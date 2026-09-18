@@ -1,0 +1,3 @@
+# Official Arch/CachyOS packages only.
+# Add one package name per line, with an adjacent comment when context helps.
+# Intentionally empty at repository bootstrap.

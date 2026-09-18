@@ -1,0 +1,16 @@
+# Editor and operating-system noise
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Never commit local environment or credential material.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*
+secrets/
