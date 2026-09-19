@@ -32,7 +32,6 @@ require_files \
 	chezmoi/dot_config/noctalia/templates.toml \
 	chezmoi/dot_config/noctalia/templates/z13-window-color \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_configure-chatgpt-spelling \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 require_files \
@@ -61,12 +60,10 @@ niri validate --config chezmoi/dot_config/niri/config.kdl
 shellcheck scripts/*.sh tests/*.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_configure-chatgpt-spelling \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_configure-chatgpt-spelling \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 tests/focus-or-spawn.sh

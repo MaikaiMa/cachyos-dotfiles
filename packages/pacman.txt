@@ -12,6 +12,3 @@ hunspell
 hunspell-nl
 hunspell-en_us
 enchant
-
-# Download the Chromium Dutch dictionary used by the ChatGPT spelling helper.
-curl
