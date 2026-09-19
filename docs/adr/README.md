@@ -11,3 +11,4 @@ alternatives considered.
 
 - [ADR-0001: Use chezmoi for dotfile management](ADR-0001-use-chezmoi-for-dotfile-management.md)
 - [ADR-0002: Use Noctalia for dynamic Niri colors](ADR-0002-use-noctalia-for-dynamic-niri-colors.md)
+- [ADR-0003: Reproducible bilingual spelling](ADR-0003-reproducible-bilingual-spelling.md)

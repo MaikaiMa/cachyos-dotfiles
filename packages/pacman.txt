@@ -6,3 +6,9 @@ jq
 
 # Provide flock for race-free application launches.
 util-linux
+
+# Dutch + US English spelling; Enchant exposes dictionaries to supporting apps.
+hunspell
+hunspell-nl
+hunspell-en_us
+enchant

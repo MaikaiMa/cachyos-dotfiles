@@ -37,6 +37,14 @@ sudo pacman -S git chezmoi shellcheck shfmt
 No package is installed automatically by this repository. AUR packages, if
 ever needed, must be explicitly justified in `packages/aur.txt`.
 
+## Dutch and English spelling
+
+The package manifest includes the shared spelling prerequisites. After a fresh
+installation, follow [the spelling setup guide](docs/spelling.md) to install and
+verify them. This provides Dutch and US English dictionaries for supporting
+applications; it does not automatically select both languages in every app.
+Application-specific spelling preferences are not yet managed.
+
 ## Bootstrap
 
 Review the repository first, then validate and preview the source tree:
