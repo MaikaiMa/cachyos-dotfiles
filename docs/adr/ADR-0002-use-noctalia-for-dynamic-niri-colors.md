@@ -11,23 +11,26 @@ in the dotfiles would drift from the shell theme, while rendering the color at
 chezmoi apply time would not react to later wallpaper or palette changes.
 
 Noctalia ships a built-in `niri` template. It renders palette roles into
-`~/.config/niri/noctalia.kdl` and maintains the corresponding include in
-Niri's live `config.kdl`.
+`~/.config/niri/noctalia.kdl` and can add the corresponding include to Niri's
+live `config.kdl`.
 
 ## Decision
 
 Enable Noctalia's built-in `niri` template through a chezmoi-managed
 `~/.config/noctalia/templates.toml`.
 
-Noctalia owns the generated `~/.config/niri/noctalia.kdl` file and the live
-include that loads it. Neither is committed to Git. Chezmoi continues to own
-the stable Niri behavior and geometry, such as focus-ring width, gaps, and
-struts. The active palette source and wallpaper remain runtime choices rather
-than repository data.
+Noctalia owns the generated `~/.config/niri/noctalia.kdl` file, which is not
+committed to Git. Chezmoi owns the optional include that loads it from the
+managed Niri `config.kdl`. Noctalia recognizes this existing include and does
+not append a duplicate. Chezmoi continues to own the stable Niri behavior and
+geometry, such as focus-ring width, gaps, and struts. The active palette source
+and wallpaper remain runtime choices rather than repository data.
 
 This is a documented exception to the usual rule that live Niri configuration
-is changed only through chezmoi: the repository declares the integration, and
-Noctalia performs its documented generation and cleanup lifecycle.
+is changed only through chezmoi: the repository owns the integration point,
+while Noctalia owns the generated palette file. Disabling the template may
+remove the include from the live config, but that creates visible chezmoi drift
+rather than changing the repository source.
 
 ## Consequences
 
@@ -36,7 +39,8 @@ Noctalia performs its documented generation and cleanup lifecycle.
 - A fresh setup requires Noctalia with its built-in Niri template.
 - The generated file must not be edited manually because Noctalia will replace
   it.
-- Disabling the template may remove the generated file and Noctalia-owned
+- Disabling the template removes the generated file and may remove its include
+  from the live config. A subsequent chezmoi apply restores the optional
   include; the stable Niri configuration remains usable with its defaults.
 - Validation of generated colors happens after Noctalia has rendered the
   template on the target machine.
