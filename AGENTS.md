@@ -5,10 +5,14 @@ with Niri.  It deliberately does not represent the live home directory.
 
 ## Change discipline
 
+- Inspect `git status` before editing. Preserve unrelated and user-owned
+  changes, and stop when the worktree contains unexpected modifications.
 - Make small, focused changes. Inspect the relevant files before editing them
   and do not reformat or modify unrelated configuration.
 - Treat `chezmoi/` as the chezmoi source directory. Add managed files there,
   never by editing their live counterparts under `$HOME`.
+- Keep implementation, package manifests, tests, and user documentation in
+  sync. Follow the shared completion checklist in `docs/maintenance.md`.
 - Scripts must be idempotent, use POSIX `sh` unless Bash is genuinely needed,
   and fail clearly when a prerequisite is absent.
 - Fish is the user's interactive shell. Every command intended for the user to
@@ -30,8 +34,22 @@ with Niri.  It deliberately does not represent the live home directory.
 - Add an ADR in `docs/adr/` before adopting a system-wide architectural
   decision. Do not silently introduce such decisions in scripts or configs.
 
+## Validation and handoff
+
+- Validation must report required files that are not yet tracked by Git. They
+  must be included in the final diff and tracked before committing.
+- Before handing off a change, run `git diff --check`,
+  `tests/validate.sh`, and a real-home `scripts/bootstrap.sh --dry-run`.
+- Review the complete dry-run output and report which live or system files
+  would be added, changed, or removed. A dry-run must not install packages,
+  modify system files, or apply chezmoi.
+- Summarize changed files, test results, dry-run results, remaining risks, and
+  any checks that still require the user's machine.
+
 ## Boundaries
 
 - Do not install packages, apply chezmoi, enable services, or edit live Niri
   configuration unless the user explicitly asks.
+- Do not commit or push changes unless the user explicitly asks. Leave the
+  final diff available for user review.
 - Keep generated files and machine-local state out of Git.

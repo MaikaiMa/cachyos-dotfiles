@@ -1,5 +1,5 @@
 #!/bin/sh
-# Initialise this repository as the chezmoi source and apply it (or preview it).
+# Apply this repository's chezmoi source (or preview it).
 set -eu
 
 repo_root=$(
@@ -22,8 +22,6 @@ if ! command -v chezmoi >/dev/null 2>&1; then
 	exit 1
 fi
 
-chezmoi init --source "$source_dir"
-
 z13_target=false
 if "$repo_root/scripts/setup-z13-window.sh" --check; then
 	z13_target=true
@@ -34,7 +32,7 @@ if "$repo_root/scripts/setup-z13-window.sh" --check; then
 	fi
 fi
 
-chezmoi apply "$@"
+chezmoi --source "$source_dir" apply "$@"
 
 if [ "$z13_target" = true ] && [ "$dry_run" = false ]; then
 	if command -v noctalia >/dev/null 2>&1; then

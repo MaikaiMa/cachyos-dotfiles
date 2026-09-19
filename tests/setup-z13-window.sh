@@ -36,15 +36,25 @@ printf '%s\n' '#!/bin/sh' 'printf "%s\n" "$*" >> "$Z13_SETUP_CALLS"' >"$fake_bin
 printf '%s\n' '#!/bin/sh' 'exit 0' >"$fake_bin/z13ctl"
 chmod +x "$fake_bin/sudo" "$fake_bin/udevadm" "$fake_bin/z13ctl"
 
-PATH="$fake_bin:$PATH" \
-	Z13_DMI_ROOT="$dmi_root" \
-	Z13_UDEV_RULE_TARGET="$rule_target" \
-	Z13_SETUP_CALLS="$calls" \
-	"$script"
+run_setup() {
+	PATH="$fake_bin:$PATH" \
+		Z13_DMI_ROOT="$dmi_root" \
+		Z13_UDEV_RULE_TARGET="$rule_target" \
+		Z13_SETUP_CALLS="$calls" \
+		"$script"
+}
+
+run_setup
 
 cmp "$repo_root/system/udev/70-z13-window.rules" "$rule_target"
 if [ "$(wc -l <"$calls")" -ne 3 ]; then
 	printf '%s\n' 'Expected udev reload, trigger, and settle calls.' >&2
+	exit 1
+fi
+
+run_setup >/dev/null 2>&1
+if [ "$(wc -l <"$calls")" -ne 3 ]; then
+	printf '%s\n' 'An unchanged udev rule must not be reloaded.' >&2
 	exit 1
 fi
 

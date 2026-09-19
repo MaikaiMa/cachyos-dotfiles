@@ -33,12 +33,24 @@ if ! is_target; then
 	exit 0
 fi
 
+if ! command -v cmp >/dev/null 2>&1; then
+	printf '%s\n' 'Required command is missing: cmp' >&2
+	exit 1
+fi
+
+rule_needs_update=true
+if cmp -s "$rule_source" "$rule_target"; then
+	rule_needs_update=false
+fi
+
 if [ "${1:-}" = "--dry-run" ]; then
 	if ! command -v "$z13ctl_command" >/dev/null 2>&1; then
 		printf '%s\n' '+ paru/yay -S --needed --noconfirm z13ctl-bin'
 	fi
-	printf '+ install %s as %s\n' "$rule_source" "$rule_target"
-	printf '%s\n' '+ reload udev rules and retrigger hidraw devices'
+	if [ "$rule_needs_update" = true ]; then
+		printf '+ install %s as %s\n' "$rule_source" "$rule_target"
+		printf '%s\n' '+ reload udev rules and retrigger hidraw devices'
+	fi
 	exit 0
 fi
 
@@ -64,6 +76,11 @@ if ! command -v "$z13ctl_command" >/dev/null 2>&1; then
 		printf '%s\n' 'z13ctl-bin installation completed without providing z13ctl.' >&2
 		exit 1
 	fi
+fi
+
+if [ "$rule_needs_update" = false ]; then
+	printf '%s\n' 'Z13 rear-window prerequisites are ready.'
+	exit 0
 fi
 
 for tool in install udevadm; do

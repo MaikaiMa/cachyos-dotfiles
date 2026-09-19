@@ -6,6 +6,13 @@ user-level CachyOS configuration. Git versions the repository and
 directory. The live configuration—such as `~/.config/niri`—is never edited
 directly by repository maintenance.
 
+## Scope
+
+The repository currently reproduces only the user-level features that have
+been deliberately migrated. It is not yet a complete CachyOS installer and
+does not recreate the operating system, drivers, accounts, secrets, or every
+installed application.
+
 ## Structure
 
 ```text
@@ -17,6 +24,7 @@ scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
 packages/                 explicit official and AUR package manifests
 docs/adr/                 architecture decision records
+docs/maintenance.md       shared change and verification workflow
 tests/                    repository validation
 ```
 
@@ -34,13 +42,16 @@ ADR-0004.
 
 ## Prerequisites
 
-Install Git, chezmoi, Fish, ShellCheck, and shfmt from the official repositories:
+Install the repository, desktop, and validation prerequisites from the
+official Arch or CachyOS repositories:
 
 ```fish
-sudo pacman -S git chezmoi fish shellcheck shfmt
+sudo pacman -S --needed git chezmoi fish shellcheck shfmt diffutils niri noctalia jq util-linux paru
 ```
 
-General package manifests are not installed automatically. The one
+The complete currently recorded package set is maintained in
+`packages/pacman.txt`, but general package manifests are not installed
+automatically. The one
 hardware-specific exception is `z13ctl-bin` on a detected GZ302 Flow Z13;
 this dependency is justified in `packages/aur.txt` and installed by bootstrap.
 
@@ -60,12 +71,18 @@ Application-specific spelling preferences are not yet managed.
 
 ## Bootstrap
 
-Review the repository first, then validate and preview the source tree:
+Clone over HTTPS so a fresh machine does not need an SSH key:
 
 ```fish
-cd /home/maikel/Projects/dotfiles
+git clone https://github.com/MaikaiMa/cachyos-dotfiles.git "$HOME/Projects/dotfiles"
+cd "$HOME/Projects/dotfiles"
+```
+
+Review the repository, then validate and preview the source tree:
+
+```fish
 ./tests/validate.sh
-./scripts/bootstrap.sh --dry-run
+./scripts/bootstrap.sh --dry-run --no-pager
 ```
 
 These are POSIX `sh` scripts and can be run directly from Fish because their
@@ -82,3 +99,10 @@ a Z13 this one command also completes the rear-window setup:
 Before adding existing live Niri files, compare them with the proposed
 chezmoi source and make a small, reviewed migration. Do not copy credentials,
 machine-specific display data, or other personal data into this repository.
+
+## Ongoing maintenance
+
+Edit files in this repository, validate them, and inspect the dry-run before
+requesting a live apply. The completion checklist and the division between
+automatic and machine-level checks are documented in
+[the maintenance guide](docs/maintenance.md).
