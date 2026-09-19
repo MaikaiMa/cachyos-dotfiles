@@ -4,6 +4,9 @@
 # Parse Niri IPC output for focus-or-spawn.
 jq
 
+# Interactive shell and syntax validation for copyable documentation commands.
+fish
+
 # Provide flock for race-free application launches.
 util-linux
 

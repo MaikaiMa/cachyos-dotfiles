@@ -34,10 +34,10 @@ ADR-0004.
 
 ## Prerequisites
 
-Install Git, chezmoi, ShellCheck, and shfmt from the official repositories:
+Install Git, chezmoi, Fish, ShellCheck, and shfmt from the official repositories:
 
-```sh
-sudo pacman -S git chezmoi shellcheck shfmt
+```fish
+sudo pacman -S git chezmoi fish shellcheck shfmt
 ```
 
 General package manifests are not installed automatically. The one
@@ -62,7 +62,7 @@ Application-specific spelling preferences are not yet managed.
 
 Review the repository first, then validate and preview the source tree:
 
-```sh
+```fish
 cd /home/maikel/Projects/dotfiles
 ./tests/validate.sh
 ./scripts/bootstrap.sh --dry-run
@@ -75,7 +75,7 @@ shebang selects `sh`. If an explicit Fish command is preferred, use
 When the source tree contains reviewed configuration, apply it explicitly. On
 a Z13 this one command also completes the rear-window setup:
 
-```sh
+```fish
 ./scripts/bootstrap.sh
 ```
 

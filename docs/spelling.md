@@ -5,8 +5,8 @@
 The spelling packages are recorded in `packages/pacman.txt`. Install them
 explicitly after the normal system update:
 
-```sh
-sudo pacman -S --needed hunspell hunspell-nl hunspell-en_us enchant curl
+```fish
+sudo pacman -S --needed hunspell hunspell-nl hunspell-en_us enchant
 ```
 
 This command is safe to repeat. Neither `scripts/bootstrap.sh` nor a chezmoi
@@ -15,7 +15,7 @@ required for this baseline.
 
 ## Verify the shared dictionaries
 
-```sh
+```fish
 hunspell -D
 enchant-lsmod-2 -list-dicts
 printf '%s\n' 'fiets bicycle' | hunspell -d nl_NL,en_US -l

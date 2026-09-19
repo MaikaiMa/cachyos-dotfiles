@@ -42,10 +42,11 @@ require_files \
 	scripts/bootstrap.sh \
 	scripts/setup-z13-window.sh \
 	system/udev/70-z13-window.rules \
+	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/validate.fish
 
-for tool in niri shellcheck shfmt; do
+for tool in fish niri shellcheck shfmt; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Missing required validation tool: %s\n' "$tool" >&2
 		exit 1
@@ -58,6 +59,8 @@ done
 
 niri validate --config chezmoi/dot_config/niri/config.kdl
 shellcheck scripts/*.sh tests/*.sh
+fish -n tests/*.fish
+tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
