@@ -10,6 +10,7 @@ binds {
     Mod+B                               hotkey-overlay-title="Open Browser: Zen" { spawn "zen-browser"; }
     Mod+Shift+E                         hotkey-overlay-title="Open Text Editor: Zed" { spawn "zeditor"; }
     Mod+E                               hotkey-overlay-title="File Manager: Nautilus" { spawn "nautilus"; }
+    Mod+Ctrl+Space                      hotkey-overlay-title="Open 1Password Quick Access" { spawn "1password" "--quick-access"; }
 
     // Noctalia:
     Mod+Shift+Return                    hotkey-overlay-title="Open Wallpaper Selector: noctalia wallpaper toggle" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
