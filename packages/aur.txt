@@ -1,3 +1,5 @@
 # AUR packages only. Prefer packages/pacman.txt whenever an official package exists.
 # Add one package name per line and explain why it is necessary in a preceding comment.
-# Intentionally empty at repository bootstrap.
+
+# Direct HID control for the GZ302 rear lightbar; asusctl cannot address it separately.
+z13ctl-bin

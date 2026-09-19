@@ -14,6 +14,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/noctalia/    declarative Noctalia configuration
   dot_config/systemd/user/ future ~/.config/systemd/user units
 scripts/                  idempotent operational helpers
+system/                   explicitly installed system integration files
 packages/                 explicit official and AUR package manifests
 docs/adr/                 architecture decision records
 tests/                    repository validation
@@ -26,6 +27,11 @@ Noctalia's built-in Niri template generates `~/.config/niri/noctalia.kdl`
 from the active palette. This generated, wallpaper-dependent file is runtime
 state and is intentionally not stored in Git; see ADR-0002.
 
+On a 2025 ROG Flow Z13 (`GZ302*`), the Noctalia user template also sends that
+same primary color to the rear window light through `z13ctl`. The helper is a
+no-op on other hardware and always targets `lightbar`, never the keyboard; see
+ADR-0004.
+
 ## Prerequisites
 
 Install Git, chezmoi, ShellCheck, and shfmt from the official repositories:
@@ -34,8 +40,15 @@ Install Git, chezmoi, ShellCheck, and shfmt from the official repositories:
 sudo pacman -S git chezmoi shellcheck shfmt
 ```
 
-No package is installed automatically by this repository. AUR packages, if
-ever needed, must be explicitly justified in `packages/aur.txt`.
+General package manifests are not installed automatically. The one
+hardware-specific exception is `z13ctl-bin` on a detected GZ302 Flow Z13;
+this dependency is justified in `packages/aur.txt` and installed by bootstrap.
+
+On a detected 2025 Z13, `scripts/bootstrap.sh` automatically installs
+`z13ctl-bin` with `paru` or `yay`, installs the narrowly scoped lightbar udev
+rule, applies the dotfiles, and asks a running Noctalia instance to refresh its
+templates. No logout or separate activation step is required. Other hardware
+skips the entire Z13 setup.
 
 ## Dutch and English spelling
 
@@ -59,7 +72,8 @@ These are POSIX `sh` scripts and can be run directly from Fish because their
 shebang selects `sh`. If an explicit Fish command is preferred, use
 `fish tests/validate.fish`; do not invoke `fish tests/validate.sh`.
 
-When the source tree contains reviewed configuration, apply it explicitly:
+When the source tree contains reviewed configuration, apply it explicitly. On
+a Z13 this one command also completes the rear-window setup:
 
 ```sh
 ./scripts/bootstrap.sh

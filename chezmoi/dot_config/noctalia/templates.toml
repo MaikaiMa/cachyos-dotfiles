@@ -1,3 +1,9 @@
 [theme.templates]
 enable_builtin_templates = true
 builtin_ids = ["niri"]
+
+[theme.templates.user.z13_window]
+input_path = "$XDG_CONFIG_HOME/noctalia/templates/z13-window-color"
+output_path = "$XDG_CACHE_HOME/noctalia/z13-window-color"
+post_hook = "$HOME/.local/bin/sync-z13-window-color '{{ colors.primary.default.hex_stripped }}'"
+hook_async = false

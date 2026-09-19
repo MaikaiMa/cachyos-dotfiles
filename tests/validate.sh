@@ -30,13 +30,19 @@ require_files \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_config/noctalia/templates.toml \
-	chezmoi/dot_local/bin/executable_focus-or-spawn
+	chezmoi/dot_config/noctalia/templates/z13-window-color \
+	chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_configure-chatgpt-spelling \
+	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 require_files \
 	docs/adr/README.md \
 	docs/adr/ADR-0001-use-chezmoi-for-dotfile-management.md \
 	docs/adr/ADR-0002-use-noctalia-for-dynamic-niri-colors.md \
+	docs/adr/ADR-0004-sync-z13-window-color-with-noctalia.md \
 	scripts/bootstrap.sh \
+	scripts/setup-z13-window.sh \
+	system/udev/70-z13-window.rules \
 	tests/focus-or-spawn.sh \
 	tests/validate.fish
 
@@ -50,10 +56,21 @@ done
 for config in chezmoi/dot_config/niri/cfg/*.kdl; do
 	niri validate --config "$config"
 done
+
 niri validate --config chezmoi/dot_config/niri/config.kdl
 shellcheck scripts/*.sh tests/*.sh
-shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn
-shfmt -d scripts/*.sh tests/*.sh chezmoi/dot_local/bin/executable_focus-or-spawn
+
+shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_configure-chatgpt-spelling \
+	chezmoi/dot_local/bin/executable_sync-z13-window-color
+
+shfmt -d scripts/*.sh tests/*.sh \
+	chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_configure-chatgpt-spelling \
+	chezmoi/dot_local/bin/executable_sync-z13-window-color
+
 tests/focus-or-spawn.sh
+tests/setup-z13-window.sh
+tests/sync-z13-window-color.sh
 
 printf '%s\n' 'Repository validation passed.'

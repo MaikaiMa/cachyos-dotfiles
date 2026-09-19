@@ -1,0 +1,3 @@
+# Give the active desktop session access to the GZ302 rear-window HID device.
+# 0b05:18c6 is the N-KEY/lightbar device; the detachable keyboard is 0b05:1a30.
+ACTION=="add|change", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0b05", ATTRS{idProduct}=="18c6", TAG+="uaccess"

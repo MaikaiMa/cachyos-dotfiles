@@ -1,0 +1,46 @@
+#!/bin/sh
+# Set only the rear lightbar on a 2025 ROG Flow Z13 to a static RGB colour.
+set -eu
+
+if [ "$#" -ne 1 ]; then
+	printf 'Usage: %s RRGGBB\n' "${0##*/}" >&2
+	exit 2
+fi
+
+colour=${1#\#}
+if [ "${#colour}" -ne 6 ]; then
+	printf 'Invalid RGB colour (expected RRGGBB): %s\n' "$1" >&2
+	exit 2
+fi
+case $colour in
+*[!0123456789abcdefABCDEF]*)
+	printf 'Invalid RGB colour (expected RRGGBB): %s\n' "$1" >&2
+	exit 2
+	;;
+esac
+
+dmi_root=${Z13_DMI_ROOT:-/sys/devices/virtual/dmi/id}
+if [ ! -r "$dmi_root/product_family" ] || [ ! -r "$dmi_root/board_name" ]; then
+	exit 0
+fi
+
+product_family=$(cat "$dmi_root/product_family")
+board_name=$(cat "$dmi_root/board_name")
+if [ "$product_family" != "ROG Flow Z13" ]; then
+	exit 0
+fi
+case $board_name in
+GZ302*) ;;
+*) exit 0 ;;
+esac
+
+if ! command -v z13ctl >/dev/null 2>&1; then
+	printf '%s\n' 'z13ctl is required to control the GZ302 rear lightbar.' >&2
+	exit 1
+fi
+
+exec z13ctl apply \
+	--device lightbar \
+	--mode static \
+	--color "$colour" \
+	--brightness high
