@@ -6,11 +6,16 @@ binds {
     Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
 
     // Applications
-    Mod+Return                          hotkey-overlay-title="Open Terminal: Alacritty" { spawn "alacritty"; }
-    Mod+B                               hotkey-overlay-title="Open Browser: Zen" { spawn "zen-browser"; }
-    Mod+Shift+E                         hotkey-overlay-title="Open Text Editor: Zed" { spawn "zeditor"; }
-    Mod+E                               hotkey-overlay-title="File Manager: Nautilus" { spawn "nautilus"; }
-    Mod+Ctrl+Space                      hotkey-overlay-title="Open 1Password Quick Access" { spawn "1password" "--quick-access"; }
+    Mod+Return                          repeat=false hotkey-overlay-title="Open Terminal: Alacritty" { spawn "alacritty"; }
+    Mod+B                               repeat=false hotkey-overlay-title="Focus or Open Browser: Zen" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" zen zen-browser"; }
+    Mod+Alt+B                           repeat=false hotkey-overlay-title="Open New Browser Window: Zen" { spawn "zen-browser"; }
+    Mod+C                               repeat=false hotkey-overlay-title="Focus or Open Code Editor: Zed" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" dev.zed.Zed zeditor"; }
+    Mod+Alt+C                           repeat=false hotkey-overlay-title="Open New Code Editor Window: Zed" { spawn "zeditor" "--new"; }
+    Mod+E                               repeat=false hotkey-overlay-title="Focus or Open File Manager: Nautilus" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" org.gnome.Nautilus nautilus"; }
+    Mod+Alt+E                           repeat=false hotkey-overlay-title="Open New File Manager Window: Nautilus" { spawn "nautilus" "--new-window"; }
+    Mod+A                               repeat=false hotkey-overlay-title="Focus or Open AI Assistant: ChatGPT" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" Chatgpt chatgpt"; }
+    Mod+P                               repeat=false hotkey-overlay-title="Focus or Open Password Manager: 1Password" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" com.onepassword.OnePassword 1password"; }
+    Mod+Ctrl+Space                      repeat=false hotkey-overlay-title="Open 1Password Quick Access" { spawn "1password" "--quick-access"; }
 
     // Noctalia:
     Mod+Shift+Return                    hotkey-overlay-title="Open Wallpaper Selector: noctalia wallpaper toggle" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
@@ -36,6 +41,7 @@ binds {
 
     // Window Movement and Focus:
     Mod+W                               { close-window; }
+    Mod+Q                               { close-window; }
 
     Mod+Left                            { focus-column-left; }
     Mod+H                               { focus-column-left; }
@@ -124,8 +130,7 @@ binds {
 
     // Layout Controls:
     Mod+CTRL+F                          { expand-column-to-available-width; }
-    Mod+C                               { center-column; }
-    Mod+CTRL+C                          { center-visible-columns; }
+    Mod+CTRL+C                          { center-column; }
     Mod+Minus                           { set-column-width "-10%"; }
     Mod+Equal                           { set-column-width "+10%"; }
     Mod+Shift+Minus                     { set-window-height "-10%"; }

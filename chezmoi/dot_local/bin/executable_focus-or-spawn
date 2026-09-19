@@ -1,0 +1,86 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -lt 2 ]; then
+	printf 'Usage: %s APP_ID COMMAND [ARG ...]\n' "${0##*/}" >&2
+	exit 2
+fi
+
+for tool in niri jq flock; do
+	if ! command -v "$tool" >/dev/null 2>&1; then
+		printf 'Missing required command: %s\n' "$tool" >&2
+		exit 127
+	fi
+done
+
+app_id=$1
+shift
+
+find_window_id() {
+	if ! windows_json=$(niri msg --json windows); then
+		printf '%s\n' 'Could not query windows from niri.' >&2
+		return 1
+	fi
+
+	printf '%s\n' "$windows_json" |
+		jq -r --arg app_id "$app_id" '
+            [
+                .[]
+                | select(.app_id == $app_id)
+            ]
+            | sort_by([
+                (if .is_focused then 1 else 0 end),
+                (.focus_timestamp.secs // 0),
+                (.focus_timestamp.nanos // 0)
+            ])
+            | last
+            | .id // empty
+        '
+}
+
+window_id=$(find_window_id)
+
+if [ -n "$window_id" ]; then
+	exec niri msg action focus-window --id "$window_id"
+fi
+
+if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+	printf '%s\n' 'XDG_RUNTIME_DIR is required for the launch lock.' >&2
+	exit 1
+fi
+
+case "$app_id" in
+*[!A-Za-z0-9._-]*)
+	printf 'Invalid application ID for launch lock: %s\n' "$app_id" >&2
+	exit 2
+	;;
+esac
+
+lock_file=$XDG_RUNTIME_DIR/focus-or-spawn-$app_id.lock
+exec 9>"$lock_file"
+
+if ! flock -n 9; then
+	exit 0
+fi
+
+# Another invocation may have launched the app while this one acquired the lock.
+window_id=$(find_window_id)
+if [ -n "$window_id" ]; then
+	exec niri msg action focus-window --id "$window_id"
+fi
+
+"$@" &
+
+# Keep the lock until niri observes the new window, preventing launch races.
+attempt=0
+while [ "$attempt" -lt 50 ]; do
+	sleep 0.1
+	window_id=$(find_window_id)
+	if [ -n "$window_id" ]; then
+		exit 0
+	fi
+	attempt=$((attempt + 1))
+done
+
+printf 'Timed out waiting for niri to observe app ID: %s\n' "$app_id" >&2
+exit 1

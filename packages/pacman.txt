@@ -1,3 +1,8 @@
 # Official Arch/CachyOS packages only.
 # Add one package name per line, with an adjacent comment when context helps.
-# Intentionally empty at repository bootstrap.
+
+# Parse Niri IPC output for focus-or-spawn.
+jq
+
+# Provide flock for race-free application launches.
+util-linux
