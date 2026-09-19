@@ -6,3 +6,8 @@ superseded records intact; a later ADR should reference the earlier one.
 
 Each ADR includes status, date, context, decision, consequences, and
 alternatives considered.
+
+## Decisions
+
+- [ADR-0001: Use chezmoi for dotfile management](ADR-0001-use-chezmoi-for-dotfile-management.md)
+- [ADR-0002: Use Noctalia for dynamic Niri colors](ADR-0002-use-noctalia-for-dynamic-niri-colors.md)

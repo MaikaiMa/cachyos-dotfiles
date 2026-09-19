@@ -10,7 +10,8 @@ directly by repository maintenance.
 
 ```text
 chezmoi/                  chezmoi source tree for home-directory files
-  dot_config/niri/        future ~/.config/niri content
+  dot_config/niri/        managed ~/.config/niri fragments
+  dot_config/noctalia/    declarative Noctalia configuration
   dot_config/systemd/user/ future ~/.config/systemd/user units
 scripts/                  idempotent operational helpers
 packages/                 explicit official and AUR package manifests
@@ -18,9 +19,12 @@ docs/adr/                 architecture decision records
 tests/                    repository validation
 ```
 
-`chezmoi/.chezmoiignore` excludes the tracked `.keep` placeholders. The
-first managed Niri file is `cfg/keybinds.kdl`; review its chezmoi diff before
-any explicit deployment.
+`chezmoi/.chezmoiignore` excludes the tracked `.keep` placeholders. Review the
+chezmoi diff before every explicit deployment.
+
+Noctalia's built-in Niri template generates `~/.config/niri/noctalia.kdl`
+from the active palette. This generated, wallpaper-dependent file is runtime
+state and is intentionally not stored in Git; see ADR-0002.
 
 ## Prerequisites
 
@@ -35,8 +39,7 @@ ever needed, must be explicitly justified in `packages/aur.txt`.
 
 ## Bootstrap
 
-Review the repository first, then validate and preview the empty initial
-source tree:
+Review the repository first, then validate and preview the source tree:
 
 ```sh
 cd /home/maikel/Projects/dotfiles
