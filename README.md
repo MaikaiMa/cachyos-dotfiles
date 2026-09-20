@@ -76,6 +76,19 @@ automatically. The one
 hardware-specific exception is `z13ctl-bin` on a detected GZ302 Flow Z13;
 this dependency is justified in `packages/aur.txt` and installed by bootstrap.
 
+## Gaming
+
+Install the recorded CachyOS gaming stack with:
+
+```fish
+sudo pacman -S --needed cachyos-gaming-meta cachyos-gaming-applications
+```
+
+This is equivalent to selecting `Install Gaming packages` in CachyOS Hello. It
+installs the gaming libraries and applications maintained by CachyOS, including
+Steam. Steam downloads, account state, compatibility data, and shader caches
+remain machine-local and are not managed by this repository.
+
 On a detected 2025 Z13, `scripts/bootstrap.sh` automatically installs
 `z13ctl-bin` with `paru` or `yay`, installs the narrowly scoped lightbar udev
 rule, applies the dotfiles, and asks a running Noctalia instance to refresh its
