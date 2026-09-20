@@ -11,7 +11,7 @@ repo_root=$(
 cd "$repo_root"
 untracked_required=false
 
-for tool in chezmoi fish git grep niri shellcheck shfmt; do
+for tool in chezmoi fish git grep niri noctalia shellcheck shfmt; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Missing required validation tool: %s\n' "$tool" >&2
 		exit 1
@@ -41,6 +41,7 @@ require_files \
 	chezmoi/.chezmoiignore \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
+	chezmoi/dot_config/noctalia/bar.toml \
 	chezmoi/dot_config/noctalia/templates.toml \
 	chezmoi/dot_config/noctalia/templates/z13-window-color \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
@@ -81,6 +82,7 @@ for config in chezmoi/dot_config/niri/cfg/*.kdl; do
 done
 
 niri validate --config chezmoi/dot_config/niri/config.kdl
+noctalia config validate chezmoi/dot_config/noctalia
 shellcheck scripts/*.sh tests/*.sh
 fish -n tests/*.fish
 tests/fish-docs.sh

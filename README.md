@@ -35,6 +35,12 @@ Noctalia's built-in Niri template generates `~/.config/niri/noctalia.kdl`
 from the active palette. This generated, wallpaper-dependent file is runtime
 state and is intentionally not stored in Git; see ADR-0002.
 
+The managed Noctalia configuration also provides a `dotfiles` bar and keeps
+the built-in `default` bar available as a disabled fallback. Bootstrap deploys
+and activates `dotfiles`. To switch locally, enable `default` and disable
+`dotfiles` in Noctalia Settings; those GUI overrides intentionally remain
+machine-local in `~/.local/state/noctalia/settings.toml`.
+
 On a 2025 ROG Flow Z13 (`GZ302*`), the Noctalia user template also sends that
 same primary color to the rear window light through `z13ctl`. The helper is a
 no-op on other hardware and always targets `lightbar`, never the keyboard; see
@@ -46,7 +52,7 @@ Install the repository, desktop, and validation prerequisites from the
 official Arch or CachyOS repositories:
 
 ```fish
-sudo pacman -S --needed git chezmoi fish shellcheck shfmt diffutils niri noctalia jq util-linux paru
+sudo pacman -S --needed git chezmoi fish shellcheck shfmt diffutils niri noctalia power-profiles-daemon jq util-linux paru
 ```
 
 The complete currently recorded package set is maintained in

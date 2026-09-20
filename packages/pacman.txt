@@ -12,6 +12,7 @@ diffutils
 # Managed desktop configuration.
 niri
 noctalia
+power-profiles-daemon
 
 # Runtime dependencies for managed helpers.
 jq

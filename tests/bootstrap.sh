@@ -57,6 +57,7 @@ run_bootstrap --no-pager
 
 for path in \
 	.config/niri/config.kdl \
+	.config/noctalia/bar.toml \
 	.config/noctalia/templates.toml \
 	.local/bin/focus-or-spawn \
 	.local/bin/sync-z13-window-color; do
