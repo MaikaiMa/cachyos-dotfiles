@@ -39,6 +39,7 @@ require_files \
 
 require_files \
 	chezmoi/.chezmoiignore \
+	chezmoi/dot_config/systemd/user/default.target.wants/symlink_protonmail-bridge.service \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_config/noctalia/bar.toml \

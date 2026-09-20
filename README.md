@@ -99,6 +99,22 @@ rule, applies the dotfiles, and asks a running Noctalia instance to refresh its
 templates. No logout or separate activation step is required. Other hardware
 skips the entire Z13 setup.
 
+## Proton Mail Bridge
+
+The package manifest records `protonmail-bridge-core`. Chezmoi enables the
+package-provided `protonmail-bridge.service` for the systemd user session, so
+Bridge starts automatically after login. The repository does not copy the
+service unit; package updates remain authoritative for its implementation.
+
+Proton credentials, Bridge account configuration, generated certificates, and
+mail-client passwords remain machine-local. Log in once with
+`protonmail-bridge-core` before deploying the dotfiles. After deployment, check
+the service with:
+
+```fish
+systemctl --user status protonmail-bridge.service
+```
+
 ## Dutch and English spelling
 
 The package manifest includes the shared spelling prerequisites. After a fresh
