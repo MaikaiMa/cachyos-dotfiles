@@ -57,9 +57,11 @@ run_bootstrap --no-pager
 
 for path in \
 	.config/niri/config.kdl \
+	.config/noctalia/audio-glow.toml \
 	.config/noctalia/bar.toml \
 	.config/noctalia/templates.toml \
 	.local/bin/focus-or-spawn \
+	.local/bin/sync-noctalia-audio-glow \
 	.local/bin/sync-z13-window-color; do
 	if [ ! -f "$test_home/$path" ]; then
 		printf 'Bootstrap did not create expected file: %s\n' "$path" >&2
@@ -69,6 +71,7 @@ done
 
 for path in \
 	.local/bin/focus-or-spawn \
+	.local/bin/sync-noctalia-audio-glow \
 	.local/bin/sync-z13-window-color; do
 	if [ ! -x "$test_home/$path" ]; then
 		printf 'Bootstrap did not make helper executable: %s\n' "$path" >&2

@@ -1,0 +1,4 @@
+# Rebuild the machine-local visualizer placement after Noctalia is ready. The
+# helper only reloads Noctalia when the generated configuration has changed.
+[hooks]
+started = "$HOME/.local/bin/sync-noctalia-audio-glow"

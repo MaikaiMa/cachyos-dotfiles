@@ -42,9 +42,11 @@ require_files \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_config/noctalia/bar.toml \
+	chezmoi/dot_config/noctalia/audio-glow.toml \
 	chezmoi/dot_config/noctalia/templates.toml \
 	chezmoi/dot_config/noctalia/templates/z13-window-color \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 require_files \
@@ -53,6 +55,7 @@ require_files \
 	docs/adr/ADR-0002-use-noctalia-for-dynamic-niri-colors.md \
 	docs/adr/ADR-0003-reproducible-bilingual-spelling.md \
 	docs/adr/ADR-0004-sync-z13-window-color-with-noctalia.md \
+	docs/adr/ADR-0005-layer-noctalia-audio-glow-behind-bar.md \
 	docs/maintenance.md \
 	scripts/bootstrap.sh \
 	scripts/setup-z13-window.sh \
@@ -61,6 +64,7 @@ require_files \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/setup-z13-window.sh \
+	tests/noctalia-audio-glow.sh \
 	tests/sync-z13-window-color.sh \
 	tests/validate.fish
 
@@ -88,13 +92,16 @@ fish -n tests/*.fish
 tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 tests/focus-or-spawn.sh
+tests/noctalia-audio-glow.sh
 tests/setup-z13-window.sh
 tests/sync-z13-window-color.sh
 tests/bootstrap.sh

@@ -41,6 +41,21 @@ and activates `dotfiles`. To switch locally, enable `default` and disable
 `dotfiles` in Noctalia Settings; those GUI overrides intentionally remain
 machine-local in `~/.local/state/noctalia/settings.toml`.
 
+While the `dotfiles` bar is active, Noctalia's native PipeWire spectrum is
+placed behind it as a subtle theme-colored glow. The placement is generated
+from the effective bar and Niri output geometry, including the bar thickness,
+padding, radius, and margins, so connector names and display dimensions remain
+machine-local. It synchronizes when Noctalia starts. After a
+display or bar-layout change during the session, refresh it with:
+
+```fish
+sync-noctalia-audio-glow
+```
+
+The generated `~/.config/noctalia/desktop-audio-glow.generated.toml` is runtime
+state and must not be committed. Disabling the `dotfiles` bar and running the
+helper removes the glow while leaving the fallback bar unchanged; see ADR-0005.
+
 On a 2025 ROG Flow Z13 (`GZ302*`), the Noctalia user template also sends that
 same primary color to the rear window light through `z13ctl`. The helper is a
 no-op on other hardware and always targets `lightbar`, never the keyboard; see
