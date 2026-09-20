@@ -1,3 +1,11 @@
+[shell.animation]
+enabled = true
+speed = 1.15
+
+[shell.shadow]
+direction = "center"
+alpha = 0.60
+
 [shell.panel]
 transparency_mode = "glass"
 control_center_placement = "floating"

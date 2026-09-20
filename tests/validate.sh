@@ -45,7 +45,10 @@ require_files \
 	chezmoi/dot_config/noctalia/audio-glow.toml \
 	chezmoi/dot_config/noctalia/templates.toml \
 	chezmoi/dot_config/noctalia/templates/z13-window-color \
+	chezmoi/dot_local/private_share/noctalia/plugins/quick-controls/plugin.toml \
+	chezmoi/dot_local/private_share/noctalia/plugins/quick-controls/panel.luau \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_noctalia-dashboard-state \
 	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
@@ -56,6 +59,8 @@ require_files \
 	docs/adr/ADR-0003-reproducible-bilingual-spelling.md \
 	docs/adr/ADR-0004-sync-z13-window-color-with-noctalia.md \
 	docs/adr/ADR-0005-layer-noctalia-audio-glow-behind-bar.md \
+	docs/adr/ADR-0006-use-a-noctalia-dashboard-plugin.md \
+	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
 	scripts/bootstrap.sh \
 	scripts/setup-z13-window.sh \
@@ -87,6 +92,7 @@ done
 
 niri validate --config chezmoi/dot_config/niri/config.kdl
 noctalia config validate chezmoi/dot_config/noctalia
+noctalia plugins lint chezmoi/dot_local/private_share/noctalia/plugins/quick-controls
 shellcheck scripts/*.sh tests/*.sh
 fish -n tests/*.fish
 tests/fish-docs.sh

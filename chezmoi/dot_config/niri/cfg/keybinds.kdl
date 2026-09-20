@@ -19,7 +19,7 @@ binds {
 
     // Noctalia:
     Mod+Return                          hotkey-overlay-title="Open Wallpaper Selector: noctalia wallpaper toggle" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
-    Mod+S                               hotkey-overlay-title="Open Control Center: noctalia controlCenter" { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Mod+S                               hotkey-overlay-title="Open Quick Controls: noctalia plugin panel" { spawn-sh "noctalia msg panel-toggle maikel/quick-controls:panel"; }
     Mod+Shift+S                         hotkey-overlay-title="Open Settings: noctalia settings" { spawn-sh "noctalia msg settings-toggle"; }
     Mod+Space                           hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
     Mod+V                               repeat=false hotkey-overlay-title="Open Clipboard History: noctalia clipboard" { spawn-sh "noctalia msg panel-toggle clipboard"; }

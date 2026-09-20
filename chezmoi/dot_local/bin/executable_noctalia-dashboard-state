@@ -1,0 +1,192 @@
+#!/bin/sh
+# Emit tab-separated, read-only state for the Noctalia Dashboard plugin.
+set -u
+
+read_audio_state() {
+	target=$1
+	label=$2
+	raw=$(wpctl get-volume "$target" 2>/dev/null) || return 0
+	volume=$(printf '%s\n' "$raw" | awk '{ printf "%.0f", $2 * 100 }')
+	muted=false
+	case $raw in
+	*'[MUTED]'*) muted=true ;;
+	esac
+	printf '%s\t%s\t%s\n' "$label" "$volume" "$muted"
+}
+
+read_brightness_state() {
+	for device in /sys/class/backlight/*; do
+		[ -d "$device" ] || continue
+		current=$(cat "$device/brightness" 2>/dev/null) || continue
+		maximum=$(cat "$device/max_brightness" 2>/dev/null) || continue
+		[ "$maximum" -gt 0 ] 2>/dev/null || continue
+		awk -v current="$current" -v maximum="$maximum" 'BEGIN { printf "brightness\t%.0f\n", current * 100 / maximum }'
+		return 0
+	done
+}
+
+read_battery_state() {
+	for battery in /sys/class/power_supply/BAT*; do
+		[ -d "$battery" ] || continue
+		capacity=$(cat "$battery/capacity" 2>/dev/null) || continue
+		status=$(cat "$battery/status" 2>/dev/null) || status=Unknown
+		seconds=0
+
+		if [ "$status" = Discharging ]; then
+			if [ -r "$battery/energy_now" ] && [ -r "$battery/power_now" ]; then
+				now=$(cat "$battery/energy_now")
+				rate=$(cat "$battery/power_now")
+			elif [ -r "$battery/charge_now" ] && [ -r "$battery/current_now" ]; then
+				now=$(cat "$battery/charge_now")
+				rate=$(cat "$battery/current_now")
+			else
+				now=0
+				rate=0
+			fi
+			if [ "$rate" -gt 0 ] 2>/dev/null; then
+				seconds=$(awk -v now="$now" -v rate="$rate" 'BEGIN { printf "%.0f", now * 3600 / rate }')
+			fi
+		fi
+
+		printf 'battery\t%s\t%s\t%s\n' "$capacity" "$status" "$seconds"
+		return 0
+	done
+}
+
+read_noctalia_status() {
+	command=$1
+	label=$2
+	value=$(noctalia msg "$command" 2>/dev/null) || return 0
+	case $value in
+	on | off) printf '%s\t%s\n' "$label" "$value" ;;
+	esac
+}
+
+read_wallpaper_state() {
+	wallpaper=$(noctalia msg wallpaper-get 2>/dev/null) || return 0
+	[ -r "$wallpaper" ] || return 0
+
+	cache_root=${XDG_CACHE_HOME:-"$HOME/.cache"}/noctalia-dashboard
+	preview=$cache_root/wallpaper-preview-v3.png
+	if command -v magick >/dev/null 2>&1; then
+		if [ ! -r "$preview" ] || [ "$wallpaper" -nt "$preview" ]; then
+			mkdir -p "$cache_root" || return 0
+			temporary=$cache_root/wallpaper-preview-v3.tmp.png
+			if magick "$wallpaper" -auto-orient -resize '320x160^' \
+				-gravity center -extent 320x160 \
+				-fill 'rgba(0,0,0,0.48)' -draw 'rectangle 0,0 320,160' \
+				-fill none -stroke white -strokewidth 4 \
+				-draw 'roundrectangle 143,35 177,69 5,5 polyline 148,62 156,53 162,59 169,50 174,62 circle 170,42 173,42' \
+				-stroke none -fill white -font Noto-Sans-Medium -pointsize 28 \
+				-gravity north -annotate +0+94 'Achtergrond' \
+				"$temporary" 2>/dev/null; then
+				mv "$temporary" "$preview"
+			else
+				rm -f "$temporary"
+			fi
+		fi
+		[ -r "$preview" ] && wallpaper=$preview
+	fi
+
+	printf 'wallpaper\t%s\n' "$wallpaper"
+}
+
+read_caffeine_state() {
+	command -v systemd-inhibit >/dev/null 2>&1 || return 0
+	command -v jq >/dev/null 2>&1 || return 0
+	json=$(systemd-inhibit --list --json=short 2>/dev/null) || return 0
+	if printf '%s\n' "$json" | jq -e 'any(.[]; ((.who // "") | ascii_downcase) == "noctalia" and ((.what // "") | contains("idle")) and (.why // "") == "Caffeine")' >/dev/null 2>&1; then
+		printf 'caffeine\ton\n'
+	else
+		printf 'caffeine\toff\n'
+	fi
+}
+
+read_media_state() {
+	command -v playerctl >/dev/null 2>&1 || return 0
+	separator=$(printf '\037')
+	format="{{status}}${separator}{{playerName}}${separator}{{xesam:title}}${separator}{{xesam:artist}}"
+	media_line=$(
+		playerctl --all-players metadata --format "$format" 2>/dev/null |
+			awk -F "$separator" '$1 == "Playing" { print; found = 1; exit } first == "" { first = $0 } END { if (!found && first != "") print first }'
+	) || return 0
+	[ -n "$media_line" ] || return 0
+
+	media_status=$(printf '%s\n' "$media_line" | cut -d "$separator" -f1)
+	media_player=$(printf '%s\n' "$media_line" | cut -d "$separator" -f2)
+	media_title=$(printf '%s\n' "$media_line" | cut -d "$separator" -f3)
+	media_artist=$(printf '%s\n' "$media_line" | cut -d "$separator" -f4-)
+	[ -n "$media_title" ] || return 0
+
+	position=$(playerctl --player "$media_player" position 2>/dev/null) || position=0
+	length_us=$(playerctl --player "$media_player" metadata mpris:length 2>/dev/null) || length_us=0
+	length=$(awk -v value="$length_us" 'BEGIN { printf "%.3f", value / 1000000 }')
+	printf 'media\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		"$media_status" "$media_title" "$media_artist" "$media_player" "$position" "$length"
+}
+
+read_system_state() {
+	[ -r /proc/stat ] || return 0
+	[ -r /proc/meminfo ] || return 0
+
+	cpu_values=$(awk '/^cpu / { total = 0; for (i = 2; i <= NF; i++) total += $i; print total, $5 + $6; exit }' /proc/stat)
+	# Splitting the two numeric fields is intentional.
+	# shellcheck disable=SC2086
+	set -- $cpu_values
+	cpu_total=$1
+	cpu_idle=$2
+	memory_percent=$(awk '
+		/^MemTotal:/ { total = $2 }
+		/^MemAvailable:/ { available = $2 }
+		END {
+			if (total > 0) printf "%.1f", (total - available) * 100 / total
+			else print "0"
+		}
+	' /proc/meminfo)
+
+	gpu_percent=-1
+	for gpu_busy in /sys/class/drm/card*/device/gpu_busy_percent; do
+		[ -r "$gpu_busy" ] || continue
+		gpu_percent=$(cat "$gpu_busy" 2>/dev/null) || gpu_percent=-1
+		break
+	done
+
+	network_values=$(awk -F '[: ]+' '
+		$2 != "lo" && NF >= 11 { received += $3; transmitted += $11 }
+		END { printf "%.0f %.0f\n", received, transmitted }
+	' /proc/net/dev)
+	# Splitting the two numeric fields is intentional.
+	# shellcheck disable=SC2086
+	set -- $network_values
+	rx_bytes=$1
+	tx_bytes=$2
+	timestamp=$(date +%s)
+
+	printf 'system\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		"$cpu_total" "$cpu_idle" "$memory_percent" "$gpu_percent" \
+		"$rx_bytes" "$tx_bytes" "$timestamp"
+}
+
+if command -v wpctl >/dev/null 2>&1; then
+	read_audio_state '@DEFAULT_AUDIO_SINK@' output
+	read_audio_state '@DEFAULT_AUDIO_SOURCE@' input
+fi
+
+read_brightness_state
+read_battery_state
+
+if command -v powerprofilesctl >/dev/null 2>&1; then
+	profile=$(powerprofilesctl get 2>/dev/null) || profile=
+	[ -n "$profile" ] && printf 'power\t%s\n' "$profile"
+fi
+
+if command -v noctalia >/dev/null 2>&1; then
+	read_noctalia_status wifi-status wifi
+	read_noctalia_status bluetooth-status bluetooth
+	read_noctalia_status notification-dnd-status dnd
+	read_wallpaper_state
+fi
+
+read_caffeine_state
+read_media_state
+read_system_state

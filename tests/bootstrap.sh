@@ -60,7 +60,10 @@ for path in \
 	.config/noctalia/audio-glow.toml \
 	.config/noctalia/bar.toml \
 	.config/noctalia/templates.toml \
+	.local/share/noctalia/plugins/quick-controls/plugin.toml \
+	.local/share/noctalia/plugins/quick-controls/panel.luau \
 	.local/bin/focus-or-spawn \
+	.local/bin/noctalia-dashboard-state \
 	.local/bin/sync-noctalia-audio-glow \
 	.local/bin/sync-z13-window-color; do
 	if [ ! -f "$test_home/$path" ]; then

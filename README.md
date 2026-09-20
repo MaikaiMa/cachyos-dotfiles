@@ -56,6 +56,10 @@ The generated `~/.config/noctalia/desktop-audio-glow.generated.toml` is runtime
 state and must not be committed. Disabling the `dotfiles` bar and running the
 helper removes the glow while leaving the fallback bar unchanged; see ADR-0005.
 
+The local [Noctalia Dashboard plugin](docs/noctalia-quick-controls.md) provides
+a compact, status-aware `Mod+S` control surface without patching Noctalia. The
+original Control Center and complete Settings remain available from its header.
+
 On a 2025 ROG Flow Z13 (`GZ302*`), the Noctalia user template also sends that
 same primary color to the rear window light through `z13ctl`. The helper is a
 no-op on other hardware and always targets `lightbar`, never the keyboard; see

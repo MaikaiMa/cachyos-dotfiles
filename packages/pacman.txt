@@ -12,6 +12,7 @@ diffutils
 # Managed desktop configuration.
 niri
 noctalia
+playerctl
 power-profiles-daemon
 
 # CachyOS gaming stack; equivalent to "Install Gaming packages" in CachyOS Hello.
@@ -21,6 +22,7 @@ cachyos-gaming-applications
 # Runtime dependencies for managed helpers.
 jq
 util-linux
+imagemagick
 
 # CachyOS AUR helper used to install the Z13 hardware dependency.
 paru
