@@ -5,6 +5,9 @@ input {
     keyboard {
         xkb {
             layout "us"
+            // Caps is a momentary app-layer modifier. Both Shift keys enable
+            // Caps Lock deliberately; either Shift key cancels it again.
+            options "lv5:caps_switch,shift:both_capslock_cancel"
         }
         numlock
     }

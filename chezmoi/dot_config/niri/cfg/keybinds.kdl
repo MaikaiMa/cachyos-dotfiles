@@ -3,28 +3,28 @@ binds {
     // https://github.com/YaLTeR/niri/wiki/Configuration:-Key-Bindings
     // https://docs.noctalia.dev/getting-started/keybinds/
 
-    Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
+    Mod+Shift+Slash                      { show-hotkey-overlay; }
 
-    // Applications
-    Mod+Return                          repeat=false hotkey-overlay-title="Open Terminal: Alacritty" { spawn "alacritty"; }
-    Mod+B                               repeat=false hotkey-overlay-title="Focus or Open Browser: Zen" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" zen zen-browser"; }
-    Mod+Alt+B                           repeat=false hotkey-overlay-title="Open New Browser Window: Zen" { spawn "zen-browser"; }
-    Mod+C                               repeat=false hotkey-overlay-title="Focus or Open Code Editor: Zed" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" dev.zed.Zed zeditor"; }
-    Mod+Alt+C                           repeat=false hotkey-overlay-title="Open New Code Editor Window: Zed" { spawn "zeditor" "--new"; }
-    Mod+E                               repeat=false hotkey-overlay-title="Focus or Open File Manager: Nautilus" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" org.gnome.Nautilus nautilus"; }
-    Mod+Alt+E                           repeat=false hotkey-overlay-title="Open New File Manager Window: Nautilus" { spawn "nautilus" "--new-window"; }
-    Mod+A                               repeat=false hotkey-overlay-title="Focus or Open AI Assistant: ChatGPT" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" Chatgpt chatgpt"; }
-    Mod+P                               repeat=false hotkey-overlay-title="Focus or Open Password Manager: 1Password" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" com.onepassword.OnePassword 1password"; }
+    // Applications: Caps is Mod3. Add Shift to force a new window.
+    Mod3+Return                         repeat=false hotkey-overlay-title="Open Terminal: Alacritty" { spawn "alacritty"; }
+    Mod3+B                              repeat=false hotkey-overlay-title="Focus or Open Browser: Zen" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" zen zen-browser"; }
+    Mod3+Shift+B                        repeat=false hotkey-overlay-title="Open New Browser Window: Zen" { spawn "zen-browser"; }
+    Mod3+C                              repeat=false hotkey-overlay-title="Focus or Open Code Editor: Zed" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" dev.zed.Zed zeditor"; }
+    Mod3+Shift+C                        repeat=false hotkey-overlay-title="Open New Code Editor Window: Zed" { spawn "zeditor" "--new"; }
+    Mod3+E                              repeat=false hotkey-overlay-title="Focus or Open File Manager: Nautilus" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" org.gnome.Nautilus nautilus"; }
+    Mod3+Shift+E                        repeat=false hotkey-overlay-title="Open New File Manager Window: Nautilus" { spawn "nautilus" "--new-window"; }
+    Mod3+A                              repeat=false hotkey-overlay-title="Focus or Open AI Assistant: ChatGPT" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" Chatgpt chatgpt"; }
+    Mod3+P                              repeat=false hotkey-overlay-title="Focus or Open Password Manager: 1Password" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" com.onepassword.OnePassword 1password"; }
     Mod+Ctrl+Space                      repeat=false hotkey-overlay-title="Open 1Password Quick Access" { spawn "1password" "--quick-access"; }
 
     // Noctalia:
-    Mod+Shift+Return                    hotkey-overlay-title="Open Wallpaper Selector: noctalia wallpaper toggle" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
+    Mod+Return                          hotkey-overlay-title="Open Wallpaper Selector: noctalia wallpaper toggle" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
     Mod+S                               hotkey-overlay-title="Open Control Center: noctalia controlCenter" { spawn-sh "noctalia msg panel-toggle control-center"; }
     Mod+Shift+S                         hotkey-overlay-title="Open Settings: noctalia settings" { spawn-sh "noctalia msg settings-toggle"; }
     Mod+Space                           hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
     Mod+V                               repeat=false hotkey-overlay-title="Open Clipboard History: noctalia clipboard" { spawn-sh "noctalia msg panel-toggle clipboard"; }
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "noctalia msg session lock"; }
-    Mod+Shift+Q                         hotkey-overlay-title="Session Menu: noctalia sessionMenu" { spawn-sh "noctalia msg panel-toggle session"; }
+    Mod+ESCAPE                          hotkey-overlay-title="Session Menu: noctalia sessionMenu" { spawn-sh "noctalia msg panel-toggle session"; }
 
     // Media Controls:
     XF86AudioRaiseVolume                allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
@@ -154,7 +154,7 @@ binds {
     // Emergency Escape Key:
     // Use this when a fullscreen app blocks your keybinds.
     // It disables any active keyboard shortcut inhibitor, restoring control.
-    Mod+ESCAPE                          allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Mod+CTRL+ESCAPE                     allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
     // Exit / Power:
     CTRL+ALT+Delete                     { quit; } // Also quits Niri
