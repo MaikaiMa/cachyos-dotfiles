@@ -23,7 +23,7 @@ start = ["dotfiles_launcher", "dotfiles_gap", "dotfiles_taskbar"]
 center = ["dotfiles_weather", "group:clock", "dotfiles_battery"]
 end = [
     "dotfiles_media",
-    "dotfiles_gap",
+    "dotfiles_gap_media_tray",
     "group:tray",
     "dotfiles_gap",
     "group:system",
@@ -72,6 +72,10 @@ widget_spacing = 6
 [widget.dotfiles_gap]
 type = "spacer"
 length = 6
+
+[widget.dotfiles_gap_media_tray]
+type = "spacer"
+length = 12
 
 [widget.dotfiles_launcher]
 type = "launcher"
