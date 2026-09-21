@@ -1,0 +1,3 @@
+# Noctalia acts as the session's polkit authentication agent.
+[shell]
+polkit_agent = true

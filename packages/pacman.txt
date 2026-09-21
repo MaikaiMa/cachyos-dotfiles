@@ -20,6 +20,12 @@ protonmail-bridge-core
 cachyos-gaming-meta
 cachyos-gaming-applications
 
+# Applications with managed configuration or default-handler entries.
+alacritty
+zed
+github-cli
+zen-browser-bin
+
 # Runtime dependencies for managed helpers.
 jq
 util-linux

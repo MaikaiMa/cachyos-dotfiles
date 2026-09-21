@@ -20,6 +20,12 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
   dot_config/noctalia/    declarative Noctalia configuration
   dot_config/systemd/user/ managed ~/.config/systemd/user units
+  dot_config/fish/        Fish helpers (conf.d, functions)
+  dot_config/alacritty/   terminal configuration
+  dot_config/zed/         editor settings
+  dot_config/mimeapps.list default applications
+  dot_gitconfig           Git credential helper
+  dot_local/bin/          deployed helper scripts
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
 packages/                 explicit official and AUR package manifests
@@ -112,6 +118,25 @@ Noctalia as well; see ADR-0007. Restart the shell with:
 
 ```fish
 systemctl --user restart noctalia.service
+```
+
+## Shell, terminal, editor and defaults
+
+The repository manages Noctalia's shell options (`config.toml`, polkit agent),
+Fish helpers under `conf.d/` and `functions/`, the Alacritty configuration, Zed
+settings, the default-application handlers in `mimeapps.list`, and a
+`.gitconfig` that uses the GitHub CLI as credential helper. Git identity is not
+managed; set it per repository or locally.
+
+Files that CachyOS installs from `/etc/skel` and that are unchanged, such as
+`config.fish`, `.zshrc`, and the Micro settings, are deliberately not managed.
+Zed and the XDG MIME database rewrite their own files; review the resulting
+`chezmoi status` drift and promote or revert it. See ADR-0008.
+
+Restart the shell with the managed Fish function:
+
+```fish
+noctalia-reset
 ```
 
 ## Proton Mail Bridge

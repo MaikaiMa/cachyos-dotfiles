@@ -44,6 +44,7 @@ require_files \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_noctalia.service \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
+	chezmoi/dot_config/noctalia/config.toml \
 	chezmoi/dot_config/noctalia/bar.toml \
 	chezmoi/dot_config/noctalia/audio-glow.toml \
 	chezmoi/dot_config/noctalia/lockscreen.toml \
@@ -54,7 +55,13 @@ require_files \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_noctalia-dashboard-state \
 	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
-	chezmoi/dot_local/bin/executable_sync-z13-window-color
+	chezmoi/dot_local/bin/executable_sync-z13-window-color \
+	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
+	chezmoi/dot_config/fish/functions/noctalia-reset.fish \
+	chezmoi/dot_config/alacritty/alacritty.toml \
+	chezmoi/dot_config/zed/settings.json \
+	chezmoi/dot_config/mimeapps.list \
+	chezmoi/dot_gitconfig
 
 require_files \
 	docs/adr/README.md \
@@ -65,6 +72,7 @@ require_files \
 	docs/adr/ADR-0005-layer-noctalia-audio-glow-behind-bar.md \
 	docs/adr/ADR-0006-use-a-noctalia-dashboard-plugin.md \
 	docs/adr/ADR-0007-start-noctalia-as-a-systemd-user-service.md \
+	docs/adr/ADR-0008-manage-application-configuration-selectively.md \
 	docs/noctalia-lockscreen.md \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
@@ -100,7 +108,7 @@ niri validate --config chezmoi/dot_config/niri/config.kdl
 noctalia config validate chezmoi/dot_config/noctalia
 noctalia plugins lint chezmoi/dot_local/private_share/noctalia/plugins/quick-controls
 shellcheck scripts/*.sh tests/*.sh
-fish -n tests/*.fish
+fish -n tests/*.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fish/functions/*.fish
 tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \

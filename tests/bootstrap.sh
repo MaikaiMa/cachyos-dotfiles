@@ -58,7 +58,14 @@ run_bootstrap --no-pager
 for path in \
 	.config/niri/config.kdl \
 	.config/systemd/user/noctalia.service \
+	.config/noctalia/config.toml \
 	.config/noctalia/audio-glow.toml \
+	.config/fish/conf.d/dotfiles.fish \
+	.config/fish/functions/noctalia-reset.fish \
+	.config/alacritty/alacritty.toml \
+	.config/zed/settings.json \
+	.config/mimeapps.list \
+	.gitconfig \
 	.config/noctalia/bar.toml \
 	.config/noctalia/lockscreen.toml \
 	.config/noctalia/templates.toml \
