@@ -178,7 +178,7 @@ assert_contains "$s1_shim" "$shim_marker"
 
 mapping_file="$test_root/mappings"
 cat >"$mapping_file" <<'EOF'
-panel-toggle wallpaper|dms ipc call settings toggleWith wallpaper
+panel-toggle wallpaper|dms ipc call dash toggle wallpaper
 panel-toggle maikel/quick-controls:panel|dms ipc call control-center toggle
 settings-toggle|dms ipc call settings toggle
 panel-toggle launcher|dms ipc call spotlight toggle
@@ -289,7 +289,7 @@ s3_state=$(new_state)
 s3_calls=$(new_calls)
 
 if HOME="$s3_home" STUB_CALLS="$s3_calls" STUB_STATE="$s3_state" \
-	PATH="$stub_dir_no_dms:$base_path" "$dms_trial" start >"$s3_home/start.out" 2>"$s3_home/start.err"; then
+	PATH="$stub_dir_no_dms" "$dms_trial" start >"$s3_home/start.out" 2>"$s3_home/start.err"; then
 	fail 'start must refuse to run when dms is missing from PATH'
 fi
 assert_contains "$s3_home/start.err" 'dms'

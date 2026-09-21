@@ -78,7 +78,7 @@ shift
 
 case "$*" in
 'panel-toggle wallpaper')
-	exec dms ipc call settings toggleWith wallpaper
+	exec dms ipc call dash toggle wallpaper
 	;;
 'panel-toggle maikel/quick-controls:panel')
 	exec dms ipc call control-center toggle

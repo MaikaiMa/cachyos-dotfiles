@@ -69,8 +69,8 @@ You: install and switch services for the trial. Do not run `dms setup` or
 ./scripts/dms-trial.sh start
 ```
 
-The wallpaper keybind opens the DMS settings wallpaper tab as a best-effort
-mapping; every other keybind maps directly to the equivalent DMS surface.
+Every keybind maps to the equivalent DMS surface; the wallpaper bind opens
+the DMS wallpaper picker.
 
 Switch back at any time:
 
@@ -118,6 +118,12 @@ Agent delivers:
 - `executable_sync-z13-window-color` reads the matugen output; its test is
   updated. `scripts/bootstrap.sh` drops the `noctalia msg templates-apply`
   step.
+- `config.kdl` gains `include optional=true "dms/layout.kdl"`. DMS's settings
+  window appends that include itself when it is missing and backs up the
+  file, which showed up as chezmoi drift during the trial. The seed
+  settings set gaps mode to Off (`niriLayoutGapsOverride` -2) and the
+  window radius override to 20 so the generated file does not fight
+  `cfg/layout.kdl` and `cfg/rules.kdl`.
 - `chezmoi/dot_config/niri/cfg/keybinds.kdl`: every `noctalia msg` bind
   becomes the `dms ipc` equivalent. The lock bind keeps calling DMS until
   phase 4.
