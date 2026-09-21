@@ -61,3 +61,11 @@ layer-rule {
         xray false
     }
 }
+
+// Interim while DMS is the shell; removed with the Noctalia rules in phase 2.
+layer-rule {
+    match namespace="^dms:"
+    background-effect {
+        xray false
+    }
+}
