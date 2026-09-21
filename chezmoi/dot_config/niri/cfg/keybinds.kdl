@@ -15,9 +15,11 @@ binds {
     Mod3+Shift+E                        repeat=false hotkey-overlay-title="Open New File Manager Window: Nautilus" { spawn "nautilus" "--new-window"; }
     Mod3+A                              repeat=false hotkey-overlay-title="Focus or Open AI Assistant: ChatGPT" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" Chatgpt chatgpt"; }
     Mod3+P                              repeat=false hotkey-overlay-title="Focus or Open Password Manager: 1Password" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" com.onepassword.OnePassword 1password"; }
+    Mod3+I                              repeat=false hotkey-overlay-title="Focus or Open AI Coding Partner: Claude" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" com.anthropic.Claude claude-desktop"; }
+    Mod3+Shift+I                        repeat=false hotkey-overlay-title="New Claude Code Session: Claude" { spawn "claude-desktop" "claude://code/new?source=desktop_action"; }
     Mod3+M                              repeat=false hotkey-overlay-title="Focus or Open Mail: Hylki" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" co.hyprlab.Hylki flatpak run co.hyprlab.Hylki"; }
     Mod3+Shift+M                        repeat=false hotkey-overlay-title="Compose New Mail: Hylki" { spawn "flatpak" "run" "co.hyprlab.Hylki" "mailto:"; }
-    Mod+Ctrl+Space                      repeat=false hotkey-overlay-title="Open 1Password Quick Access" { spawn "1password" "--quick-access"; }
+    Mod+Shift+Space                     repeat=false hotkey-overlay-title="Open 1Password Quick Access" { spawn "1password" "--quick-access"; }
 
     // Noctalia:
     Mod+Return                          hotkey-overlay-title="Open Wallpaper Selector: noctalia wallpaper toggle" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
