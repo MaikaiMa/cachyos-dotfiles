@@ -44,6 +44,7 @@ end = [
     "group:system",
     "dotfiles_gap",
     "dotfiles_updates",
+    "dotfiles_gap",
     "dotfiles_privacy",
     "dotfiles_notifications",
     "dotfiles_session",
@@ -147,14 +148,11 @@ type = "power_profile"
 [widget.dotfiles_power_profile.actions]
 left = "panel-toggle control-center power"
 
-# Community plugin (yuuto/arch-updater): pacman, AUR, and Flatpak updates.
-# Left click opens its panel, right click checks now, middle click opens its
-# settings. The validator resolves the type once the plugin is materialized.
 [widget.dotfiles_updates]
 type = "yuuto/arch-updater:widget"
 glyph = "package"
 show_count = true
-hide_on_empty = false
+hide_on_empty = true
 
 [widget.dotfiles_privacy]
 type = "privacy"
