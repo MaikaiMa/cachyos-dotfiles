@@ -1,0 +1,19 @@
+{
+    "id": "dotfilesWorkspaces",
+    "name": "Dotfiles Workspaces",
+    "description": "Compact niri workspace pills that turn red when an application on the workspace has a notification",
+    "version": "1.0.0",
+    "author": "Maikel",
+    "type": "widget",
+    "capabilities": [
+        "dankbar-widget"
+    ],
+    "component": "./DotfilesWorkspaces.qml",
+    "settings": "./DotfilesWorkspacesSettings.qml",
+    "icon": "view_column",
+    "requires_dms": ">=1.6.0",
+    "permissions": [
+        "settings_read",
+        "settings_write"
+    ]
+}

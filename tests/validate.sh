@@ -113,7 +113,11 @@ require_files \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/DotfilesApps.qml \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/DotfilesDashboard.qml
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/DotfilesDashboard.qml \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/DotfilesLauncher.qml \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/DotfilesWorkspaces.qml
 
 for adr in docs/adr/ADR-*.md; do
 	adr_name=${adr##*/}

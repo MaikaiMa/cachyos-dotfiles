@@ -1,0 +1,14 @@
+{
+    "id": "dotfilesLauncher",
+    "name": "Dotfiles Launcher",
+    "description": "The built-in apps-grid launcher icon drawn on a filled Theme.primary pill",
+    "version": "1.0.0",
+    "author": "Maikel",
+    "type": "widget",
+    "capabilities": [
+        "dankbar-widget"
+    ],
+    "component": "./DotfilesLauncher.qml",
+    "icon": "apps",
+    "requires_dms": ">=1.6.0"
+}

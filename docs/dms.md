@@ -62,6 +62,7 @@ systemctl --user restart dms.service
 | `blurBorderEnabled` | `false`: no outline around the blurred glass, for a cleaner edge. |
 | `barElevationEnabled` | `false`: removes the bar's drop shadow; Noctalia's bar had `shadow = false`. |
 | `audioVisualizerEnabled` | Enables the cava-driven visualizer bars inside the `music` bar widget. |
+| `trayAutoOverflow`, `trayMaxVisibleItems` | `true`, `1` — one tray icon in the bar, the rest behind the expand button. |
 | `updaterCheckOnStart` | Checks for pacman, AUR and Flatpak updates right after the shell starts; the interval check (30 minutes by default) continues afterwards. |
 | `showWorkspaceApps`, `showOccupiedWorkspacesOnly` | The workspace switcher shows per-app icons grouped in each workspace pill, and hides empty workspaces — this is what gives the left group its "workspace pills with running app icons" look without a separate running-apps widget. |
 | `barConfigs[id=default].leftWidgets` | `launcherButton`, `workspaceSwitcher`, `dotfilesApps` — the app grid button, compact workspace pills, and the repository plugin that shows the current workspace's apps with a focus highlight and a notification dot. |
