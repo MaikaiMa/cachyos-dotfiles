@@ -1,0 +1,156 @@
+# Keep the active wallpaper visible and let Noctalia derive colours from its
+# wallpaper palette. The lock screen deliberately uses only built-in widgets.
+[lockscreen]
+enabled = true
+blurred_desktop = false
+blur_intensity = 0.0
+tint_intensity = 0.20
+
+[lockscreen_widgets]
+enabled = true
+schema_version = 2
+widget_order = [
+    "lockscreen-time@eDP-1",
+    "lockscreen-date@eDP-1",
+    "lockscreen-login-box@eDP-1",
+    "lockscreen-time@DP-1",
+    "lockscreen-date@DP-1",
+    "lockscreen-login-box@DP-1",
+]
+
+[lockscreen_widgets.grid]
+cell_size = 16
+major_interval = 4
+visible = true
+
+# Laptop display: a compact, vertically centred stock composition.
+[lockscreen_widgets.widget."lockscreen-time@eDP-1"]
+type = "clock"
+output = "eDP-1"
+cx = 732.0
+cy = 365.0
+box_width = 420.0
+box_height = 110.0
+placement_width = 1463.0
+placement_height = 914.0
+rotation = 0.0
+
+[lockscreen_widgets.widget."lockscreen-time@eDP-1".settings]
+clock_style = "digital"
+format = "{:%H:%M}"
+center_text = true
+color = "on_surface"
+shadow = true
+background = false
+
+[lockscreen_widgets.widget."lockscreen-date@eDP-1"]
+type = "clock"
+output = "eDP-1"
+cx = 732.0
+cy = 435.0
+box_width = 420.0
+box_height = 28.0
+placement_width = 1463.0
+placement_height = 914.0
+rotation = 0.0
+
+[lockscreen_widgets.widget."lockscreen-date@eDP-1".settings]
+clock_style = "digital"
+format = "{:%A %-d %B}"
+center_text = true
+color = "on_surface_variant"
+shadow = true
+background = false
+
+[lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
+type = "login_box"
+output = "eDP-1"
+cx = 732.0
+cy = 540.0
+box_width = 680.0
+box_height = 128.0
+placement_width = 1463.0
+placement_height = 914.0
+rotation = 0.0
+
+[lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings]
+layout = "regular"
+background_color = "surface_variant"
+background_opacity = 0.88
+background_radius = 16.0
+input_opacity = 0.72
+input_radius = 10.0
+center_password_text = false
+show_caps_lock = true
+show_keyboard_layout = true
+show_login_button = true
+show_media = false
+show_session_buttons = true
+show_unlock_hint = false
+show_weather = false
+
+# Known external display, scaled from the same stock composition.
+[lockscreen_widgets.widget."lockscreen-time@DP-1"]
+type = "clock"
+output = "DP-1"
+cx = 1280.0
+cy = 575.0
+box_width = 560.0
+box_height = 130.0
+placement_width = 2560.0
+placement_height = 1440.0
+rotation = 0.0
+
+[lockscreen_widgets.widget."lockscreen-time@DP-1".settings]
+clock_style = "digital"
+format = "{:%H:%M}"
+center_text = true
+color = "on_surface"
+shadow = true
+background = false
+
+[lockscreen_widgets.widget."lockscreen-date@DP-1"]
+type = "clock"
+output = "DP-1"
+cx = 1280.0
+cy = 685.0
+box_width = 560.0
+box_height = 36.0
+placement_width = 2560.0
+placement_height = 1440.0
+rotation = 0.0
+
+[lockscreen_widgets.widget."lockscreen-date@DP-1".settings]
+clock_style = "digital"
+format = "{:%A %-d %B}"
+center_text = true
+color = "on_surface_variant"
+shadow = true
+background = false
+
+[lockscreen_widgets.widget."lockscreen-login-box@DP-1"]
+type = "login_box"
+output = "DP-1"
+cx = 1280.0
+cy = 850.0
+box_width = 900.0
+box_height = 150.0
+placement_width = 2560.0
+placement_height = 1440.0
+rotation = 0.0
+
+[lockscreen_widgets.widget."lockscreen-login-box@DP-1".settings]
+layout = "regular"
+background_color = "surface_variant"
+background_opacity = 0.88
+background_radius = 16.0
+input_opacity = 0.72
+input_radius = 10.0
+center_password_text = false
+show_caps_lock = true
+show_keyboard_layout = true
+show_login_button = true
+show_media = false
+show_session_buttons = true
+show_unlock_hint = false
+show_weather = false

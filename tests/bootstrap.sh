@@ -59,6 +59,7 @@ for path in \
 	.config/niri/config.kdl \
 	.config/noctalia/audio-glow.toml \
 	.config/noctalia/bar.toml \
+	.config/noctalia/lockscreen.toml \
 	.config/noctalia/templates.toml \
 	.local/share/noctalia/plugins/quick-controls/plugin.toml \
 	.local/share/noctalia/plugins/quick-controls/panel.luau \

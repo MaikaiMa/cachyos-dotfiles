@@ -60,6 +60,10 @@ The local [Noctalia Dashboard plugin](docs/noctalia-quick-controls.md) provides
 a compact, status-aware `Mod+S` control surface without patching Noctalia. The
 original Control Center and complete Settings remain available from its header.
 
+The managed [Noctalia lock screen](docs/noctalia-lockscreen.md) keeps a small
+stock composition of native time, date, and login widgets. It follows the
+active wallpaper palette without maintaining custom lock-screen code.
+
 On a 2025 ROG Flow Z13 (`GZ302*`), the Noctalia user template also sends that
 same primary color to the rear window light through `z13ctl`. The helper is a
 no-op on other hardware and always targets `lightbar`, never the keyboard; see

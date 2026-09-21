@@ -44,6 +44,7 @@ require_files \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_config/noctalia/bar.toml \
 	chezmoi/dot_config/noctalia/audio-glow.toml \
+	chezmoi/dot_config/noctalia/lockscreen.toml \
 	chezmoi/dot_config/noctalia/templates.toml \
 	chezmoi/dot_config/noctalia/templates/z13-window-color \
 	chezmoi/dot_local/private_share/noctalia/plugins/quick-controls/plugin.toml \
@@ -61,6 +62,7 @@ require_files \
 	docs/adr/ADR-0004-sync-z13-window-color-with-noctalia.md \
 	docs/adr/ADR-0005-layer-noctalia-audio-glow-behind-bar.md \
 	docs/adr/ADR-0006-use-a-noctalia-dashboard-plugin.md \
+	docs/noctalia-lockscreen.md \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
 	scripts/bootstrap.sh \
