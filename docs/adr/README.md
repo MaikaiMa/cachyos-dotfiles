@@ -21,3 +21,5 @@ alternatives considered.
 - [ADR-0010: Adopt Hylki as mail client via Flatpak](ADR-0010-adopt-hylki-as-mail-client-via-flatpak.md)
 - [ADR-0011: Declare Noctalia plugins and show updates in the bar](ADR-0011-declare-noctalia-plugins-and-show-updates-in-the-bar.md)
 - [ADR-0012: Use GNOME Keyring and 1Password for secrets](ADR-0012-use-gnome-keyring-and-1password-for-secrets.md)
+- [ADR-0013: Replace Noctalia with DankMaterialShell and repository-owned Quickshell surfaces](ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md)
+- [ADR-0014: Replace SDDM with greetd running the repository-owned Quickshell greeter](ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md)

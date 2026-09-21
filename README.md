@@ -34,6 +34,7 @@ system/                   explicitly installed system integration files
 packages/                 official, AUR, and Flatpak package manifests
 docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
+docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0014)
 tests/                    repository validation
 ```
 

@@ -83,11 +83,14 @@ require_files \
 	docs/adr/ADR-0010-adopt-hylki-as-mail-client-via-flatpak.md \
 	docs/adr/ADR-0011-declare-noctalia-plugins-and-show-updates-in-the-bar.md \
 	docs/adr/ADR-0012-use-gnome-keyring-and-1password-for-secrets.md \
+	docs/adr/ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md \
+	docs/adr/ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/noctalia-lockscreen.md \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
+	docs/desktop-migration.md \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
 	scripts/setup-z13-window.sh \
