@@ -12,10 +12,13 @@ PluginComponent {
     readonly property bool currentWorkspaceOnly: pluginData.currentWorkspaceOnly ?? true
     readonly property bool currentMonitorOnly: pluginData.currentMonitorOnly ?? false
     readonly property bool notificationBadgeEnabled: pluginData.notificationBadgeEnabled ?? true
+    readonly property bool dismissOnFocus: pluginData.dismissOnFocus ?? true
+    readonly property int dismissOnFocusDelayMs: 1500
 
     property int toplevelsRevision: 0
     property int desktopEntriesRevision: 0
     property int appIdSubstitutionsRevision: 0
+    property string pendingDismissAppId: ""
 
     readonly property real cellWidth: iconSize + 8
     readonly property real cellHeight: Math.min(iconSize + 8, widgetThickness)
@@ -72,6 +75,18 @@ PluginComponent {
                 return Paths.moddedAppId(toplevel.appId || "");
         }
         return "";
+    }
+
+    function dismissNotificationsForFocusedApp() {
+        if (!root.dismissOnFocus)
+            return;
+        if (root.pendingDismissAppId === "" || root.pendingDismissAppId !== root.focusedAppId)
+            return;
+
+        const desktopEntry = DesktopEntries.heuristicLookup(root.focusedAppId);
+        const appName = Paths.getAppName(root.focusedAppId, desktopEntry);
+        for (const groupKey of matcher.groupKeysForApp(root.focusedAppId, appName))
+            NotificationService.dismissGroup(groupKey);
     }
 
     function activateEntry(entry) {
@@ -162,6 +177,23 @@ PluginComponent {
 
     visible: appEntries.length > 0
 
+    function scheduleDismissForFocusedApp() {
+        dismissOnFocusTimer.stop();
+        pendingDismissAppId = focusedAppId;
+        if (dismissOnFocus && focusedAppId !== "")
+            dismissOnFocusTimer.start();
+    }
+
+    onFocusedAppIdChanged: scheduleDismissForFocusedApp()
+
+    Timer {
+        id: dismissOnFocusTimer
+
+        interval: root.dismissOnFocusDelayMs
+        repeat: false
+        onTriggered: root.dismissNotificationsForFocusedApp()
+    }
+
     Connections {
         target: CompositorService
 
@@ -188,6 +220,8 @@ PluginComponent {
 
     NotificationMatcher {
         id: matcher
+
+        onNotifiedKeysChanged: root.scheduleDismissForFocusedApp()
     }
 
     Component {

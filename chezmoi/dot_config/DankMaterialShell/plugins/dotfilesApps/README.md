@@ -1,16 +1,13 @@
 # dotfilesApps
 
 A DankMaterialShell bar widget that shows the applications on the current workspace as
-icons, like the built-in `runningApps` widget, plus two indicators:
+icons, like the built-in `runningApps` widget. The focused app is drawn at full
+opacity on a primary-colour background, the others at 0.6. A small dot in the
+theme error colour (red) sits at the top right of an icon while the notification
+centre holds at least one notification from that app, and disappears again once
+the app has been focused for a moment.
 
-- a small dot in the theme primary colour, centred under the icon, when the app
-  has at least one open window (full opacity when the app is focused, dimmed
-  otherwise);
-- a small dot in the theme error colour (red) at the top right of the icon when
-  the notification centre holds at least one notification from that app.
-
-Apps are grouped per application id. Pinned apps that are not running are shown
-dimmed and without the window dot.
+Apps are grouped per application id.
 
 ## Interaction
 
@@ -56,8 +53,10 @@ Settings → Plugins → Dotfiles Apps:
 - **Show pinned apps** — also show `SessionData.pinnedApps` entries that are not
   running (default on).
 - **Notification badge** — show the red dot (default on).
+- **Clear notifications on focus** — dismiss an app's notifications to the
+  history after it stays focused for 1.5 seconds (default on).
 - **Current workspace only** / **Current monitor only** — filter the window list
-  the same way the built-in widget does (both default off).
+  the same way the built-in widget does.
 
 ## Notification matching
 
@@ -70,11 +69,31 @@ applied to the part after the last dot, so `org.gnome.Nautilus` also matches
 `nautilus`. A `.desktop` suffix is stripped first. An icon is badged when any of
 its keys matches any notification key.
 
+`NotificationMatcher.qml` is shared verbatim with the sibling plugin
+`dotfilesWorkspaces`, which colours its workspace pill from the same data. The
+two copies must stay identical; change this one and copy it over.
+
+## Clearing notifications on focus
+
+While **Clear notifications on focus** is on, `DotfilesApps.qml` watches
+`focusedAppId`. Every change restarts a single-shot 1.5 s timer, so alt-tabbing
+past an app clears nothing. When the timer fires and the same app is still
+focused, `NotificationMatcher.groupKeysForApp()` resolves the app to notification
+group keys with the same normalisation used for the badge, and each key goes to
+`NotificationService.dismissGroup()`. Clicking an app's icon is covered by the
+same watcher, because the click changes the focus.
+
+`dismissGroup()` calls `dismiss()` on each notification in the group. DMS writes
+a notification to the history the moment it arrives, and dropping a wrapper does
+not call `removeFromHistory`, so a dismissed notification only leaves the
+notification centre's active list — it stays in the centre's history tab.
+Nothing is deleted.
+
 ## DMS dependencies
 
 - `CompositorService` — `sortedToplevels`, workspace/monitor filters,
   `activateToplevel`, `toggleToplevel`, `canMinimize`, `supportsMinimize`
-- `NotificationService` — `groupedNotifications`
+- `NotificationService` — `groupedNotifications`, `dismissGroup`
 - `SessionData` — `pinnedApps`, `setPinnedApps`
 - `SessionService` — `launchDesktopEntry`
 - `AppUsageHistoryData` — `addAppUsage`
@@ -87,8 +106,12 @@ Requires DMS >= 1.6.0 for the plugin API used here.
 
 ## Known limits
 
-- The window count is not drawn on the icon; the built-in widget's numeric
-  badge is replaced by the single window dot. The count is in the tooltip.
+- The window count is not drawn on the icon; it is in the tooltip only.
+- A notification that arrives while its app is already focused is not cleared,
+  because the focus never changes. Focus something else and come back.
+- Clearing on focus is per bar instance, so on a multi-monitor setup every
+  instance runs its own timer. `dismissGroup` on an already empty group is a
+  no-op, so the repeats are harmless.
 - Pin/Unpin writes the same `SessionData.pinnedApps` list the dock uses, so
   pinning here also changes the dock.
 - The context menu acts on the active window of an app, not on every window of

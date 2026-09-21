@@ -10,16 +10,19 @@ QtObject {
         for (const group of groups) {
             if (!group)
                 continue;
-            collectKeys(keys, group.key);
-            collectKeys(keys, group.appName);
-            collectKeys(keys, group.latestNotification?.desktopEntry);
+            for (const key of keysForGroup(group))
+                keys.add(key);
         }
         return keys;
     }
 
-    function collectKeys(target, value) {
-        for (const key of keysFor(value))
-            target.add(key);
+    function keysForGroup(group) {
+        const keys = [];
+        for (const value of [group.key, group.appName, group.latestNotification?.desktopEntry]) {
+            for (const key of keysFor(value))
+                keys.push(key);
+        }
+        return keys;
     }
 
     function keysFor(value) {
@@ -41,6 +44,10 @@ QtObject {
         return keys;
     }
 
+    function keysForApp(appId, appName) {
+        return new Set([...keysFor(appId), ...keysFor(appName)]);
+    }
+
     function matchesApp(appId, appName) {
         const keys = notifiedKeys;
         if (keys.size === 0)
@@ -55,5 +62,21 @@ QtObject {
                 return true;
         }
         return false;
+    }
+
+    function groupKeysForApp(appId, appName) {
+        const appKeys = keysForApp(appId, appName);
+        if (appKeys.size === 0)
+            return [];
+
+        const matched = [];
+        const groups = NotificationService.groupedNotifications || [];
+        for (const group of groups) {
+            if (!group)
+                continue;
+            if (keysForGroup(group).some(key => appKeys.has(key)))
+                matched.push(group.key);
+        }
+        return matched;
     }
 }

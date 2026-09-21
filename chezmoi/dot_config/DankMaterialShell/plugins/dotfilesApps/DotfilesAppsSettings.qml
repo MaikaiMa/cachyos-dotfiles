@@ -10,7 +10,7 @@ PluginSettings {
         settingKey: "showPinnedApps"
         label: "Show pinned apps"
         description: "Also show the apps pinned to the dock, even when they are not running"
-        defaultValue: true
+        defaultValue: false
     }
 
     ToggleSetting {
@@ -21,10 +21,17 @@ PluginSettings {
     }
 
     ToggleSetting {
+        settingKey: "dismissOnFocus"
+        label: "Clear notifications on focus"
+        description: "Dismiss an app's notifications to the history after it stays focused for 1.5 seconds"
+        defaultValue: true
+    }
+
+    ToggleSetting {
         settingKey: "currentWorkspaceOnly"
         label: "Current workspace only"
         description: "Only show windows on the active workspace"
-        defaultValue: false
+        defaultValue: true
     }
 
     ToggleSetting {
