@@ -1,0 +1,3 @@
+# Keys live in 1Password; its agent answers every host. See docs/secrets.md.
+Host *
+	IdentityAgent ~/.1password/agent.sock

@@ -66,6 +66,9 @@ for path in \
 	.config/zed/settings.json \
 	.config/mimeapps.list \
 	.gitconfig \
+	.config/environment.d/10-ssh-agent.conf \
+	.ssh/config \
+	.config/git/allowed_signers \
 	.config/noctalia/bar.toml \
 	.config/noctalia/lockscreen.toml \
 	.config/noctalia/templates.toml \
@@ -90,6 +93,17 @@ for path in \
 		exit 1
 	fi
 done
+
+ssh_dir_mode=$(stat -c %a "$test_home/.ssh")
+if [ "$ssh_dir_mode" != 700 ]; then
+	printf 'Bootstrap deployed ~/.ssh with mode %s, expected 700.\n' "$ssh_dir_mode" >&2
+	exit 1
+fi
+ssh_config_mode=$(stat -c %a "$test_home/.ssh/config")
+if [ "$ssh_config_mode" != 600 ]; then
+	printf 'Bootstrap deployed ~/.ssh/config with mode %s, expected 600.\n' "$ssh_config_mode" >&2
+	exit 1
+fi
 
 if ! grep -Fq "sourceDir = \"$repo_root/chezmoi\"" "$test_home/.config/chezmoi/chezmoi.toml"; then
 	printf '%s\n' 'Bootstrap did not render the chezmoi source directory into chezmoi.toml.' >&2

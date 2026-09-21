@@ -20,3 +20,4 @@ alternatives considered.
 - [ADR-0009: Scope package manifests to the CachyOS profile baseline](ADR-0009-scope-package-manifests-to-the-cachyos-profile.md)
 - [ADR-0010: Adopt Hylki as mail client via Flatpak](ADR-0010-adopt-hylki-as-mail-client-via-flatpak.md)
 - [ADR-0011: Declare Noctalia plugins and show updates in the bar](ADR-0011-declare-noctalia-plugins-and-show-updates-in-the-bar.md)
+- [ADR-0012: Use GNOME Keyring and 1Password for secrets](ADR-0012-use-gnome-keyring-and-1password-for-secrets.md)

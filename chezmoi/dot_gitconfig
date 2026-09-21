@@ -4,3 +4,14 @@
 [credential "https://gist.github.com"]
 	helper =
 	helper = !/usr/bin/gh auth git-credential
+[user]
+	signingkey = key::ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDl0h5uFRTD9raDa1VYgFIpxD6ABGe8CBGHhsDBkFvOTumU15loXf8XO19LzPyd4FZr8ZEYEI8KAGtXxM5x2YL8so019fkALVdbwhh8JFZkcv9Vxxai+8lWE2glRKSywg22S1MoLf6N5g7m/tV/9QrFOmsFA4jiz1iat6CRfJxYoU8uOH2iH0fMrPL69MiQ3XbkInLGYDDgbuzsrVdJ5Vgqx1Si9xGGQwfNQbUnr5/zj1O1+SikSd3gVqgHP0m/4g2/T7diW6aIg8N/okOZ4XMW68UGXqRi0lgGWQcNcU0F8XnOHUMYoXKd6h3XNCjc/bVIFPkVrb3m+ofXPCKOOf9r
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /opt/1Password/op-ssh-sign
+	allowedSignersFile = ~/.config/git/allowed_signers
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true

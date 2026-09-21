@@ -20,11 +20,14 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
   dot_config/noctalia/    declarative Noctalia configuration
   dot_config/systemd/user/ managed ~/.config/systemd/user units
+  dot_config/environment.d/ session environment (SSH agent socket)
+  dot_config/git/         allowed signers for SSH commit signatures
   dot_config/fish/        Fish helpers (conf.d, functions)
   dot_config/alacritty/   terminal configuration
   dot_config/zed/         editor settings
   dot_config/mimeapps.list default applications
   dot_gitconfig           Git credential helper
+  private_dot_ssh/        SSH client configuration
   dot_local/bin/          deployed helper scripts
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
@@ -148,8 +151,9 @@ systemctl --user restart noctalia.service
 The repository manages Noctalia's shell options (`config.toml`, polkit agent),
 Fish helpers under `conf.d/` and `functions/`, the Alacritty configuration, Zed
 settings, the default-application handlers in `mimeapps.list`, and a
-`.gitconfig` that uses the GitHub CLI as credential helper. Git identity is not
-managed; set it per repository or locally.
+`.gitconfig` that uses the GitHub CLI as credential helper and signs commits
+and tags with the SSH key from 1Password. Git identity is not managed; set it
+per repository or locally.
 
 Files that CachyOS installs from `/etc/skel` and that are unchanged, such as
 `config.fish`, `.zshrc`, and the Micro settings, are deliberately not managed.
@@ -161,6 +165,12 @@ Restart the shell with the managed Fish function:
 ```fish
 noctalia-reset
 ```
+
+## Secrets
+
+GNOME Keyring provides the Secret Service, the 1Password agent provides SSH,
+and commits are signed with the SSH key from 1Password. Setup and the one-time
+GitHub step are in [docs/secrets.md](docs/secrets.md); see ADR-0012.
 
 ## Mail
 

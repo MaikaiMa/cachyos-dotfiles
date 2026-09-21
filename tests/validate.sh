@@ -64,7 +64,10 @@ require_files \
 	chezmoi/dot_config/alacritty/alacritty.toml \
 	chezmoi/dot_config/zed/settings.json \
 	chezmoi/dot_config/mimeapps.list \
-	chezmoi/dot_gitconfig
+	chezmoi/dot_gitconfig \
+	chezmoi/dot_config/environment.d/10-ssh-agent.conf \
+	chezmoi/private_dot_ssh/private_config \
+	chezmoi/dot_config/git/allowed_signers
 
 require_files \
 	docs/adr/README.md \
@@ -79,7 +82,9 @@ require_files \
 	docs/adr/ADR-0009-scope-package-manifests-to-the-cachyos-profile.md \
 	docs/adr/ADR-0010-adopt-hylki-as-mail-client-via-flatpak.md \
 	docs/adr/ADR-0011-declare-noctalia-plugins-and-show-updates-in-the-bar.md \
+	docs/adr/ADR-0012-use-gnome-keyring-and-1password-for-secrets.md \
 	docs/mail.md \
+	docs/secrets.md \
 	docs/noctalia-lockscreen.md \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \

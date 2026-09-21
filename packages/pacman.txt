@@ -40,6 +40,10 @@ zen-browser-bin
 chatgpt-desktop-bin
 github-cli # git credential helper in .gitconfig
 
+# Secrets: Secret Service provider (profile-provided) and its CLI secret-tool.
+gnome-keyring
+libsecret
+
 # Mail: Flatpak runtime for Hylki and GNOME Online Accounts for Google OAuth.
 flatpak
 gnome-online-accounts
