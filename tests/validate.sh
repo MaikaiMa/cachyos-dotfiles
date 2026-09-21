@@ -94,6 +94,7 @@ require_files \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
 	scripts/setup-z13-window.sh \
+	scripts/dms-trial.sh \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
@@ -102,6 +103,7 @@ require_files \
 	tests/setup-z13-window.sh \
 	tests/noctalia-audio-glow.sh \
 	tests/sync-z13-window-color.sh \
+	tests/dms-trial.sh \
 	tests/validate.fish
 
 for adr in docs/adr/ADR-*.md; do
@@ -147,6 +149,7 @@ tests/focus-or-spawn.sh
 tests/noctalia-audio-glow.sh
 tests/setup-z13-window.sh
 tests/sync-z13-window-color.sh
+tests/dms-trial.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

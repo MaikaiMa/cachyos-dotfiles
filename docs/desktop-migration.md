@@ -51,38 +51,31 @@ No configuration changes.
 
 Goal: decide whether DMS feels right before touching the repository.
 
-Agent: nothing beyond this document.
+Agent provides the temporary `scripts/dms-trial.sh`, with a keybind shim
+installed at `~/.local/bin/noctalia` that forwards the existing Noctalia
+keybinds to DMS IPC calls. `~/.local/bin` is first in the PATH Niri uses to
+spawn keybind commands, so the shim intercepts `noctalia msg ...` without
+touching the Niri config. Both the script and the shim are removed in
+phase 2.
 
-You: install and switch services for the trial. Stop Noctalia first so the
-two notification daemons do not fight over the same DBus name. Do not run
-`dms setup` or `dms sync`; they write into the live Niri configuration.
+You: install and switch services for the trial. Do not run `dms setup` or
+`dms sync`; they write into the live Niri configuration.
 
 ```fish
-sudo pacman -S --needed dms-shell-niri
+./scripts/dms-trial.sh install
 ```
 
 ```fish
-systemctl --user stop noctalia.service; and systemctl --user start dms.service
+./scripts/dms-trial.sh start
 ```
 
-The Niri keybinds still call `noctalia msg`, so open surfaces from a terminal:
-
-```fish
-dms ipc call spotlight toggle
-```
-
-```fish
-dms ipc call control-center toggle
-```
-
-```fish
-dms ipc call notifications toggle
-```
+The wallpaper keybind opens the DMS settings wallpaper tab as a best-effort
+mapping; every other keybind maps directly to the equivalent DMS surface.
 
 Switch back at any time:
 
 ```fish
-systemctl --user stop dms.service; and systemctl --user start noctalia.service
+./scripts/dms-trial.sh stop
 ```
 
 Done when, after about a week: the bar, control center, launcher, and
@@ -137,6 +130,10 @@ Agent delivers:
   ADR-0002/0004/0005/0006/0007/0011 status lines set to
   "Superseded by ADR-0013", and `docs/noctalia-lockscreen.md` and
   `docs/noctalia-quick-controls.md` removed.
+- Remove `scripts/dms-trial.sh` and `tests/dms-trial.sh`; the shim does not
+  need a `.chezmoiremove` entry because `./scripts/dms-trial.sh stop` already
+  removes it. The trial's `start` must not be active on this machine when
+  phase 2 is applied.
 
 You:
 
