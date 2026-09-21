@@ -1,0 +1,7 @@
+# Flatpak applications. Third tier after packages/pacman.txt and packages/aur.txt:
+# only for software without an official or AUR package. Explain why in a
+# preceding comment and document the flatpakref that adds its remote and key.
+
+# Mail client; upstream ships a signed Flatpak remote only, no AUR package.
+# Install: see docs/mail.md. ADR-0010.
+co.hyprlab.Hylki

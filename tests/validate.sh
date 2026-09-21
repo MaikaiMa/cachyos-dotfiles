@@ -36,7 +36,8 @@ require_files \
 	CLAUDE.md \
 	README.md \
 	packages/pacman.txt \
-	packages/aur.txt
+	packages/aur.txt \
+	packages/flatpak.txt
 
 require_files \
 	chezmoi/.chezmoiignore \
@@ -76,6 +77,8 @@ require_files \
 	docs/adr/ADR-0007-start-noctalia-as-a-systemd-user-service.md \
 	docs/adr/ADR-0008-manage-application-configuration-selectively.md \
 	docs/adr/ADR-0009-scope-package-manifests-to-the-cachyos-profile.md \
+	docs/adr/ADR-0010-adopt-hylki-as-mail-client-via-flatpak.md \
+	docs/mail.md \
 	docs/noctalia-lockscreen.md \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \

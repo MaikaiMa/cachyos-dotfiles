@@ -10,11 +10,12 @@ repo_root=$(
 )
 packages_dir=${PACKAGES_DIR:-$repo_root/packages}
 pacman_command=${PACMAN_COMMAND:-pacman}
+flatpak_command=${FLATPAK_COMMAND:-flatpak}
 mark_explicit=false
 
 usage() {
 	printf 'Usage: %s [--mark-explicit]\n' "${0##*/}"
-	printf '%s\n' 'Report manifest packages that are missing or installed only as a dependency.'
+	printf '%s\n' 'Report manifest packages and Flatpak applications that are missing, and packages installed only as a dependency.'
 	printf '%s\n' '  --mark-explicit  mark dependency-only manifest packages as explicitly installed'
 }
 
@@ -53,7 +54,25 @@ for package in $(list_packages "$packages_dir/pacman.txt" "$packages_dir/aur.txt
 	esac
 done
 
+missing_flatpaks=
+flatpak_manifest=$packages_dir/flatpak.txt
+if [ -f "$flatpak_manifest" ] && command -v "$flatpak_command" >/dev/null 2>&1; then
+	for app in $(list_packages "$flatpak_manifest"); do
+		if ! "$flatpak_command" info -- "$app" >/dev/null 2>&1; then
+			missing_flatpaks="$missing_flatpaks $app"
+		fi
+	done
+fi
+
 status=0
+if [ -n "$missing_flatpaks" ]; then
+	printf '%s\n' 'Flatpak applications from the manifest not installed on this machine:'
+	for app in $missing_flatpaks; do
+		printf '  %s\n' "$app"
+	done
+	status=1
+fi
+
 if [ -n "$missing" ]; then
 	printf '%s\n' 'Manifest packages not installed on this machine:'
 	for package in $missing; do
@@ -86,6 +105,6 @@ if [ -n "$dependency_only" ]; then
 fi
 
 if [ "$status" -eq 0 ]; then
-	printf '%s\n' 'All manifest packages are installed and explicit.'
+	printf '%s\n' 'All manifest packages and Flatpak applications are installed; packages are explicit.'
 fi
 exit "$status"

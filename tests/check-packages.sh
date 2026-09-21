@@ -32,7 +32,12 @@ printf '%s\n' \
 	'printf "Install Reason  : %s\n" "$reason"' >"$fake_bin/pacman-test"
 # shellcheck disable=SC2016
 printf '%s\n' '#!/bin/sh' 'exec "$@"' >"$fake_bin/sudo"
-chmod +x "$fake_bin/pacman-test" "$fake_bin/sudo"
+# shellcheck disable=SC2016
+printf '%s\n' \
+	'#!/bin/sh' \
+	'[ "$1" = info ] || exit 2' \
+	'grep -qx -- "$3" "$FAKE_FLATPAK_INSTALLED"' >"$fake_bin/flatpak-test"
+chmod +x "$fake_bin/pacman-test" "$fake_bin/sudo" "$fake_bin/flatpak-test"
 
 cat >"$packages_dir/pacman.txt" <<'MANIFEST'
 # Comment line
@@ -41,6 +46,8 @@ dependency-pkg
 missing-pkg
 MANIFEST
 printf '%s\n' 'aur-explicit' >"$packages_dir/aur.txt"
+printf '%s\n' '# Flatpak tier' 'org.example.Installed' 'org.example.Missing' >"$packages_dir/flatpak.txt"
+printf '%s\n' 'org.example.Installed' >"$test_root/flatpaks"
 cat >"$db" <<'DB'
 explicit-pkg Explicitly installed
 dependency-pkg Installed as a dependency for another package
@@ -50,6 +57,8 @@ DB
 run_check() {
 	PATH="$fake_bin:$PATH" \
 		PACMAN_COMMAND=pacman-test \
+		FLATPAK_COMMAND=flatpak-test \
+		FAKE_FLATPAK_INSTALLED="$test_root/flatpaks" \
 		PACKAGES_DIR="$packages_dir" \
 		FAKE_PACMAN_DB="$db" \
 		FAKE_PACMAN_CALLS="$calls" \
@@ -62,14 +71,14 @@ if output=$(run_check); then
 	exit 1
 fi
 case $output in
-*'missing-pkg'*'dependency-pkg'*) ;;
+*'org.example.Missing'*'missing-pkg'*'dependency-pkg'*) ;;
 *)
 	printf 'Report did not list the missing and dependency-only packages:\n%s\n' "$output" >&2
 	exit 1
 	;;
 esac
 case $output in
-*'explicit-pkg'* | *'aur-explicit'*)
+*'explicit-pkg'* | *'aur-explicit'* | *'org.example.Installed'*)
 	printf 'Report listed an explicitly installed package:\n%s\n' "$output" >&2
 	exit 1
 	;;
@@ -86,6 +95,7 @@ if [ "$(cat "$calls")" != '-D --asexplicit dependency-pkg' ]; then
 fi
 
 sed -i '/^missing-pkg$/d' "$packages_dir/pacman.txt"
+sed -i '/^org.example.Missing$/d' "$packages_dir/flatpak.txt"
 printf '%s\n' 'dependency-pkg Explicitly installed' >>"$db"
 sed -i '/dependency for another/d' "$db"
 : >"$calls"

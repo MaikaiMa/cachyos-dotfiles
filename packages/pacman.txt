@@ -40,6 +40,11 @@ zen-browser-bin
 chatgpt-desktop-bin
 github-cli # git credential helper in .gitconfig
 
+# Mail: Flatpak runtime for Hylki and GNOME Online Accounts for Google OAuth.
+flatpak
+gnome-online-accounts
+gnome-control-center # only UI that can add GNOME Online Accounts
+
 # CachyOS gaming stack; equivalent to "Install Gaming packages" in CachyOS Hello.
 cachyos-gaming-meta
 cachyos-gaming-applications

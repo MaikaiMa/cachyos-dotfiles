@@ -28,7 +28,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_local/bin/          deployed helper scripts
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
-packages/                 explicit official and AUR package manifests
+packages/                 official, AUR, and Flatpak package manifests
 docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
 tests/                    repository validation
@@ -108,6 +108,9 @@ sudo pacman -S --needed (sed 's/#.*//' packages/pacman.txt | string trim | strin
 Install them individually with `paru`; bootstrap installs `z13ctl-bin` itself
 on a detected GZ302 Flow Z13 and nothing on other hardware.
 
+`packages/flatpak.txt` is the last-resort tier for software without an official
+or AUR package; each entry names the guide that documents its installation.
+
 ## Gaming
 
 Install the recorded CachyOS gaming stack with:
@@ -156,6 +159,12 @@ Restart the shell with the managed Fish function:
 ```fish
 noctalia-reset
 ```
+
+## Mail
+
+[Hylki](docs/mail.md) is the managed mail client, installed as a Flatpak and
+reachable with `Mod3+M`. It reads the Proton account through the Bridge below
+and Google accounts through GNOME Online Accounts; see ADR-0010.
 
 ## Proton Mail Bridge
 

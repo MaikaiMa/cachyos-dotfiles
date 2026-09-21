@@ -25,6 +25,11 @@ window-rule {
 }
 
 window-rule {
+    match app-id=r#"^co\.hyprlab\.Hylki$"#
+    open-on-workspace "chat"
+}
+
+window-rule {
     match app-id="dev.noctalia.Noctalia"
     open-floating true
     default-column-width { fixed 1080; }
