@@ -96,7 +96,8 @@ to the same state.
 Agent delivers:
 
 - `packages/pacman.txt`: add `dms-shell-niri`, `quickshell`, `matugen`,
-  and `cava` (DMS's optional audio visualizer). Remove the `noctalia` line;
+  `cava` (DMS's optional audio visualizer), and `kimageformats` (extra Qt
+  image formats for wallpapers). Remove the `noctalia` line;
   the binary stays through the profile meta package. Review `playerctl`,
   `imagemagick`, and `noto-fonts` against what still references them and
   remove the ones nothing needs.
