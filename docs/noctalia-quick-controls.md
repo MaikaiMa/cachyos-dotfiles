@@ -27,13 +27,8 @@ to `$XDG_DATA_HOME/noctalia/plugins/quick-controls/`. The read-only
 `noctalia-dashboard-state` helper runs only for refreshes while the panel is
 open. `playerctl` is required for media metadata and controls.
 
-Noctalia keeps its enabled-plugin list as machine-local state. Enable the
-dashboard once after the first deployment:
-
-```fish
-noctalia msg plugins enable maikel/quick-controls
-```
-
+The managed `config.toml` declares the dashboard in the `[plugins]` enabled
+list, so a fresh deployment activates it without a manual step (ADR-0011).
 Noctalia watches local plugin files and normally reloads them automatically.
 If the panel was open during deployment, close and reopen it with `Mod+S`.
 

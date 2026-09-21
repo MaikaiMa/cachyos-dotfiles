@@ -84,7 +84,9 @@ what the managed configuration, helpers, validation, and documented setup need
 on top of or from within that baseline. Kernel, bootloader, driver, and other
 installer-owned packages are deliberately not recorded; see ADR-0009.
 
-Compare the manifests with the machine at any time:
+Pending updates from all three sources show in the bar through the
+`yuuto/arch-updater` plugin; see the maintenance guide for the update
+command. Compare the manifests with the machine at any time:
 
 ```fish
 ./scripts/check-packages.sh

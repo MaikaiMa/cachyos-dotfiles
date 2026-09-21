@@ -67,6 +67,25 @@ A change is ready for review when all applicable items are true:
   pass.
 - The handoff states what still needs to be verified on the physical machine.
 
+## Updating the machine
+
+The `dotfiles` bar shows pending pacman, AUR, and Flatpak updates through the
+`yuuto/arch-updater` plugin; left click lists them, right click checks now.
+The plugin's own settings, such as the automatic check interval, are plugin
+state edited from its widget (middle click), not repository configuration.
+
+Update everything from a terminal with:
+
+```fish
+paru -Syu; and flatpak update
+```
+
+Afterwards confirm that the manifests still match the machine:
+
+```fish
+./scripts/check-packages.sh
+```
+
 ## Deployment and machine verification
 
 After explicit approval, deploy from the reviewed worktree:
