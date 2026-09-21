@@ -75,20 +75,38 @@ same primary color to the rear window light through `z13ctl`. The helper is a
 no-op on other hardware and always targets `lightbar`, never the keyboard; see
 ADR-0004.
 
-## Prerequisites
+## Packages
 
-Install the repository, desktop, and validation prerequisites from the
-official Arch or CachyOS repositories:
+The baseline is a CachyOS installation with the "Niri / Noctalia" desktop
+profile, which installs `cachyos-niri-noctalia` and with it Niri, Noctalia,
+the cursor theme, and the desktop portals. `packages/pacman.txt` records only
+what the managed configuration, helpers, validation, and documented setup need
+on top of or from within that baseline. Kernel, bootloader, driver, and other
+installer-owned packages are deliberately not recorded; see ADR-0009.
+
+Compare the manifests with the machine at any time:
 
 ```fish
-sudo pacman -S --needed git chezmoi fish shellcheck shfmt diffutils niri noctalia power-profiles-daemon jq util-linux paru
+./scripts/check-packages.sh
 ```
 
-The complete currently recorded package set is maintained in
-`packages/pacman.txt`, but general package manifests are not installed
-automatically. The one
-hardware-specific exception is `z13ctl-bin` on a detected GZ302 Flow Z13;
-this dependency is justified in `packages/aur.txt` and installed by bootstrap.
+It lists packages that are missing and packages that are installed only as a
+dependency of something else, which an orphan cleanup could remove. Mark the
+latter as explicitly installed with:
+
+```fish
+./scripts/check-packages.sh --mark-explicit
+```
+
+Install the recorded official packages on a fresh machine with:
+
+```fish
+sudo pacman -S --needed (sed 's/#.*//' packages/pacman.txt | string trim | string match --invert '')
+```
+
+`packages/aur.txt` lists the unavoidable AUR packages with their rationale.
+Install them individually with `paru`; bootstrap installs `z13ctl-bin` itself
+on a detected GZ302 Flow Z13 and nothing on other hardware.
 
 ## Gaming
 

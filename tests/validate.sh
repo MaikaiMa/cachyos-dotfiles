@@ -73,13 +73,16 @@ require_files \
 	docs/adr/ADR-0006-use-a-noctalia-dashboard-plugin.md \
 	docs/adr/ADR-0007-start-noctalia-as-a-systemd-user-service.md \
 	docs/adr/ADR-0008-manage-application-configuration-selectively.md \
+	docs/adr/ADR-0009-scope-package-manifests-to-the-cachyos-profile.md \
 	docs/noctalia-lockscreen.md \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
 	scripts/bootstrap.sh \
+	scripts/check-packages.sh \
 	scripts/setup-z13-window.sh \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
+	tests/check-packages.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/setup-z13-window.sh \
@@ -120,6 +123,7 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
+tests/check-packages.sh
 tests/focus-or-spawn.sh
 tests/noctalia-audio-glow.sh
 tests/setup-z13-window.sh

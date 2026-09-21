@@ -17,3 +17,4 @@ alternatives considered.
 - [ADR-0006: Use a Noctalia dashboard plugin](ADR-0006-use-a-noctalia-dashboard-plugin.md)
 - [ADR-0007: Start Noctalia as a systemd user service](ADR-0007-start-noctalia-as-a-systemd-user-service.md)
 - [ADR-0008: Manage application configuration selectively](ADR-0008-manage-application-configuration-selectively.md)
+- [ADR-0009: Scope package manifests to the CachyOS profile baseline](ADR-0009-scope-package-manifests-to-the-cachyos-profile.md)

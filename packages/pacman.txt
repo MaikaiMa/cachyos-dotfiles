@@ -1,5 +1,13 @@
 # Official Arch/CachyOS packages only.
-# Add one package name per line, with an adjacent comment when context helps.
+#
+# Baseline: a CachyOS installation with the "Niri / Noctalia" desktop profile,
+# which installs cachyos-niri-noctalia. This manifest records only what the
+# managed configuration, helpers, validation, and documented setup need on top
+# of or from within that baseline. Kernel, bootloader, driver, filesystem, and
+# other installer-owned packages are deliberately not recorded; see ADR-0009.
+#
+# One package per line; an inline comment may follow. Compare this manifest
+# with the machine using scripts/check-packages.sh.
 
 # Repository checkout, deployment, and validation.
 git
@@ -9,29 +17,34 @@ shellcheck
 shfmt
 diffutils
 
-# Managed desktop configuration.
+# Desktop session from the CachyOS profile, referenced directly by the config.
+cachyos-niri-noctalia
 niri
 noctalia
-playerctl
-power-profiles-daemon
-protonmail-bridge-core
+capitaine-cursors # cursor theme in niri misc.kdl
+
+# Managed desktop configuration and helpers.
+playerctl # dashboard media state and controls
+power-profiles-daemon # dashboard power profiles
+protonmail-bridge-core # enabled user service
+jq # focus-or-spawn, audio glow, dashboard state
+util-linux # flock in focus-or-spawn
+imagemagick # dashboard wallpaper preview
+noto-fonts # Noto Sans Medium in the wallpaper preview
+
+# Applications launched by managed keybinds or set as default handlers.
+alacritty
+zed
+nautilus
+zen-browser-bin
+chatgpt-desktop-bin
+github-cli # git credential helper in .gitconfig
 
 # CachyOS gaming stack; equivalent to "Install Gaming packages" in CachyOS Hello.
 cachyos-gaming-meta
 cachyos-gaming-applications
 
-# Applications with managed configuration or default-handler entries.
-alacritty
-zed
-github-cli
-zen-browser-bin
-
-# Runtime dependencies for managed helpers.
-jq
-util-linux
-imagemagick
-
-# CachyOS AUR helper used to install the Z13 hardware dependency.
+# CachyOS AUR helper used to install the AUR manifest.
 paru
 
 # Dutch + US English spelling; Enchant exposes dictionaries to supporting apps.

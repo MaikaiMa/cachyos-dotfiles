@@ -78,6 +78,12 @@ Run a second preview to detect unexpected drift:
 ./scripts/bootstrap.sh --dry-run --no-pager
 ```
 
+Check that the machine still provides every recorded package:
+
+```fish
+./scripts/check-packages.sh
+```
+
 Repository tests cannot prove hardware and desktop behavior. After deployment,
 manually verify the affected Niri behavior, Noctalia template refresh, spelling
 integration, Z13 rear-window lighting, and any feature-specific restart
