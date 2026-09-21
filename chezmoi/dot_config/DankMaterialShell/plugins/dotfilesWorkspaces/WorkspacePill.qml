@@ -23,11 +23,15 @@ Item {
     readonly property real labelExtent: labelText.visible ? ((vertical ? labelText.implicitHeight : labelText.implicitWidth) + Theme.spacingS) : 0
     readonly property real mainExtent: Math.max(isActive ? Math.max(thickness * 1.05, glyphSize * 1.6) : Math.max(thickness * 0.7, glyphSize * 1.2), labelExtent)
 
+    readonly property color alertColor: controller?.alertPillColor ?? Theme.error
+
     readonly property color fillColor: {
+        if (alerting && isActive)
+            return alertColor;
+        if (alerting)
+            return Theme.withAlpha(alertColor, 0.45);
         if (isActive)
             return controller?.focusedPillColor ?? Theme.primary;
-        if (alerting)
-            return controller?.alertPillColor ?? Theme.error;
         if (isHovered)
             return Theme.withAlpha(controller?.idlePillColor ?? Theme.surfaceTextAlpha, 0.7);
         if (isOccupied)
@@ -60,8 +64,6 @@ Item {
         height: pill.vertical ? pill.mainExtent : pill.crossExtent
         radius: Theme.cornerRadius
         color: pill.fillColor
-        border.width: pill.alerting ? 2 : 0
-        border.color: pill.alerting ? (pill.controller?.alertPillColor ?? Theme.error) : Theme.withAlpha(Theme.error, 0)
 
         Behavior on color {
             ColorAnimation {

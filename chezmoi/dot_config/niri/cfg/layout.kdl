@@ -14,7 +14,7 @@ layout {
 
     focus-ring {
         on
-        width 2
+        width 1
     }
 
     border {

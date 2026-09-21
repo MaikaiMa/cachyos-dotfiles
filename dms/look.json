@@ -61,5 +61,6 @@
   ],
   "updaterCheckOnStart": true,
   "trayMaxVisibleItems": 1,
-  "trayAutoOverflow": true
+  "trayAutoOverflow": true,
+  "niriLayoutBorderSize": 1
 }
