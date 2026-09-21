@@ -8,11 +8,11 @@
   "runUserMatugenTemplates": true,
   "runDmsMatugenTemplates": true,
   "popupTransparency": 0.85,
-  "blurEnabled": false,
-  "blurForegroundLayers": false,
+  "blurEnabled": true,
+  "blurForegroundLayers": true,
   "foregroundLayerTransparency": 0.85,
   "blurredWallpaperLayer": false,
-  "blurBorderEnabled": false,
+  "blurBorderEnabled": true,
   "barElevationEnabled": false,
   "audioVisualizerEnabled": true,
   "showWorkspaceApps": false,
@@ -26,19 +26,19 @@
         "dotfilesApps"
       ],
       "centerWidgets": [
-        "music",
+        "weather",
         "clock",
-        "weather"
+        "music"
       ],
       "rightWidgets": [
         "systemTray",
         "dotfilesDashboard",
+        "battery",
         {
           "id": "systemUpdate",
           "hideWhenIdle": true
         },
         "notificationButton",
-        "battery",
         "powerMenuButton"
       ],
       "spacing": 6,
@@ -46,7 +46,7 @@
       "barLengthPadding": 12,
       "bottomGap": 4,
       "widgetPadding": 10,
-      "transparency": 0.72,
+      "transparency": 0.6,
       "widgetTransparency": 0.75,
       "noBackground": false,
       "squareCorners": false,
