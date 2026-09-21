@@ -1,0 +1,59 @@
+{
+  "cornerRadius": 16,
+  "niriLayoutGapsOverride": -2,
+  "niriLayoutRadiusOverride": 20,
+  "currentThemeName": "dynamic",
+  "currentThemeCategory": "dynamic",
+  "matugenSmartMode": true,
+  "runUserMatugenTemplates": true,
+  "runDmsMatugenTemplates": true,
+  "popupTransparency": 0.85,
+  "blurEnabled": true,
+  "blurForegroundLayers": true,
+  "foregroundLayerTransparency": 0.85,
+  "blurredWallpaperLayer": true,
+  "blurBorderEnabled": false,
+  "barElevationEnabled": false,
+  "audioVisualizerEnabled": true,
+  "showWorkspaceApps": false,
+  "showOccupiedWorkspacesOnly": true,
+  "barConfigs": [
+    {
+      "id": "default",
+      "leftWidgets": [
+        "launcherButton",
+        "workspaceSwitcher",
+        "dotfilesApps"
+      ],
+      "centerWidgets": [
+        "music",
+        "clock",
+        "weather"
+      ],
+      "rightWidgets": [
+        "systemTray",
+        "dotfilesDashboard",
+        {
+          "id": "systemUpdate",
+          "hideWhenIdle": true
+        },
+        "notificationButton",
+        "battery",
+        "powerMenuButton"
+      ],
+      "spacing": 6,
+      "innerPadding": 4,
+      "barLengthPadding": 12,
+      "bottomGap": 4,
+      "widgetPadding": 10,
+      "transparency": 0,
+      "widgetTransparency": 0.75,
+      "noBackground": false,
+      "squareCorners": false,
+      "borderEnabled": false,
+      "widgetOutlineEnabled": false,
+      "shadowIntensity": 0,
+      "gothCornersEnabled": false
+    }
+  ]
+}

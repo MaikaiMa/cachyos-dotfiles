@@ -91,10 +91,13 @@ require_files \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
 	docs/desktop-migration.md \
+	docs/dms.md \
+	dms/look.json \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
 	scripts/setup-z13-window.sh \
 	scripts/dms-trial.sh \
+	scripts/dms-apply-look.sh \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
@@ -105,6 +108,10 @@ require_files \
 	tests/sync-z13-window-color.sh \
 	tests/dms-trial.sh \
 	tests/validate.fish
+
+require_files \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/DotfilesApps.qml
 
 for adr in docs/adr/ADR-*.md; do
 	adr_name=${adr##*/}

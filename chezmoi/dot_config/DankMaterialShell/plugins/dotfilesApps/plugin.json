@@ -1,0 +1,19 @@
+{
+    "id": "dotfilesApps",
+    "name": "Dotfiles Apps",
+    "description": "Pinned and running applications as bar icons, with a window indicator dot and a notification badge",
+    "version": "1.0.0",
+    "author": "Maikel",
+    "type": "widget",
+    "capabilities": [
+        "dankbar-widget"
+    ],
+    "component": "./DotfilesApps.qml",
+    "settings": "./DotfilesAppsSettings.qml",
+    "icon": "apps",
+    "requires_dms": ">=1.6.0",
+    "permissions": [
+        "settings_read",
+        "settings_write"
+    ]
+}
