@@ -19,13 +19,15 @@ window-rule {
     open-on-workspace "web"
 }
 
+// Editor, terminals, and Claude (coding partner) share the code workspace.
 window-rule {
-    match app-id=r#"^(Alacritty|com\.mitchellh\.ghostty|dev\.zed\.Zed)$"#
+    match app-id=r#"^(Alacritty|com\.mitchellh\.ghostty|dev\.zed\.Zed|com\.anthropic\.Claude)$"#
     open-on-workspace "code"
 }
 
+// Mail and the general-purpose assistant: consult, then jump back.
 window-rule {
-    match app-id=r#"^co\.hyprlab\.Hylki$"#
+    match app-id=r#"^(co\.hyprlab\.Hylki|Chatgpt)$"#
     open-on-workspace "chat"
 }
 
