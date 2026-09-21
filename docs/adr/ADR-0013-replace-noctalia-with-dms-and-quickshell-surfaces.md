@@ -1,7 +1,6 @@
 # ADR-0013: Replace Noctalia with DankMaterialShell and repository-owned Quickshell surfaces
 
-- Status: Accepted (2026-09-21); implemented through
-  [the desktop migration plan](../desktop-migration.md)
+- Status: Accepted as interim shell (2026-09-21); see the review below
 - Date: 2026-09-21
 - Supersedes: ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0011
 
@@ -120,3 +119,37 @@ Facts that drove the choice (verified 2026-09-21):
 - **Remove `cachyos-niri-noctalia`:** would require recording its
   dependencies by hand and moves the machine away from the profile baseline
   for no functional gain.
+
+## Review after the first evening (2026-09-21)
+
+The stock DMS trial solved none of the listed problems and looked less like
+the desired desktop than the Noctalia setup it replaced. That was expected
+for an unconfigured shell, but the plan asked the user to work in it for a
+week before anything was built. That order was wrong: nothing is evaluated on
+the live desktop before it is polished to a testable state.
+
+The recommendation itself also had a flaw in its reasoning, recorded here so
+it is not repeated:
+
+- The constraints (simple, no fork, close to CachyOS) were used as the first
+  filter and the requirement list as the second. Constraints describe how a
+  solution may look; they do not make a partial solution better than keeping
+  what worked. The requirement list is the goal and filters first.
+- The first advice assumed DMS's QML is editable on disk. It is embedded in
+  the binary since 1.6. When that surfaced, the decision was adjusted around
+  the new fact instead of reopened.
+- The user had said the Noctalia bar and dashboard were already good. An
+  option that gives those up to gain other items had to be presented as a
+  trade-off for the user to weigh, not as a net gain.
+
+Consequences of the review:
+
+- DMS stays as the interim shell and is configured and extended first
+  (settings for the mat-glass look, an application-icon widget with running
+  and notification dots, a dashboard popout). The user evaluates only the
+  polished result.
+- The known ceiling stands: the bar container, the built-in lock screen and
+  the panel styling cannot be changed without a fork. If that ceiling is
+  unacceptable after evaluation, the follow-up is a repository-owned
+  Quickshell shell, the option this record dismissed as too large. That
+  decision, if taken, gets its own ADR and supersedes this one.

@@ -47,46 +47,40 @@ DMS shell tree.
 Done in the same change as this plan: ADR-0013, ADR-0014, and this document.
 No configuration changes.
 
-## Phase 1: DMS trial next to Noctalia
+## Phase 1: polish DMS, then evaluate
 
-Goal: decide whether DMS feels right before touching the repository.
+Goal: bring DMS to a state that can be judged fairly against the previous
+desktop before the user works in it. The order of the first attempt, a week
+in an unconfigured shell, is recorded as a mistake in ADR-0013's review.
 
-Agent provides the temporary `scripts/dms-trial.sh`, with a keybind shim
-installed at `~/.local/bin/noctalia` that forwards the existing Noctalia
-keybinds to DMS IPC calls. `~/.local/bin` is first in the PATH Niri uses to
-spawn keybind commands, so the shim intercepts `noctalia msg ...` without
-touching the Niri config. Both the script and the shim are removed in
-phase 2.
+Agent delivers, in parallel and outside the chezmoi tree until accepted:
 
-You: install and switch services for the trial. Do not run `dms setup` or
-`dms sync`; they write into the live Niri configuration.
+- `dms/look.json` and `scripts/dms-apply-look.sh`: DMS settings for the
+  mat-glass look, corner radius, bar widget layout mirroring the previous
+  bar, audio visualizer, Niri layout overrides off, wallpaper theming;
+  documented in `docs/dms.md` so values can change on feedback.
+- Plugin `dotfilesApps`: application icons with a primary-color running dot
+  and a red notification dot, replacing the built-in running-apps widget.
+- Plugin `dotfilesDashboard`: the previous dashboard as a DMS popout.
+- The temporary `scripts/dms-trial.sh` with its keybind shim stays until
+  phase 2 replaces the keybinds.
 
-```fish
-./scripts/dms-trial.sh install
-```
+You: switch with the trial script, then judge the polished result and give
+feedback per surface. Do not run `dms setup` or `dms sync`; they write into
+the live Niri configuration.
 
 ```fish
 ./scripts/dms-trial.sh start
 ```
 
-Every keybind maps to the equivalent DMS surface; the wallpaper bind opens
-the DMS wallpaper picker.
-
-Switch back at any time:
-
 ```fish
 ./scripts/dms-trial.sh stop
 ```
 
-Done when, after about a week: the bar, control center, launcher, and
-notifications feel good enough to build on; wallpaper theming works; the
-Niri workspace integration behaves; and nothing blocks daily work. Note every
-irritation, and separate "plugin can fix this" from "DMS built-in". The
-built-in lock screen is not part of the verdict; phase 4 replaces it.
-
-Verdict: passes, phase 2 starts. Fails, the trial is reverted with the
-command above and ADR-0013 is amended with the reasons before any other
-approach is tried.
+Done when: the bar, dashboard and indicators are close enough to the
+reference to live with, or the ceiling of ADR-0013 is confirmed as
+unacceptable. Passes, phase 2 starts. Fails, the trial is reverted with
+`stop` and the follow-up decision gets its own ADR.
 
 ## Phase 2: move the shell into the repository
 
