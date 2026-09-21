@@ -5,6 +5,8 @@ import qs.Services
 Row {
     id: stats
 
+    property var popout: null
+
     readonly property real tileWidth: (width - spacing * 3) / 4
     readonly property var primaryGpu: DgopService.availableGpus?.[0] ?? null
     readonly property real networkRate: DgopService.networkRxRate + DgopService.networkTxRate
@@ -13,6 +15,11 @@ Row {
     property var networkSamples: []
     property real networkCeiling: 64
     property int tick: 0
+
+    function openProcessList() {
+        stats.popout?.closePopout();
+        PopoutService.toggleProcessListModal();
+    }
 
     function formatRate(bytesPerSecond) {
         const rate = bytesPerSecond || 0;
@@ -63,6 +70,7 @@ Row {
         samples: DgopService.cpuHistory
         repaintTrigger: stats.tick
         lineColor: Theme.primary
+        onClicked: stats.openProcessList()
     }
 
     StatTile {
@@ -72,6 +80,7 @@ Row {
         samples: DgopService.memoryHistory
         repaintTrigger: stats.tick
         lineColor: Theme.info
+        onClicked: stats.openProcessList()
     }
 
     StatTile {
@@ -81,6 +90,7 @@ Row {
         samples: stats.gpuHistory
         repaintTrigger: stats.tick
         lineColor: Theme.secondary
+        onClicked: stats.openProcessList()
     }
 
     StatTile {
@@ -91,6 +101,7 @@ Row {
         sampleCeiling: stats.networkCeiling
         repaintTrigger: stats.tick
         lineColor: Theme.primary
+        onClicked: stats.openProcessList()
     }
 
     // dgop mutates its history arrays in place, so nothing notifies on new samples;

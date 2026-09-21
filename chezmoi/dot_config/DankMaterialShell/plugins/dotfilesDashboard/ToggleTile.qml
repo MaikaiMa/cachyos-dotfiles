@@ -15,7 +15,7 @@ Rectangle {
 
     signal clicked
 
-    height: 64
+    height: 76
     radius: Theme.cornerRadius + 4
     clip: true
     antialiasing: true
@@ -63,12 +63,12 @@ Rectangle {
 
     Column {
         anchors.centerIn: parent
-        spacing: Theme.spacingXXS
+        spacing: Theme.spacingXS
 
         DankIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             name: tile.iconName
-            size: Theme.iconSize - 2
+            size: Theme.iconSize
             color: tile.foreground
         }
 

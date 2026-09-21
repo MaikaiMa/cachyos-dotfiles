@@ -65,7 +65,6 @@ Column {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             visible: row.showMuteButton
-            circular: false
             iconName: row.muteIconName
             iconSize: Theme.iconSizeSmall + 2
             iconColor: row.muted ? Theme.error : Theme.surfaceText
@@ -85,8 +84,8 @@ Column {
         showValue: false
         unit: row.unit
         thumbOutlineColor: Theme.surfaceContainer
-        trackColor: Theme.ccSliderTrackColor
-        trackOpacity: Theme.ccSliderTrackOpacity
+        trackColor: Theme.surfaceVariant
+        trackOpacity: 0.5
         onSliderValueChanged: newValue => row.moved(newValue)
     }
 

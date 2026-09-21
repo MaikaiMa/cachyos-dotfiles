@@ -13,6 +13,29 @@ DashboardCard {
     readonly property real trackLength: MprisController.activePlayerStableLength
 
     property bool isSeeking: false
+    property var popout: null
+
+    function focusPlayerWindow() {
+        const player = media.activePlayer;
+        if (!player)
+            return;
+
+        const wanted = [player.desktopEntry, player.identity].filter(name => name && name.length > 0).map(name => name.toLowerCase());
+        const toplevels = CompositorService.sortedToplevels || [];
+        const match = toplevels.find(toplevel => {
+            const appId = (toplevel?.appId || "").toLowerCase();
+            if (appId.length === 0)
+                return false;
+            return wanted.some(name => appId === name || appId.includes(name) || name.includes(appId));
+        });
+
+        media.popout?.closePopout();
+        if (match) {
+            CompositorService.activateToplevel(match);
+            return;
+        }
+        PopoutService.toggleDankDash("media");
+    }
 
     function formatTime(seconds) {
         const total = Math.max(0, Math.floor(seconds || 0));
@@ -27,35 +50,22 @@ DashboardCard {
         width: parent.width
         height: 66
 
-        Rectangle {
+        MediaArtwork {
             id: artwork
 
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             width: 66
             height: 66
-            radius: Theme.cornerRadius
-            color: Theme.primaryBackground
-            clip: true
+            artUrl: TrackArtService.resolvedArtUrl
+            cornerRadius: Theme.cornerRadius
 
-            DankIcon {
-                anchors.centerIn: parent
-                name: "music_note"
-                size: Theme.iconSizeLarge - 4
-                color: Theme.primary
-                visible: artImage.status !== Image.Ready
-            }
-
-            Image {
-                id: artImage
-
+            MouseArea {
                 anchors.fill: parent
-                source: TrackArtService.resolvedArtUrl
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                sourceSize.width: 132
-                sourceSize.height: 132
-                visible: status === Image.Ready
+                enabled: media.hasPlayer
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: media.focusPlayerWindow()
             }
         }
 
@@ -95,7 +105,7 @@ DashboardCard {
             spacing: Theme.spacingXS
 
             DankActionButton {
-                circular: false
+                anchors.verticalCenter: parent.verticalCenter
                 iconName: "skip_previous"
                 enabled: media.activePlayer?.canGoPrevious ?? false
                 opacity: enabled ? 1 : 0.4
@@ -104,16 +114,19 @@ DashboardCard {
             }
 
             DankActionButton {
-                circular: false
+                anchors.verticalCenter: parent.verticalCenter
+                buttonSize: 40
+                radius: width / 2
                 iconName: media.isPlaying ? "pause" : "play_arrow"
                 enabled: media.hasPlayer
                 opacity: enabled ? 1 : 0.4
-                backgroundColor: Theme.ccPillInactiveBg
+                iconColor: Theme.primaryText
+                backgroundColor: Theme.primary
                 onClicked: media.activePlayer?.togglePlaying()
             }
 
             DankActionButton {
-                circular: false
+                anchors.verticalCenter: parent.verticalCenter
                 iconName: "skip_next"
                 enabled: media.activePlayer?.canGoNext ?? false
                 opacity: enabled ? 1 : 0.4

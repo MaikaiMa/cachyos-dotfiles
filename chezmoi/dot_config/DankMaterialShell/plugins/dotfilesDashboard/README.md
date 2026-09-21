@@ -32,6 +32,25 @@ The popout is a mat-glass panel with, top to bottom:
 Both routes need the widget to be present in a bar; DMS only registers widgets
 that a bar actually renders.
 
+## Placement
+
+DMS anchors a plugin popout under the pill that opened it. The dashboard instead
+opens horizontally centred, with its top edge where Niri starts tiled windows.
+`DashboardPopout.placePopout()` does this by writing `triggerX`, `triggerWidth`
+and `triggerY` on the injected `parentPopout` (the `PluginPopout`), which the
+popout's own `alignedX` / `alignedY` bindings then follow. DMS rewrites those
+three values on every open, so the placement is re-applied from `Connections` on
+the popout. The DMS open/close animation, backdrop and click-outside-to-close
+are untouched.
+
+## Extra actions
+
+- Clicking a stat tile closes the dashboard and opens the DMS process list.
+- Clicking the album art focuses the window of the playing media player
+  (matching the MPRIS desktop entry or identity against
+  `CompositorService.sortedToplevels`), or falls back to the DMS media dash when
+  no window matches.
+
 ## Services used
 
 Everything reads and writes live DMS state; nothing shells out.
@@ -62,3 +81,8 @@ Everything reads and writes live DMS state; nothing shells out.
 - Night light is absent, as it was in the Noctalia dashboard.
 - The bar button follows the existing `controlCenterShow*` settings for which
   indicators to show, but has no settings UI of its own.
+- The 2 logical pixel offset between the bar and the first window row is Niri's,
+  not something DMS reports, so it is a constant in `DashboardPopout.qml`.
+- `dms ipc call plugins reload` only re-reads the manifest component; edits to
+  the other QML files in this directory need `systemctl --user restart
+  dms.service`.

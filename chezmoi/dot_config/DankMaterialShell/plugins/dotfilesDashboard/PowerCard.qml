@@ -59,7 +59,7 @@ DashboardCard {
         width: parent.width
         height: 6
         radius: height / 2
-        color: Theme.withAlpha(Theme.ccSliderTrackColor, Theme.ccSliderTrackOpacity)
+        color: Theme.withAlpha(Theme.surfaceVariant, 0.5)
         visible: BatteryService.batteryAvailable
 
         Rectangle {
@@ -115,7 +115,7 @@ DashboardCard {
                 readonly property bool isAvailable: PowerProfileWatcher.availableProfiles.indexOf(modelData.profile) !== -1
 
                 width: profiles.buttonWidth
-                height: 36
+                height: 44
                 radius: Theme.cornerRadius
                 enabled: isAvailable
                 opacity: isAvailable ? 1 : 0.4

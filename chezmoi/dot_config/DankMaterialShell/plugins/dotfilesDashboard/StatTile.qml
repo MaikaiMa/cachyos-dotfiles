@@ -12,13 +12,15 @@ Rectangle {
     property color lineColor: Theme.primary
     property real repaintTrigger: 0
 
+    signal clicked
+
     onRepaintTriggerChanged: sparkline.requestPaint()
     onSamplesChanged: sparkline.requestPaint()
     onLineColorChanged: sparkline.requestPaint()
 
     implicitHeight: body.implicitHeight + Theme.spacingS * 2
     radius: Theme.cornerRadius
-    color: Theme.nestedSurface
+    color: hoverArea.containsMouse ? Theme.ccPillInactiveHoverBg : Theme.nestedSurface
     border.color: Theme.outlineMedium
     border.width: 1
 
@@ -57,7 +59,7 @@ Rectangle {
             id: sparkline
 
             width: parent.width
-            height: 28
+            height: 44
             antialiasing: true
 
             onPaint: {
@@ -92,5 +94,21 @@ Rectangle {
                 context.fill();
             }
         }
+    }
+
+    DankRipple {
+        id: ripple
+
+        cornerRadius: tile.radius
+    }
+
+    MouseArea {
+        id: hoverArea
+
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onPressed: mouse => ripple.trigger(mouse.x, mouse.y)
+        onClicked: tile.clicked()
     }
 }
