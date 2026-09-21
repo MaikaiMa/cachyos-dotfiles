@@ -7,7 +7,8 @@ must not be edited as a substitute for changing `chezmoi/`.
 ## Responsibilities
 
 - `README.md` documents installation, scope, and normal use.
-- `AGENTS.md` defines mandatory working boundaries for AI agents.
+- `AGENTS.md` defines mandatory working boundaries for AI agents; `CLAUDE.md`
+  only imports it for Claude Code.
 - This guide defines the shared change, review, and verification workflow.
 - `docs/adr/` records durable architectural decisions and their trade-offs.
 - Package manifests record every non-base dependency needed by managed
@@ -19,10 +20,12 @@ authoritative guide or ADR instead.
 
 ## Change workflow
 
-Start by confirming that the worktree contains only expected changes:
+Start by confirming that the worktree and the live home contain only expected
+changes:
 
 ```fish
 git status --short
+chezmoi status
 ```
 
 Make one focused change in the repository. Add or update its dependencies,

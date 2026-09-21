@@ -33,12 +33,14 @@ require_files() {
 
 require_files \
 	AGENTS.md \
+	CLAUDE.md \
 	README.md \
 	packages/pacman.txt \
 	packages/aur.txt
 
 require_files \
 	chezmoi/.chezmoiignore \
+	chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_protonmail-bridge.service \
 	chezmoi/dot_config/systemd/user/noctalia.service \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_noctalia.service \
@@ -115,13 +117,18 @@ fish -n tests/*.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fi
 tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_noctalia-dashboard-state \
 	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
+	chezmoi/dot_local/bin/executable_noctalia-dashboard-state \
 	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
+
+chezmoi --source chezmoi execute-template \
+	<chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl >/dev/null
 
 tests/check-packages.sh
 tests/focus-or-spawn.sh

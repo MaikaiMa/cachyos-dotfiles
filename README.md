@@ -208,6 +208,17 @@ a Z13 this one command also completes the rear-window setup:
 ./scripts/bootstrap.sh
 ```
 
+The first bootstrap also renders `~/.config/chezmoi/chezmoi.toml` with the
+repository's source directory, so plain chezmoi commands work afterwards:
+
+```fish
+chezmoi status
+chezmoi diff
+```
+
+Deployment still goes through `scripts/bootstrap.sh`, which passes the source
+explicitly and handles the Z13 steps.
+
 Before adding existing live Niri files, compare them with the proposed
 chezmoi source and make a small, reviewed migration. Do not copy credentials,
 machine-specific display data, or other personal data into this repository.

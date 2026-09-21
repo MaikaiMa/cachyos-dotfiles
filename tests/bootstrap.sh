@@ -91,6 +91,11 @@ for path in \
 	fi
 done
 
+if ! grep -Fq "sourceDir = \"$repo_root/chezmoi\"" "$test_home/.config/chezmoi/chezmoi.toml"; then
+	printf '%s\n' 'Bootstrap did not render the chezmoi source directory into chezmoi.toml.' >&2
+	exit 1
+fi
+
 wants_link=$test_home/.config/systemd/user/niri.service.wants/noctalia.service
 if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "../noctalia.service" ]; then
 	printf '%s\n' 'Bootstrap did not enable noctalia.service for niri.service.' >&2
