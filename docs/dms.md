@@ -58,7 +58,7 @@ systemctl --user restart dms.service
 | `matugenSmartMode` | Lets matugen pick light/dark and contrast from the wallpaper automatically. |
 | `runUserMatugenTemplates`, `runDmsMatugenTemplates` | Regenerate both the user's and DMS's own matugen templates when the theme changes, so terminals and GTK/Qt apps stay in sync with the wallpaper too. |
 | `popupTransparency`, `foregroundLayerTransparency` | `0.85`: Control Center, Dashboard, and other popups read as translucent glass over the wallpaper rather than flat opaque panels. |
-| `blurEnabled`, `blurForegroundLayers`, `blurredWallpaperLayer` | Turns on background blur behind popups and the desktop wallpaper layer, the "glass" half of mat-glass. |
+| `blurEnabled`, `blurForegroundLayers`, `blurredWallpaperLayer` | All off. DMS's own blur blurred the wallpaper itself; the glass comes from a Niri `layer-rule` on the `^dms:` namespaces in `cfg/rules.kdl` instead. |
 | `blurBorderEnabled` | `false`: no outline around the blurred glass, for a cleaner edge. |
 | `barElevationEnabled` | `false`: removes the bar's drop shadow; Noctalia's bar had `shadow = false`. |
 | `audioVisualizerEnabled` | Enables the cava-driven visualizer bars inside the `music` bar widget. |
@@ -67,7 +67,7 @@ systemctl --user restart dms.service
 | `barConfigs[id=default].centerWidgets` | `music`, `clock`, `weather` — the `music` widget is where `audioVisualizerEnabled` draws its bars. |
 | `barConfigs[id=default].rightWidgets` | `systemTray`, `dotfilesDashboard`, `systemUpdate` (with `hideWhenIdle`), `notificationButton`, `battery`, `powerMenuButton`. The dashboard plugin's button shows the Wi-Fi, Bluetooth and audio state and opens the dashboard; DMS 1.6.2 has no separate toggle widgets. |
 | `barConfigs[id=default].spacing`, `.widgetPadding`, `.barLengthPadding`, `.bottomGap`, `.innerPadding` | `6`, `10`, `12`, `4`, `4` — spacing between widgets, padding inside each capsule, and the margins from the screen edges, close to Noctalia's `widget_spacing = 6`, capsule `padding = 8-10`, and `margin_ends = 12`. |
-| `barConfigs[id=default].transparency`, `.widgetTransparency`, `.noBackground` | `0`, `0.75`, `false` — the bar surface itself is invisible and every widget is a translucent capsule. In DMS `noBackground` removes the widget capsules, not the bar surface, so it stays off. |
+| `barConfigs[id=default].transparency`, `.widgetTransparency`, `.noBackground` | `0.6`, `0.75`, `false` — a translucent bar strip, blurred by Niri, with a glass capsule per widget. In DMS `noBackground` removes the widget capsules, not the bar surface, so it stays off. |
 | `barConfigs[id=default].squareCorners`, `.gothCornersEnabled`, `.borderEnabled`, `.widgetOutlineEnabled`, `.shadowIntensity` | `false`, `false`, `false`, `false`, `0` — rounded corners (via the global `cornerRadius`), no borders or outlines, no shadow. |
 
 ## Spec keys that do not exist in DMS 1.6.2

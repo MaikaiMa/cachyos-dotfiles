@@ -76,7 +76,6 @@ Item {
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: -2
             width: delegate.iconPixelSize
             height: delegate.iconPixelSize
             source: {
@@ -118,16 +117,6 @@ Item {
             opacity: appIcon.opacity
         }
 
-        StatusDot {
-            id: focusDot
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 1
-            diameter: 4
-            color: Theme.primary
-            visible: delegate.focused
-        }
 
         StatusDot {
             id: notificationDot

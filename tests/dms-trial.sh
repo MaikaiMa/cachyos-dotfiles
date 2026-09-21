@@ -179,7 +179,7 @@ assert_contains "$s1_shim" "$shim_marker"
 mapping_file="$test_root/mappings"
 cat >"$mapping_file" <<'EOF'
 panel-toggle wallpaper|dms ipc call dash toggle wallpaper
-panel-toggle maikel/quick-controls:panel|dms ipc call control-center toggle
+panel-toggle maikel/quick-controls:panel|dms ipc call widget toggle dotfilesDashboard
 settings-toggle|dms ipc call settings toggle
 panel-toggle launcher|dms ipc call spotlight toggle
 panel-toggle clipboard|dms ipc call clipboard toggle

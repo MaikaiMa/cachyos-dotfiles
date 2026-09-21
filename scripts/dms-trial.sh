@@ -81,7 +81,7 @@ case "$*" in
 	exec dms ipc call dash toggle wallpaper
 	;;
 'panel-toggle maikel/quick-controls:panel')
-	exec dms ipc call control-center toggle
+	exec dms ipc call widget toggle dotfilesDashboard
 	;;
 'settings-toggle')
 	exec dms ipc call settings toggle

@@ -1,0 +1,17 @@
+{
+    "id": "dotfilesDashboard",
+    "name": "Dotfiles Dashboard",
+    "description": "Quick controls, media, display and audio, power and system stats in one popout",
+    "version": "1.0.0",
+    "author": "Maikel",
+    "type": "widget",
+    "capabilities": [
+        "dankbar-widget"
+    ],
+    "component": "./DotfilesDashboard.qml",
+    "icon": "dashboard",
+    "requires_dms": ">=1.6.0",
+    "permissions": [
+        "settings_read"
+    ]
+}
