@@ -19,7 +19,7 @@ installed application.
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
   dot_config/noctalia/    declarative Noctalia configuration
-  dot_config/systemd/user/ future ~/.config/systemd/user units
+  dot_config/systemd/user/ managed ~/.config/systemd/user units
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
 packages/                 explicit official and AUR package manifests
@@ -102,6 +102,17 @@ On a detected 2025 Z13, `scripts/bootstrap.sh` automatically installs
 rule, applies the dotfiles, and asks a running Noctalia instance to refresh its
 templates. No logout or separate activation step is required. Other hardware
 skips the entire Z13 setup.
+
+## Noctalia startup
+
+Noctalia is started by the managed systemd user unit `noctalia.service`, which
+is bound to `niri.service` and enabled through a chezmoi-managed symlink in
+`niri.service.wants/`. Niri's autostart fragment deliberately does not spawn
+Noctalia as well; see ADR-0007. Restart the shell with:
+
+```fish
+systemctl --user restart noctalia.service
+```
 
 ## Proton Mail Bridge
 

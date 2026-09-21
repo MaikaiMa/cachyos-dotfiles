@@ -57,6 +57,7 @@ run_bootstrap --no-pager
 
 for path in \
 	.config/niri/config.kdl \
+	.config/systemd/user/noctalia.service \
 	.config/noctalia/audio-glow.toml \
 	.config/noctalia/bar.toml \
 	.config/noctalia/lockscreen.toml \
@@ -82,6 +83,16 @@ for path in \
 		exit 1
 	fi
 done
+
+wants_link=$test_home/.config/systemd/user/niri.service.wants/noctalia.service
+if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "../noctalia.service" ]; then
+	printf '%s\n' 'Bootstrap did not enable noctalia.service for niri.service.' >&2
+	exit 1
+fi
+if grep -q 'spawn-at-startup "noctalia"' "$test_home/.config/niri/cfg/autostart.kdl"; then
+	printf '%s\n' 'Niri autostart still spawns Noctalia; see ADR-0007.' >&2
+	exit 1
+fi
 
 if find "$test_home" -name .keep -print -quit | grep -q .; then
 	printf '%s\n' 'Bootstrap deployed a repository-only .keep file.' >&2

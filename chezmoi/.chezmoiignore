@@ -1,3 +1,2 @@
 # Structural placeholders are kept in Git only; chezmoi must not deploy them.
 dot_config/niri/.keep
-dot_config/systemd/user/.keep

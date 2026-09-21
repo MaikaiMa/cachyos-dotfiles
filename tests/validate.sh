@@ -40,6 +40,8 @@ require_files \
 require_files \
 	chezmoi/.chezmoiignore \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_protonmail-bridge.service \
+	chezmoi/dot_config/systemd/user/noctalia.service \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_noctalia.service \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_config/noctalia/bar.toml \
@@ -62,6 +64,7 @@ require_files \
 	docs/adr/ADR-0004-sync-z13-window-color-with-noctalia.md \
 	docs/adr/ADR-0005-layer-noctalia-audio-glow-behind-bar.md \
 	docs/adr/ADR-0006-use-a-noctalia-dashboard-plugin.md \
+	docs/adr/ADR-0007-start-noctalia-as-a-systemd-user-service.md \
 	docs/noctalia-lockscreen.md \
 	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
