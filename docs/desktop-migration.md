@@ -91,9 +91,9 @@ Niri workspace integration behaves; and nothing blocks daily work. Note every
 irritation, and separate "plugin can fix this" from "DMS built-in". The
 built-in lock screen is not part of the verdict; phase 4 replaces it.
 
-Verdict: passes, ADR-0013 becomes Accepted and phase 2 starts. Fails, the
-trial is reverted with the command above and ADR-0013 is marked Rejected with
-the reasons.
+Verdict: passes, phase 2 starts. Fails, the trial is reverted with the
+command above and ADR-0013 is amended with the reasons before any other
+approach is tried.
 
 ## Phase 2: move the shell into the repository
 

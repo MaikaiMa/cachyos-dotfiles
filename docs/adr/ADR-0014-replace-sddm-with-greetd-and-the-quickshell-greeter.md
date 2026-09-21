@@ -1,6 +1,6 @@
 # ADR-0014: Replace SDDM with greetd running the repository-owned Quickshell greeter
 
-- Status: Proposed; implemented as the last phase of
+- Status: Accepted (2026-09-21); implemented as the last phase of
   [the desktop migration plan](../desktop-migration.md)
 - Date: 2026-09-21
 - Depends on: ADR-0013

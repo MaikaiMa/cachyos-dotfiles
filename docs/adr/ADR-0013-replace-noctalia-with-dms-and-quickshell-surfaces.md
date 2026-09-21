@@ -1,7 +1,7 @@
 # ADR-0013: Replace Noctalia with DankMaterialShell and repository-owned Quickshell surfaces
 
-- Status: Proposed; becomes Accepted when phase 1 of
-  [the desktop migration plan](../desktop-migration.md) passes
+- Status: Accepted (2026-09-21); implemented through
+  [the desktop migration plan](../desktop-migration.md)
 - Date: 2026-09-21
 - Supersedes: ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0011
 
@@ -103,8 +103,8 @@ Facts that drove the choice (verified 2026-09-21):
   of the migration lands. Their files stay for history.
 - `tests/validate.sh` loses its `noctalia` tool requirement and gains
   `qmllint` for the QML directories.
-- Until phase 1 passes this record is Proposed; the trial runs outside the
-  repository and is reversible with one service switch.
+- Phase 1 of the plan is the go/no-go for phase 2; the trial runs outside
+  the repository and is reversible with one service switch.
 
 ## Alternatives considered
 
