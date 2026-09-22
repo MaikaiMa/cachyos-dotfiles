@@ -11,3 +11,7 @@ z13ctl-bin
 # greetd greeter in the DMS look; the official repositories only offer
 # regreet, tuigreet, and agreety. Installed by scripts/setup-greetd.sh.
 greetd-dms-greeter-bin
+
+# Blip file transfer, opened on the chat workspace by a window rule; upstream
+# publishes only an AUR package (blipnet), no official one.
+blipnet

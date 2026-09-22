@@ -1,6 +1,7 @@
-workspace "chat"
-workspace "web"
+workspace "inbox"
+workspace "browse"
 workspace "code"
+workspace "game"
 
 window-rule {
     geometry-corner-radius 20
@@ -14,21 +15,33 @@ window-rule {
     }
 }
 
+// Browsers: Zen, with Firefox kept as the backup.
 window-rule {
-    match app-id=r#"^zen$"#
-    open-on-workspace "web"
+    match app-id=r#"^(zen|firefox)$"#
+    open-on-workspace "browse"
 }
 
-// Editor, terminals, and Claude (coding partner) share the code workspace.
+// Editor, terminals, Meld and Claude (coding partner) share the code workspace.
 window-rule {
-    match app-id=r#"^(Alacritty|com\.mitchellh\.ghostty|dev\.zed\.Zed|com\.anthropic\.Claude)$"#
+    match app-id=r#"^(Alacritty|com\.mitchellh\.ghostty|dev\.zed\.Zed|org\.gnome\.Meld|com\.anthropic\.Claude)$"#
     open-on-workspace "code"
 }
 
-// Mail and the general-purpose assistant: consult, then jump back.
+// Mail, the general-purpose assistant and Blip (file transfer; its X11 class is
+// MainKt): things that arrive and want an answer.
 window-rule {
-    match app-id=r#"^(co\.hyprlab\.Hylki|Chatgpt)$"#
-    open-on-workspace "chat"
+    match app-id=r#"^(co\.hyprlab\.Hylki|Chatgpt|MainKt)$"#
+    open-on-workspace "inbox"
+}
+
+// Steam, Heroic, Lutris, Goverlay and the games they launch stay out of the
+// way. Wine reports the executable name as the window class, so ".exe" and
+// gamescope catch games started through Heroic or Lutris.
+window-rule {
+    match app-id=r#"^(steam|heroic|net\.lutris\.Lutris|goverlay|gamescope)$"#
+    match app-id=r#"^steam_app_\d+$"#
+    match app-id=r#"\.exe$"#
+    open-on-workspace "game"
 }
 
 // Browsers, the editor, mail and the Steam main window keep the full width;

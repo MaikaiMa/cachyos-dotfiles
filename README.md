@@ -31,6 +31,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_gitconfig           Git credential helper
   private_dot_ssh/        SSH client configuration
   dot_local/bin/          deployed helper scripts
+  dot_local/private_share/applications/ desktop-entry overrides (Blip via java-uiscale)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
@@ -186,6 +187,23 @@ Restart the shell with the managed Fish function:
 ```fish
 dms-reset
 ```
+
+Niri has four named workspaces: `inbox` (mail, ChatGPT, Blip), `browse` (Zen,
+Firefox), `code` (terminals, Zed, Meld, Claude) and `game` (Steam, Heroic,
+Lutris, Goverlay and their games); the file manager and viewers open on the
+current workspace.
+
+## XWayland applications and HiDPI
+
+Blip runs through XWayland, and xwayland-satellite maps X11 pixels onto
+physical pixels, so it renders unscaled on the 1.75 display. The managed
+desktop entry starts it through `java-uiscale`, which reads the focused
+output's scale from niri and passes it to the JVM as `sun.java2d.uiScale`. The
+scale is read at launch, so restart Blip after moving it to a display with a
+different scale. This per-application approach was chosen over a global
+`Xft.dpi` set via `xrdb`, because Blip is currently the only X11 window and
+that approach needs an extra package and a startup hook; revisit if more X11
+applications arrive.
 
 ## Secrets
 

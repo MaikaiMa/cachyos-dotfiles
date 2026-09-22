@@ -85,7 +85,7 @@ session already runs.
 - `Mod3+M` (Caps+M) focuses the existing Hylki window or starts it.
 - `Mod3+Shift+M` opens a new message through the `mailto:` handler.
 - `mailto:` and `mid:` links open in Hylki through the managed `mimeapps.list`.
-- Hylki opens on the `chat` workspace.
+- Hylki opens on the `inbox` workspace.
 
 ## Machine-local state
 

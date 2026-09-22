@@ -1,0 +1,11 @@
+[Desktop Entry]
+Categories=Network;FileTransfer;
+Comment=Send files to people and devices around the world
+Exec=sh -c "exec \"\$HOME/.local/bin/java-uiscale\" blip"
+GenericName=File transfer
+Icon=net.blip.Blip
+Name=Blip
+StartupWMClass=MainKt
+Terminal=false
+Type=Application
+Version=1.0

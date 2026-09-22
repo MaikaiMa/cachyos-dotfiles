@@ -47,6 +47,10 @@ sushi # space-bar quick preview in Nautilus; GTK3, pulls evince for PDF previews
 zen-browser-bin
 chatgpt-desktop-bin
 github-cli # git credential helper in .gitconfig
+firefox # backup browser, opens on the browse workspace (niri rules.kdl)
+meld # diff tool, opens on the code workspace (niri rules.kdl)
+ghostty # terminal, opens on the code workspace (niri rules.kdl)
+claude-desktop # Claude Desktop, Mod3+I keybind
 
 # Secrets: Secret Service provider (profile-provided) and its CLI secret-tool.
 gnome-keyring
