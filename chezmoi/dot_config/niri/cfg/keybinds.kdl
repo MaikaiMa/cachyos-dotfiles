@@ -3,7 +3,7 @@ binds {
     // https://github.com/YaLTeR/niri/wiki/Configuration:-Key-Bindings
     // https://danklinux.com/docs/dankmaterialshell/keybinds-ipc
 
-    Mod+Shift+Slash                     hotkey-overlay-title="Show Hotkeys" { show-hotkey-overlay; }
+    Mod+Shift+Slash                     hotkey-overlay-title=null { show-hotkey-overlay; }
 
     // Applications: Caps is Mod3. Add Shift to force a new window.
     Mod3+Return                         repeat=false hotkey-overlay-title=null { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" Alacritty alacritty"; }
