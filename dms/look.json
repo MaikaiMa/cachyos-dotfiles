@@ -47,7 +47,7 @@
       "spacing": 6,
       "innerPadding": 4,
       "barLengthPadding": 12,
-      "bottomGap": 4,
+      "bottomGap": 0,
       "widgetPadding": 10,
       "transparency": 0.6,
       "widgetTransparency": 0.75,
