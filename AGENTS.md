@@ -33,6 +33,12 @@ with Niri.  It deliberately does not represent the live home directory.
   a structural change.
 - Add an ADR in `docs/adr/` before adopting a system-wide architectural
   decision. Do not silently introduce such decisions in scripts or configs.
+- A change to the Niri `input`, `output`, `cursor`, or `debug` sections
+  (`chezmoi/dot_config/niri/cfg/input.kdl`, `misc.kdl`, `display.kdl`) also
+  changes what the login screen needs: the greeter runs its own Niri from a
+  copy of those sections. State in the handoff that the user must run
+  `./scripts/setup-greetd.sh` after applying such a change; see
+  `docs/greeter.md`.
 
 ## Validation and handoff
 
