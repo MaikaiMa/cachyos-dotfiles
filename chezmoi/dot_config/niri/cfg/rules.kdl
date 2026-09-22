@@ -34,6 +34,13 @@ window-rule {
     open-on-workspace "inbox"
 }
 
+// X11 windows cannot use the activation token that Spotlight hands out, so
+// niri would leave Blip unfocused on its workspace; force the focus.
+window-rule {
+    match app-id=r#"^MainKt$"#
+    open-focused true
+}
+
 // Steam, Heroic, Lutris, Goverlay and the games they launch stay out of the
 // way. Wine reports the executable name as the window class, so ".exe" and
 // gamescope catch games started through Heroic or Lutris.
