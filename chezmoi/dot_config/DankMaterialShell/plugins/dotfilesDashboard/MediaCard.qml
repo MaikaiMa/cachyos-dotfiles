@@ -15,6 +15,10 @@ DashboardCard {
     property bool isSeeking: false
     property var popout: null
 
+    // DMS keeps plugin popout content loaded after close, so the position poll below
+    // would otherwise keep running for the rest of the session.
+    property bool popoutVisible: false
+
     function focusPlayerWindow() {
         const player = media.activePlayer;
         if (!player)
@@ -180,7 +184,7 @@ DashboardCard {
     Timer {
         interval: 500
         repeat: true
-        running: media.isPlaying && !media.isSeeking
+        running: media.popoutVisible && media.isPlaying && !media.isSeeking
         onTriggered: media.activePlayer?.positionSupported && media.activePlayer.positionChanged()
     }
 }

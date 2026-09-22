@@ -10,8 +10,5 @@
     ],
     "component": "./DotfilesDashboard.qml",
     "icon": "dashboard",
-    "requires_dms": ">=1.6.0",
-    "permissions": [
-        "settings_read"
-    ]
+    "requires_dms": ">=1.6.0"
 }

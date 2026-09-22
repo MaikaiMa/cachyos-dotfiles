@@ -6,7 +6,7 @@ DashboardCard {
     id: displayAudio
 
     readonly property string brightnessDevice: DisplayService.currentDevice || DisplayService.getDefaultDevice()
-    readonly property var brightnessDeviceInfo: DisplayService.devices.find(device => device.name === displayAudio.brightnessDevice) ?? null
+    readonly property var brightnessDeviceInfo: (DisplayService.devices ?? []).find(device => device.name === displayAudio.brightnessDevice) ?? null
     readonly property int brightnessValue: {
         DisplayService.brightnessVersion;
         return displayAudio.brightnessDevice ? DisplayService.getDeviceBrightness(displayAudio.brightnessDevice) : 0;

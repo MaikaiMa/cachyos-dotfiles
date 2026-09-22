@@ -10,9 +10,11 @@ that workspace has a notification waiting in the notification centre.
 - Rounded pills, one per niri workspace on the bar's own output, ordered by `idx`.
 - The focused workspace gets the wide pill in the focused colour (`Theme.primary` by
   default), the others stay in the muted surface colour.
-- A pill is drawn in `Theme.error` when a window on that workspace belongs to an app
-  that has a notification, or when niri marks a window on it urgent. The focused pill
-  keeps its focused fill and gets a red border instead, so the focus stays readable.
+- A pill alerts when a window on that workspace belongs to an app that has a
+  notification, or when niri marks a window on it urgent. An unfocused alerting pill
+  is filled with the alert colour at 45% alpha, the focused one with the full alert
+  colour, so it stays the widest and brightest pill in the strip. The alert colour is
+  the shell's urgent workspace colour, `Theme.error` by default.
 - Left click switches to the workspace, right click toggles the niri overview, and
   scrolling over the widget cycles through the workspaces (mouse wheel and touchpad,
   honouring `reverseScrolling`).
@@ -24,8 +26,8 @@ From the shell's own settings (Settings -> DankBar -> Workspaces):
 
 - `showOccupiedWorkspacesOnly`
 - `showWorkspaceIndex` and `showWorkspaceName` (both off means empty pills)
-- `workspaceColorMode`, `workspaceOccupiedColorMode`, `workspaceUnfocusedColorMode`
-  and their `custom` colour counterparts
+- `workspaceColorMode`, `workspaceOccupiedColorMode`, `workspaceUnfocusedColorMode`,
+  `workspaceUrgentColorMode` and their `custom` colour counterparts
 - `reverseScrolling`
 
 The plugin's own settings:
@@ -60,3 +62,14 @@ can be pulled into a shared location later; do not edit one without the other.
   notification's app name or desktop entry will not light up its workspace.
 - Pill sizes follow the built-in formula with the app-icon size offset fixed at the
   default, so a non-default `workspaceAppIconSizeOffset` does not change them.
+
+## Reloading during development
+
+`dms ipc call plugins reload <id>` only re-reads the manifest component, so an edit
+to any other file in this directory needs a shell restart:
+
+```fish
+systemctl --user restart dms.service
+```
+
+The `dms-reset` fish function does the same thing.

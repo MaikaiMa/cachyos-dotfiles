@@ -15,10 +15,12 @@ PluginComponent {
     readonly property bool dismissOnFocus: pluginData.dismissOnFocus ?? true
     readonly property int dismissOnFocusDelayMs: 1500
 
+    // CompositorService keeps the same sortedToplevels array when the new contents are
+    // equivalent, so a window title or focus change never invalidates a binding on it;
+    // this counter is what makes the list below follow those changes.
     property int toplevelsRevision: 0
+
     property int desktopEntriesRevision: 0
-    property int appIdSubstitutionsRevision: 0
-    property string pendingDismissAppId: ""
 
     readonly property real cellWidth: iconSize + 8
     readonly property real cellHeight: Math.min(iconSize + 8, widgetThickness)
@@ -36,7 +38,6 @@ PluginComponent {
     }
 
     readonly property var appEntries: {
-        root.appIdSubstitutionsRevision;
         const entries = new Map();
 
         if (root.showPinnedApps) {
@@ -78,9 +79,7 @@ PluginComponent {
     }
 
     function dismissNotificationsForFocusedApp() {
-        if (!root.dismissOnFocus)
-            return;
-        if (root.pendingDismissAppId === "" || root.pendingDismissAppId !== root.focusedAppId)
+        if (!root.dismissOnFocus || root.focusedAppId === "")
             return;
 
         const desktopEntry = DesktopEntries.heuristicLookup(root.focusedAppId);
@@ -151,7 +150,6 @@ PluginComponent {
     }
 
     function showTooltip(text, anchorX, anchorY) {
-        tooltipLoader.active = true;
         if (!tooltipLoader.item)
             return;
 
@@ -170,16 +168,13 @@ PluginComponent {
     }
 
     function hideTooltip() {
-        if (tooltipLoader.item)
-            tooltipLoader.item.hide();
-        tooltipLoader.active = false;
+        tooltipLoader.item?.hide();
     }
 
     visible: appEntries.length > 0
 
     function scheduleDismissForFocusedApp() {
         dismissOnFocusTimer.stop();
-        pendingDismissAppId = focusedAppId;
         if (dismissOnFocus && focusedAppId !== "")
             dismissOnFocusTimer.start();
     }
@@ -207,14 +202,6 @@ PluginComponent {
 
         function onApplicationsChanged() {
             root.desktopEntriesRevision++;
-        }
-    }
-
-    Connections {
-        target: SettingsData
-
-        function onAppIdSubstitutionsChanged() {
-            root.appIdSubstitutionsRevision++;
         }
     }
 
@@ -283,7 +270,7 @@ PluginComponent {
     Loader {
         id: tooltipLoader
 
-        active: false
+        active: true
         sourceComponent: tooltipComponent
     }
 

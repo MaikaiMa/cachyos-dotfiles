@@ -37,14 +37,14 @@ changed from the command line.
 
 ## Reloading during development
 
+`dms ipc call plugins reload <id>` only re-reads the manifest component, so an edit
+to any other file in this directory needs a shell restart:
+
 ```fish
-dms ipc call plugins reload dotfilesApps
+systemctl --user restart dms.service
 ```
 
-DMS cache-busts only the manifest's `component` file. After editing one of the
-helper files (`AppIconDelegate.qml`, `StatusDot.qml`, `NotificationMatcher.qml`,
-`AppContextMenu.qml`) the first reload still uses the cached helper and can fail
-with a `component error`; run the reload a second time.
+The `dms-reset` fish function does the same thing.
 
 ## Settings
 
@@ -75,13 +75,17 @@ two copies must stay identical; change this one and copy it over.
 
 ## Clearing notifications on focus
 
-While **Clear notifications on focus** is on, `DotfilesApps.qml` watches
-`focusedAppId`. Every change restarts a single-shot 1.5 s timer, so alt-tabbing
-past an app clears nothing. When the timer fires and the same app is still
-focused, `NotificationMatcher.groupKeysForApp()` resolves the app to notification
-group keys with the same normalisation used for the badge, and each key goes to
-`NotificationService.dismissGroup()`. Clicking an app's icon is covered by the
-same watcher, because the click changes the focus.
+While **Clear notifications on focus** is on, `DotfilesApps.qml` restarts a
+single-shot 1.5 s timer on two events: the focused app changes, and the set of
+notified apps changes. Restarting is the whole debounce, so alt-tabbing past an app
+clears nothing, and a notification that arrives while its app is already focused
+still gets its own 1.5 s before it is cleared.
+
+When the timer fires, `NotificationMatcher.groupKeysForApp()` resolves the app that
+is focused at that moment to notification group keys, with the same normalisation
+used for the badge, and each key goes to `NotificationService.dismissGroup()`.
+Clicking an app's icon is covered by the same watcher, because the click changes the
+focus.
 
 `dismissGroup()` calls `dismiss()` on each notification in the group. DMS writes
 a notification to the history the moment it arrives, and dropping a wrapper does
@@ -97,8 +101,9 @@ Nothing is deleted.
 - `SessionData` — `pinnedApps`, `setPinnedApps`
 - `SessionService` — `launchDesktopEntry`
 - `AppUsageHistoryData` — `addAppUsage`
-- `Paths` — `moddedAppId`, `getAppIcon`, `getAppName`, `isSteamApp`
-- `SettingsData` — `appIdSubstitutionsChanged`
+- `Paths` — `moddedAppId`, `getAppIcon`, `getAppName`, `isSteamApp`; `moddedAppId`
+  reads `SettingsData.appIdSubstitutions`, so the icon list follows that setting
+  without a watcher of its own
 - `Theme`, `BlurService`, `I18n`, `DankIcon`, `DankTooltip`, `StyledText`
 - Quickshell `DesktopEntries`, `IconImage`, `ScriptModel`, `PanelWindow`
 
@@ -107,8 +112,6 @@ Requires DMS >= 1.6.0 for the plugin API used here.
 ## Known limits
 
 - The window count is not drawn on the icon; it is in the tooltip only.
-- A notification that arrives while its app is already focused is not cleared,
-  because the focus never changes. Focus something else and come back.
 - Clearing on focus is per bar instance, so on a multi-monitor setup every
   instance runs its own timer. `dismissGroup` on an already empty group is a
   no-op, so the repeats are harmless.

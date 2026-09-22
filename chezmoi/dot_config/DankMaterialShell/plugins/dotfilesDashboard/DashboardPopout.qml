@@ -8,10 +8,16 @@ PopoutComponent {
 
     property var dashboard: null
 
+    // DMS keeps this content loaded after the popout closes, so the cards that poll
+    // need to know whether the popout is on screen.
+    readonly property bool popoutVisible: parentPopout?.shouldBeVisible ?? false
+
     // DMS anchors plugin popouts under the clicked pill with its own gap; Niri starts
     // tiled windows 2 logical pixels below the bar, so the placement is corrected here.
     readonly property real niriWindowGap: 2
 
+    // Writing the trigger values back into DMS's own popout is deliberate: the popout
+    // derives its position from them, and DMS resets them on every open.
     function placePopout() {
         const popout = parentPopout;
         if (!popout || !popout.screen)
@@ -49,7 +55,7 @@ PopoutComponent {
                 iconName: "notifications"
                 tooltipText: I18n.trFor("dotfilesDashboard", "Open notifications")
                 backgroundColor: Theme.ccPillInactiveBg
-                onClicked: dashboardPopout.dashboard?.openNotificationCenter()
+                onClicked: dashboardPopout.dashboard?.openNotificationCenter(dashboardPopout.parentPopout)
             }
 
             DankActionButton {
@@ -69,6 +75,7 @@ PopoutComponent {
     MediaCard {
         width: parent.width
         popout: dashboardPopout
+        popoutVisible: dashboardPopout.popoutVisible
     }
 
     DisplayAudioCard {
@@ -82,6 +89,7 @@ PopoutComponent {
     StatsCard {
         width: parent.width
         popout: dashboardPopout
+        popoutVisible: dashboardPopout.popoutVisible
     }
 
     Connections {
@@ -96,18 +104,6 @@ PopoutComponent {
         }
 
         function onTriggerWidthChanged() {
-            dashboardPopout.placePopout();
-        }
-
-        function onScreenChanged() {
-            dashboardPopout.placePopout();
-        }
-
-        function onBarYChanged() {
-            dashboardPopout.placePopout();
-        }
-
-        function onBarHeightChanged() {
             dashboardPopout.placePopout();
         }
 

@@ -51,7 +51,7 @@ Item {
         if (!hasWindows)
             return appName;
         if (windowCount > 1)
-            return appName + " (" + windowCount + " " + I18n.tr("windows") + ")";
+            return appName + " (" + windowCount + " " + I18n.trFor("dotfilesApps", "windows") + ")";
         return windowTitle ? appName + " • " + windowTitle : appName;
     }
 

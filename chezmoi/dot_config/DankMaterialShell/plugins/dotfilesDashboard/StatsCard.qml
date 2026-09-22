@@ -7,6 +7,10 @@ Row {
 
     property var popout: null
 
+    // DMS keeps plugin popout content loaded after close, so everything periodic here
+    // has to follow the popout's visibility instead of running for the session.
+    property bool popoutVisible: false
+
     readonly property real tileWidth: (width - spacing * 3) / 4
     readonly property var primaryGpu: DgopService.availableGpus?.[0] ?? null
     readonly property real networkRate: DgopService.networkRxRate + DgopService.networkTxRate
@@ -15,6 +19,52 @@ Row {
     property var networkSamples: []
     property real networkCeiling: 64
     property int tick: 0
+
+    property bool baseRefHeld: false
+    property string gpuRefPciId: ""
+
+    // Releasing the last reference to a pciId makes dgop rewrite availableGpus, which
+    // re-enters the handler below, so the bookkeeping is cleared before the call and
+    // syncGpuRef refuses to run inside itself.
+    property bool syncingGpuRef: false
+
+    function releaseGpuRef() {
+        const pciId = stats.gpuRefPciId;
+        if (pciId === "")
+            return;
+
+        stats.gpuRefPciId = "";
+        DgopService.removeRef(["gpu"]);
+        DgopService.removeGpuPciId(pciId);
+    }
+
+    function syncGpuRef() {
+        if (stats.syncingGpuRef)
+            return;
+
+        stats.syncingGpuRef = true;
+        const wanted = stats.popoutVisible ? (stats.primaryGpu?.pciId ?? "") : "";
+        if (stats.gpuRefPciId !== wanted) {
+            stats.releaseGpuRef();
+            if (wanted !== "") {
+                DgopService.addRef(["gpu"]);
+                DgopService.addGpuPciId(wanted);
+                stats.gpuRefPciId = wanted;
+            }
+        }
+        stats.syncingGpuRef = false;
+    }
+
+    function syncDgopRefs() {
+        if (stats.popoutVisible && !stats.baseRefHeld) {
+            DgopService.addRef(["cpu", "memory", "network"]);
+            stats.baseRefHeld = true;
+        } else if (!stats.popoutVisible && stats.baseRefHeld) {
+            DgopService.removeRef(["cpu", "memory", "network"]);
+            stats.baseRefHeld = false;
+        }
+        stats.syncGpuRef();
+    }
 
     function openProcessList() {
         stats.popout?.closePopout();
@@ -46,20 +96,18 @@ Row {
 
     spacing: Theme.spacingS
 
+    onPopoutVisibleChanged: stats.syncDgopRefs()
+
     Component.onCompleted: {
-        DgopService.addRef(["cpu", "memory", "network"]);
-        if (stats.primaryGpu?.pciId) {
-            DgopService.addRef(["gpu"]);
-            DgopService.addGpuPciId(stats.primaryGpu.pciId);
-        }
+        stats.syncDgopRefs();
         stats.refreshNetworkSamples();
     }
 
     Component.onDestruction: {
-        DgopService.removeRef(["cpu", "memory", "network"]);
-        if (stats.primaryGpu?.pciId) {
-            DgopService.removeRef(["gpu"]);
-            DgopService.removeGpuPciId(stats.primaryGpu.pciId);
+        stats.releaseGpuRef();
+        if (stats.baseRefHeld) {
+            DgopService.removeRef(["cpu", "memory", "network"]);
+            stats.baseRefHeld = false;
         }
     }
 
@@ -109,7 +157,7 @@ Row {
     Timer {
         interval: 1000
         repeat: true
-        running: true
+        running: stats.popoutVisible
         onTriggered: {
             stats.refreshNetworkSamples();
             stats.tick++;
@@ -122,8 +170,10 @@ Row {
         target: DgopService
 
         function onAvailableGpusChanged() {
+            stats.syncGpuRef();
+
             const gpu = stats.primaryGpu;
-            if (!gpu)
+            if (!gpu || !stats.popoutVisible)
                 return;
             const history = stats.gpuHistory.slice();
             history.push(gpu.temperature || 0);

@@ -6,18 +6,19 @@ import qs.Services
 PluginComponent {
     id: root
 
-    function triggerPosition() {
-        const screen = parentScreen || Screen;
-        const globalPos = mapToItem(null, 0, 0);
-        const barPosition = axis?.edge === "left" ? 2 : (axis?.edge === "right" ? 3 : (axis?.edge === "top" ? 0 : 1));
-        return SettingsData.getPopupTriggerPosition(globalPos, screen, barThickness, width, barSpacing, barPosition, barConfig);
-    }
+    // A PluginComponent subclass cannot reach the pill's visual content, which is what
+    // DMS itself measures, so the notification centre reuses the placement
+    // DashboardPopout already forced onto the dashboard popout.
+    function openNotificationCenter(popout) {
+        if (!popout?.screen)
+            return;
 
-    function openNotificationCenter() {
-        const screen = parentScreen || Screen;
-        const pos = triggerPosition();
+        const screen = popout.screen;
+        const x = popout.triggerX;
+        const y = popout.triggerY;
+        const width = popout.triggerWidth;
         closePopout();
-        PopoutService.toggleNotificationCenter(pos.x, pos.y, pos.width, section, screen);
+        PopoutService.toggleNotificationCenter(x, y, width, section, screen);
     }
 
     function openDashTab(tab) {

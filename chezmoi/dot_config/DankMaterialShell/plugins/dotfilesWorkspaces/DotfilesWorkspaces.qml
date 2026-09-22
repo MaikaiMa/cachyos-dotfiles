@@ -50,8 +50,7 @@ PluginComponent {
         if (all.length === 0)
             return [];
 
-        const onThisOutput = root.outputName ? all.filter(ws => ws.output === root.outputName) : [];
-        const source = onThisOutput.length > 0 ? onThisOutput : all;
+        const source = root.outputName ? all.filter(ws => ws.output === root.outputName) : all;
         const ordered = source.slice().sort((a, b) => a.idx - b.idx);
 
         if (!SettingsData.showOccupiedWorkspacesOnly)
@@ -113,7 +112,7 @@ PluginComponent {
         return colorFromMode(mode, root.idlePillColor, SettingsData.workspaceOccupiedCustomColor, Theme.secondary);
     }
 
-    readonly property color alertPillColor: Theme.error
+    readonly property color alertPillColor: colorFromMode(SettingsData.workspaceUrgentColorMode, Theme.error, SettingsData.workspaceUrgentCustomColor, Theme.error)
 
     function labelFor(workspace, vertical) {
         let name = SettingsData.showWorkspaceName ? (workspace?.name ?? "") : "";

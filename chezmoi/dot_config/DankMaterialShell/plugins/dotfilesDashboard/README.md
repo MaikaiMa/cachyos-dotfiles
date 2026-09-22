@@ -83,6 +83,19 @@ Everything reads and writes live DMS state; nothing shells out.
   indicators to show, but has no settings UI of its own.
 - The 2 logical pixel offset between the bar and the first window row is Niri's,
   not something DMS reports, so it is a constant in `DashboardPopout.qml`.
-- `dms ipc call plugins reload` only re-reads the manifest component; edits to
-  the other QML files in this directory need `systemctl --user restart
-  dms.service`.
+- DMS keeps the popout content loaded after a close, so the stat timers and the
+  `DgopService` refs are tied to `parentPopout.shouldBeVisible` by hand.
+- A plugin cannot reach its own bar pill's visual geometry, so the notification
+  centre is opened from the dashboard popout's trigger values instead, which puts
+  it in the same centred place as the dashboard.
+
+## Reloading during development
+
+`dms ipc call plugins reload <id>` only re-reads the manifest component, so an edit
+to any other file in this directory needs a shell restart:
+
+```fish
+systemctl --user restart dms.service
+```
+
+The `dms-reset` fish function does the same thing.

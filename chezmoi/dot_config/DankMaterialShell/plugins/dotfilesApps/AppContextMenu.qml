@@ -31,18 +31,18 @@ PanelWindow {
         const items = [];
         if (CompositorService.canMinimize(primaryWindow)) {
             items.push({
-                "label": primaryWindow?.minimized ? I18n.tr("Restore") : I18n.tr("Minimize"),
+                "label": primaryWindow?.minimized ? I18n.trFor("dotfilesApps", "Restore") : I18n.trFor("dotfilesApps", "Minimize"),
                 "action": "minimize"
             });
         }
         if (primaryWindow) {
             items.push({
-                "label": I18n.tr("Close"),
+                "label": I18n.trFor("dotfilesApps", "Close"),
                 "action": "close"
             });
         }
         items.push({
-            "label": isPinned ? I18n.tr("Unpin") : I18n.tr("Pin"),
+            "label": isPinned ? I18n.trFor("dotfilesApps", "Unpin") : I18n.trFor("dotfilesApps", "Pin"),
             "action": "pin"
         });
         return items;
