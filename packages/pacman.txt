@@ -37,6 +37,7 @@ protonmail-bridge-core # enabled user service
 jq # focus-or-spawn and scripts/dms-apply-look.sh
 util-linux # flock in focus-or-spawn
 tinysparql # wallpaper-favorites reads Nautilus stars
+xorg-xprop # xwayland-scaled sets Xft.dpi for X11 apps such as Blip
 
 # Applications launched by managed keybinds or set as default handlers.
 alacritty

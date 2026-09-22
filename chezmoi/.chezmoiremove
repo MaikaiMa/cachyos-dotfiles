@@ -10,3 +10,6 @@
 
 # Keybind shim that scripts/dms-trial.sh installed during the DMS trial.
 .local/bin/noctalia
+
+# Renamed to xwayland-scaled; J2D_UISCALE was overridden by Skiko.
+.local/bin/java-uiscale

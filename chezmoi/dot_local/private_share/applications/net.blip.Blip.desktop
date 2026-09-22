@@ -1,7 +1,7 @@
 [Desktop Entry]
 Categories=Network;FileTransfer;
 Comment=Send files to people and devices around the world
-Exec=sh -c "exec ~/.local/bin/java-uiscale blip"
+Exec=sh -c "exec ~/.local/bin/xwayland-scaled blip"
 GenericName=File transfer
 Icon=net.blip.Blip
 Name=Blip

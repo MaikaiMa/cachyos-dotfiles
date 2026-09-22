@@ -1,0 +1,47 @@
+#!/bin/sh
+set -eu
+
+# Blip is a Java 25 Compose app running through XWayland; xwayland-satellite
+# maps X11 pixels 1:1 onto physical pixels, so the app must scale itself. Its
+# Conveyor launcher strips JAVA_TOOL_OPTIONS/JDK_JAVA_OPTIONS and rejects -D
+# flags in CONVEYOR_JVM_OPTIONS, so JVM options are out. Skiko, Compose's
+# rendering layer, reads Xft.dpi from the X resource database and sets Java's
+# uiScale from it, overriding J2D_UISCALE; the JDK truncates fractional
+# factors, so a 1.75 scale must become dpi 192 (2x), not 168. The property is
+# overwritten as a whole because nothing else in this session writes X
+# resources (xrdb is not installed), and it is set on every launch because
+# Xwayland starts on demand and the scale may differ per display.
+
+if [ "$#" -lt 1 ]; then
+	printf 'Usage: %s COMMAND [ARG ...]\n' "${0##*/}" >&2
+	exit 2
+fi
+
+for tool in niri jq xprop; do
+	if ! command -v "$tool" >/dev/null 2>&1; then
+		printf 'Missing required command: %s\n' "$tool" >&2
+		exit 127
+	fi
+done
+
+if [ -z "${DISPLAY:-}" ]; then
+	printf '%s\n' 'DISPLAY is not set; launching unscaled.' >&2
+	exec "$@"
+fi
+
+scale=$(niri msg --json focused-output 2>/dev/null | jq -r '(.logical.scale // empty) | [round, 1] | max') || scale=""
+
+if [ -z "$scale" ]; then
+	printf '%s\n' 'Could not determine the focused output scale from niri; launching unscaled.' >&2
+	exec "$@"
+fi
+
+dpi=$((96 * scale))
+resource=$(printf 'Xft.dpi:\t%s' "$dpi")
+
+if ! xprop -root -f RESOURCE_MANAGER 8s -set RESOURCE_MANAGER "$resource"; then
+	printf '%s\n' 'Could not set Xft.dpi on the X server; launching unscaled.' >&2
+	exec "$@"
+fi
+
+exec "$@"

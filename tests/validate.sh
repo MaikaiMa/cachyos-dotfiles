@@ -56,9 +56,9 @@ require_files \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_java-uiscale \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
 	chezmoi/dot_local/bin/executable_wallpaper-favorites \
+	chezmoi/dot_local/bin/executable_xwayland-scaled \
 	chezmoi/dot_local/private_share/applications/net.blip.Blip.desktop \
 	chezmoi/dot_config/wallpapers/libraries \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
@@ -111,11 +111,11 @@ require_files \
 	tests/check-packages.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
-	tests/java-uiscale.sh \
 	tests/setup-greetd.sh \
 	tests/setup-z13-window.sh \
 	tests/sync-z13-window-color.sh \
 	tests/wallpaper-favorites.sh \
+	tests/xwayland-scaled.sh \
 	tests/validate.fish
 
 require_files \
@@ -173,16 +173,16 @@ fish -n tests/*.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fi
 tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_java-uiscale \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
 	chezmoi/dot_local/bin/executable_wallpaper-favorites \
+	chezmoi/dot_local/bin/executable_xwayland-scaled \
 	system/local/bin/niri-session
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_java-uiscale \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
 	chezmoi/dot_local/bin/executable_wallpaper-favorites \
+	chezmoi/dot_local/bin/executable_xwayland-scaled \
 	system/local/bin/niri-session
 
 chezmoi --source chezmoi execute-template \
@@ -190,11 +190,11 @@ chezmoi --source chezmoi execute-template \
 
 tests/check-packages.sh
 tests/focus-or-spawn.sh
-tests/java-uiscale.sh
 tests/setup-greetd.sh
 tests/setup-z13-window.sh
 tests/sync-z13-window-color.sh
 tests/wallpaper-favorites.sh
+tests/xwayland-scaled.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

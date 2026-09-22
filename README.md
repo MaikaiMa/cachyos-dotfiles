@@ -31,7 +31,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_gitconfig           Git credential helper
   private_dot_ssh/        SSH client configuration
   dot_local/bin/          deployed helper scripts
-  dot_local/private_share/applications/ desktop-entry overrides (Blip via java-uiscale)
+  dot_local/private_share/applications/ desktop-entry overrides (Blip via xwayland-scaled)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
@@ -195,18 +195,19 @@ current workspace.
 
 ## XWayland applications and HiDPI
 
-Blip runs through XWayland, and xwayland-satellite maps X11 pixels onto
-physical pixels, so it renders unscaled. The managed desktop entry starts it
-through `java-uiscale`, which reads the focused output's scale from niri and
-exports it as `J2D_UISCALE`, the variable the JDK's X11 toolkit reads. JVM
-options cannot be used because Blip's Conveyor launcher strips
-`JAVA_TOOL_OPTIONS` and rejects `-D` flags in `CONVEYOR_JVM_OPTIONS`. The
-toolkit accepts integer factors only, so the value is rounded and Blip renders
-at 2x on the 1.75 display, slightly larger than native apps. The scale is read
-at launch, so restart Blip after moving it to a display with another scale.
-This per-application approach was preferred over a global `Xft.dpi` via xrdb
-because Blip is the only X11 window. DMS Spotlight parses desktop entries with
-quickshell, which rejects `\$` escapes in Exec, hence the `~` form.
+Blip runs through XWayland and renders unscaled because xwayland-satellite
+maps X11 pixels onto physical pixels; the managed desktop entry starts it
+through `xwayland-scaled`, which reads the focused output's scale from niri,
+rounds it, and writes the matching `Xft.dpi` (96 per scale step) into the X
+resource database with `xprop` before starting the app. Skiko, Compose's
+rendering layer, reads `Xft.dpi` and applies it, whereas JVM options are
+stripped by Blip's Conveyor launcher and `J2D_UISCALE` is overridden by Skiko.
+Fractional factors are truncated by the JDK, so on the 1.75 display Blip
+renders at 2x, slightly larger than native apps. The resource is set per
+launch because Xwayland starts on demand and the scale may differ per
+display, so restart Blip after moving it. Any X11 app that reads `Xft.dpi`
+benefits as well. DMS Spotlight parses desktop entries with quickshell, which
+rejects `\$` escapes in Exec, hence the `~` form.
 
 ## Secrets
 
