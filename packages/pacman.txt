@@ -36,11 +36,14 @@ power-profiles-daemon # dashboard power profiles
 protonmail-bridge-core # enabled user service
 jq # focus-or-spawn and scripts/dms-apply-look.sh
 util-linux # flock in focus-or-spawn
+tinysparql # wallpaper-favorites reads Nautilus stars
 
 # Applications launched by managed keybinds or set as default handlers.
 alacritty
 zed
 nautilus
+loupe # default image viewer (mimeapps.list)
+sushi # space-bar quick preview in Nautilus; GTK3, pulls evince for PDF previews
 zen-browser-bin
 chatgpt-desktop-bin
 github-cli # git credential helper in .gitconfig

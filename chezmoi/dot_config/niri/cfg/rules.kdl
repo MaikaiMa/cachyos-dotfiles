@@ -31,6 +31,12 @@ window-rule {
     open-on-workspace "chat"
 }
 
+// Sushi (Files quick preview on space) is a transient overlay, not a column.
+window-rule {
+    match app-id=r#"^org\.gnome\.NautilusPreviewer$"#
+    open-floating true
+}
+
 window-rule {
     match app-id="steam"
     exclude title=r#"^[Ss]team$"#

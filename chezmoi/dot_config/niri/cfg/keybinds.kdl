@@ -150,10 +150,13 @@ binds {
     Mod+Slash                           { toggle-column-tabbed-display; }
     Mod+M                               { maximize-window-to-edges; }
 
-    // Screenshots:
-    Mod+Shift+1                        { screenshot; }
-    Mod+Shift+2                        { screenshot-screen; }
-    Mod+Shift+3                        { screenshot-window; }
+    // Screenshots: macOS layout (simple to complex). Plain = clipboard only, +Ctrl = also save to ~/Pictures/Screenshots.
+    Mod+Shift+2                         repeat=false hotkey-overlay-title="Copy Screenshot of Screen: dms screenshot full" { spawn-sh "dms screenshot full --no-file"; }
+    Mod+Shift+3                         repeat=false hotkey-overlay-title="Copy Screenshot of Window: dms screenshot window" { spawn-sh "dms screenshot window --no-file"; }
+    Mod+Shift+4                         repeat=false hotkey-overlay-title="Copy Screenshot of Region: dms screenshot region" { spawn-sh "dms screenshot region --no-confirm --no-file"; }
+    Mod+Ctrl+Shift+2                    repeat=false hotkey-overlay-title="Save Screenshot of Screen: dms screenshot full" { spawn-sh "dms screenshot full"; }
+    Mod+Ctrl+Shift+3                    repeat=false hotkey-overlay-title="Save Screenshot of Window: dms screenshot window" { spawn-sh "dms screenshot window"; }
+    Mod+Ctrl+Shift+4                    repeat=false hotkey-overlay-title="Save Screenshot of Region: dms screenshot region" { spawn-sh "dms screenshot region --no-confirm"; }
 
     // Emergency Escape Key:
     // Use this when a fullscreen app blocks your keybinds.

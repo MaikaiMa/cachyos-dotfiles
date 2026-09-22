@@ -50,10 +50,15 @@ require_files \
 	chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_protonmail-bridge.service \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_dms.service \
+	chezmoi/dot_config/systemd/user/default.target.wants/symlink_wallpaper-favorites.path \
+	chezmoi/dot_config/systemd/user/wallpaper-favorites.service \
+	chezmoi/dot_config/systemd/user/wallpaper-favorites.path \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
+	chezmoi/dot_local/bin/executable_wallpaper-favorites \
+	chezmoi/dot_config/wallpapers/libraries \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
 	chezmoi/dot_config/fish/functions/dms-reset.fish \
@@ -82,12 +87,14 @@ require_files \
 	docs/adr/ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md \
 	docs/adr/ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md \
 	docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md \
+	docs/adr/ADR-0016-mirror-nautilus-stars-into-the-dms-wallpaper-folder.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
 	docs/desktop-migration.md \
 	docs/greeter.md \
 	docs/dms.md \
+	docs/pictures.md \
 	dms/look.json \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
@@ -105,6 +112,7 @@ require_files \
 	tests/setup-greetd.sh \
 	tests/setup-z13-window.sh \
 	tests/sync-z13-window-color.sh \
+	tests/wallpaper-favorites.sh \
 	tests/validate.fish
 
 require_files \
@@ -163,11 +171,13 @@ tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
+	chezmoi/dot_local/bin/executable_wallpaper-favorites \
 	system/local/bin/niri-session
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
+	chezmoi/dot_local/bin/executable_wallpaper-favorites \
 	system/local/bin/niri-session
 
 chezmoi --source chezmoi execute-template \
@@ -178,6 +188,7 @@ tests/focus-or-spawn.sh
 tests/setup-greetd.sh
 tests/setup-z13-window.sh
 tests/sync-z13-window-color.sh
+tests/wallpaper-favorites.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

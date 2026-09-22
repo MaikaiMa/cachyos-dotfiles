@@ -1,0 +1,300 @@
+#!/bin/sh
+# Mirror images starred in Files (Nautilus) into one flat folder of symlinks,
+# because the DMS wallpaper picker reads a single folder non-recursively.
+set -eu
+
+libraries_dir=${WALLPAPER_LIBRARIES_DIR:-$HOME/Pictures/Libraries}
+favorites_dir=${WALLPAPER_FAVORITES_DIR:-$HOME/Pictures/Wallpapers}
+tags_dir=${NAUTILUS_TAGS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/nautilus/tags}
+libraries_file=${XDG_CONFIG_HOME:-$HOME/.config}/wallpapers/libraries
+
+libraries_dir=${libraries_dir%/}
+favorites_dir=${favorites_dir%/}
+
+starred_query='SELECT ?f { ?f a nautilus:File ; nautilus:starred true }'
+image_extensions='jpg jpeg png bmp gif webp jxl avif heif exr'
+
+skipped=0
+targets_file=
+
+usage() {
+	cat <<EOF
+Usage: ${0##*/} [sync|pull|list]
+
+  sync   Mirror starred images into the favourites folder (default).
+  pull   Clone or fast-forward the configured libraries, then sync.
+  list   Print the resolved favourite target paths, one per line.
+
+Environment:
+  WALLPAPER_LIBRARIES_DIR            wallpaper checkouts
+  WALLPAPER_FAVORITES_DIR            flat folder of favourite symlinks
+  NAUTILUS_TAGS_DIR                  Nautilus tag database directory
+  WALLPAPER_FAVORITES_STARRED_FILE   read starred URIs from this file instead
+                                     of querying the tag database
+EOF
+}
+
+require_command() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		printf 'Missing required command: %s\n' "$1" >&2
+		exit 127
+	fi
+}
+
+report() {
+	printf 'wallpaper-favorites: %s\n' "$1" >&2
+}
+
+starred_uris() {
+	if [ -n "${WALLPAPER_FAVORITES_STARRED_FILE:-}" ]; then
+		if [ ! -f "$WALLPAPER_FAVORITES_STARRED_FILE" ]; then
+			printf 'Starred URI file not found: %s\n' \
+				"$WALLPAPER_FAVORITES_STARRED_FILE" >&2
+			exit 1
+		fi
+		cat -- "$WALLPAPER_FAVORITES_STARRED_FILE"
+		return
+	fi
+
+	require_command tinysparql
+	if [ ! -d "$tags_dir" ]; then
+		printf 'Nautilus tag database not found: %s\n' "$tags_dir" >&2
+		printf '%s\n' 'Star a file in Files once to create it.' >&2
+		exit 1
+	fi
+
+	if ! query_output=$(tinysparql query -d "$tags_dir" "$starred_query" 2>&1); then
+		printf '%s\n' "$query_output" >&2
+		printf 'Could not read starred files from %s\n' "$tags_dir" >&2
+		exit 1
+	fi
+
+	# The first line is "Results:"; every result follows indented by two
+	# spaces, and an empty result set prints "None".
+	printf '%s\n' "$query_output" |
+		awk 'NR > 1 && substr($0, 1, 2) == "  " {
+			uri = substr($0, 3)
+			if (uri != "" && uri != "None") {
+				print uri
+			}
+		}'
+}
+
+# Turn percent-encoded URIs into printf %b arguments, so that UTF-8 bytes and
+# spaces survive without depending on anything outside POSIX tools.
+decode_uris() {
+	awk '
+		function hexvalue(text,   position, digit, value) {
+			value = 0
+			for (position = 1; position <= length(text); position++) {
+				digit = tolower(substr(text, position, 1))
+				value = value * 16 + index("0123456789abcdef", digit) - 1
+			}
+			return value
+		}
+		{
+			uri = $0
+			if (uri == "") {
+				next
+			}
+			if (substr(uri, 1, 7) == "file://") {
+				uri = substr(uri, 8)
+			}
+			decoded = ""
+			position = 1
+			length_of_uri = length(uri)
+			while (position <= length_of_uri) {
+				character = substr(uri, position, 1)
+				pair = substr(uri, position + 1, 2)
+				if (character == "%" && position + 2 <= length_of_uri &&
+					pair ~ /^[0-9A-Fa-f][0-9A-Fa-f]$/) {
+					decoded = decoded sprintf("\\0%03o", hexvalue(pair))
+					position += 3
+				} else {
+					if (character == "\\") {
+						decoded = decoded "\\\\"
+					} else {
+						decoded = decoded character
+					}
+					position += 1
+				}
+			}
+			print decoded
+		}
+	'
+}
+
+is_library_image() {
+	case $1 in
+	"$libraries_dir"/*) ;;
+	*) return 1 ;;
+	esac
+
+	[ -f "$1" ] || return 1
+
+	case $1 in
+	*.*) ;;
+	*) return 1 ;;
+	esac
+
+	extension=$(printf '%s' "${1##*.}" | tr '[:upper:]' '[:lower:]')
+	for accepted in $image_extensions; do
+		if [ "$extension" = "$accepted" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+collect_targets() {
+	starred_uris >"$work_dir/uris"
+	decode_uris <"$work_dir/uris" >"$work_dir/encoded"
+
+	: >"$work_dir/accepted"
+	: >"$work_dir/skipped"
+	while IFS= read -r encoded_path; do
+		target=$(printf '%b' "$encoded_path")
+		if is_library_image "$target"; then
+			printf '%s\n' "$target" >>"$work_dir/accepted"
+		else
+			printf '%s\n' "$target" >>"$work_dir/skipped"
+		fi
+	done <"$work_dir/encoded"
+
+	sort -u "$work_dir/accepted" >"$work_dir/targets"
+	skipped=$(tr -cd '\n' <"$work_dir/skipped" | wc -c)
+	targets_file=$work_dir/targets
+}
+
+link_name_for() {
+	relative_path=${1#"$libraries_dir"/}
+	printf '%s' "$relative_path" | tr '/' '-'
+}
+
+sync_favorites() {
+	if [ ! -d "$libraries_dir" ]; then
+		printf 'Wallpaper libraries directory not found: %s\n' "$libraries_dir" >&2
+		printf '%s\n' 'Run "wallpaper-favorites pull" to clone the libraries first.' >&2
+		exit 1
+	fi
+
+	collect_targets
+	mkdir -p "$favorites_dir"
+
+	linked=0
+	added=0
+	removed=0
+
+	: >"$work_dir/desired"
+	while IFS= read -r target; do
+		name=$(link_name_for "$target")
+		link=$favorites_dir/$name
+		printf '%s\n' "$name" >>"$work_dir/desired"
+
+		if [ -h "$link" ]; then
+			if [ "$(readlink "$link")" = "$target" ]; then
+				linked=$((linked + 1))
+				continue
+			fi
+		elif [ -e "$link" ]; then
+			report "not a symlink, cannot link: $link"
+			continue
+		fi
+
+		ln -sfn "$target" "$link"
+		added=$((added + 1))
+		linked=$((linked + 1))
+	done <"$targets_file"
+
+	find "$favorites_dir" -mindepth 1 -maxdepth 1 >"$work_dir/entries"
+	while IFS= read -r entry; do
+		name=${entry##*/}
+		if [ -h "$entry" ]; then
+			if ! grep -F -x -q -e "$name" "$work_dir/desired"; then
+				rm -f -- "$entry"
+				removed=$((removed + 1))
+			fi
+			continue
+		fi
+		if ! grep -F -x -q -e "$name" "$work_dir/desired"; then
+			report "ignoring non-symlink: $entry"
+		fi
+	done <"$work_dir/entries"
+
+	printf 'wallpaper-favorites: %s linked, %s added, %s removed, %s skipped\n' \
+		"$linked" "$added" "$removed" "$skipped"
+}
+
+list_favorites() {
+	collect_targets
+	cat "$targets_file"
+}
+
+pull_libraries() {
+	require_command git
+
+	if [ ! -f "$libraries_file" ]; then
+		printf 'No wallpaper library list at %s\n' "$libraries_file" >&2
+		exit 1
+	fi
+
+	mkdir -p "$libraries_dir"
+	while IFS= read -r line || [ -n "$line" ]; do
+		case $line in
+		'' | \#*) continue ;;
+		esac
+
+		name=${line%% *}
+		url=${line#* }
+		if [ "$url" = "$name" ] || [ -z "$url" ]; then
+			printf 'Library line needs "name url": %s\n' "$line" >&2
+			exit 1
+		fi
+
+		case $name in
+		'' | . | .. | */* | -*)
+			printf 'Invalid library name: %s\n' "$name" >&2
+			exit 1
+			;;
+		esac
+
+		destination=$libraries_dir/$name
+		if [ -d "$destination/.git" ]; then
+			git -C "$destination" pull --ff-only
+		elif [ -e "$destination" ]; then
+			printf 'Library path is not a git checkout: %s\n' "$destination" >&2
+			exit 1
+		else
+			git clone "$url" "$destination"
+		fi
+	done <"$libraries_file"
+}
+
+command_name=${1:-sync}
+case $command_name in
+-h | --help)
+	usage
+	exit 0
+	;;
+sync | pull | list) ;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac
+
+for tool in awk find grep sort tr; do
+	require_command "$tool"
+done
+
+work_dir=$(mktemp -d)
+trap 'rm -rf -- "$work_dir"' EXIT HUP INT TERM
+
+case $command_name in
+sync) sync_favorites ;;
+pull)
+	pull_libraries
+	sync_favorites
+	;;
+list) list_favorites ;;
+esac

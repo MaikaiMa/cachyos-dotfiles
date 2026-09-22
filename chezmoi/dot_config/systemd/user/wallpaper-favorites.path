@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch the Nautilus tag database for starred wallpapers
+
+[Path]
+# Nautilus keeps its SQLite connection open, so starring only produces an
+# IN_MODIFY on the write-ahead log; PathChanged (IN_CLOSE_WRITE) would not fire
+# until Nautilus quits. meta.db is watched for the checkpoint after that.
+PathModified=%h/.local/share/nautilus/tags/meta.db-wal
+PathModified=%h/.local/share/nautilus/tags/meta.db
+
+[Install]
+WantedBy=default.target

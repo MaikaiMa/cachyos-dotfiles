@@ -1,0 +1,6 @@
+[Unit]
+Description=Mirror images starred in Files into the DMS wallpaper folder
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/wallpaper-favorites sync

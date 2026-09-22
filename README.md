@@ -27,6 +27,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/alacritty/   terminal configuration
   dot_config/zed/         editor settings
   dot_config/mimeapps.list default applications
+  dot_config/wallpapers/  wallpaper repositories cloned by wallpaper-favorites
   dot_gitconfig           Git credential helper
   private_dot_ssh/        SSH client configuration
   dot_local/bin/          deployed helper scripts
@@ -38,6 +39,7 @@ docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
 docs/dms.md               DMS shell: what is deployed, the look, plugins, matugen, idle/lock
 docs/greeter.md           login screen: greetd running the DMS greeter
+docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, viewers
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
@@ -147,6 +149,23 @@ Restart the shell with:
 ```fish
 dms-reset
 ```
+
+## Wallpaper favourites
+
+The DMS wallpaper picker reads one flat folder, so `~/Pictures/Wallpapers`
+holds only symlinks. `wallpaper-favorites` creates them from the images
+starred in Files (Nautilus) under `~/Pictures/Libraries`, and the
+chezmoi-enabled `wallpaper-favorites.path` user unit runs it whenever a star
+changes. After the first deployment the unit needs one manual start:
+
+```fish
+systemctl --user daemon-reload
+systemctl --user start wallpaper-favorites.path
+wallpaper-favorites pull
+```
+
+See [docs/pictures.md](docs/pictures.md) and
+[ADR-0016](docs/adr/ADR-0016-mirror-nautilus-stars-into-the-dms-wallpaper-folder.md).
 
 ## Shell, terminal, editor and defaults
 
