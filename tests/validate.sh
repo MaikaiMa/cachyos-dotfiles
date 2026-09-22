@@ -54,6 +54,7 @@ require_files \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
+	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
 	chezmoi/dot_config/fish/functions/dms-reset.fish \
 	chezmoi/dot_config/alacritty/alacritty.toml \
@@ -95,6 +96,8 @@ require_files \
 	scripts/dms-apply-look.sh \
 	system/greetd/config.toml \
 	system/pam.d/greetd \
+	system/wayland-sessions/niri.desktop \
+	system/local/bin/niri-session-quiet \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
@@ -160,11 +163,13 @@ fish -n tests/*.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fi
 tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_sync-z13-window-color
+	chezmoi/dot_local/bin/executable_sync-z13-window-color \
+	system/local/bin/niri-session-quiet
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_sync-z13-window-color
+	chezmoi/dot_local/bin/executable_sync-z13-window-color \
+	system/local/bin/niri-session-quiet
 
 chezmoi --source chezmoi execute-template \
 	<chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl >/dev/null

@@ -10,8 +10,12 @@ repo_root=$(
 )
 config_source="$repo_root/system/greetd/config.toml"
 pam_source="$repo_root/system/pam.d/greetd"
+session_source="$repo_root/system/wayland-sessions/niri.desktop"
+session_wrapper_source="$repo_root/system/local/bin/niri-session-quiet"
 config_target=${GREETD_CONFIG_TARGET:-/etc/greetd/config.toml}
 pam_target=${GREETD_PAM_TARGET:-/etc/pam.d/greetd}
+session_target=${GREETD_SESSION_TARGET:-/usr/local/share/wayland-sessions/niri.desktop}
+session_wrapper_target=${GREETD_SESSION_WRAPPER_TARGET:-/usr/local/bin/niri-session-quiet}
 niri_config=${GREETD_NIRI_CONFIG:-/etc/greetd/niri/config.kdl}
 greeter_command=${DMS_GREETER_COMMAND:-dms-greeter}
 settings_json=${DMS_SETTINGS_PATH:-$HOME/.config/DankMaterialShell/settings.json}
@@ -57,6 +61,14 @@ service_is_enabled() {
 	[ "$(systemctl is-enabled "$1" 2>/dev/null || true)" = enabled ]
 }
 
+report_display_manager() {
+	if service_is_enabled greetd; then
+		printf '%s\n' 'greetd is the display manager; nothing to switch.'
+	else
+		printf '%s\n' 'SDDM stays the display manager; --switch performs the change.'
+	fi
+}
+
 config_ownership_is_wrong() {
 	[ -f "$config_target" ] || return 1
 	[ "$(stat -c '%U:%G %a' "$config_target" 2>/dev/null)" != 'root:root 644' ]
@@ -93,6 +105,16 @@ if cmp -s "$pam_source" "$pam_target"; then
 	pam_differs=false
 fi
 
+session_differs=true
+if cmp -s "$session_source" "$session_target"; then
+	session_differs=false
+fi
+
+session_wrapper_differs=true
+if cmp -s "$session_wrapper_source" "$session_wrapper_target"; then
+	session_wrapper_differs=false
+fi
+
 if [ "$dry_run" = true ]; then
 	if [ "$greetd_missing" = true ]; then
 		printf '%s\n' '+ sudo pacman -S --needed --noconfirm greetd acl'
@@ -105,6 +127,12 @@ if [ "$dry_run" = true ]; then
 	fi
 	if [ "$pam_differs" = true ]; then
 		printf '+ sudo install -Dm644 %s %s\n' "$pam_source" "$pam_target"
+	fi
+	if [ "$session_wrapper_differs" = true ]; then
+		printf '+ sudo install -Dm755 %s %s\n' "$session_wrapper_source" "$session_wrapper_target"
+	fi
+	if [ "$session_differs" = true ]; then
+		printf '+ sudo install -Dm644 %s %s\n' "$session_source" "$session_target"
 	fi
 	printf '+ %s sync --yes\n' "$greeter_command"
 	if config_ownership_is_wrong; then
@@ -121,7 +149,7 @@ if [ "$dry_run" = true ]; then
 			printf '%s\n' '+ sudo systemctl enable greetd'
 		fi
 	else
-		printf '%s\n' 'SDDM stays the display manager; --switch performs the change.'
+		report_display_manager
 	fi
 	exit 0
 fi
@@ -146,6 +174,14 @@ if [ "$pam_differs" = true ]; then
 	sudo install -Dm644 "$pam_source" "$pam_target"
 fi
 
+if [ "$session_wrapper_differs" = true ]; then
+	sudo install -Dm755 "$session_wrapper_source" "$session_wrapper_target"
+fi
+
+if [ "$session_differs" = true ]; then
+	sudo install -Dm644 "$session_source" "$session_target"
+fi
+
 "$greeter_command" sync --yes
 
 if [ ! -f "$niri_config" ]; then
@@ -164,7 +200,7 @@ niri validate --config "$niri_config"
 "$greeter_command" status
 
 if [ "$switch" = false ]; then
-	printf '%s\n' 'SDDM stays the display manager; --switch performs the change.'
+	report_display_manager
 	exit 0
 fi
 

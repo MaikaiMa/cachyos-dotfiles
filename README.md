@@ -73,7 +73,7 @@ describe it and are superseded by
 On a 2025 ROG Flow Z13 (`GZ302*`), the matugen `z13_window` template also
 sends the primary color to the rear window light through `z13ctl`. The helper
 is a no-op on other hardware and always targets `lightbar`, never the
-keyboard; see [docs/dms.md](docs/dms.md#matugen-and-the-z13-rear-window-color).
+keyboard; see [docs/dms.md](docs/dms.md#z13-rear-window-color).
 
 ## Packages
 

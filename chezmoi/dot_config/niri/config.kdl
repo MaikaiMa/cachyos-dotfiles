@@ -10,3 +10,4 @@ include "./cfg/misc.kdl"
 // DMS regenerates both files.
 include optional=true "dms/layout.kdl"
 include optional=true "dms/colors.kdl"
+include optional=true "matugen/backdrop.kdl"

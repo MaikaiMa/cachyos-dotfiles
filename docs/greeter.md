@@ -41,6 +41,43 @@ sysusers file. The same package ships `/etc/greetd/config.toml` and
 so a package upgrade never overwrites a locally modified copy; it writes a
 `.pacnew` alongside it instead.
 
+## Quiet session entry
+
+greetd hands the session's stdout and stderr to the VT, so everything
+`niri-session` prints stays on screen for a moment at login and at logout.
+SDDM used to redirect that stream to a log file; greetd does not. Two
+repository-owned files restore the redirect:
+
+- `system/local/bin/niri-session-quiet` installs as
+  `/usr/local/bin/niri-session-quiet`. It creates `~/.local/state` if needed
+  and then `exec`s `/usr/bin/niri-session` with stdout and stderr redirected
+  to `~/.local/state/niri-session.log`. The file is truncated at every login,
+  so it holds the current or the last session only.
+- `system/wayland-sessions/niri.desktop` installs as
+  `/usr/local/share/wayland-sessions/niri.desktop` and runs that wrapper.
+
+The redirect lives in the wrapper, not in the desktop entry, because the
+greeter's session launcher parses `Exec=` per the Desktop Entry specification
+rather than through a shell: `>` and `2>&1` would be passed to `niri-session`
+as literal arguments.
+
+The greeter reads `/usr/local/share/wayland-sessions` before
+`/usr/share/wayland-sessions` and deduplicates on `Name=`, so the local entry
+replaces the packaged one in the picker instead of appearing next to it. That
+is why the file keeps the name `niri.desktop` and the value `Name=Niri`: the
+desktop id is what the launcher resolves and what the greeter remembers as
+the last-used session.
+
+The packaged `/usr/share/wayland-sessions/niri.desktop` is never touched, so
+a niri upgrade cannot conflict with this, and a display manager that reads
+only `/usr/share/wayland-sessions` keeps starting the packaged session
+unchanged. SDDM's default `SessionDir` lists `/usr/local/share/wayland-sessions`
+first as well, so after a rollback to SDDM the quiet entry is used there too;
+the only effect is that the session log moves from SDDM's own
+`~/.local/share/sddm/wayland-session.log` to `~/.local/state/niri-session.log`.
+Removing `/usr/local/share/wayland-sessions/niri.desktop` restores the
+packaged entry everywhere.
+
 ## How sync works
 
 `dms-greeter sync --yes` (run by `scripts/setup-greetd.sh`) makes the login
@@ -147,6 +184,11 @@ After the first login through greetd, confirm:
   ```fish
   loginctl show-session $XDG_SESSION_ID -p Type
   ```
+- The session picker lists exactly one Niri entry, and the session log exists
+  instead of scrolling past on the VT:
+  ```fish
+  ls -l ~/.local/state/niri-session.log
+  ```
 - The last-used session is remembered on the next boot.
 - The wallpaper and colors on the greeter match the desktop.
 - DMS starts without an immediate lock screen after login.
@@ -174,7 +216,7 @@ Re-run the sync after:
 ./scripts/setup-greetd.sh
 ```
 
-Without `--switch`, this only re-installs the two system files if they
+Without `--switch`, this only re-installs the four system files if they
 differ and re-runs the sync; it does not touch the SDDM/greetd boot path.
 
 If a package upgrade of `greetd` or `dms-greeter` leaves a `.pacnew` next to
@@ -197,14 +239,13 @@ install command in the README, is harmless; it stays disabled until
   line of `system/pam.d/greetd` running for the greeter's own session, which
   has no keyring; the later `gkr-pam: unlocked login keyring` for your user is
   the line that matters.
-- For a moment at login and at logout the VT shows the line `Calling
-  import-environment without a list of variable names is deprecated.` in
-  systemd's warning colour. It comes from `niri-session` (the package's
-  `/usr/bin/niri-session` calls `systemctl --user import-environment` without
-  arguments, which systemd 261 deprecates) and is written to the session's
-  stderr. greetd leaves that on the VT, where SDDM used to redirect it to
-  `~/.local/share/sddm/wayland-session.log`, so the message is old but only
-  visible now. Harmless; it disappears when niri fixes the script upstream.
+- The packaged `/usr/bin/niri-session` calls `systemctl --user
+  import-environment` without arguments, which systemd 261 warns about
+  (`Calling import-environment without a list of variable names is
+  deprecated.`). The quiet session entry above redirects it to
+  `~/.local/state/niri-session.log` instead of the VT. It is harmless, and
+  the deprecated call is fixed upstream in niri (PRs 3572 and 3776), not
+  here.
 - The greeter preselects the last successfully logged-in user and session
   from `/var/cache/dms-greeter/.local/state/memory.json`. That file is written
   at the first successful login, so the very first boot through greetd shows
