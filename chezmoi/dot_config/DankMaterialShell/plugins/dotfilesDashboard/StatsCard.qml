@@ -7,6 +7,9 @@ Row {
 
     property var popout: null
 
+    readonly property int processesTab: 0
+    readonly property int performanceTab: 1
+
     // DMS keeps plugin popout content loaded after close, so everything periodic here
     // has to follow the popout's visibility instead of running for the session.
     property bool popoutVisible: false
@@ -66,9 +69,24 @@ Row {
         stats.syncGpuRef();
     }
 
-    function openProcessList() {
+    function openProcessList(tab, sortBy) {
         stats.popout?.closePopout();
-        PopoutService.toggleProcessListModal();
+        if (sortBy)
+            DgopService.setSortBy(sortBy);
+
+        const modal = PopoutService.processListModal;
+        if (modal) {
+            modal.currentTab = tab;
+            modal.focusOrToggle();
+            return;
+        }
+
+        PopoutService.showProcessListModal();
+        Qt.callLater(() => {
+            const loaded = PopoutService.processListModal;
+            if (loaded)
+                loaded.currentTab = tab;
+        });
     }
 
     function formatRate(bytesPerSecond) {
@@ -118,7 +136,7 @@ Row {
         samples: DgopService.cpuHistory
         repaintTrigger: stats.tick
         lineColor: Theme.primary
-        onClicked: stats.openProcessList()
+        onClicked: stats.openProcessList(stats.processesTab, "cpu")
     }
 
     StatTile {
@@ -128,7 +146,7 @@ Row {
         samples: DgopService.memoryHistory
         repaintTrigger: stats.tick
         lineColor: Theme.info
-        onClicked: stats.openProcessList()
+        onClicked: stats.openProcessList(stats.processesTab, "memory")
     }
 
     StatTile {
@@ -138,7 +156,7 @@ Row {
         samples: stats.gpuHistory
         repaintTrigger: stats.tick
         lineColor: Theme.secondary
-        onClicked: stats.openProcessList()
+        onClicked: stats.openProcessList(stats.performanceTab, "")
     }
 
     StatTile {
@@ -149,7 +167,7 @@ Row {
         sampleCeiling: stats.networkCeiling
         repaintTrigger: stats.tick
         lineColor: Theme.primary
-        onClicked: stats.openProcessList()
+        onClicked: stats.openProcessList(stats.performanceTab, "")
     }
 
     // dgop mutates its history arrays in place, so nothing notifies on new samples;

@@ -45,11 +45,19 @@ are untouched.
 
 ## Extra actions
 
-- Clicking a stat tile closes the dashboard and opens the DMS process list.
-- Clicking the album art focuses the window of the playing media player
-  (matching the MPRIS desktop entry or identity against
-  `CompositorService.sortedToplevels`), or falls back to the DMS media dash when
-  no window matches.
+- Clicking a stat tile closes the dashboard and opens the DMS system monitor on
+  the matching view: CPU and Memory open the Processes tab sorted by that column
+  (`DgopService.setSortBy`), GPU and Network open the Performance tab. It uses
+  the modal's `focusOrToggle()`, so an already open monitor is focused instead of
+  closed.
+- Clicking the album art focuses the window of the playing media player. The
+  MPRIS desktop entry, identity and bus name (including their last reverse-DNS
+  segment) are matched against `appId` in `CompositorService.sortedToplevels`,
+  with the track title against the window title as a fallback for browsers. When
+  nothing matches it opens the DMS media dash instead. The activation is delayed
+  until the popout has closed, because the open popout holds the keyboard focus.
+- The header's settings button uses `focusOrToggleSettings()`, so an open
+  settings window is focused rather than closed.
 
 ## Services used
 

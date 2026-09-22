@@ -28,7 +28,7 @@ PluginComponent {
 
     function openShellSettings() {
         closePopout();
-        PopoutService.openSettings();
+        PopoutService.focusOrToggleSettings();
     }
 
     popoutWidth: 700

@@ -18,27 +18,64 @@ DashboardCard {
     // DMS keeps plugin popout content loaded after close, so the position poll below
     // would otherwise keep running for the rest of the session.
     property bool popoutVisible: false
+    property var pendingFocusToplevel: null
+
+    function playerNames() {
+        const player = media.activePlayer;
+        const names = [];
+        const add = value => {
+            const name = (value || "").toString().toLowerCase().trim();
+            if (name.length < 3 || names.indexOf(name) !== -1)
+                return;
+            names.push(name);
+            const lastSegment = name.split(".").pop();
+            if (lastSegment.length >= 3 && names.indexOf(lastSegment) === -1)
+                names.push(lastSegment);
+        };
+
+        if (!player)
+            return names;
+        add(player.desktopEntry);
+        add(player.identity);
+        add((player.dbusName || "").replace("org.mpris.MediaPlayer2.", "").split(".")[0]);
+        return names;
+    }
+
+    function toplevelForPlayer() {
+        const toplevels = CompositorService.sortedToplevels || [];
+        const names = media.playerNames();
+        const byAppId = toplevels.find(toplevel => {
+            const appId = (toplevel?.appId || "").toLowerCase();
+            if (appId.length < 2)
+                return false;
+            return names.some(name => name === appId || name.includes(appId) || appId.includes(name));
+        });
+        if (byAppId)
+            return byAppId;
+
+        // Browsers report their own name over MPRIS, never the site's, so the window
+        // is found back through the track title the browser puts in its title bar.
+        const track = (MprisController.stableTitle || "").toLowerCase().trim();
+        if (track.length < 4)
+            return null;
+        return toplevels.find(toplevel => (toplevel?.title || "").toLowerCase().includes(track)) ?? null;
+    }
 
     function focusPlayerWindow() {
-        const player = media.activePlayer;
-        if (!player)
+        if (!media.activePlayer)
             return;
 
-        const wanted = [player.desktopEntry, player.identity].filter(name => name && name.length > 0).map(name => name.toLowerCase());
-        const toplevels = CompositorService.sortedToplevels || [];
-        const match = toplevels.find(toplevel => {
-            const appId = (toplevel?.appId || "").toLowerCase();
-            if (appId.length === 0)
-                return false;
-            return wanted.some(name => appId === name || appId.includes(name) || name.includes(appId));
-        });
-
+        const match = media.toplevelForPlayer();
         media.popout?.closePopout();
-        if (match) {
-            CompositorService.activateToplevel(match);
+        if (!match) {
+            PopoutService.toggleDankDash("media");
             return;
         }
-        PopoutService.toggleDankDash("media");
+
+        // The open popout holds the keyboard focus, so activating the window before the
+        // popout has closed leaves the compositor focus where it was.
+        media.pendingFocusToplevel = match;
+        focusAfterClose.restart();
     }
 
     function formatTime(seconds) {
@@ -186,5 +223,17 @@ DashboardCard {
         repeat: true
         running: media.popoutVisible && media.isPlaying && !media.isSeeking
         onTriggered: media.activePlayer?.positionSupported && media.activePlayer.positionChanged()
+    }
+
+    Timer {
+        id: focusAfterClose
+
+        interval: 250
+        onTriggered: {
+            const target = media.pendingFocusToplevel;
+            media.pendingFocusToplevel = null;
+            if (target)
+                CompositorService.activateToplevel(target);
+        }
     }
 }
