@@ -1,6 +1,6 @@
 # ADR-0002: Use Noctalia for dynamic Niri colors
 
-- Status: Accepted
+- Status: Superseded by ADR-0013 (2026-09-22)
 - Date: 2026-09-19
 
 ## Context

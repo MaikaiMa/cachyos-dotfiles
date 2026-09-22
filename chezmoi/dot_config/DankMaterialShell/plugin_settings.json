@@ -1,0 +1,14 @@
+{
+  "dotfilesApps": {
+    "enabled": true
+  },
+  "dotfilesDashboard": {
+    "enabled": true
+  },
+  "dotfilesLauncher": {
+    "enabled": true
+  },
+  "dotfilesWorkspaces": {
+    "enabled": true
+  }
+}

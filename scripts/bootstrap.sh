@@ -9,6 +9,7 @@ repo_root=$(
 	pwd
 )
 source_dir="$repo_root/chezmoi"
+dms_command=${DMS_COMMAND:-dms}
 dry_run=false
 
 for arg in "$@"; do
@@ -22,9 +23,7 @@ if ! command -v chezmoi >/dev/null 2>&1; then
 	exit 1
 fi
 
-z13_target=false
 if "$repo_root/scripts/setup-z13-window.sh" --check; then
-	z13_target=true
 	if [ "$dry_run" = true ]; then
 		"$repo_root/scripts/setup-z13-window.sh" --dry-run
 	else
@@ -34,12 +33,10 @@ fi
 
 chezmoi --source "$source_dir" apply "$@"
 
-if [ "$z13_target" = true ] && [ "$dry_run" = false ]; then
-	if command -v noctalia >/dev/null 2>&1; then
-		if ! noctalia msg templates-apply; then
-			printf '%s\n' 'Noctalia is not running; it will apply the Z13 template on its next start.' >&2
-		fi
-	else
-		printf '%s\n' 'Noctalia is not installed; Z13 color syncing will start when it becomes available.' >&2
+if command -v "$dms_command" >/dev/null 2>&1; then
+	if [ "$dry_run" = true ]; then
+		"$repo_root/scripts/dms-apply-look.sh" --dry-run
+	elif ! "$repo_root/scripts/dms-apply-look.sh"; then
+		printf '%s\n' 'Applying the DMS look failed; run scripts/dms-apply-look.sh yourself.' >&2
 	fi
 fi

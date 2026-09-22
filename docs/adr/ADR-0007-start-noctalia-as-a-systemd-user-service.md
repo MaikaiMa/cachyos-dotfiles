@@ -1,6 +1,6 @@
 # ADR-0007: Start Noctalia as a systemd user service
 
-- Status: Accepted
+- Status: Superseded by ADR-0013 (2026-09-22)
 - Date: 2026-09-21
 
 ## Context

@@ -29,7 +29,7 @@ running when Flatpak was first installed do not see the new path. Restart the
 shell so its launcher lists Hylki, or log out and in:
 
 ```fish
-noctalia-reset
+dms-reset
 ```
 
 ## Accounts

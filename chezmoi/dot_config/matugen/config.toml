@@ -1,0 +1,8 @@
+[config]
+
+[templates]
+
+[templates.z13_window]
+input_path = "~/.config/matugen/templates/z13-window-color"
+output_path = "~/.cache/matugen/z13-window-color"
+post_hook = "~/.local/bin/sync-z13-window-color '{{ colors.primary.default.hex_stripped }}'"

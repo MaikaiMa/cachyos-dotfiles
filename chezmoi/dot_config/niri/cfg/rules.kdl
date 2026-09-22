@@ -32,13 +32,6 @@ window-rule {
 }
 
 window-rule {
-    match app-id="dev.noctalia.Noctalia"
-    open-floating true
-    default-column-width { fixed 1080; }
-    default-window-height { fixed 920; }
-}
-
-window-rule {
     match app-id="steam"
     exclude title=r#"^[Ss]team$"#
     open-floating true
@@ -50,19 +43,6 @@ window-rule {
     open-focused false
 }
 
-layer-rule {
-    match namespace="^noctalia-wallpaper"
-    place-within-backdrop true
-}
-
-layer-rule {
-    match namespace="^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$"
-    background-effect {
-        xray false
-    }
-}
-
-// Interim while DMS is the shell; removed with the Noctalia rules in phase 2.
 layer-rule {
     match namespace="^dms:"
     background-effect {

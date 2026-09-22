@@ -1,6 +1,6 @@
 # ADR-0005: Layer Noctalia audio glow behind the bar
 
-- Status: Accepted
+- Status: Superseded by ADR-0013 (2026-09-22)
 - Date: 2026-09-20
 
 ## Context

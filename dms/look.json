@@ -59,6 +59,10 @@
       "gothCornersEnabled": false
     }
   ],
+  "acLockTimeout": 600,
+  "acSuspendTimeout": 0,
+  "batteryLockTimeout": 300,
+  "batterySuspendTimeout": 900,
   "updaterCheckOnStart": true,
   "trayMaxVisibleItems": 1,
   "trayAutoOverflow": true,

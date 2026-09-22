@@ -1,9 +1,0 @@
-# Noctalia acts as the session's polkit authentication agent.
-[shell]
-polkit_agent = true
-
-# Plugins Noctalia fetches and enables. Local plugins live under
-# ~/.local/share/noctalia/plugins; community plugins are downloaded on first
-# start. Toggling in Settings writes a machine-local override; see ADR-0011.
-[plugins]
-enabled = ["maikel/quick-controls", "yuuto/arch-updater"]

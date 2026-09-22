@@ -107,7 +107,9 @@ Check that the machine still provides every recorded package:
 ```
 
 Repository tests cannot prove hardware and desktop behavior. After deployment,
-manually verify the affected Niri behavior, Noctalia template refresh, spelling
-integration, Z13 rear-window lighting, and any feature-specific restart
-requirements. Record a failed assumption in the relevant guide or ADR before
-trying a different architectural approach.
+manually verify the affected Niri behavior, that the DMS bar and its plugins
+load (`dms-reset`, then check the bar and `Mod+S`), that a wallpaper change
+re-renders the Z13 rear-window color (see `docs/dms.md`), spelling
+integration, and any feature-specific restart requirements. Record a failed
+assumption in the relevant guide or ADR before trying a different
+architectural approach.

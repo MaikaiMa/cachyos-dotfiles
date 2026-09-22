@@ -7,8 +7,6 @@ include "./cfg/layout.kdl"
 include "./cfg/rules.kdl"
 include "./cfg/misc.kdl"
 
-include optional=true "noctalia.kdl"
-
-// Interim while DMS is the shell; DMS regenerates both files.
+// DMS regenerates both files.
 include optional=true "dms/layout.kdl"
 include optional=true "dms/colors.kdl"

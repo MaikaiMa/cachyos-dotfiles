@@ -18,7 +18,8 @@ installed application.
 ```text
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
-  dot_config/noctalia/    declarative Noctalia configuration
+  dot_config/DankMaterialShell/ DMS plugins and plugin settings
+  dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color)
   dot_config/systemd/user/ managed ~/.config/systemd/user units
   dot_config/environment.d/ session environment (SSH agent socket)
   dot_config/git/         allowed signers for SSH commit signatures
@@ -29,11 +30,13 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_gitconfig           Git credential helper
   private_dot_ssh/        SSH client configuration
   dot_local/bin/          deployed helper scripts
+dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
 packages/                 official, AUR, and Flatpak package manifests
 docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
+docs/dms.md               DMS shell: what is deployed, the look, plugins, matugen, idle/lock
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0014)
 tests/                    repository validation
 ```
@@ -41,52 +44,46 @@ tests/                    repository validation
 `chezmoi/.chezmoiignore` excludes the tracked `.keep` placeholders. Review the
 chezmoi diff before every explicit deployment.
 
-Noctalia's built-in Niri template generates `~/.config/niri/noctalia.kdl`
-from the active palette. This generated, wallpaper-dependent file is runtime
-state and is intentionally not stored in Git; see ADR-0002.
+DankMaterialShell (DMS) writes `dms/layout.kdl` and `dms/colors.kdl` from the
+active wallpaper palette; the managed `config.kdl` includes both optionally, so
+the Niri focus ring width and color follow DMS's theme on every change. These
+generated, wallpaper-dependent files are runtime state and are intentionally
+not stored in Git.
 
-The managed Noctalia configuration also provides a `dotfiles` bar and keeps
-the built-in `default` bar available as a disabled fallback. Bootstrap deploys
-and activates `dotfiles`. To switch locally, enable `default` and disable
-`dotfiles` in Noctalia Settings; those GUI overrides intentionally remain
-machine-local in `~/.local/state/noctalia/settings.toml`.
+DMS is deployed with the mat-glass bar look from `dms/look.json`, applied by
+`scripts/dms-apply-look.sh`: a launcher button, workspace pills that turn red
+on a notification, and application icons with a focus highlight and
+notification dot replace the built-in bar widgets. The [Dotfiles
+Dashboard](chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md)
+plugin rebuilds the former Noctalia dashboard as a centered popout on
+`Mod+S`, with the original DMS Control Center and Settings still reachable
+from its header. DMS's own built-in lock screen is used for now; a
+repository-owned lock screen is the next step, see ADR-0014 and
+`docs/desktop-migration.md`. All of this, including how to iterate on the
+look, restart the shell, and reload a plugin, is documented in
+[docs/dms.md](docs/dms.md).
 
-While the `dotfiles` bar is active, Noctalia's native PipeWire spectrum is
-placed behind it as a subtle theme-colored glow. The placement is generated
-from the effective bar and Niri output geometry, including the bar thickness,
-padding, radius, and margins, so connector names and display dimensions remain
-machine-local. It synchronizes when Noctalia starts. After a
-display or bar-layout change during the session, refresh it with:
+The former Noctalia configuration is preserved only as the `noctalia-final`
+Git tag; ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, and ADR-0011
+describe it and are superseded by
+[ADR-0013](docs/adr/ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md).
 
-```fish
-sync-noctalia-audio-glow
-```
-
-The generated `~/.config/noctalia/desktop-audio-glow.generated.toml` is runtime
-state and must not be committed. Disabling the `dotfiles` bar and running the
-helper removes the glow while leaving the fallback bar unchanged; see ADR-0005.
-
-The local [Noctalia Dashboard plugin](docs/noctalia-quick-controls.md) provides
-a compact, status-aware `Mod+S` control surface without patching Noctalia. The
-original Control Center and complete Settings remain available from its header.
-
-The managed [Noctalia lock screen](docs/noctalia-lockscreen.md) keeps a small
-stock composition of native time, date, and login widgets. It follows the
-active wallpaper palette without maintaining custom lock-screen code.
-
-On a 2025 ROG Flow Z13 (`GZ302*`), the Noctalia user template also sends that
-same primary color to the rear window light through `z13ctl`. The helper is a
-no-op on other hardware and always targets `lightbar`, never the keyboard; see
-ADR-0004.
+On a 2025 ROG Flow Z13 (`GZ302*`), the matugen `z13_window` template also
+sends the primary color to the rear window light through `z13ctl`. The helper
+is a no-op on other hardware and always targets `lightbar`, never the
+keyboard; see [docs/dms.md](docs/dms.md#matugen-and-the-z13-rear-window-color).
 
 ## Packages
 
 The baseline is a CachyOS installation with the "Niri / Noctalia" desktop
-profile, which installs `cachyos-niri-noctalia` and with it Niri, Noctalia,
-the cursor theme, and the desktop portals. `packages/pacman.txt` records only
-what the managed configuration, helpers, validation, and documented setup need
-on top of or from within that baseline. Kernel, bootloader, driver, and other
-installer-owned packages are deliberately not recorded; see ADR-0009.
+profile, which installs `cachyos-niri-noctalia` and with it Niri, the cursor
+theme, and the desktop portals. That profile stays the baseline for those
+pieces even though DMS, not Noctalia, is the deployed shell; Noctalia remains
+on disk unused. `packages/pacman.txt` records only what the managed
+configuration, helpers, validation, and documented setup need on top of or
+from within that baseline — including `dms-shell-niri`, `quickshell`,
+`matugen`, and `cava`. Kernel, bootloader, driver, and other installer-owned
+packages are deliberately not recorded; see ADR-0009.
 
 Pending updates from all three sources show in the bar through the
 `yuuto/arch-updater` plugin; see the maintenance guide for the update
@@ -132,29 +129,28 @@ remain machine-local and are not managed by this repository.
 
 On a detected 2025 Z13, `scripts/bootstrap.sh` automatically installs
 `z13ctl-bin` with `paru` or `yay`, installs the narrowly scoped lightbar udev
-rule, applies the dotfiles, and asks a running Noctalia instance to refresh its
-templates. No logout or separate activation step is required. Other hardware
-skips the entire Z13 setup.
+rule, applies the dotfiles, and applies the DMS look. No logout or separate
+activation step is required. Other hardware skips the entire Z13 setup.
 
-## Noctalia startup
+## DMS startup
 
-Noctalia is started by the managed systemd user unit `noctalia.service`, which
-is bound to `niri.service` and enabled through a chezmoi-managed symlink in
-`niri.service.wants/`. Niri's autostart fragment deliberately does not spawn
-Noctalia as well; see ADR-0007. Restart the shell with:
+DMS is started by its own packaged systemd user unit, `dms.service`, which is
+bound to `niri.service` and enabled through a chezmoi-managed symlink in
+`niri.service.wants/`. Niri's autostart fragment does not spawn DMS as well.
+Restart the shell with:
 
 ```fish
-systemctl --user restart noctalia.service
+dms-reset
 ```
 
 ## Shell, terminal, editor and defaults
 
-The repository manages Noctalia's shell options (`config.toml`, polkit agent),
-Fish helpers under `conf.d/` and `functions/`, the Alacritty configuration, Zed
-settings, the default-application handlers in `mimeapps.list`, and a
-`.gitconfig` that uses the GitHub CLI as credential helper and signs commits
-and tags with the SSH key from 1Password. Git identity is not managed; set it
-per repository or locally.
+The repository manages DMS's plugins and plugin settings (see
+[docs/dms.md](docs/dms.md)), Fish helpers under `conf.d/` and `functions/`,
+the Alacritty configuration, Zed settings, the default-application handlers in
+`mimeapps.list`, and a `.gitconfig` that uses the GitHub CLI as credential
+helper and signs commits and tags with the SSH key from 1Password. Git
+identity is not managed; set it per repository or locally.
 
 Files that CachyOS installs from `/etc/skel` and that are unchanged, such as
 `config.fish`, `.zshrc`, and the Micro settings, are deliberately not managed.
@@ -164,7 +160,7 @@ Zed and the XDG MIME database rewrite their own files; review the resulting
 Restart the shell with the managed Fish function:
 
 ```fish
-noctalia-reset
+dms-reset
 ```
 
 ## Secrets

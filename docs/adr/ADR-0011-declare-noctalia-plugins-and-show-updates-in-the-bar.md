@@ -1,6 +1,6 @@
 # ADR-0011: Declare Noctalia plugins and show updates in the bar
 
-- Status: Accepted
+- Status: Superseded by ADR-0013 (2026-09-22)
 - Date: 2026-09-21
 
 ## Context

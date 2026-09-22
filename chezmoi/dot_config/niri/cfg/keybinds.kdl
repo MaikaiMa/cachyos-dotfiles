@@ -1,7 +1,7 @@
 binds {
     // Keybindings:
     // https://github.com/YaLTeR/niri/wiki/Configuration:-Key-Bindings
-    // https://docs.noctalia.dev/getting-started/keybinds/
+    // https://danklinux.com/docs/dankmaterialshell/keybinds-ipc
 
     Mod+Shift+Slash                      { show-hotkey-overlay; }
 
@@ -21,28 +21,28 @@ binds {
     Mod3+Shift+M                        repeat=false hotkey-overlay-title="Compose New Mail: Hylki" { spawn "flatpak" "run" "co.hyprlab.Hylki" "mailto:"; }
     Mod+Shift+Space                     repeat=false hotkey-overlay-title="Open 1Password Quick Access" { spawn "1password" "--quick-access"; }
 
-    // Noctalia:
-    Mod+Return                          hotkey-overlay-title="Open Wallpaper Selector: noctalia wallpaper toggle" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
-    Mod+S                               hotkey-overlay-title="Open Quick Controls: noctalia plugin panel" { spawn-sh "noctalia msg panel-toggle maikel/quick-controls:panel"; }
-    Mod+Shift+S                         hotkey-overlay-title="Open Settings: noctalia settings" { spawn-sh "noctalia msg settings-toggle"; }
-    Mod+Space                           hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
-    Mod+V                               repeat=false hotkey-overlay-title="Open Clipboard History: noctalia clipboard" { spawn-sh "noctalia msg panel-toggle clipboard"; }
-    Mod+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "noctalia msg session lock"; }
-    Mod+ESCAPE                          hotkey-overlay-title="Session Menu: noctalia sessionMenu" { spawn-sh "noctalia msg panel-toggle session"; }
+    // DankMaterialShell:
+    Mod+Return                          hotkey-overlay-title="Open Wallpaper Selector: dms dash wallpaper" { spawn-sh "dms ipc call dash toggle wallpaper"; }
+    Mod+S                               hotkey-overlay-title="Open Dashboard: dms dotfilesDashboard widget" { spawn-sh "dms ipc call widget toggle dotfilesDashboard"; }
+    Mod+Shift+S                         hotkey-overlay-title="Open Settings: dms settings" { spawn-sh "dms ipc call settings toggle"; }
+    Mod+Space                           hotkey-overlay-title="Open App Launcher: dms spotlight" { spawn-sh "dms ipc call spotlight toggle"; }
+    Mod+V                               repeat=false hotkey-overlay-title="Open Clipboard History: dms clipboard" { spawn-sh "dms ipc call clipboard toggle"; }
+    Mod+ALT+L                           hotkey-overlay-title="Lock Screen: dms lock" { spawn-sh "dms ipc call lock lock"; }
+    Mod+ESCAPE                          hotkey-overlay-title="Session Menu: dms powermenu" { spawn-sh "dms ipc call powermenu toggle"; }
 
     // Media Controls:
-    XF86AudioRaiseVolume                allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
-    XF86AudioLowerVolume                allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
-    XF86AudioMute                       allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
-    XF86AudioMicMute                    allow-when-locked=true { spawn-sh "noctalia msg mic-mute"; }
-    XF86AudioNext                       allow-when-locked=true { spawn-sh "noctalia msg media next"; }
-    XF86AudioPrev                       allow-when-locked=true { spawn-sh "noctalia msg media previous"; }
-    XF86AudioPlay                       allow-when-locked=true { spawn-sh "noctalia msg media play"; }
-    XF86AudioPause                      allow-when-locked=true { spawn-sh "noctalia msg media stop"; }
+    XF86AudioRaiseVolume                allow-when-locked=true { spawn-sh "dms ipc call audio increment 5"; }
+    XF86AudioLowerVolume                allow-when-locked=true { spawn-sh "dms ipc call audio decrement 5"; }
+    XF86AudioMute                       allow-when-locked=true { spawn-sh "dms ipc call audio mute"; }
+    XF86AudioMicMute                    allow-when-locked=true { spawn-sh "dms ipc call audio micmute"; }
+    XF86AudioNext                       allow-when-locked=true { spawn-sh "dms ipc call mpris next"; }
+    XF86AudioPrev                       allow-when-locked=true { spawn-sh "dms ipc call mpris previous"; }
+    XF86AudioPlay                       allow-when-locked=true { spawn-sh "dms ipc call mpris playPause"; }
+    XF86AudioPause                      allow-when-locked=true { spawn-sh "dms ipc call mpris pause"; }
 
     // Brightness Controls:
-    XF86MonBrightnessUp                 allow-when-locked=true { spawn-sh "noctalia msg brightness-up"; }
-    XF86MonBrightnessDown               allow-when-locked=true { spawn-sh "noctalia msg brightness-down"; }
+    XF86MonBrightnessUp                 allow-when-locked=true { spawn-sh "dms ipc call brightness increment 5"; }
+    XF86MonBrightnessDown               allow-when-locked=true { spawn-sh "dms ipc call brightness decrement 5"; }
 
     // Window Movement and Focus:
     Mod+W                               { close-window; }

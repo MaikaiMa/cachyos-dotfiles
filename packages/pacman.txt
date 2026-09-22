@@ -20,17 +20,17 @@ diffutils
 # Desktop session from the CachyOS profile, referenced directly by the config.
 cachyos-niri-noctalia
 niri
-noctalia
+dms-shell-niri # DankMaterialShell for Niri; pulls in dms-shell and quickshell
 capitaine-cursors # cursor theme in niri misc.kdl
 
 # Managed desktop configuration and helpers.
-playerctl # dashboard media state and controls
+matugen # DMS wallpaper theming and the Z13 rear-window template
+cava # audio visualizer in the DMS bar
+kimageformats # extra wallpaper image formats for DMS
 power-profiles-daemon # dashboard power profiles
 protonmail-bridge-core # enabled user service
-jq # focus-or-spawn, audio glow, dashboard state
+jq # focus-or-spawn and scripts/dms-apply-look.sh
 util-linux # flock in focus-or-spawn
-imagemagick # dashboard wallpaper preview
-noto-fonts # Noto Sans Medium in the wallpaper preview
 
 # Applications launched by managed keybinds or set as default handlers.
 alacritty

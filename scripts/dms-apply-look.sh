@@ -43,18 +43,20 @@ command -v jq >/dev/null 2>&1 || {
 	exit 1
 }
 
-[ -f "$settings_json" ] || {
-	printf 'dms-apply-look: %s not found; run DMS at least once first\n' "$settings_json" >&2
-	exit 1
-}
-
 jq empty "$look_json" 2>/dev/null || {
 	printf 'dms-apply-look: %s is not valid JSON\n' "$look_json" >&2
 	exit 1
 }
 
 tmp_merged=$(mktemp)
-trap 'rm -f "$tmp_merged"' EXIT HUP INT TERM
+tmp_settings=$(mktemp)
+trap 'rm -f "$tmp_merged" "$tmp_settings"' EXIT HUP INT TERM
+
+if [ -f "$settings_json" ]; then
+	cp "$settings_json" "$tmp_settings"
+else
+	printf '{}\n' >"$tmp_settings"
+fi
 
 # shellcheck disable=SC2016
 merge_filter='
@@ -76,11 +78,11 @@ merge_filter='
       end
     )
 '
-jq -s "$merge_filter" "$settings_json" "$look_json" >"$tmp_merged"
+jq -s "$merge_filter" "$tmp_settings" "$look_json" >"$tmp_merged"
 
 # shellcheck disable=SC2016
 restrict_filter='($look[0] | keys_unsorted) as $keys | ($obj[0] | with_entries(select(.key as $k | $keys | index($k))))'
-before_touched=$(jq -n --slurpfile look "$look_json" --slurpfile obj "$settings_json" "$restrict_filter")
+before_touched=$(jq -n --slurpfile look "$look_json" --slurpfile obj "$tmp_settings" "$restrict_filter")
 after_touched=$(jq -n --slurpfile look "$look_json" --slurpfile obj "$tmp_merged" "$restrict_filter")
 
 if [ "$before_touched" = "$after_touched" ]; then
@@ -89,7 +91,7 @@ if [ "$before_touched" = "$after_touched" ]; then
 fi
 
 if [ "$dry_run" -eq 1 ]; then
-	printf 'dms-apply-look: dry run, would change:\n'
+	printf 'dms-apply-look: dry run, applying would restart dms.service and change:\n'
 	jq -n --argjson before "$before_touched" --argjson after "$after_touched" \
 		'{before: $before, after: $after}'
 	exit 0
@@ -99,7 +101,9 @@ printf 'dms-apply-look: applying changes:\n'
 jq -n --argjson before "$before_touched" --argjson after "$after_touched" \
 	'{before: $before, after: $after}'
 
-if [ ! -e "$backup_json" ]; then
+mkdir -p "$(dirname "$settings_json")"
+
+if [ -f "$settings_json" ] && [ ! -e "$backup_json" ]; then
 	cp -p "$settings_json" "$backup_json"
 fi
 
@@ -115,4 +119,8 @@ if ! systemctl --user start dms.service; then
 	exit 1
 fi
 
-printf 'dms-apply-look: applied %s to %s (backup: %s)\n' "$look_json" "$settings_json" "$backup_json"
+if [ -e "$backup_json" ]; then
+	printf 'dms-apply-look: applied %s to %s (backup: %s)\n' "$look_json" "$settings_json" "$backup_json"
+else
+	printf 'dms-apply-look: applied %s to %s\n' "$look_json" "$settings_json"
+fi

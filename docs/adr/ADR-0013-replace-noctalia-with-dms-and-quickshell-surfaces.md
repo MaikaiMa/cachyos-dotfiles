@@ -1,6 +1,6 @@
 # ADR-0013: Replace Noctalia with DankMaterialShell and repository-owned Quickshell surfaces
 
-- Status: Accepted as interim shell (2026-09-21); see the review below
+- Status: Accepted (2026-09-22); DMS is the deployed shell
 - Date: 2026-09-21
 - Supersedes: ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0011
 
@@ -153,3 +153,16 @@ Consequences of the review:
   unacceptable after evaluation, the follow-up is a repository-owned
   Quickshell shell, the option this record dismissed as too large. That
   decision, if taken, gets its own ADR and supersedes this one.
+
+## Update 2026-09-22
+
+The polished DMS setup from phase 1 was accepted after evaluation: the bar,
+dashboard, and application indicators are close enough to the reference to
+live with. Phase 2 of `docs/desktop-migration.md` makes DMS the deployed
+default, moving the shell, its plugins, and matugen theming into the
+chezmoi-managed tree; the Noctalia configuration this ADR describes is no
+longer deployed and is preserved only as the `noctalia-final` Git tag. A
+repository-owned lock screen and greeter (ADR-0014) remain the next steps.
+The ceiling noted in the review above still stands: the DMS bar container,
+its built-in lock screen, and its panel styling cannot be changed without a
+fork.

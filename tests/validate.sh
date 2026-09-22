@@ -11,7 +11,12 @@ repo_root=$(
 cd "$repo_root"
 untracked_required=false
 
-for tool in chezmoi fish git grep niri noctalia shellcheck shfmt; do
+qmllint_command=qmllint
+if ! command -v "$qmllint_command" >/dev/null 2>&1; then
+	qmllint_command=/usr/lib/qt6/bin/qmllint
+fi
+
+for tool in chezmoi fish git grep niri "$qmllint_command" shellcheck shfmt; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Missing required validation tool: %s\n' "$tool" >&2
 		exit 1
@@ -41,26 +46,16 @@ require_files \
 
 require_files \
 	chezmoi/.chezmoiignore \
+	chezmoi/.chezmoiremove \
 	chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_protonmail-bridge.service \
-	chezmoi/dot_config/systemd/user/noctalia.service \
-	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_noctalia.service \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_dms.service \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
-	chezmoi/dot_config/noctalia/config.toml \
-	chezmoi/dot_config/noctalia/bar.toml \
-	chezmoi/dot_config/noctalia/audio-glow.toml \
-	chezmoi/dot_config/noctalia/lockscreen.toml \
-	chezmoi/dot_config/noctalia/templates.toml \
-	chezmoi/dot_config/noctalia/templates/z13-window-color \
-	chezmoi/dot_local/private_share/noctalia/plugins/quick-controls/plugin.toml \
-	chezmoi/dot_local/private_share/noctalia/plugins/quick-controls/panel.luau \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_noctalia-dashboard-state \
-	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
-	chezmoi/dot_config/fish/functions/noctalia-reset.fish \
+	chezmoi/dot_config/fish/functions/dms-reset.fish \
 	chezmoi/dot_config/alacritty/alacritty.toml \
 	chezmoi/dot_config/zed/settings.json \
 	chezmoi/dot_config/mimeapps.list \
@@ -87,8 +82,6 @@ require_files \
 	docs/adr/ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md \
 	docs/mail.md \
 	docs/secrets.md \
-	docs/noctalia-lockscreen.md \
-	docs/noctalia-quick-controls.md \
 	docs/maintenance.md \
 	docs/desktop-migration.md \
 	docs/dms.md \
@@ -96,7 +89,6 @@ require_files \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
 	scripts/setup-z13-window.sh \
-	scripts/dms-trial.sh \
 	scripts/dms-apply-look.sh \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
@@ -104,12 +96,11 @@ require_files \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/setup-z13-window.sh \
-	tests/noctalia-audio-glow.sh \
 	tests/sync-z13-window-color.sh \
-	tests/dms-trial.sh \
 	tests/validate.fish
 
 require_files \
+	chezmoi/dot_config/DankMaterialShell/plugin_settings.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/DotfilesApps.qml \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
@@ -132,26 +123,34 @@ if grep -R -n -F '/home/maikel' README.md docs; then
 	exit 1
 fi
 
+lint_plugin_qml() {
+	plugins_dir=chezmoi/dot_config/DankMaterialShell/plugins
+	qml_status=0
+	qml_report=$("$qmllint_command" -I "$plugins_dir" "$plugins_dir"/*/*.qml 2>&1) || qml_status=$?
+	# DMS ships its qs.* modules outside this tree, so unresolved imports are
+	# expected warnings here; only errors and a failing exit status count.
+	if [ "$qml_status" -ne 0 ] || printf '%s\n' "$qml_report" | grep -q ': Error'; then
+		printf '%s\n' "$qml_report" >&2
+		printf '%s\n' 'qmllint reported errors in the DMS plugins.' >&2
+		exit 1
+	fi
+}
+
 for config in chezmoi/dot_config/niri/cfg/*.kdl; do
 	niri validate --config "$config"
 done
 
 niri validate --config chezmoi/dot_config/niri/config.kdl
-noctalia config validate chezmoi/dot_config/noctalia
-noctalia plugins lint chezmoi/dot_local/private_share/noctalia/plugins/quick-controls
+lint_plugin_qml
 shellcheck scripts/*.sh tests/*.sh
 fish -n tests/*.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fish/functions/*.fish
 tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_noctalia-dashboard-state \
-	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
-	chezmoi/dot_local/bin/executable_noctalia-dashboard-state \
-	chezmoi/dot_local/bin/executable_sync-noctalia-audio-glow \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color
 
 chezmoi --source chezmoi execute-template \
@@ -159,10 +158,8 @@ chezmoi --source chezmoi execute-template \
 
 tests/check-packages.sh
 tests/focus-or-spawn.sh
-tests/noctalia-audio-glow.sh
 tests/setup-z13-window.sh
 tests/sync-z13-window-color.sh
-tests/dms-trial.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

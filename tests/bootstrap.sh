@@ -27,6 +27,7 @@ run_bootstrap() {
 		XDG_STATE_HOME=$test_home/.local/state \
 		Z13_DMI_ROOT=$dmi_root \
 		Z13_UDEV_RULE_TARGET=$rule_target \
+		DMS_COMMAND=${DMS_COMMAND:-missing-dms} \
 		"$bootstrap" "$@"
 }
 
@@ -57,11 +58,8 @@ run_bootstrap --no-pager
 
 for path in \
 	.config/niri/config.kdl \
-	.config/systemd/user/noctalia.service \
-	.config/noctalia/config.toml \
-	.config/noctalia/audio-glow.toml \
 	.config/fish/conf.d/dotfiles.fish \
-	.config/fish/functions/noctalia-reset.fish \
+	.config/fish/functions/dms-reset.fish \
 	.config/alacritty/alacritty.toml \
 	.config/zed/settings.json \
 	.config/mimeapps.list \
@@ -69,14 +67,12 @@ for path in \
 	.config/environment.d/10-ssh-agent.conf \
 	.ssh/config \
 	.config/git/allowed_signers \
-	.config/noctalia/bar.toml \
-	.config/noctalia/lockscreen.toml \
-	.config/noctalia/templates.toml \
-	.local/share/noctalia/plugins/quick-controls/plugin.toml \
-	.local/share/noctalia/plugins/quick-controls/panel.luau \
+	.config/DankMaterialShell/plugin_settings.json \
+	.config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
+	.config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
+	.config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
+	.config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
 	.local/bin/focus-or-spawn \
-	.local/bin/noctalia-dashboard-state \
-	.local/bin/sync-noctalia-audio-glow \
 	.local/bin/sync-z13-window-color; do
 	if [ ! -f "$test_home/$path" ]; then
 		printf 'Bootstrap did not create expected file: %s\n' "$path" >&2
@@ -86,7 +82,6 @@ done
 
 for path in \
 	.local/bin/focus-or-spawn \
-	.local/bin/sync-noctalia-audio-glow \
 	.local/bin/sync-z13-window-color; do
 	if [ ! -x "$test_home/$path" ]; then
 		printf 'Bootstrap did not make helper executable: %s\n' "$path" >&2
@@ -110,13 +105,13 @@ if ! grep -Fq "sourceDir = \"$repo_root/chezmoi\"" "$test_home/.config/chezmoi/c
 	exit 1
 fi
 
-wants_link=$test_home/.config/systemd/user/niri.service.wants/noctalia.service
-if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "../noctalia.service" ]; then
-	printf '%s\n' 'Bootstrap did not enable noctalia.service for niri.service.' >&2
+wants_link=$test_home/.config/systemd/user/niri.service.wants/dms.service
+if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "/usr/lib/systemd/user/dms.service" ]; then
+	printf '%s\n' 'Bootstrap did not enable dms.service for niri.service.' >&2
 	exit 1
 fi
-if grep -q 'spawn-at-startup "noctalia"' "$test_home/.config/niri/cfg/autostart.kdl"; then
-	printf '%s\n' 'Niri autostart still spawns Noctalia; see ADR-0007.' >&2
+if grep -q 'spawn-at-startup "dms"' "$test_home/.config/niri/cfg/autostart.kdl"; then
+	printf '%s\n' 'Niri autostart still spawns the shell; see ADR-0007.' >&2
 	exit 1
 fi
 
@@ -129,6 +124,25 @@ second_dry_run=$(run_bootstrap --dry-run --no-pager)
 if [ -n "$second_dry_run" ]; then
 	printf '%s\n' 'Bootstrap is not idempotent; second dry-run produced output:' >&2
 	printf '%s\n' "$second_dry_run" >&2
+	exit 1
+fi
+
+dms_stub_dir=$test_root/stub
+mkdir -p "$dms_stub_dir"
+printf '%s\n' '#!/bin/sh' 'exit 0' >"$dms_stub_dir/dms"
+chmod +x "$dms_stub_dir/dms"
+
+look_dry_run=$(PATH="$dms_stub_dir:$PATH" DMS_COMMAND=dms run_bootstrap --dry-run --no-pager)
+case $look_dry_run in
+*'dms-apply-look: dry run, applying would restart dms.service'*) ;;
+*)
+	printf '%s\n' 'Bootstrap dry-run did not preview the DMS look:' >&2
+	printf '%s\n' "$look_dry_run" >&2
+	exit 1
+	;;
+esac
+if [ -e "$test_home/.config/DankMaterialShell/settings.json" ]; then
+	printf '%s\n' 'Bootstrap dry-run wrote the DMS settings file.' >&2
 	exit 1
 fi
 

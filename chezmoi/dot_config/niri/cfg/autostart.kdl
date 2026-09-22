@@ -1,2 +1,3 @@
-// Noctalia is started by the systemd user unit ~/.config/systemd/user/noctalia.service,
-// which is bound to niri.service; see ADR-0007. Do not spawn it here as well.
+// DankMaterialShell is started by the systemd user unit
+// ~/.config/systemd/user/niri.service.wants/dms.service, which is bound to
+// niri.service; see ADR-0007. Do not spawn it here as well.

@@ -1,0 +1,12 @@
+# Noctalia, replaced by DankMaterialShell in docs/desktop-migration.md phase 2.
+.config/systemd/user/niri.service.wants/noctalia.service
+.config/systemd/user/noctalia.service
+.config/noctalia
+.local/share/noctalia/plugins/quick-controls
+.config/niri/noctalia.kdl
+.local/bin/noctalia-dashboard-state
+.local/bin/sync-noctalia-audio-glow
+.config/fish/functions/noctalia-reset.fish
+
+# Keybind shim that scripts/dms-trial.sh installed during the DMS trial.
+.local/bin/noctalia

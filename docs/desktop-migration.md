@@ -49,6 +49,9 @@ No configuration changes.
 
 ## Phase 1: polish DMS, then evaluate
 
+Done (2026-09-22): the polished look and the two plugins were accepted after
+evaluation; see ADR-0013's 2026-09-22 update.
+
 Goal: bring DMS to a state that can be judged fairly against the previous
 desktop before the user works in it. The order of the first attempt, a week
 in an unconfigured shell, is recorded as a mistake in ADR-0013's review.
@@ -83,6 +86,10 @@ unacceptable. Passes, phase 2 starts. Fails, the trial is reverted with
 `stop` and the follow-up decision gets its own ADR.
 
 ## Phase 2: move the shell into the repository
+
+Done (2026-09-22): DMS is the deployed shell from a fresh bootstrap; the
+Noctalia configuration this phase replaced is preserved only as the
+`noctalia-final` Git tag.
 
 Goal: a fresh bootstrap yields DMS, not Noctalia, and this machine converges
 to the same state.
@@ -164,6 +171,10 @@ Rollback: `git stash` the change, run the bootstrap again, start
 `noctalia.service`. Nothing in this phase touches system files.
 
 ## Phase 3: repository plugins for DMS
+
+Done (2026-09-22): all four plugins (`dotfilesLauncher`, `dotfilesWorkspaces`,
+`dotfilesApps`, `dotfilesDashboard`) are built, enabled, and deployed. A code
+review pass over the plugin QML remains.
 
 Goal: the two features that Noctalia could not provide and DMS can host.
 
