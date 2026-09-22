@@ -197,6 +197,14 @@ install command in the README, is harmless; it stays disabled until
   line of `system/pam.d/greetd` running for the greeter's own session, which
   has no keyring; the later `gkr-pam: unlocked login keyring` for your user is
   the line that matters.
+- For a moment at login and at logout the VT shows the line `Calling
+  import-environment without a list of variable names is deprecated.` in
+  systemd's warning colour. It comes from `niri-session` (the package's
+  `/usr/bin/niri-session` calls `systemctl --user import-environment` without
+  arguments, which systemd 261 deprecates) and is written to the session's
+  stderr. greetd leaves that on the VT, where SDDM used to redirect it to
+  `~/.local/share/sddm/wayland-session.log`, so the message is old but only
+  visible now. Harmless; it disappears when niri fixes the script upstream.
 - The greeter preselects the last successfully logged-in user and session
   from `/var/cache/dms-greeter/.local/state/memory.json`. That file is written
   at the first successful login, so the very first boot through greetd shows
