@@ -1,7 +1,12 @@
-# Desktop migration: Noctalia to DMS, Quickshell lock screen, greetd
+# Desktop migration: Noctalia to DMS, greetd with the DMS greeter
 
 This plan implements [ADR-0013](adr/ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md)
-and [ADR-0014](adr/ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md).
+and [ADR-0015](adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
+DMS's own built-in lock screen stays; there is no repository-owned Quickshell
+lock screen. The login screen is greetd running the DMS greeter
+(`dms-greeter`), not repository-owned greeter QML; see
+[docs/greeter.md](greeter.md).
+
 It is written for a split workflow: an AI agent prepares every repository
 change, the user reviews the diff, runs the privileged or session-affecting
 commands, tests on the machine, and commits. Each phase is one reviewable
@@ -27,20 +32,21 @@ Rules that apply to every phase:
 | DMS settings seed and plugin lock | `chezmoi/dot_config/DankMaterialShell/` | `~/.config/DankMaterialShell/` | 2 |
 | DMS service wiring | `chezmoi/dot_config/systemd/user/niri.service.wants/symlink_dms.service` | `~/.config/systemd/user/niri.service.wants/dms.service` | 2 |
 | Noctalia removals | `chezmoi/.chezmoiremove` | Noctalia files and service symlink | 2 |
-| Niri keybinds and includes | `chezmoi/dot_config/niri/` | `~/.config/niri/` | 2, 4 |
+| Niri keybinds and includes | `chezmoi/dot_config/niri/` | `~/.config/niri/` | 2 |
 | matugen config and templates | `chezmoi/dot_config/matugen/` | `~/.config/matugen/` | 2 |
 | Z13 rear-window color helper | `chezmoi/dot_local/bin/executable_sync-z13-window-color` | `~/.local/bin/` | 2 |
 | Repository plugins for DMS | `chezmoi/dot_config/DankMaterialShell/plugins/` | `~/.config/DankMaterialShell/plugins/` | 3 |
-| Lock screen and greeter QML | `chezmoi/dot_config/quickshell/session/` | `~/.config/quickshell/session/` | 4, 5 |
-| Locker and idle user units | `chezmoi/dot_config/systemd/user/` | `~/.config/systemd/user/` | 4 |
-| greetd, Niri greeter config, PAM | `system/greetd/`, `system/pam.d/greetd` | `/etc/greetd/`, `/etc/pam.d/greetd` | 5 |
-| greetd installer | `scripts/setup-greetd.sh` | runs with sudo | 5 |
-| Greeter theme sync helper | `chezmoi/dot_local/bin/executable_sync-greeter-theme` | `/var/lib/greeter/` | 5 |
-| Packages | `packages/pacman.txt`, `packages/aur.txt` | pacman, paru | 2, 4, 5 |
+| greetd config | `system/greetd/config.toml` | `/etc/greetd/config.toml` | 5 |
+| greetd PAM stack | `system/pam.d/greetd` | `/etc/pam.d/greetd` | 5 |
+| greetd and dms-greeter installer | `scripts/setup-greetd.sh` | runs as the user, escalates with sudo per step | 5 |
+| greetd installer test | `tests/setup-greetd.sh` | n/a | 5 |
+| Login screen guide | `docs/greeter.md` | n/a | 5 |
+| Packages | `packages/pacman.txt`, `packages/aur.txt` | pacman, paru | 2, 5 |
 
 Generated files never enter Git: matugen output, DMS runtime state, the
-synced wallpaper and palette under `/var/lib/greeter/`, and the extracted
-DMS shell tree.
+`dms-greeter` cache and per-user symlinks under `/var/cache/dms-greeter/`,
+the extracted Niri greeter config under `/etc/greetd/niri/`, and the
+extracted DMS shell tree.
 
 ## Phase 0: decision records
 
@@ -126,8 +132,8 @@ Agent delivers:
   window radius override to 20 so the generated file does not fight
   `cfg/layout.kdl` and `cfg/rules.kdl`.
 - `chezmoi/dot_config/niri/cfg/keybinds.kdl`: every `noctalia msg` bind
-  becomes the `dms ipc` equivalent. The lock bind keeps calling DMS until
-  phase 4.
+  becomes the `dms ipc` equivalent, including the lock bind, which stays on
+  DMS's own built-in lock screen (see ADR-0015).
 - Fish: `noctalia-reset.fish` becomes a `dms-reset.fish` with the equivalent
   restart, or is dropped if `dms` already offers it.
 - `tests/validate.sh`: remove the `noctalia` tool requirement and the
@@ -207,83 +213,62 @@ but the final look is your call.
 Done when: both plugins load after a DMS restart, indicators match the
 notification list, and the dashboard shows real state for every control.
 
-## Phase 4: repository-owned lock screen
+## Phase 4: repository-owned lock screen (dropped, 2026-09-22)
 
-Goal: a lock screen with the layout and look of the target design, that
-cannot lock you out.
+DMS's own built-in lock screen is acceptable as is. The only things a
+repository-owned locker would have bought were the clock-to-input spacing and
+a compact media row, and both are hard-coded in DMS's embedded QML, out of
+reach without forking it. A custom `WlSessionLock` implementation was judged
+too much to build and maintain for that gain. See
+[ADR-0015](adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
 
-Agent delivers:
+## Phase 5: greetd with the DMS greeter
 
-- `chezmoi/dot_config/quickshell/session/` with shared components (palette
-  loader for the matugen output, clock, media card, user card, session info),
-  a `lock/shell.qml` entry using `WlSessionLock` and `PamContext`, and a
-  `greeter/shell.qml` entry that phase 5 wires up.
-- A matugen template that renders the palette to
-  `~/.config/quickshell/session/generated/palette.json`; the directory is
-  ignored by chezmoi.
-- `chezmoi/dot_config/systemd/user/session-lock.service` with
-  `Restart=on-failure`, started on demand. `swayidle` (or DMS's idle hook if
-  it accepts a custom lock command; the agent verifies which) triggers it on
-  idle and before sleep.
-- Keybinds: `Mod+Alt+L` starts the unit and carries `allow-when-locked=true`
-  so it also relaunches the locker on the solid-color screen. DMS's own lock
-  is disabled in the seed settings.
-- `packages/pacman.txt`: `swaylock` as the recorded fallback, `swayidle` if
-  used.
-- Docs: `docs/lockscreen.md` with the recovery drill; `tests/validate.sh`
-  runs `qmllint` over the session tree.
+Done (2026-09-22): the repository pieces are delivered; switching the boot
+path is a user step, done per machine.
 
-You: apply, then run the tests that need a person present. Lock and unlock
-with the keyboard; press a physical key on the lock screen; close and open
-the lid; leave it to sleep overnight; and run the recovery drill once: kill
-the locker from a TTY, confirm the screen stays locked, press `Mod+Alt+L`,
-confirm the locker returns, and unlock.
-
-```fish
-systemctl --user start session-lock.service
-```
-
-Fallback from a TTY if the locker will not start:
-
-```fish
-env WAYLAND_DISPLAY=wayland-1 swaylock
-```
-
-Done when: all tests above pass twice on separate days.
-
-## Phase 5: greetd with the repository greeter
-
-Goal: the login screen is the lock screen with a session picker.
+Goal: the login screen matches the desktop's look and keyboard layout, without
+building a second implementation of the lock screen. [ADR-0015](adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md)
+replaces the repository-owned greeter QML of ADR-0014 with `dms-greeter`
+(AUR `greetd-dms-greeter-bin`), which renders DMS's own greeter UI and syncs
+itself from the live DMS and Niri configuration; see
+[docs/greeter.md](greeter.md) for the mechanism and the full walkthrough.
 
 Agent delivers:
 
-- `system/greetd/config.toml`, `system/greetd/niri.kdl` (minimal Niri config
-  that spawns the greeter entry point and exits with it), and
-  `system/pam.d/greetd` carrying the `pam_gnome_keyring.so` lines from
-  `/etc/pam.d/sddm`.
-- `scripts/setup-greetd.sh`: idempotent, `--dry-run` capable; installs the
-  files, copies `~/.config/quickshell/session/` to
-  `/etc/greetd/quickshell/session/`, creates `/var/lib/greeter/` owned by
-  the `greeter` group, adds the user to that group, validates the Niri
-  config and runs `qmllint` on the copied tree, and only then disables SDDM
-  and enables greetd. It never removes SDDM.
-- `executable_sync-greeter-theme`: copies the current wallpaper and palette
-  into `/var/lib/greeter/`; invoked after a palette change, and the
-  maintenance guide lists it.
-- `packages/pacman.txt`: `greetd`. `tests/setup-greetd.sh` exercising the
-  dry-run against a temporary root.
-- Docs: `docs/greeter.md` including the rollback from a TTY and the Big
-  Picture session note.
+- `system/greetd/config.toml`: starts `dms-greeter` as the `greeter` user
+  under its own Niri session.
+- `system/pam.d/greetd`: Arch's default `greetd` PAM stack plus the
+  `pam_gnome_keyring.so` auth/password/session lines from `/etc/pam.d/sddm`,
+  authoritative because `dms/look.json` sets `greeterPamExternallyManaged`.
+- `scripts/setup-greetd.sh` (`--dry-run`, `--switch`): idempotent; installs
+  `greetd`, `acl`, and `greetd-dms-greeter-bin` when missing, installs the
+  two system files when they differ, runs `dms-greeter sync --yes`,
+  validates the generated Niri greeter config, and prints
+  `dms-greeter status`. Only `--switch` disables SDDM and enables greetd,
+  and never with `--now`.
+- `tests/setup-greetd.sh`, exercised by `tests/validate.sh`, against fake
+  binaries.
+- `packages/pacman.txt`: `greetd`, `acl`. `packages/aur.txt`:
+  `greetd-dms-greeter-bin`.
+- Docs: `docs/greeter.md` with the install order, the verification
+  checklist, the rollback, and known limits.
 
-You: dry-run first, read it completely, then install and reboot. Before the
-reboot, make sure you can reach a TTY and have the rollback in front of you.
+You: follow the order in [docs/greeter.md](greeter.md) — apply the look if it
+changed, dry-run, read it, run it for real, log out and back in once, preview
+with `dms-greeter run`, then switch and reboot with the rollback line ready
+on a second device.
 
 ```fish
-sudo ./scripts/setup-greetd.sh --dry-run
+./scripts/setup-greetd.sh --dry-run
 ```
 
 ```fish
-sudo ./scripts/setup-greetd.sh
+./scripts/setup-greetd.sh
+```
+
+```fish
+./scripts/setup-greetd.sh --switch
 ```
 
 Rollback from a TTY:
@@ -292,10 +277,8 @@ Rollback from a TTY:
 sudo systemctl disable greetd; and sudo systemctl enable sddm; and sudo reboot
 ```
 
-Done when: login works with the keyboard, GNOME Keyring is unlocked after
-login (an SSH signature does not prompt for the keyring), the last session
-is remembered, and, once `gamescope-session-cachyos` is installed, the Big
-Picture session appears in the picker.
+Done when: the verification checklist in `docs/greeter.md` passes after the
+first reboot into greetd.
 
 ## Phase 6: cleanup
 

@@ -37,7 +37,8 @@ packages/                 official, AUR, and Flatpak package manifests
 docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
 docs/dms.md               DMS shell: what is deployed, the look, plugins, matugen, idle/lock
-docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0014)
+docs/greeter.md           login screen: greetd running the DMS greeter
+docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
 
@@ -57,11 +58,12 @@ notification dot replace the built-in bar widgets. The [Dotfiles
 Dashboard](chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md)
 plugin rebuilds the former Noctalia dashboard as a centered popout on
 `Mod+S`, with the original DMS Control Center and Settings still reachable
-from its header. DMS's own built-in lock screen is used for now; a
-repository-owned lock screen is the next step, see ADR-0014 and
-`docs/desktop-migration.md`. All of this, including how to iterate on the
-look, restart the shell, and reload a plugin, is documented in
-[docs/dms.md](docs/dms.md).
+from its header. DMS's own built-in lock screen stays; see
+[ADR-0015](docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
+All of this, including how to iterate on the look, restart the shell, and
+reload a plugin, is documented in [docs/dms.md](docs/dms.md). The login
+screen, greetd running the DMS greeter, is documented in
+[docs/greeter.md](docs/greeter.md).
 
 The former Noctalia configuration is preserved only as the `noctalia-final`
 Git tag; ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, and ADR-0011
@@ -109,7 +111,10 @@ sudo pacman -S --needed (sed 's/#.*//' packages/pacman.txt | string trim | strin
 
 `packages/aur.txt` lists the unavoidable AUR packages with their rationale.
 Install them individually with `paru`; bootstrap installs `z13ctl-bin` itself
-on a detected GZ302 Flow Z13 and nothing on other hardware.
+on a detected GZ302 Flow Z13 and nothing on other hardware. The login screen
+(`greetd`, `acl`, and the AUR `greetd-dms-greeter-bin`) is not installed by
+bootstrap either; it is a separate, explicitly approved step run with
+`./scripts/setup-greetd.sh`, see [docs/greeter.md](docs/greeter.md).
 
 `packages/flatpak.txt` is the last-resort tier for software without an official
 or AUR package; each entry names the guide that documents its installation.

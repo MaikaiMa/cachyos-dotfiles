@@ -7,3 +7,7 @@
 # Direct HID control for the GZ302 rear lightbar; asusctl cannot address it separately.
 # Installed by bootstrap only on a detected Z13.
 z13ctl-bin
+
+# greetd greeter in the DMS look; the official repositories only offer
+# regreet, tuigreet, and agreety. Installed by scripts/setup-greetd.sh.
+greetd-dms-greeter-bin

@@ -228,8 +228,11 @@ source:
 - On battery: lock after 5 minutes (`batteryLockTimeout`, `300` seconds),
   suspend after 15 minutes (`batterySuspendTimeout`, `900` seconds).
 
-These use DMS's built-in idle and lock handling; there is no repository-owned
-locker yet (that is ADR-0014 / `docs/desktop-migration.md` phase 4).
+These use DMS's built-in idle and lock handling. DMS's own lock screen stays;
+a repository-owned locker was considered and dropped, see
+[ADR-0015](adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
+The login screen, which shares DMS's look through `dms-greeter`, is documented
+in [docs/greeter.md](greeter.md).
 
 ## Known limits
 
@@ -237,8 +240,8 @@ locker yet (that is ADR-0014 / `docs/desktop-migration.md` phase 4).
   built-in widget chrome) is DMS's; only plugins and the settings in
   `dms/look.json` are repository-owned.
 - The lock screen is DMS's own built-in one, not a repository-owned
-  Quickshell surface; see ADR-0013 decision 3 and phase 4 of
-  `docs/desktop-migration.md` for the plan to replace it.
+  Quickshell surface. That is a final decision, not a pending phase; see
+  [ADR-0015](adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
 - Do not run `dms setup` or `dms sync`: both write into the live Niri
   configuration (`~/.config/niri/`), which conflicts with the
   chezmoi-managed source tree.

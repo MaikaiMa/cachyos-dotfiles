@@ -1,6 +1,7 @@
 # ADR-0013: Replace Noctalia with DankMaterialShell and repository-owned Quickshell surfaces
 
-- Status: Accepted (2026-09-22); DMS is the deployed shell
+- Status: Accepted (2026-09-22); DMS is the deployed shell; decision 3 is
+  amended by [ADR-0015](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md)
 - Date: 2026-09-21
 - Supersedes: ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0011
 
@@ -166,3 +167,12 @@ repository-owned lock screen and greeter (ADR-0014) remain the next steps.
 The ceiling noted in the review above still stands: the DMS bar container,
 its built-in lock screen, and its panel styling cannot be changed without a
 fork.
+
+## Update 2026-09-22 (ADR-0015)
+
+Decision 3 is amended: the lock screen stays DMS's built-in one, not a
+repository-owned Quickshell locker, and the greeter is dank-greeter
+(`greetd-dms-greeter-bin`), not a repository-owned Quickshell greeter.
+Decisions 1, 2, 4, 5, and 6 are unchanged. See
+[ADR-0015](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md)
+for the reasoning.

@@ -23,3 +23,4 @@ alternatives considered.
 - [ADR-0012: Use GNOME Keyring and 1Password for secrets](ADR-0012-use-gnome-keyring-and-1password-for-secrets.md)
 - [ADR-0013: Replace Noctalia with DankMaterialShell and repository-owned Quickshell surfaces](ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md)
 - [ADR-0014: Replace SDDM with greetd running the repository-owned Quickshell greeter](ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md)
+- [ADR-0015: Use the DMS greeter under greetd and keep the DMS lock screen](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md)

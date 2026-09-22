@@ -86,6 +86,16 @@ Afterwards confirm that the manifests still match the machine:
 ./scripts/check-packages.sh
 ```
 
+After an upgrade of `greetd-dms-greeter-bin`, and after changing Niri input,
+output, cursor, or debug configuration, re-sync the greeter:
+
+```fish
+./scripts/setup-greetd.sh
+```
+
+See [docs/greeter.md](greeter.md) for what the sync does and why it is
+needed again after those changes.
+
 ## Deployment and machine verification
 
 After explicit approval, deploy from the reviewed worktree:
@@ -105,6 +115,10 @@ Check that the machine still provides every recorded package:
 ```fish
 ./scripts/check-packages.sh
 ```
+
+Greetd and the login screen are not part of `scripts/bootstrap.sh`. Installing
+or switching the greeter is a separate step that needs its own explicit
+approval; see [docs/greeter.md](greeter.md).
 
 Repository tests cannot prove hardware and desktop behavior. After deployment,
 manually verify the affected Niri behavior, that the DMS bar and its plugins

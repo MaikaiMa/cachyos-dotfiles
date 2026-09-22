@@ -80,21 +80,27 @@ require_files \
 	docs/adr/ADR-0012-use-gnome-keyring-and-1password-for-secrets.md \
 	docs/adr/ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md \
 	docs/adr/ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md \
+	docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
 	docs/desktop-migration.md \
+	docs/greeter.md \
 	docs/dms.md \
 	dms/look.json \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
+	scripts/setup-greetd.sh \
 	scripts/setup-z13-window.sh \
 	scripts/dms-apply-look.sh \
+	system/greetd/config.toml \
+	system/pam.d/greetd \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
+	tests/setup-greetd.sh \
 	tests/setup-z13-window.sh \
 	tests/sync-z13-window-color.sh \
 	tests/validate.fish
@@ -165,6 +171,7 @@ chezmoi --source chezmoi execute-template \
 
 tests/check-packages.sh
 tests/focus-or-spawn.sh
+tests/setup-greetd.sh
 tests/setup-z13-window.sh
 tests/sync-z13-window-color.sh
 tests/bootstrap.sh

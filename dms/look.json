@@ -63,6 +63,7 @@
   "acSuspendTimeout": 0,
   "batteryLockTimeout": 300,
   "batterySuspendTimeout": 900,
+  "greeterPamExternallyManaged": true,
   "updaterCheckOnStart": true,
   "trayMaxVisibleItems": 1,
   "trayAutoOverflow": true,

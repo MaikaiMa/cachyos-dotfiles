@@ -23,6 +23,11 @@ niri
 dms-shell-niri # DankMaterialShell for Niri; pulls in dms-shell and quickshell
 capitaine-cursors # cursor theme in niri misc.kdl
 
+# Login: greetd with the DMS greeter (ADR-0015); acl provides setfacl for
+# dms-greeter sync.
+greetd
+acl
+
 # Managed desktop configuration and helpers.
 matugen # DMS wallpaper theming and the Z13 rear-window template
 cava # audio visualizer in the DMS bar

@@ -1,7 +1,6 @@
 # ADR-0014: Replace SDDM with greetd running the repository-owned Quickshell greeter
 
-- Status: Accepted (2026-09-21); implemented as the last phase of
-  [the desktop migration plan](../desktop-migration.md)
+- Status: Superseded by [ADR-0015](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md) (2026-09-22); never implemented
 - Date: 2026-09-21
 - Depends on: ADR-0013
 
@@ -82,3 +81,12 @@ only step of the migration that changes the boot path, and it runs last.
   Quickshell modules or the shared components.
 - **`greetd-regreet` or `greetd-tuigreet`:** solid, but a fixed GTK or
   terminal look that cannot match the lock screen.
+
+## Update 2026-09-22
+
+This ADR was never implemented. The repository-owned lock screen it depended
+on (ADR-0013 decision 3) was dropped after the user judged DMS's built-in
+lock screen acceptable, which removed the reason to run a repository-owned
+greeter as well. `greetd-dms-greeter-bin`, listed above as an alternative
+because it renders DMS's own lock screen, is now the decision; see
+[ADR-0015](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
