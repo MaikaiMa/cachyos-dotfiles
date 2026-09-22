@@ -76,3 +76,12 @@ settings rather than a managed config file.
   on GNOME Keyring for existing integrations (GNOME Online Accounts, `gh`).
 - **Store the signing key outside the repository:** the key is public by
   design, so hiding it would only add friction without protecting anything.
+
+## Update 2026-09-22
+
+The login screen moved from SDDM to greetd with the DMS greeter
+([ADR-0015](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md)).
+The `pam_gnome_keyring.so` lines this record depends on now live in the
+repository-owned `system/pam.d/greetd`, installed as `/etc/pam.d/greetd`;
+`pam_kwallet5.so` was not carried over. The behaviour described above is
+unchanged and was verified after the first greetd login.

@@ -11,7 +11,10 @@ for why these three and not one.
 
 GNOME Keyring is started and unlocked by PAM at login through
 `pam_gnome_keyring.so` (`auth` and `session`, with `auto_start`) in
-`/etc/pam.d/sddm`, storing its data in `~/.local/share/keyrings/login.keyring`.
+`/etc/pam.d/greetd`, the repository-owned `system/pam.d/greetd` installed by
+`scripts/setup-greetd.sh` (see [docs/greeter.md](greeter.md)); SDDM's stack
+carried the same lines before ADR-0015. The keyring data lives in
+`~/.local/share/keyrings/login.keyring`.
 It unlocks with the login password, so it changes whenever that does.
 GNOME Online Accounts tokens (used by Hylki for Google Mail, see
 [docs/mail.md](mail.md)) and the `gh` token used by `dot_gitconfig`'s

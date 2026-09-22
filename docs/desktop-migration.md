@@ -283,6 +283,12 @@ first reboot into greetd.
 
 ## Phase 6: cleanup
 
+Done (2026-09-22): the manifests match the machine, validation passes, and
+the README describes the deployed desktop. The remaining mentions of Noctalia
+are the CachyOS profile name (`cachyos-niri-noctalia`), the look comparisons
+in `docs/dms.md`, this plan's own history, and the superseded ADRs, all of
+which are intentional.
+
 Goal: nothing Noctalia-specific remains that a fresh machine would not need.
 
 Agent delivers: a sweep of the manifests with `scripts/check-packages.sh`,
