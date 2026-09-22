@@ -12,6 +12,8 @@ DashboardCard {
     readonly property bool isPlaying: activePlayer?.playbackState === MprisPlaybackState.Playing
     readonly property real trackLength: MprisController.activePlayerStableLength
 
+    readonly property real artworkSize: 66
+
     property bool isSeeking: false
     property var popout: null
 
@@ -89,15 +91,15 @@ DashboardCard {
 
     Item {
         width: parent.width
-        height: 66
+        height: media.artworkSize
 
         MediaArtwork {
             id: artwork
 
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 66
-            height: 66
+            width: media.artworkSize
+            height: media.artworkSize
             artUrl: TrackArtService.resolvedArtUrl
             cornerRadius: Theme.cornerRadius
 

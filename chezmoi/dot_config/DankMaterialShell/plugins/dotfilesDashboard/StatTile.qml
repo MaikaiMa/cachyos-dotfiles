@@ -12,6 +12,9 @@ Rectangle {
     property color lineColor: Theme.primary
     property real repaintTrigger: 0
 
+    readonly property real headerHeight: 18
+    readonly property real sparklineHeight: 44
+
     signal clicked
 
     onRepaintTriggerChanged: sparkline.requestPaint()
@@ -35,7 +38,7 @@ Rectangle {
 
         Item {
             width: parent.width
-            height: 18
+            height: tile.headerHeight
 
             StyledText {
                 anchors.left: parent.left
@@ -59,7 +62,7 @@ Rectangle {
             id: sparkline
 
             width: parent.width
-            height: 44
+            height: tile.sparklineHeight
             antialiasing: true
 
             onPaint: {

@@ -1,0 +1,50 @@
+{
+    "windows": {
+        "windows": "vensters"
+    },
+    "Restore": {
+        "Restore": "Herstellen"
+    },
+    "Minimize": {
+        "Minimize": "Minimaliseren"
+    },
+    "Close": {
+        "Close": "Sluiten"
+    },
+    "Pin": {
+        "Pin": "Vastmaken"
+    },
+    "Unpin": {
+        "Unpin": "Losmaken"
+    },
+    "Show pinned apps": {
+        "Show pinned apps": "Vastgemaakte apps tonen"
+    },
+    "Also show the apps pinned to the dock, even when they are not running": {
+        "Also show the apps pinned to the dock, even when they are not running": "Toon ook de apps die aan het dock zijn vastgemaakt, ook als ze niet draaien"
+    },
+    "Notification badge": {
+        "Notification badge": "Meldingsbadge"
+    },
+    "Show a red dot when the notification centre holds a notification from the app": {
+        "Show a red dot when the notification centre holds a notification from the app": "Toon een rode stip als het meldingencentrum een melding van de app bevat"
+    },
+    "Clear notifications on focus": {
+        "Clear notifications on focus": "Meldingen wissen bij focus"
+    },
+    "Dismiss an app's notifications to the history after it stays focused for 1.5 seconds": {
+        "Dismiss an app's notifications to the history after it stays focused for 1.5 seconds": "Verplaats de meldingen van een app naar de geschiedenis nadat die 1,5 seconde gefocust blijft"
+    },
+    "Current workspace only": {
+        "Current workspace only": "Alleen huidige werkruimte"
+    },
+    "Only show windows on the active workspace": {
+        "Only show windows on the active workspace": "Toon alleen vensters op de actieve werkruimte"
+    },
+    "Current monitor only": {
+        "Current monitor only": "Alleen huidige monitor"
+    },
+    "Only show windows on the monitor this bar belongs to": {
+        "Only show windows on the monitor this bar belongs to": "Toon alleen vensters op de monitor waar deze balk bij hoort"
+    }
+}

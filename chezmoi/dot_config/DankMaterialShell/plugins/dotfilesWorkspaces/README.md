@@ -52,6 +52,13 @@ swapping the widgets in the DankBar settings UI.
 `NotificationMatcher.qml` is a byte-identical copy of the one in `dotfilesApps` so it
 can be pulled into a shared location later; do not edit one without the other.
 
+## Translations
+
+The two settings strings go through `I18n.trFor("dotfilesWorkspaces", ...)`, and
+`translations/nl.json` holds the Dutch catalogue. DMS reads the file that
+matches `SessionData.locale` (Settings, Locale) and reloads it when the locale
+changes; the English strings in the QML are the source and the fallback.
+
 ## Known limits
 
 - niri only. On other compositors the widget hides itself.

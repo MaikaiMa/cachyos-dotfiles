@@ -1,0 +1,77 @@
+{
+    "Dashboard": {
+        "Dashboard": "Dashboard"
+    },
+    "Open the dash": {
+        "Open the dash": "Dash openen"
+    },
+    "Open notifications": {
+        "Open notifications": "Meldingen openen"
+    },
+    "Open settings": {
+        "Open settings": "Instellingen openen"
+    },
+    "Wallpaper": {
+        "Wallpaper": "Achtergrond"
+    },
+    "Wifi": {
+        "Wifi": "Wifi"
+    },
+    "Bluetooth": {
+        "Bluetooth": "Bluetooth"
+    },
+    "Caffeine": {
+        "Caffeine": "Caffeine"
+    },
+    "Do not disturb": {
+        "Do not disturb": "Niet storen"
+    },
+    "Nothing playing": {
+        "Nothing playing": "Geen media actief"
+    },
+    "Start playback to use these controls": {
+        "Start playback to use these controls": "Start muziek om de bediening te gebruiken"
+    },
+    "Unknown track": {
+        "Unknown track": "Onbekend nummer"
+    },
+    "Unknown artist": {
+        "Unknown artist": "Onbekende artiest"
+    },
+    "Display & audio": {
+        "Display & audio": "Beeld & geluid"
+    },
+    "Brightness": {
+        "Brightness": "Helderheid"
+    },
+    "Output": {
+        "Output": "Uitvoer"
+    },
+    "Input": {
+        "Input": "Invoer"
+    },
+    "Power": {
+        "Power": "Energie"
+    },
+    "Power Saver": {
+        "Power Saver": "Energiebesparing"
+    },
+    "Balanced": {
+        "Balanced": "Gebalanceerd"
+    },
+    "Performance": {
+        "Performance": "Prestaties"
+    },
+    "CPU": {
+        "CPU": "CPU"
+    },
+    "Memory": {
+        "Memory": "Geheugen"
+    },
+    "GPU": {
+        "GPU": "GPU"
+    },
+    "Network": {
+        "Network": "Netwerk"
+    }
+}

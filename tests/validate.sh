@@ -108,7 +108,10 @@ require_files \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/DotfilesLauncher.qml \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/DotfilesWorkspaces.qml
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/DotfilesWorkspaces.qml \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/translations/nl.json \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/translations/nl.json \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/translations/nl.json
 
 for adr in docs/adr/ADR-*.md; do
 	adr_name=${adr##*/}
@@ -142,6 +145,10 @@ done
 
 niri validate --config chezmoi/dot_config/niri/config.kdl
 lint_plugin_qml
+
+for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.json dms/*.json; do
+	jq empty "$catalogue"
+done
 shellcheck scripts/*.sh tests/*.sh
 fish -n tests/*.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fish/functions/*.fish
 tests/fish-docs.sh

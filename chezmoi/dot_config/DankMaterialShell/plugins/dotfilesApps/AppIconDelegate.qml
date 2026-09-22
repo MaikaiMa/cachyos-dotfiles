@@ -18,6 +18,9 @@ Item {
     property real cellHeight: 28
     property int desktopEntriesRevision: 0
 
+    readonly property real initialLetterSize: 10
+    readonly property real notificationDotDiameter: 6
+
     signal activated
     signal closeRequested
     signal contextMenuRequested(real anchorX, real anchorY)
@@ -112,7 +115,7 @@ Item {
             anchors.verticalCenter: appIcon.verticalCenter
             visible: !appIcon.visible && !Paths.isSteamApp(delegate.appId)
             text: delegate.appName ? delegate.appName.charAt(0).toUpperCase() : "?"
-            font.pixelSize: 10
+            font.pixelSize: delegate.initialLetterSize
             color: Theme.widgetTextColor
             opacity: appIcon.opacity
         }
@@ -123,7 +126,7 @@ Item {
 
             anchors.horizontalCenter: appIcon.right
             anchors.verticalCenter: appIcon.top
-            diameter: 6
+            diameter: delegate.notificationDotDiameter
             color: Theme.error
             visible: delegate.hasNotification
             z: 10

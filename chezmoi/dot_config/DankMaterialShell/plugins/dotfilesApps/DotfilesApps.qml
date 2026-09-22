@@ -22,8 +22,8 @@ PluginComponent {
 
     property int desktopEntriesRevision: 0
 
-    readonly property real cellWidth: iconSize + 8
-    readonly property real cellHeight: Math.min(iconSize + 8, widgetThickness)
+    readonly property real cellWidth: iconSize + Theme.spacingS
+    readonly property real cellHeight: Math.min(cellWidth, widgetThickness)
 
     readonly property var visibleToplevels: {
         root.toplevelsRevision;

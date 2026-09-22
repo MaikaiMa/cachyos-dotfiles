@@ -12,11 +12,12 @@ Rectangle {
 
     readonly property bool showsImage: imagePath.length > 0 && image.status === Image.Ready
     readonly property color foreground: isActive ? Theme.ccTileActiveText : Theme.surfaceText
+    readonly property real tileHeight: 76
 
     signal clicked
 
-    height: 76
-    radius: Theme.cornerRadius + 4
+    height: tileHeight
+    radius: Theme.cornerRadius + Theme.spacingXS
     clip: true
     antialiasing: true
     color: {

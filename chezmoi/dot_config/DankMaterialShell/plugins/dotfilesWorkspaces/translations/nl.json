@@ -1,0 +1,14 @@
+{
+    "Notification highlight": {
+        "Notification highlight": "Meldingsmarkering"
+    },
+    "Colour a workspace red when the notification centre holds a notification from an app on it": {
+        "Colour a workspace red when the notification centre holds a notification from an app on it": "Kleur een werkruimte rood als het meldingencentrum een melding bevat van een app op die werkruimte"
+    },
+    "Overview on right click": {
+        "Overview on right click": "Overzicht bij rechtermuisklik"
+    },
+    "Toggle the niri overview when the widget is right clicked": {
+        "Toggle the niri overview when the widget is right clicked": "Open of sluit het niri-overzicht bij een rechtermuisklik op de widget"
+    }
+}

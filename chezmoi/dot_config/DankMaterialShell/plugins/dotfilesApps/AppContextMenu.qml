@@ -14,6 +14,9 @@ PanelWindow {
     property real barSpacing: 4
     property point anchorPos: Qt.point(0, 0)
 
+    readonly property real menuWidth: 130
+    readonly property real menuItemHeight: 28
+
     readonly property bool isVerticalBar: barEdge === "left" || barEdge === "right"
     readonly property var primaryWindow: {
         const windows = entry?.windows ?? [];
@@ -135,7 +138,7 @@ PanelWindow {
                 return menuWindow.height - offset - height;
             return offset;
         }
-        width: 130
+        width: menuWindow.menuWidth
         height: menuColumn.height + Theme.spacingXS * 2
         radius: Theme.cornerRadius
         color: Theme.withAlpha(Theme.surfaceContainer, Theme.popupTransparency)
@@ -160,7 +163,7 @@ PanelWindow {
                     required property var modelData
 
                     width: menuColumn.width
-                    height: 28
+                    height: menuWindow.menuItemHeight
                     radius: Theme.cornerRadius
                     color: itemMouseArea.containsMouse ? BlurService.hoverColor(Theme.widgetBaseHoverColor) : "transparent"
 

@@ -19,9 +19,16 @@ Item {
     readonly property real glyphSize: controller?.pillIconSize ?? 16
     readonly property bool alerting: isUrgent || hasNotification
 
-    readonly property real crossExtent: thickness * 0.5
+    // Pill proportions mirror DMS's built-in WorkspaceSwitcher so both widgets read alike.
+    readonly property real crossRatio: 0.5
+    readonly property real activeThicknessRatio: 1.05
+    readonly property real activeGlyphRatio: 1.6
+    readonly property real idleThicknessRatio: 0.7
+    readonly property real idleGlyphRatio: 1.2
+
+    readonly property real crossExtent: thickness * crossRatio
     readonly property real labelExtent: labelText.visible ? ((vertical ? labelText.implicitHeight : labelText.implicitWidth) + Theme.spacingS) : 0
-    readonly property real mainExtent: Math.max(isActive ? Math.max(thickness * 1.05, glyphSize * 1.6) : Math.max(thickness * 0.7, glyphSize * 1.2), labelExtent)
+    readonly property real mainExtent: Math.max(isActive ? Math.max(thickness * activeThicknessRatio, glyphSize * activeGlyphRatio) : Math.max(thickness * idleThicknessRatio, glyphSize * idleGlyphRatio), labelExtent)
 
     readonly property color alertColor: controller?.alertPillColor ?? Theme.error
 

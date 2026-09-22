@@ -97,6 +97,16 @@ Everything reads and writes live DMS state; nothing shells out.
   centre is opened from the dashboard popout's trigger values instead, which puts
   it in the same centred place as the dashboard.
 
+## Translations
+
+Every user-facing string goes through `I18n.trFor("dotfilesDashboard", ...)`, and
+`translations/nl.json` holds the Dutch catalogue, reusing the wording of the
+Noctalia dashboard where it had one. DMS reads the file that matches
+`SessionData.locale` (Settings, Locale) and reloads it when the locale changes;
+the English strings in the QML are the source and the fallback. Terms whose
+Dutch is the English word, such as `Wifi` and `Caffeine`, are listed with an
+identical translation so DMS's own catalogue cannot rename them later.
+
 ## Reloading during development
 
 `dms ipc call plugins reload <id>` only re-reads the manifest component, so an edit

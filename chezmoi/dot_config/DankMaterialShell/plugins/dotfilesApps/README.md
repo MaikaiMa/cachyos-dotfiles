@@ -109,6 +109,14 @@ Nothing is deleted.
 
 Requires DMS >= 1.6.0 for the plugin API used here.
 
+## Translations
+
+The context menu, the tooltip and the settings strings go through
+`I18n.trFor("dotfilesApps", ...)`, and `translations/nl.json` holds the Dutch
+catalogue. DMS reads the file that matches `SessionData.locale` (Settings,
+Locale) and reloads it when the locale changes; the English strings in the QML
+are the source and the fallback.
+
 ## Known limits
 
 - The window count is not drawn on the icon; it is in the tooltip only.

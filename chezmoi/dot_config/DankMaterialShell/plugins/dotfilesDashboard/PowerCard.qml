@@ -86,6 +86,7 @@ DashboardCard {
         topPadding: Theme.spacingXS
 
         readonly property real buttonWidth: (width - spacing * 2) / 3
+        readonly property real buttonHeight: 44
 
         Repeater {
             model: [
@@ -115,7 +116,7 @@ DashboardCard {
                 readonly property bool isAvailable: PowerProfileWatcher.availableProfiles.indexOf(modelData.profile) !== -1
 
                 width: profiles.buttonWidth
-                height: 44
+                height: profiles.buttonHeight
                 radius: Theme.cornerRadius
                 enabled: isAvailable
                 opacity: isAvailable ? 1 : 0.4

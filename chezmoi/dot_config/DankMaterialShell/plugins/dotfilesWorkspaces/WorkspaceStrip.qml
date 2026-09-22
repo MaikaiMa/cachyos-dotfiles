@@ -9,8 +9,10 @@ Item {
     property bool vertical: false
     property int hoveredIndex: -1
 
+    // Scroll accumulation mirrors DMS's built-in WorkspaceSwitcher so both widgets feel alike.
     readonly property real touchpadThreshold: 500
     readonly property real mouseThreshold: 120
+    readonly property int scrollCooldownMs: 100
 
     property real touchpadAccumulator: 0
     property real mouseAccumulator: 0
@@ -65,7 +67,7 @@ Item {
     Timer {
         id: scrollCooldown
 
-        interval: 100
+        interval: strip.scrollCooldownMs
         onTriggered: strip.scrollInProgress = false
     }
 
