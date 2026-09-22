@@ -88,11 +88,11 @@ systemctl --user status wallpaper-favorites.service
 The binds, in
 [`keybinds.kdl`](../chezmoi/dot_config/niri/cfg/keybinds.kdl), follow the
 macOS layout from simple to complex: Mod+Shift+2 captures the focused screen,
-Mod+Shift+3 captures the focused window, and Mod+Shift+4 captures a region (on
-mouse release). Plain binds copy to the clipboard only; adding Ctrl also saves
-a file to `~/Pictures/Screenshots` (and still copies). Mod+Shift+5 is
-deliberately left unbound: macOS uses it for the screenshot toolbar, which DMS
-has no equivalent of.
+Mod+Shift+3 captures the focused window, Mod+Shift+4 captures a region (on
+mouse release), and Mod+Shift+5 captures a scrolling region: select a region,
+scroll the content yourself, Enter finishes, Esc cancels, and the frames are
+stitched into one tall image. Plain binds copy to the clipboard only; adding
+Ctrl also saves a file to `~/Pictures/Screenshots` (and still copies).
 
 Niri's own screenshot actions are unbound; `screenshot-path null` stays set in
 [`misc.kdl`](../chezmoi/dot_config/niri/cfg/misc.kdl) so niri never writes
