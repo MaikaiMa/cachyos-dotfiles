@@ -9,6 +9,13 @@ PluginComponent {
     // A PluginComponent subclass cannot reach the pill's visual content, which is what
     // DMS itself measures, so the notification centre reuses the placement
     // DashboardPopout already forced onto the dashboard popout.
+    // DMS 1.6 loads these popouts lazily and the PopoutService toggles are no-ops
+    // until their loader is active; DMS's own widgets activate it before toggling.
+    function activateLoader(loader) {
+        if (loader)
+            loader.active = true;
+    }
+
     function openNotificationCenter(popout) {
         if (!popout?.screen)
             return;
@@ -18,11 +25,13 @@ PluginComponent {
         const y = popout.triggerY;
         const width = popout.triggerWidth;
         closePopout();
+        activateLoader(PopoutService.notificationCenterLoader);
         PopoutService.toggleNotificationCenter(x, y, width, section, screen);
     }
 
     function openDashTab(tab) {
         closePopout();
+        activateLoader(PopoutService.dankDashPopoutLoader);
         PopoutService.toggleDankDash(tab);
     }
 

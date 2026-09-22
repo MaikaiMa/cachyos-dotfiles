@@ -76,7 +76,7 @@ Everything reads and writes live DMS state; nothing shells out.
 | Battery | `BatteryService` |
 | Power profiles | `PowerProfileWatcher` |
 | System stats | `DgopService` |
-| Header actions | `PopoutService` (dash, notification center, settings) |
+| Header actions | `PopoutService` (dash, notification center, settings); the dash and notification-center loaders are activated first because DMS 1.6 loads them lazily and the toggles are no-ops before |
 
 ## Known limits
 

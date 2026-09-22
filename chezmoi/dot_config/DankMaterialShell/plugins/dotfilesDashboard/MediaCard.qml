@@ -70,6 +70,8 @@ DashboardCard {
         const match = media.toplevelForPlayer();
         media.popout?.closePopout();
         if (!match) {
+            if (PopoutService.dankDashPopoutLoader)
+                PopoutService.dankDashPopoutLoader.active = true;
             PopoutService.toggleDankDash("media");
             return;
         }

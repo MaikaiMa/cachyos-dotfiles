@@ -14,7 +14,8 @@ A DankMaterialShell bar widget: the built-in apps-grid launcher icon on a filled
 
 ## Services used
 
-- `PopoutService` - `toggleAppDrawer`
+- `PopoutService` - `appDrawerLoader`, `toggleAppDrawer` (the loader is activated
+  first, because DMS 1.6 loads the drawer lazily and the toggle is a no-op before)
 - `CompositorService` - `isNiri`, `getScreenScale`
 - `NiriService` - `toggleOverview`
 - `Theme` - `primary`, `primaryText`, `hoverTint`, `cornerRadius`, `barIconSize`,
