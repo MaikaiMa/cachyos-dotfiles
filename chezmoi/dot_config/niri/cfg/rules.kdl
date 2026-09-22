@@ -31,6 +31,14 @@ window-rule {
     open-on-workspace "chat"
 }
 
+// Browsers, the editor, mail and the Steam main window keep the full width;
+// everything else, including terminals and the AI assistants, opens at 50%.
+window-rule {
+    match app-id=r#"^(zen|firefox|dev\.zed\.Zed|co\.hyprlab\.Hylki)$"#
+    match app-id="steam" title=r#"^[Ss]team$"#
+    default-column-width { proportion 1.0; }
+}
+
 // Sushi (Files quick preview on space) is a transient overlay, not a column.
 window-rule {
     match app-id=r#"^org\.gnome\.NautilusPreviewer$"#

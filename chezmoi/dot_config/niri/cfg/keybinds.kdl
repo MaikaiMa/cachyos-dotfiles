@@ -6,7 +6,8 @@ binds {
     Mod+Shift+Slash                      { show-hotkey-overlay; }
 
     // Applications: Caps is Mod3. Add Shift to force a new window.
-    Mod3+Return                         repeat=false hotkey-overlay-title="Open Terminal: Alacritty" { spawn "alacritty"; }
+    Mod3+Return                         repeat=false hotkey-overlay-title="Focus or Open Terminal: Alacritty" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" Alacritty alacritty"; }
+    Mod3+Shift+Return                   repeat=false hotkey-overlay-title="Open New Terminal Window: Alacritty" { spawn "alacritty"; }
     Mod3+B                              repeat=false hotkey-overlay-title="Focus or Open Browser: Zen" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" zen zen-browser"; }
     Mod3+Shift+B                        repeat=false hotkey-overlay-title="Open New Browser Window: Zen" { spawn "zen-browser"; }
     Mod3+C                              repeat=false hotkey-overlay-title="Focus or Open Code Editor: Zed" { spawn-sh "exec \"$HOME/.local/bin/focus-or-spawn\" dev.zed.Zed zeditor"; }
