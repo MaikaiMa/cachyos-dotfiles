@@ -41,8 +41,8 @@ binds {
     XF86AudioPause                      allow-when-locked=true { spawn-sh "dms ipc call mpris pause"; }
 
     // Brightness Controls:
-    XF86MonBrightnessUp                 allow-when-locked=true { spawn-sh "dms ipc call brightness increment 5"; }
-    XF86MonBrightnessDown               allow-when-locked=true { spawn-sh "dms ipc call brightness decrement 5"; }
+    XF86MonBrightnessUp                 allow-when-locked=true { spawn-sh "dms ipc call brightness increment 5 \"\""; }
+    XF86MonBrightnessDown               allow-when-locked=true { spawn-sh "dms ipc call brightness decrement 5 \"\""; }
 
     // Window Movement and Focus:
     Mod+W                               { close-window; }
