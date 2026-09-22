@@ -24,7 +24,7 @@ binds {
     // DankMaterialShell:
     Mod+Return                          hotkey-overlay-title="Open Wallpaper Selector: dms dash wallpaper" { spawn-sh "dms ipc call dash toggle wallpaper"; }
     Mod+S                               hotkey-overlay-title="Open Dashboard: dms dotfilesDashboard widget" { spawn-sh "dms ipc call widget toggle dotfilesDashboard"; }
-    Mod+Shift+S                         hotkey-overlay-title="Open Settings: dms settings" { spawn-sh "dms ipc call settings toggle"; }
+    Mod+Shift+S                         hotkey-overlay-title="Open Settings: dms settings" { spawn-sh "dms ipc call settings focusOrToggle"; }
     Mod+Space                           hotkey-overlay-title="Open App Launcher: dms spotlight" { spawn-sh "dms ipc call spotlight toggle"; }
     Mod+V                               repeat=false hotkey-overlay-title="Open Clipboard History: dms clipboard" { spawn-sh "dms ipc call clipboard toggle"; }
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen: dms lock" { spawn-sh "dms ipc call lock lock"; }
