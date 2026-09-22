@@ -15,6 +15,8 @@ fake_bin=$test_dir/bin
 calls=$test_dir/calls
 mkdir -p "$fake_bin"
 
+unset J2D_UISCALE 2>/dev/null || true
+
 # shellcheck disable=SC2016
 printf '%s\n' \
 	'#!/bin/sh' \
@@ -31,7 +33,8 @@ chmod +x "$fake_bin/niri"
 # shellcheck disable=SC2016
 printf '%s\n' \
 	'#!/bin/sh' \
-	'printf "%s\n" "$JAVA_TOOL_OPTIONS" > "$CALLS_FILE.options"' \
+	'printf "%s\n" "${J2D_UISCALE:-}" > "$CALLS_FILE.uiscale"' \
+	'printf "%s\n" "${JAVA_TOOL_OPTIONS:-}" > "$CALLS_FILE.options"' \
 	'printf "%s\n" "$*" > "$CALLS_FILE.args"' >"$fake_bin/test-app"
 chmod +x "$fake_bin/test-app"
 
@@ -39,7 +42,7 @@ PATH=$fake_bin:$PATH \
 	CALLS_FILE=$calls \
 	NIRI_OUTPUT='{"logical": {"scale": 1.75}}' \
 	"$helper" test-app one two
-grep -qx -- '-Dsun.java2d.uiScale=2' "$calls.options"
+grep -qx -- '2' "$calls.uiscale"
 grep -qx 'one two' "$calls.args"
 
 PATH=$fake_bin:$PATH \
@@ -47,33 +50,34 @@ PATH=$fake_bin:$PATH \
 	NIRI_OUTPUT='{"logical": {"scale": 1.75}}' \
 	JAVA_TOOL_OPTIONS='-Xmx1g' \
 	"$helper" test-app
-grep -qx -- '-Xmx1g -Dsun.java2d.uiScale=2' "$calls.options"
+grep -qx -- '-Xmx1g' "$calls.options"
+grep -qx -- '2' "$calls.uiscale"
 
 PATH=$fake_bin:$PATH \
 	CALLS_FILE=$calls \
 	NIRI_OUTPUT='{"logical": {"scale": 1.25}}' \
 	"$helper" test-app one two
-grep -qx -- '-Dsun.java2d.uiScale=1' "$calls.options"
+grep -qx -- '1' "$calls.uiscale"
 
 PATH=$fake_bin:$PATH \
 	CALLS_FILE=$calls \
 	NIRI_OUTPUT='{"logical": {"scale": 2.0}}' \
 	"$helper" test-app one two
-grep -qx -- '-Dsun.java2d.uiScale=2' "$calls.options"
+grep -qx -- '2' "$calls.uiscale"
 
 PATH=$fake_bin:$PATH \
 	CALLS_FILE=$calls \
 	NIRI_OUTPUT='{"logical": {"scale": 0.5}}' \
 	"$helper" test-app one two
-grep -qx -- '-Dsun.java2d.uiScale=1' "$calls.options"
+grep -qx -- '1' "$calls.uiscale"
 
 warning=$test_dir/warning
-: >"$calls.options"
+: >"$calls.uiscale"
 PATH=$fake_bin:$PATH \
 	CALLS_FILE=$calls \
 	NIRI_FAIL=1 \
 	"$helper" test-app 2>"$warning"
-[ -z "$(cat "$calls.options")" ]
+[ -z "$(cat "$calls.uiscale")" ]
 [ -s "$warning" ]
 
 status=0
