@@ -41,42 +41,39 @@ sysusers file. The same package ships `/etc/greetd/config.toml` and
 so a package upgrade never overwrites a locally modified copy; it writes a
 `.pacnew` alongside it instead.
 
-## Quiet session entry
+## Quiet niri-session wrapper
 
 greetd hands the session's stdout and stderr to the VT, so everything
 `niri-session` prints stays on screen for a moment at login and at logout.
-SDDM used to redirect that stream to a log file; greetd does not. Two
-repository-owned files restore the redirect:
+SDDM used to redirect that stream to a log file; greetd does not.
 
-- `system/local/bin/niri-session-quiet` installs as
-  `/usr/local/bin/niri-session-quiet`. It creates `~/.local/state` if needed
-  and then `exec`s `/usr/bin/niri-session` with stdout and stderr redirected
-  to `~/.local/state/niri-session.log`. The file is truncated at every login,
-  so it holds the current or the last session only.
-- `system/wayland-sessions/niri.desktop` installs as
-  `/usr/local/share/wayland-sessions/niri.desktop` and runs that wrapper.
+`system/local/bin/niri-session` installs as `/usr/local/bin/niri-session` and
+restores the redirect by shadowing the packaged script on `PATH`. greetd runs
+the session's `Exec=` through `/bin/sh -c`, which sources `/etc/profile`, and
+the session PATH starts with `/usr/local/sbin:/usr/local/bin` before
+`/usr/bin`. So `niri-session` resolves to the wrapper: it creates
+`~/.local/state` if needed and `exec`s `/usr/bin/niri-session` by absolute
+path, with stdout and stderr redirected to `~/.local/state/niri-session.log`.
+The absolute path also keeps the wrapper out of its own way, because
+`niri-session` re-execs `$0` through the login shell. The log is truncated at
+every login, so it holds the current or the last session only.
 
-The redirect lives in the wrapper, not in the desktop entry, because the
-greeter's session launcher parses `Exec=` per the Desktop Entry specification
-rather than through a shell: `>` and `2>&1` would be passed to `niri-session`
-as literal arguments.
-
-The greeter reads `/usr/local/share/wayland-sessions` before
-`/usr/share/wayland-sessions` and deduplicates on `Name=`, so the local entry
-replaces the packaged one in the picker instead of appearing next to it. That
-is why the file keeps the name `niri.desktop` and the value `Name=Niri`: the
-desktop id is what the launcher resolves and what the greeter remembers as
-the last-used session.
-
-The packaged `/usr/share/wayland-sessions/niri.desktop` is never touched, so
-a niri upgrade cannot conflict with this, and a display manager that reads
-only `/usr/share/wayland-sessions` keeps starting the packaged session
-unchanged. SDDM's default `SessionDir` lists `/usr/local/share/wayland-sessions`
-first as well, so after a rollback to SDDM the quiet entry is used there too;
-the only effect is that the session log moves from SDDM's own
+Nothing packaged is modified: `/usr/share/wayland-sessions/niri.desktop` and
+`/usr/bin/niri-session` stay as the package ships them, so a niri upgrade
+cannot conflict with this. Because the shadow works on `PATH`, it applies to
+every launcher that starts the session through a shell, including SDDM after
+a rollback; there the log simply moves from
 `~/.local/share/sddm/wayland-session.log` to `~/.local/state/niri-session.log`.
-Removing `/usr/local/share/wayland-sessions/niri.desktop` restores the
-packaged entry everywhere.
+Removing `/usr/local/bin/niri-session` undoes the whole mechanism.
+
+An earlier revision instead installed a session entry in
+`/usr/local/share/wayland-sessions`, which did not work: the greeter appends
+the `XDG_DATA_DIRS` entries (`/etc/profile.d/flatpak.sh` puts `/usr/share/` in
+there) after its hard-coded directories and then reverses the list, so
+`/usr/share/wayland-sessions` is read first and wins the `Name=` deduplication.
+The packaged entry was selected every time. `setup-greetd.sh` removes both
+files of that revision, `/usr/local/share/wayland-sessions/niri.desktop` and
+`/usr/local/bin/niri-session-quiet`, on its next run.
 
 ## How sync works
 
@@ -184,10 +181,13 @@ After the first login through greetd, confirm:
   ```fish
   loginctl show-session $XDG_SESSION_ID -p Type
   ```
-- The session picker lists exactly one Niri entry, and the session log exists
-  instead of scrolling past on the VT:
+- The session log exists instead of scrolling past on the VT:
   ```fish
   ls -l ~/.local/state/niri-session.log
+  ```
+- A session terminal resolves `niri-session` to the wrapper:
+  ```fish
+  realpath (command -v niri-session)
   ```
 - The last-used session is remembered on the next boot.
 - The wallpaper and colors on the greeter match the desktop.
@@ -216,7 +216,7 @@ Re-run the sync after:
 ./scripts/setup-greetd.sh
 ```
 
-Without `--switch`, this only re-installs the four system files if they
+Without `--switch`, this only re-installs the three system files if they
 differ and re-runs the sync; it does not touch the SDDM/greetd boot path.
 
 If a package upgrade of `greetd` or `dms-greeter` leaves a `.pacnew` next to
@@ -242,7 +242,7 @@ install command in the README, is harmless; it stays disabled until
 - The packaged `/usr/bin/niri-session` calls `systemctl --user
   import-environment` without arguments, which systemd 261 warns about
   (`Calling import-environment without a list of variable names is
-  deprecated.`). The quiet session entry above redirects it to
+  deprecated.`). The quiet wrapper above redirects it to
   `~/.local/state/niri-session.log` instead of the VT. It is harmless, and
   the deprecated call is fixed upstream in niri (PRs 3572 and 3776), not
   here.

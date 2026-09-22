@@ -1,7 +1,0 @@
-#!/bin/sh
-# The session's stderr would otherwise land on the greetd VT.
-set -eu
-
-mkdir -p "$HOME/.local/state"
-
-exec /usr/bin/niri-session >"$HOME/.local/state/niri-session.log" 2>&1

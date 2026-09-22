@@ -38,8 +38,7 @@ Rules that apply to every phase:
 | Repository plugins for DMS | `chezmoi/dot_config/DankMaterialShell/plugins/` | `~/.config/DankMaterialShell/plugins/` | 3 |
 | greetd config | `system/greetd/config.toml` | `/etc/greetd/config.toml` | 5 |
 | greetd PAM stack | `system/pam.d/greetd` | `/etc/pam.d/greetd` | 5 |
-| Quiet Niri session entry | `system/wayland-sessions/niri.desktop` | `/usr/local/share/wayland-sessions/niri.desktop` | 5 |
-| Quiet Niri session wrapper | `system/local/bin/niri-session-quiet` | `/usr/local/bin/niri-session-quiet` | 5 |
+| Quiet niri-session wrapper | `system/local/bin/niri-session` | `/usr/local/bin/niri-session` | 5 |
 | greetd and dms-greeter installer | `scripts/setup-greetd.sh` | runs as the user, escalates with sudo per step | 5 |
 | greetd installer test | `tests/setup-greetd.sh` | n/a | 5 |
 | Login screen guide | `docs/greeter.md` | n/a | 5 |

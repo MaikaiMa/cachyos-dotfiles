@@ -18,12 +18,19 @@ marker="$test_root/greetd-installed"
 state="$test_root/unit"
 config_target="$test_root/etc/greetd/config.toml"
 pam_target="$test_root/etc/pam.d/greetd"
-session_target="$test_root/usr/local/share/wayland-sessions/niri.desktop"
-session_wrapper_target="$test_root/usr/local/bin/niri-session-quiet"
+session_wrapper_target="$test_root/usr/local/bin/niri-session"
+legacy_session_target="$test_root/usr/local/share/wayland-sessions/niri.desktop"
+legacy_wrapper_target="$test_root/usr/local/bin/niri-session-quiet"
 niri_config="$test_root/etc/greetd/niri/config.kdl"
 settings_json="$test_root/settings.json"
 path_prefix=
-mkdir -p "$fake_bin" "$root_bin" "$test_root/etc/greetd/niri"
+mkdir -p "$fake_bin" "$root_bin" "$test_root/etc/greetd/niri" \
+	"$test_root/usr/local/share/wayland-sessions" "$test_root/usr/local/bin"
+
+printf '%s\n' '[Desktop Entry]' 'Name=Niri' 'Exec=/usr/local/bin/niri-session-quiet' \
+	>"$legacy_session_target"
+printf '%s\n' '#!/bin/sh' 'exec /usr/bin/niri-session' >"$legacy_wrapper_target"
+chmod +x "$legacy_wrapper_target"
 
 printf '%s\n' '{"greeterPamExternallyManaged": true}' >"$settings_json"
 printf '%s\n' 'output "eDP-1" {}' >"$niri_config"
@@ -67,8 +74,9 @@ run_setup() {
 	PATH="$path_prefix$fake_bin:$PATH" \
 		GREETD_CONFIG_TARGET="$config_target" \
 		GREETD_PAM_TARGET="$pam_target" \
-		GREETD_SESSION_TARGET="$session_target" \
 		GREETD_SESSION_WRAPPER_TARGET="$session_wrapper_target" \
+		GREETD_LEGACY_SESSION_TARGET="$legacy_session_target" \
+		GREETD_LEGACY_WRAPPER_TARGET="$legacy_wrapper_target" \
 		GREETD_NIRI_CONFIG="$niri_config" \
 		DMS_SETTINGS_PATH="$settings_json" \
 		GREETD_SETUP_CALLS="$calls" \
@@ -88,7 +96,10 @@ expect_no_changes() {
 	if [ -e "$config_target" ] || [ -e "$pam_target" ]; then
 		fail "$1"
 	fi
-	if [ -e "$session_target" ] || [ -e "$session_wrapper_target" ]; then
+	if [ -e "$session_wrapper_target" ]; then
+		fail "$1"
+	fi
+	if [ ! -e "$legacy_session_target" ] || [ ! -e "$legacy_wrapper_target" ]; then
 		fail "$1"
 	fi
 }
@@ -106,12 +117,16 @@ case $dry_run_output in
 *) fail 'A dry run must report the missing greetd package.' ;;
 esac
 case $dry_run_output in
-*"+ sudo install -Dm755 $repo_root/system/local/bin/niri-session-quiet $session_wrapper_target"*) ;;
+*"+ sudo install -Dm755 $repo_root/system/local/bin/niri-session $session_wrapper_target"*) ;;
 *) fail 'A dry run must report installing the quiet session wrapper.' ;;
 esac
 case $dry_run_output in
-*"+ sudo install -Dm644 $repo_root/system/wayland-sessions/niri.desktop $session_target"*) ;;
-*) fail 'A dry run must report installing the session entry.' ;;
+*"+ sudo rm $legacy_session_target"*) ;;
+*) fail 'A dry run must report removing the session entry of the earlier revision.' ;;
+esac
+case $dry_run_output in
+*"+ sudo rm $legacy_wrapper_target"*) ;;
+*) fail 'A dry run must report removing the wrapper of the earlier revision.' ;;
 esac
 case $dry_run_output in
 *"+ niri validate --config $niri_config"*) ;;
@@ -157,13 +172,18 @@ run_setup >/dev/null
 
 cmp "$repo_root/system/greetd/config.toml" "$config_target"
 cmp "$repo_root/system/pam.d/greetd" "$pam_target"
-cmp "$repo_root/system/wayland-sessions/niri.desktop" "$session_target"
-cmp "$repo_root/system/local/bin/niri-session-quiet" "$session_wrapper_target"
+cmp "$repo_root/system/local/bin/niri-session" "$session_wrapper_target"
 if [ ! -x "$session_wrapper_target" ]; then
 	fail 'The installed session wrapper must be executable.'
 fi
-if [ "$(count_calls '^sudo install ')" -ne 4 ]; then
-	fail 'The first run must install all four greetd files.'
+if [ "$(count_calls '^sudo install ')" -ne 3 ]; then
+	fail 'The first run must install all three greetd files.'
+fi
+if [ "$(count_calls '^sudo rm ')" -ne 2 ]; then
+	fail 'The first run must remove both files of the earlier revision.'
+fi
+if [ -e "$legacy_session_target" ] || [ -e "$legacy_wrapper_target" ]; then
+	fail 'The first run must leave nothing of the earlier revision behind.'
 fi
 grep -q '^dms-greeter sync --yes$' "$calls" || fail 'The first run must sync the greeter.'
 grep -q "^niri validate --config $niri_config\$" "$calls" || fail 'The first run must validate the greeter Niri config.'
@@ -182,6 +202,9 @@ fi
 run_setup >/dev/null
 if grep -q '^sudo install ' "$calls"; then
 	fail 'Unchanged files must not be installed again.'
+fi
+if grep -q '^sudo rm ' "$calls"; then
+	fail 'A second run must not remove anything.'
 fi
 grep -q '^dms-greeter sync --yes$' "$calls" || fail 'Every run must sync the greeter.'
 

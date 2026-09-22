@@ -96,8 +96,7 @@ require_files \
 	scripts/dms-apply-look.sh \
 	system/greetd/config.toml \
 	system/pam.d/greetd \
-	system/wayland-sessions/niri.desktop \
-	system/local/bin/niri-session-quiet \
+	system/local/bin/niri-session \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
@@ -164,12 +163,12 @@ tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
-	system/local/bin/niri-session-quiet
+	system/local/bin/niri-session
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
-	system/local/bin/niri-session-quiet
+	system/local/bin/niri-session
 
 chezmoi --source chezmoi execute-template \
 	<chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl >/dev/null

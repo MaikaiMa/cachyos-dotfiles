@@ -10,12 +10,12 @@ repo_root=$(
 )
 config_source="$repo_root/system/greetd/config.toml"
 pam_source="$repo_root/system/pam.d/greetd"
-session_source="$repo_root/system/wayland-sessions/niri.desktop"
-session_wrapper_source="$repo_root/system/local/bin/niri-session-quiet"
+session_wrapper_source="$repo_root/system/local/bin/niri-session"
 config_target=${GREETD_CONFIG_TARGET:-/etc/greetd/config.toml}
 pam_target=${GREETD_PAM_TARGET:-/etc/pam.d/greetd}
-session_target=${GREETD_SESSION_TARGET:-/usr/local/share/wayland-sessions/niri.desktop}
-session_wrapper_target=${GREETD_SESSION_WRAPPER_TARGET:-/usr/local/bin/niri-session-quiet}
+session_wrapper_target=${GREETD_SESSION_WRAPPER_TARGET:-/usr/local/bin/niri-session}
+legacy_session_target=${GREETD_LEGACY_SESSION_TARGET:-/usr/local/share/wayland-sessions/niri.desktop}
+legacy_wrapper_target=${GREETD_LEGACY_WRAPPER_TARGET:-/usr/local/bin/niri-session-quiet}
 niri_config=${GREETD_NIRI_CONFIG:-/etc/greetd/niri/config.kdl}
 greeter_command=${DMS_GREETER_COMMAND:-dms-greeter}
 settings_json=${DMS_SETTINGS_PATH:-$HOME/.config/DankMaterialShell/settings.json}
@@ -69,6 +69,14 @@ report_display_manager() {
 	fi
 }
 
+# An earlier revision shadowed the packaged session entry from
+# /usr/local/share; the greeter loads /usr/share first, so that file never took
+# effect and is removed here instead of being left behind.
+legacy_session_is_ours() {
+	[ -f "$legacy_session_target" ] || return 1
+	grep -Fqx 'Exec=/usr/local/bin/niri-session-quiet' "$legacy_session_target"
+}
+
 config_ownership_is_wrong() {
 	[ -f "$config_target" ] || return 1
 	[ "$(stat -c '%U:%G %a' "$config_target" 2>/dev/null)" != 'root:root 644' ]
@@ -105,11 +113,6 @@ if cmp -s "$pam_source" "$pam_target"; then
 	pam_differs=false
 fi
 
-session_differs=true
-if cmp -s "$session_source" "$session_target"; then
-	session_differs=false
-fi
-
 session_wrapper_differs=true
 if cmp -s "$session_wrapper_source" "$session_wrapper_target"; then
 	session_wrapper_differs=false
@@ -131,8 +134,11 @@ if [ "$dry_run" = true ]; then
 	if [ "$session_wrapper_differs" = true ]; then
 		printf '+ sudo install -Dm755 %s %s\n' "$session_wrapper_source" "$session_wrapper_target"
 	fi
-	if [ "$session_differs" = true ]; then
-		printf '+ sudo install -Dm644 %s %s\n' "$session_source" "$session_target"
+	if legacy_session_is_ours; then
+		printf '+ sudo rm %s\n' "$legacy_session_target"
+	fi
+	if [ -e "$legacy_wrapper_target" ]; then
+		printf '+ sudo rm %s\n' "$legacy_wrapper_target"
 	fi
 	printf '+ %s sync --yes\n' "$greeter_command"
 	if config_ownership_is_wrong; then
@@ -178,8 +184,12 @@ if [ "$session_wrapper_differs" = true ]; then
 	sudo install -Dm755 "$session_wrapper_source" "$session_wrapper_target"
 fi
 
-if [ "$session_differs" = true ]; then
-	sudo install -Dm644 "$session_source" "$session_target"
+if legacy_session_is_ours; then
+	sudo rm "$legacy_session_target"
+fi
+
+if [ -e "$legacy_wrapper_target" ]; then
+	sudo rm "$legacy_wrapper_target"
 fi
 
 "$greeter_command" sync --yes
