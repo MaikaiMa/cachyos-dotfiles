@@ -192,6 +192,16 @@ install command in the README, is harmless; it stays disabled until
 
 ## Known limits
 
+- `journalctl -b -u greetd` shows `gkr-pam: couldn't unlock the login keyring`
+  once per boot for the `greeter` user (uid 952). That is the keyring session
+  line of `system/pam.d/greetd` running for the greeter's own session, which
+  has no keyring; the later `gkr-pam: unlocked login keyring` for your user is
+  the line that matters.
+- The greeter preselects the last successfully logged-in user and session
+  from `/var/cache/dms-greeter/.local/state/memory.json`. That file is written
+  at the first successful login, so the very first boot through greetd shows
+  no preselected user.
+
 - The `greeter` system account gets read access to `~/.cache/DankMaterialShell`
   as part of the ACL sync, which includes clipboard and notification history,
   not just theme state. This is an accepted trade-off of using the live
