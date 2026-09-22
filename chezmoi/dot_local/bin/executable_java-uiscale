@@ -5,6 +5,9 @@ set -eu
 # maps X11 pixels 1:1 onto physical pixels, so the app must scale itself.
 # Java 2D reads scale from sun.java2d.uiScale, and the native launcher in
 # /opt/blip/bin has no options file, but the JVM honours JAVA_TOOL_OPTIONS.
+# OpenJDK's X11 toolkit only supports integer scale factors, so the fractional
+# output scale is rounded; on a 1.75 display Blip renders at 2x, slightly
+# larger than native apps.
 
 if [ "$#" -lt 1 ]; then
 	printf 'Usage: %s COMMAND [ARG ...]\n' "${0##*/}" >&2
@@ -18,7 +21,7 @@ for tool in niri jq; do
 	fi
 done
 
-scale=$(niri msg --json focused-output 2>/dev/null | jq -r '.logical.scale // empty') || scale=""
+scale=$(niri msg --json focused-output 2>/dev/null | jq -r '(.logical.scale // empty) | [round, 1] | max') || scale=""
 
 if [ -z "$scale" ]; then
 	printf '%s\n' 'Could not determine the focused output scale from niri; launching unscaled.' >&2

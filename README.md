@@ -198,12 +198,14 @@ current workspace.
 Blip runs through XWayland, and xwayland-satellite maps X11 pixels onto
 physical pixels, so it renders unscaled on the 1.75 display. The managed
 desktop entry starts it through `java-uiscale`, which reads the focused
-output's scale from niri and passes it to the JVM as `sun.java2d.uiScale`. The
-scale is read at launch, so restart Blip after moving it to a display with a
-different scale. This per-application approach was chosen over a global
-`Xft.dpi` set via `xrdb`, because Blip is currently the only X11 window and
-that approach needs an extra package and a startup hook; revisit if more X11
-applications arrive.
+output's scale from niri and passes it to the JVM as `sun.java2d.uiScale` via
+`JAVA_TOOL_OPTIONS`. OpenJDK's X11 toolkit accepts integer factors only, so the
+value is rounded and Blip renders at 2x on the 1.75 display, slightly larger
+than native apps. The scale is read at launch, so restart Blip after moving it
+to a display with a different scale. This per-application approach was
+preferred over a global `Xft.dpi` via xrdb because Blip is currently the only
+X11 window. DMS Spotlight parses desktop entries with quickshell, which
+rejects `\$` escapes in Exec, hence the `~` form.
 
 ## Secrets
 

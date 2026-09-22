@@ -39,7 +39,7 @@ PATH=$fake_bin:$PATH \
 	CALLS_FILE=$calls \
 	NIRI_OUTPUT='{"logical": {"scale": 1.75}}' \
 	"$helper" test-app one two
-grep -qx -- '-Dsun.java2d.uiScale=1.75' "$calls.options"
+grep -qx -- '-Dsun.java2d.uiScale=2' "$calls.options"
 grep -qx 'one two' "$calls.args"
 
 PATH=$fake_bin:$PATH \
@@ -47,7 +47,25 @@ PATH=$fake_bin:$PATH \
 	NIRI_OUTPUT='{"logical": {"scale": 1.75}}' \
 	JAVA_TOOL_OPTIONS='-Xmx1g' \
 	"$helper" test-app
-grep -qx -- '-Xmx1g -Dsun.java2d.uiScale=1.75' "$calls.options"
+grep -qx -- '-Xmx1g -Dsun.java2d.uiScale=2' "$calls.options"
+
+PATH=$fake_bin:$PATH \
+	CALLS_FILE=$calls \
+	NIRI_OUTPUT='{"logical": {"scale": 1.25}}' \
+	"$helper" test-app one two
+grep -qx -- '-Dsun.java2d.uiScale=1' "$calls.options"
+
+PATH=$fake_bin:$PATH \
+	CALLS_FILE=$calls \
+	NIRI_OUTPUT='{"logical": {"scale": 2.0}}' \
+	"$helper" test-app one two
+grep -qx -- '-Dsun.java2d.uiScale=2' "$calls.options"
+
+PATH=$fake_bin:$PATH \
+	CALLS_FILE=$calls \
+	NIRI_OUTPUT='{"logical": {"scale": 0.5}}' \
+	"$helper" test-app one two
+grep -qx -- '-Dsun.java2d.uiScale=1' "$calls.options"
 
 warning=$test_dir/warning
 : >"$calls.options"
