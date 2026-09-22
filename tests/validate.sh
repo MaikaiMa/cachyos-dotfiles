@@ -60,6 +60,7 @@ require_files \
 	chezmoi/dot_local/bin/executable_wallpaper-favorites \
 	chezmoi/dot_local/bin/executable_xwayland-scaled \
 	chezmoi/dot_local/private_share/applications/net.blip.Blip.desktop \
+	chezmoi/dot_local/private_share/applications/dev.noctalia.Noctalia.desktop \
 	chezmoi/dot_config/wallpapers/libraries \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \

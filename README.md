@@ -31,7 +31,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_gitconfig           Git credential helper
   private_dot_ssh/        SSH client configuration
   dot_local/bin/          deployed helper scripts
-  dot_local/private_share/applications/ desktop-entry overrides (Blip via xwayland-scaled)
+  dot_local/private_share/applications/ desktop-entry overrides (Blip via xwayland-scaled, Noctalia hidden)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
@@ -84,7 +84,10 @@ The baseline is a CachyOS installation with the "Niri / Noctalia" desktop
 profile, which installs `cachyos-niri-noctalia` and with it Niri, the cursor
 theme, and the desktop portals. That profile stays the baseline for those
 pieces even though DMS, not Noctalia, is the deployed shell; Noctalia remains
-on disk unused. `packages/pacman.txt` records only what the managed
+on disk unused. The `noctalia` package stays installed because the profile
+requires it; a managed desktop-entry override
+(`chezmoi/dot_local/private_share/applications/dev.noctalia.Noctalia.desktop`)
+hides it from the launcher. `packages/pacman.txt` records only what the managed
 configuration, helpers, validation, and documented setup need on top of or
 from within that baseline — including `dms-shell-niri`, `quickshell`,
 `matugen`, and `cava`. Kernel, bootloader, driver, and other installer-owned

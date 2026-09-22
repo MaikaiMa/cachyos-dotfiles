@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-21
+- Amended: 2026-09-22, the workspace was renamed to `inbox` when Blip joined it (see README, "Shell, terminal, editor and defaults").
 
 ## Context
 
