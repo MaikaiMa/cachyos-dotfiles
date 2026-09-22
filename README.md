@@ -196,6 +196,16 @@ Firefox), `code` (terminals, Zed, Meld, Claude) and `game` (Steam, Heroic,
 Lutris, Goverlay and their games); the file manager and viewers open on the
 current workspace.
 
+The Niri hotkey overlay (Mod+Shift+/) is curated by hand: every bind in
+`cfg/keybinds.kdl` carries either `hotkey-overlay-title="..."` or
+`hotkey-overlay-title=null`, so a new bind must choose one. The list is kept
+at about 40 keyboard-only entries: window, workspace, layout, DMS and
+screenshot binds, without the application launchers and media keys.
+`hide-not-bound` in `cfg/misc.kdl` drops Niri's hardcoded actions that have
+no bind. Niri re-renders the overlay on a config reload only when the binds
+or the Mod key change; a change to the `hotkey-overlay` section alone shows
+up after the next bind change or restart.
+
 ## XWayland applications and HiDPI
 
 Blip runs through XWayland and renders unscaled because xwayland-satellite
