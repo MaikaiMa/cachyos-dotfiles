@@ -52,9 +52,14 @@ printf '%s\n' '#!/bin/sh' 'unit_state="$GREETD_TEST_STATE.$2"' 'if [ "$1" = is-e
 	'esac' >"$fake_bin/systemctl"
 # shellcheck disable=SC2016
 printf '%s\n' '#!/bin/sh' 'printf "niri %s\n" "$*" >> "$GREETD_SETUP_CALLS"' >"$fake_bin/niri"
+# The real chown and chmod would fail for a test that runs as the user.
+# shellcheck disable=SC2016
+printf '%s\n' '#!/bin/sh' 'printf "chown %s\n" "$*" >> "$GREETD_SETUP_CALLS"' >"$fake_bin/chown"
+# shellcheck disable=SC2016
+printf '%s\n' '#!/bin/sh' 'printf "chmod %s\n" "$*" >> "$GREETD_SETUP_CALLS"' >"$fake_bin/chmod"
 printf '%s\n' '#!/bin/sh' 'printf "0\n"' >"$root_bin/id"
 chmod +x "$fake_bin/sudo" "$fake_bin/pacman" "$fake_bin/paru" "$fake_bin/dms-greeter" \
-	"$fake_bin/systemctl" "$fake_bin/niri" "$root_bin/id"
+	"$fake_bin/systemctl" "$fake_bin/niri" "$fake_bin/chown" "$fake_bin/chmod" "$root_bin/id"
 
 run_setup() {
 	PATH="$path_prefix$fake_bin:$PATH" \
@@ -143,6 +148,12 @@ fi
 grep -q '^dms-greeter sync --yes$' "$calls" || fail 'The first run must sync the greeter.'
 grep -q "^niri validate --config $niri_config\$" "$calls" || fail 'The first run must validate the greeter Niri config.'
 grep -q '^dms-greeter status$' "$calls" || fail 'The first run must report the greeter status.'
+if [ "$(count_calls "^sudo chown root:root $config_target\$")" -ne 1 ]; then
+	fail 'The first run must restore root ownership of the greetd config once.'
+fi
+if [ "$(count_calls "^sudo chmod 644 $config_target\$")" -ne 1 ]; then
+	fail 'The first run must restore mode 644 on the greetd config once.'
+fi
 if grep -Eq '^systemctl (disable|enable) ' "$calls"; then
 	fail 'A run without --switch must not change any service.'
 fi
@@ -172,6 +183,20 @@ fi
 run_setup --switch >/dev/null
 if grep -Eq '^systemctl (disable|enable) ' "$calls"; then
 	fail 'A repeated --switch run must leave the services alone.'
+fi
+
+: >"$calls"
+ownership_dry_run_output=$(run_setup --dry-run)
+case $ownership_dry_run_output in
+*"+ sudo chown root:root $config_target"*) ;;
+*) fail 'A dry run must report a wrongly owned greetd config.' ;;
+esac
+case $ownership_dry_run_output in
+*"+ sudo chmod 644 $config_target"*) ;;
+*) fail 'A dry run must report a wrong mode on the greetd config.' ;;
+esac
+if [ -s "$calls" ]; then
+	fail 'A dry run must not change the greetd config ownership.'
 fi
 
 path_prefix="$root_bin:"

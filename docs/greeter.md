@@ -97,8 +97,12 @@ Read the dry-run output completely, then run it for real:
 ./scripts/setup-greetd.sh
 ```
 
-Log out and back in once, so the new `greeter` group membership takes effect.
-Then check the sync state:
+The `dms-greeter status` report at the end of this first run shows
+`permission denied` and `symlink not found` lines for `/var/cache/dms-greeter`:
+the sync added you to the `greeter` group, but the running session does not
+have that group yet, so the status check cannot read the cache directory.
+Log out and back in once, so the group membership takes effect. Then check
+the sync state again; every line should now pass:
 
 ```fish
 dms-greeter status
@@ -194,6 +198,10 @@ install command in the README, is harmless; it stays disabled until
   symlink approach.
 - `/etc/greetd/config.toml` accumulates a timestamped backup on every sync
   run; this is cosmetic and safe to clean up by hand.
+- dank-greeter 1.6.2's sync leaves `/etc/greetd/config.toml` owned by the
+  invoking user with mode 0600, because its last rewrite moves a user-owned
+  temporary file into place. greetd runs as root and reads it regardless;
+  `setup-greetd.sh` restores `root:root` and mode 0644 after every sync.
 - The greeter UI is embedded in the `dms-greeter` binary and reads the live
   `settings.json` of whatever DMS version is installed. A DMS upgrade does
   not change the login screen; the AUR package has to catch up on its own,

@@ -46,7 +46,7 @@ if [ "$(id -u)" -eq 0 ]; then
 	exit 1
 fi
 
-for tool in cmp install jq niri pacman sudo; do
+for tool in cmp install jq niri pacman stat sudo; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Required command is missing: %s\n' "$tool" >&2
 		exit 1
@@ -55,6 +55,11 @@ done
 
 service_is_enabled() {
 	[ "$(systemctl is-enabled "$1" 2>/dev/null || true)" = enabled ]
+}
+
+config_ownership_is_wrong() {
+	[ -f "$config_target" ] || return 1
+	[ "$(stat -c '%U:%G %a' "$config_target" 2>/dev/null)" != 'root:root 644' ]
 }
 
 greetd_missing=false
@@ -102,6 +107,10 @@ if [ "$dry_run" = true ]; then
 		printf '+ sudo install -Dm644 %s %s\n' "$pam_source" "$pam_target"
 	fi
 	printf '+ %s sync --yes\n' "$greeter_command"
+	if config_ownership_is_wrong; then
+		printf '+ sudo chown root:root %s\n' "$config_target"
+		printf '+ sudo chmod 644 %s\n' "$config_target"
+	fi
 	printf '+ niri validate --config %s\n' "$niri_config"
 	printf '+ %s status\n' "$greeter_command"
 	if [ "$switch" = true ]; then
@@ -142,6 +151,12 @@ fi
 if [ ! -f "$niri_config" ]; then
 	printf 'dms-greeter sync did not produce %s\n' "$niri_config" >&2
 	exit 1
+fi
+
+# dms-greeter 1.6.2 appends -C by moving a temp file owned by the invoking user.
+if config_ownership_is_wrong; then
+	sudo chown root:root "$config_target"
+	sudo chmod 644 "$config_target"
 fi
 
 niri validate --config "$niri_config"
