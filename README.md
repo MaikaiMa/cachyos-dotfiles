@@ -33,6 +33,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_local/bin/          deployed helper scripts
   dot_local/private_share/applications/ desktop-entry overrides (Blip via xwayland-scaled, Noctalia hidden)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
+dms/plugins.lock.json      DMS registry plugins pinned to exact commits; see docs/dms.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
 packages/                 official, AUR, and Flatpak package manifests
@@ -61,7 +62,9 @@ notification dot replace the built-in bar widgets. The [Dotfiles
 Dashboard](chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md)
 plugin rebuilds the former Noctalia dashboard as a centered popout on
 `Mod+S`, with the original DMS Control Center and Settings still reachable
-from its header. DMS's own built-in lock screen stays; see
+from its header. Registry plugins for the launcher are pinned in
+`dms/plugins.lock.json` and installed by `scripts/dms-restore-plugins.sh`.
+DMS's own built-in lock screen stays; see
 [ADR-0015](docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
 All of this, including how to iterate on the look, restart the shell, and
 reload a plugin, is documented in [docs/dms.md](docs/dms.md). The login

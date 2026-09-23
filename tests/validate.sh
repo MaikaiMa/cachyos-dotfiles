@@ -99,17 +99,20 @@ require_files \
 	docs/dms.md \
 	docs/pictures.md \
 	dms/look.json \
+	dms/plugins.lock.json \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
 	scripts/setup-greetd.sh \
 	scripts/setup-z13-window.sh \
 	scripts/dms-apply-look.sh \
+	scripts/dms-restore-plugins.sh \
 	system/greetd/config.toml \
 	system/pam.d/greetd \
 	system/local/bin/niri-session \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
+	tests/dms-restore-plugins.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/setup-greetd.sh \
@@ -190,6 +193,7 @@ chezmoi --source chezmoi execute-template \
 	<chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl >/dev/null
 
 tests/check-packages.sh
+tests/dms-restore-plugins.sh
 tests/focus-or-spawn.sh
 tests/setup-greetd.sh
 tests/setup-z13-window.sh

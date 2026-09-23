@@ -1,4 +1,19 @@
 {
+  "commandRunner": {
+    "enabled": true
+  },
+  "converter": {
+    "enabled": true
+  },
+  "dankGifSearch": {
+    "enabled": true
+  },
+  "dankLauncherKeys": {
+    "enabled": true
+  },
+  "dankTranslate": {
+    "enabled": true
+  },
   "dotfilesApps": {
     "enabled": true
   },
@@ -9,6 +24,21 @@
     "enabled": true
   },
   "dotfilesWorkspaces": {
+    "enabled": true
+  },
+  "emojiLauncher": {
+    "enabled": true
+  },
+  "obsidianSearch": {
+    "enabled": true
+  },
+  "personalDictionary": {
+    "enabled": true
+  },
+  "svglSearch": {
+    "enabled": true
+  },
+  "webSearch": {
     "enabled": true
   }
 }

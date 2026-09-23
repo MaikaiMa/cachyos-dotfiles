@@ -63,6 +63,10 @@ Facts that drove the choice (verified 2026-09-21):
    `requires_dms` and live under the chezmoi-managed plugin directory together
    with DMS's `plugins.lock.json`. Overriding the embedded QML tree is
    rejected as a fork.
+   *Amended 2026-09-23:* third-party plugins are pinned in
+   `dms/plugins.lock.json` as desired state and installed with
+   `dms plugins restore`, not deployed by chezmoi, because DMS rewrites its
+   live lockfile on every install and update; see `docs/dms.md`.
 3. **Lock screen and greeter are repository-owned Quickshell configurations.**
    A single source directory, `~/.config/quickshell/session/`, contains the
    shared components plus a `lock` and a `greeter` entry point. The lock uses

@@ -1,0 +1,48 @@
+{
+  "lockfileVersion": 1,
+  "plugins": {
+    "commandRunner": {
+      "repo": "https://github.com/devnullvoid/dms-command-runner",
+      "commit": "5c2cab404335ceb96c60cf9e97a9682994209cd4"
+    },
+    "converter": {
+      "repo": "https://github.com/viewerofall-labs/weather-viewer",
+      "path": "converter",
+      "commit": "45ab60d67079d23b5c1fbac506aec825e9d3178c"
+    },
+    "dankGifSearch": {
+      "repo": "https://github.com/AvengeMedia/dms-plugins",
+      "path": "DankGifSearch",
+      "commit": "e774a9756f2a50499c37a5513f28bee4ebe81d73"
+    },
+    "dankLauncherKeys": {
+      "repo": "https://github.com/AvengeMedia/dms-plugins",
+      "path": "DankLauncherKeys",
+      "commit": "e774a9756f2a50499c37a5513f28bee4ebe81d73"
+    },
+    "dankTranslate": {
+      "repo": "https://github.com/alcxyz/DankTranslate",
+      "commit": "8b3eaaa5f2db7160d5562f8c473df91ca799a0d7"
+    },
+    "emojiLauncher": {
+      "repo": "https://github.com/devnullvoid/dms-emoji-launcher",
+      "commit": "8ff394e3ddfcb2fd755ed2e7b4c6f01f3e26e596"
+    },
+    "obsidianSearch": {
+      "repo": "https://github.com/kmf/dms-obsidian-search",
+      "commit": "cffadc76d5d64af598e18cfe9c47bc28d493c8d1"
+    },
+    "personalDictionary": {
+      "repo": "https://github.com/gemb0-0/Personal-Dictionary",
+      "commit": "5f7a3ce7bd83ee606e697522ca6d371b05c7e246"
+    },
+    "svglSearch": {
+      "repo": "https://github.com/Grant07/dms-svgl-search",
+      "commit": "98301dd987fc0fc73af719bc59d725544c4bdb9b"
+    },
+    "webSearch": {
+      "repo": "https://github.com/devnullvoid/dms-web-search",
+      "commit": "821f5b437ea96739ce1cbc85ce324fb55e8884bb"
+    }
+  }
+}

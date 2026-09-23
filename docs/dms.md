@@ -37,6 +37,9 @@ is preserved only as the `noctalia-final` Git tag.
     rebuilds the former Noctalia dashboard as a DMS popout on `Mod+S`
     (wallpaper, Wi-Fi, Bluetooth, caffeine, do-not-disturb toggles, media,
     display and audio, power, and system stats), centred under the bar.
+- **Registry plugins** for the launcher, pinned in
+  `dms/plugins.lock.json` and installed by `scripts/dms-restore-plugins.sh`;
+  see "Registry plugins" below.
 - **Niri integration.** `chezmoi/dot_config/niri/config.kdl` includes
   `dms/layout.kdl` and `dms/colors.kdl`, which DMS itself writes, so the Niri
   focus ring width and colour follow the DMS primary colour on every theme
@@ -45,6 +48,77 @@ is preserved only as the `noctalia-final` Git tag.
   surfaces are not see-through. `chezmoi/dot_config/niri/cfg/layout.kdl` sets
   `gaps 10` and struts that align tiled windows with the bar.
 - **matugen templates**, Niri backdrop and the Z13 template, see below.
+
+## Registry plugins
+
+Third-party plugins from the [DMS plugin registry](https://plugins.danklinux.com)
+extend the launcher (Spotlight). Each is enabled in
+`chezmoi/dot_config/DankMaterialShell/plugin_settings.json` and pinned to an
+exact Git commit in `dms/plugins.lock.json`:
+
+| Plugin | In the launcher |
+| --- | --- |
+| `dankLauncherKeys` | Search and browse Niri and application keyboard shortcuts. |
+| `converter` | Convert units (distance, weight, temperature, and more) and colours (RGB, hex, HSV, HSL). |
+| `webSearch` | Search the web with a keyword-selected engine; opens the result with `xdg-open`. |
+| `emojiLauncher` | Search emoji and Unicode characters and copy (or type) them. |
+| `commandRunner` | Run a shell command, in a terminal or in the background, with history. Its terminal defaults to `kitty`; set it in the plugin settings. |
+| `dankTranslate` | Translate text with `translate-shell` and copy the result. |
+| `dankGifSearch` | Search GIFs (Klipy) and copy or paste one. |
+| `personalDictionary` | Expand predefined snippets: copy them or type them into the focused window with `wtype`. |
+| `svglSearch` | Search SVGL brand logos and copy one. It ships a prebuilt helper binary and is not yet marked reviewed in the registry. |
+| `obsidianSearch` | Search Obsidian vaults by title, folder, and content. Needs a running Obsidian 1.12.7+ with its CLI registered (Settings, General, Command line interface), which installs `~/.local/bin/obsidian`. |
+
+Their runtime tools are recorded in `packages/pacman.txt`.
+
+### Why the lockfile lives in `dms/`
+
+DMS rewrites its live lockfile,
+`~/.config/DankMaterialShell/plugins.lock.json`, on every install and update,
+so a chezmoi-managed copy would drift constantly. `dms/plugins.lock.json` is
+desired state instead, like `dms/look.json`, in the DMS 1.6.2 format
+(`lockfileVersion` 1; per plugin id a `repo`, an optional `path` inside that
+repository, and a 40-character `commit`; plugins from one repository must share
+a commit). `scripts/dms-restore-plugins.sh` compares it with the live lockfile
+and the installed plugin manifests and runs `dms plugins restore` on the repo
+file only when something differs. `scripts/bootstrap.sh` calls it before the
+look is applied. Preview it with:
+
+```fish
+./scripts/dms-restore-plugins.sh --dry-run
+```
+
+Restore runs without `--prune`: plugins installed by hand and missing from
+`dms/plugins.lock.json` stay installed. A plugin installed outside DMS's live
+lockfile under a locked id is reported as a conflict, because DMS refuses to
+restore over it. If a restore actually installs or updates a plugin while
+`dms.service` is running, the script prints a notice to restart DMS
+(`dms-reset`) so the running shell picks the new plugins up, instead of
+leaving them stuck `[disabled]`.
+
+### Adding or updating a plugin
+
+Install or update it through DMS, which records the new commit in the live
+lockfile:
+
+```fish
+dms plugins install webSearch
+dms plugins update webSearch
+```
+
+Then copy that plugin's entry from the live lockfile into
+`dms/plugins.lock.json`; this prints it:
+
+```fish
+jq .plugins.webSearch ~/.config/DankMaterialShell/plugins.lock.json
+```
+
+For a new plugin, also add `"<id>": {"enabled": true}` to
+`chezmoi/dot_config/DankMaterialShell/plugin_settings.json`, its row to the
+table above, and the packages from its registry `Dependencies` (see
+`dms plugins browse`) to `packages/pacman.txt`. `dankLauncherKeys` and
+`dankGifSearch` both come from `AvengeMedia/dms-plugins`, so updating one
+moves the other to the same commit; copy both entries.
 
 ## The mat-glass look
 

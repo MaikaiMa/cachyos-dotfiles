@@ -35,6 +35,12 @@ chezmoi --source "$source_dir" apply "$@"
 
 if command -v "$dms_command" >/dev/null 2>&1; then
 	if [ "$dry_run" = true ]; then
+		"$repo_root/scripts/dms-restore-plugins.sh" --dry-run
+	elif ! "$repo_root/scripts/dms-restore-plugins.sh"; then
+		printf '%s\n' 'Restoring the DMS plugins failed; run scripts/dms-restore-plugins.sh yourself.' >&2
+	fi
+
+	if [ "$dry_run" = true ]; then
 		"$repo_root/scripts/dms-apply-look.sh" --dry-run
 	elif ! "$repo_root/scripts/dms-apply-look.sh"; then
 		printf '%s\n' 'Applying the DMS look failed; run scripts/dms-apply-look.sh yourself.' >&2

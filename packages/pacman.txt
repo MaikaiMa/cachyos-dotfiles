@@ -34,10 +34,19 @@ cava # audio visualizer in the DMS bar
 kimageformats # extra wallpaper image formats for DMS
 power-profiles-daemon # dashboard power profiles
 protonmail-bridge-core # enabled user service
-jq # focus-or-spawn and scripts/dms-apply-look.sh
+jq # focus-or-spawn, scripts/dms-apply-look.sh and scripts/dms-restore-plugins.sh
 util-linux # flock in focus-or-spawn
 tinysparql # wallpaper-favorites reads Nautilus stars
 xorg-xprop # xwayland-scaled sets Xft.dpi for X11 apps such as Blip
+
+# Runtime tools for the DMS registry plugins in dms/plugins.lock.json.
+curl # dankGifSearch fetches GIFs
+qt6-imageformats # dankGifSearch renders animated GIF/WebP previews
+translate-shell # dankTranslate runs trans
+wl-clipboard # wl-copy for dankTranslate, personalDictionary, svglSearch and emojiLauncher
+wtype # personalDictionary, emojiLauncher and dankGifSearch type into the focused window
+xdg-utils # xdg-open for webSearch and obsidianSearch
+obsidian # obsidianSearch searches vaults through the Obsidian CLI
 
 # Applications launched by managed keybinds or set as default handlers.
 alacritty
