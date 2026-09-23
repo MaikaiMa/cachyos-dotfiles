@@ -202,7 +202,8 @@ plugins pinned in `lazy-lock.json`. Plain `vim` comes from `gvim`. See
 [ADR-0018](docs/adr/ADR-0018-use-neovim-with-lazyvim-as-the-terminal-editor.md).
 
 Files that CachyOS installs from `/etc/skel` and that are unchanged, such as
-`config.fish`, `.zshrc`, and the Micro settings, are deliberately not managed.
+`.zshrc` and the Micro settings, are deliberately not managed. `config.fish` is
+managed only to replace CachyOS's fastfetch greeting with an empty one.
 Zed and the XDG MIME database rewrite their own files; review the resulting
 `chezmoi status` drift and promote or revert it. See ADR-0008.
 

@@ -65,6 +65,7 @@ require_files \
 	chezmoi/dot_config/wallpapers/libraries \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/matugen/templates/ghostty-background \
+	chezmoi/dot_config/fish/config.fish \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
 	chezmoi/dot_config/fish/functions/dms-reset.fish \
 	chezmoi/dot_config/ghostty/config.ghostty \
@@ -235,7 +236,7 @@ for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.j
 	jq empty "$catalogue"
 done
 shellcheck scripts/*.sh tests/*.sh
-fish -n tests/*.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fish/functions/*.fish
+fish -n tests/*.fish chezmoi/dot_config/fish/config.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fish/functions/*.fish
 tests/fish-docs.sh
 
 shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
