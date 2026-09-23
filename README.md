@@ -27,6 +27,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/ghostty/     terminal configuration; see docs/terminal.md
   dot_config/alacritty/   fallback terminal configuration
   dot_config/zed/         editor settings
+  dot_config/nvim/        Neovim (LazyVim) configuration and plugin lockfile; see docs/editor.md
   dot_config/mimeapps.list default applications
   dot_config/wallpapers/  wallpaper repositories cloned by wallpaper-favorites
   dot_gitconfig           Git credential helper
@@ -45,12 +46,14 @@ docs/dms.md               DMS shell: what is deployed, the look, plugins, matuge
 docs/greeter.md           login screen: greetd running the DMS greeter
 docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, viewers
 docs/terminal.md          Ghostty: configuration, opening windows, colours, fallback
+docs/editor.md            Neovim with LazyVim: first start, plugin updates, colours, sudoedit
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
 
-`chezmoi/.chezmoiignore` excludes the tracked `.keep` placeholders. Review the
-chezmoi diff before every explicit deployment.
+`chezmoi/.chezmoiignore` excludes the tracked `.keep` placeholders and the
+Neovim colours that DMS generates. Review the chezmoi diff before every
+explicit deployment.
 
 DankMaterialShell (DMS) writes `dms/layout.kdl` and `dms/colors.kdl` from the
 active wallpaper palette; the managed `config.kdl` includes both optionally, so
@@ -181,15 +184,21 @@ See [docs/pictures.md](docs/pictures.md) and
 
 The repository manages DMS's plugins and plugin settings (see
 [docs/dms.md](docs/dms.md)), Fish helpers under `conf.d/` and `functions/`,
-the Ghostty and fallback Alacritty configurations, Zed settings, the
-default-application handlers in `mimeapps.list`, and a `.gitconfig` that uses
-the GitHub CLI as credential helper and signs commits and tags with the SSH
-key from 1Password. Git identity is not managed; set it per repository or
+the Ghostty and fallback Alacritty configurations, Zed settings, the Neovim
+(LazyVim) configuration, the default-application handlers in `mimeapps.list`,
+and a `.gitconfig` that uses the GitHub CLI as credential helper and signs
+commits and tags with the SSH key from 1Password. Git identity is not managed; set it per repository or
 locally.
 
 Ghostty is the terminal on `Mod3+Return`; Alacritty stays installed as an
 unbound fallback. See [docs/terminal.md](docs/terminal.md) and
 [ADR-0017](docs/adr/ADR-0017-use-ghostty-as-the-terminal.md).
+
+Zed is the main editor. Neovim with LazyVim is the terminal editor and what
+`EDITOR`, `VISUAL`, and thus `sudoedit` open; its first start downloads the
+plugins pinned in `lazy-lock.json`. Plain `vim` comes from `gvim`. See
+[docs/editor.md](docs/editor.md) and
+[ADR-0018](docs/adr/ADR-0018-use-neovim-with-lazyvim-as-the-terminal-editor.md).
 
 Files that CachyOS installs from `/etc/skel` and that are unchanged, such as
 `config.fish`, `.zshrc`, and the Micro settings, are deliberately not managed.

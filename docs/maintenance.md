@@ -84,6 +84,9 @@ Update everything from a terminal with:
 paru -Syu; and flatpak update
 ```
 
+Neovim plugins are not part of this; update them with `:Lazy update` and copy
+the lockfile back as described in [docs/editor.md](editor.md#updating-plugins-and-the-lockfile).
+
 Afterwards confirm that the manifests still match the machine:
 
 ```fish

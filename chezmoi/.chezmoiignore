@@ -1,3 +1,6 @@
 # Structural placeholders are kept in Git only; chezmoi must not deploy them.
 dot_config/niri/.keep
 dot_config/niri/matugen/.keep
+# Rendered by DMS from the wallpaper (matugenTemplateNeovim); see docs/editor.md.
+.config/nvim/colors/dms.lua
+.config/nvim/lua/lualine/themes/dms.lua

@@ -16,7 +16,7 @@ if ! command -v "$qmllint_command" >/dev/null 2>&1; then
 	qmllint_command=/usr/lib/qt6/bin/qmllint
 fi
 
-for tool in chezmoi fish ghostty git grep niri "$qmllint_command" shellcheck shfmt; do
+for tool in chezmoi fish ghostty git grep jq niri nvim "$qmllint_command" shellcheck shfmt; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Missing required validation tool: %s\n' "$tool" >&2
 		exit 1
@@ -68,6 +68,14 @@ require_files \
 	chezmoi/dot_config/fish/functions/dms-reset.fish \
 	chezmoi/dot_config/ghostty/config.ghostty \
 	chezmoi/dot_config/alacritty/alacritty.toml \
+	chezmoi/dot_config/nvim/init.lua \
+	chezmoi/dot_config/nvim/lazy-lock.json \
+	chezmoi/dot_config/nvim/stylua.toml \
+	chezmoi/dot_config/nvim/lua/config/lazy.lua \
+	chezmoi/dot_config/nvim/lua/config/options.lua \
+	chezmoi/dot_config/nvim/lua/config/keymaps.lua \
+	chezmoi/dot_config/nvim/lua/config/autocmds.lua \
+	chezmoi/dot_config/nvim/lua/plugins/colorscheme.lua \
 	chezmoi/dot_config/zed/settings.json \
 	chezmoi/dot_config/mimeapps.list \
 	chezmoi/dot_gitconfig \
@@ -94,6 +102,7 @@ require_files \
 	docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md \
 	docs/adr/ADR-0016-mirror-nautilus-stars-into-the-dms-wallpaper-folder.md \
 	docs/adr/ADR-0017-use-ghostty-as-the-terminal.md \
+	docs/adr/ADR-0018-use-neovim-with-lazyvim-as-the-terminal-editor.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -102,6 +111,7 @@ require_files \
 	docs/dms.md \
 	docs/pictures.md \
 	docs/terminal.md \
+	docs/editor.md \
 	dms/look.json \
 	dms/plugins.lock.json \
 	scripts/bootstrap.sh \
@@ -182,15 +192,41 @@ validate_ghostty_config() {
 	fi
 }
 
+validate_nvim_lua() {
+	nvim_home=$(mktemp -d)
+	cat >"$nvim_home/check.lua" <<'EOF'
+local failed = false
+for _, path in ipairs(arg) do
+  local _, err = loadfile(path)
+  if err then
+    io.stderr:write(err, "\n")
+    failed = true
+  end
+end
+os.exit(failed and 1 or 0)
+EOF
+	nvim_status=0
+	XDG_CONFIG_HOME=$nvim_home XDG_DATA_HOME=$nvim_home XDG_STATE_HOME=$nvim_home \
+		XDG_CACHE_HOME=$nvim_home find chezmoi/dot_config/nvim -name '*.lua' \
+		-exec nvim --clean -l "$nvim_home/check.lua" {} + || nvim_status=$?
+	rm -rf -- "$nvim_home"
+	if [ "$nvim_status" -ne 0 ]; then
+		printf '%s\n' 'Neovim rejected a Lua file under chezmoi/dot_config/nvim.' >&2
+		exit 1
+	fi
+}
+
 for config in chezmoi/dot_config/niri/cfg/*.kdl; do
 	niri validate --config "$config"
 done
 
 niri validate --config chezmoi/dot_config/niri/config.kdl
 validate_ghostty_config
+validate_nvim_lua
 lint_plugin_qml
 
-for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.json dms/*.json; do
+for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.json dms/*.json \
+	chezmoi/dot_config/nvim/lazy-lock.json; do
 	jq empty "$catalogue"
 done
 shellcheck scripts/*.sh tests/*.sh

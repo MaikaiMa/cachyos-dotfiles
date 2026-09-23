@@ -43,7 +43,7 @@ xorg-xprop # xwayland-scaled sets Xft.dpi for X11 apps such as Blip
 curl # dankGifSearch fetches GIFs
 qt6-imageformats # dankGifSearch renders animated GIF/WebP previews
 translate-shell # dankTranslate runs trans
-wl-clipboard # wl-copy for dankTranslate, personalDictionary, svglSearch and emojiLauncher
+wl-clipboard # wl-copy for dankTranslate, personalDictionary, svglSearch and emojiLauncher; Neovim clipboard
 wtype # personalDictionary, emojiLauncher and dankGifSearch type into the focused window
 xdg-utils # xdg-open for webSearch and obsidianSearch
 obsidian # obsidianSearch searches vaults through the Obsidian CLI
@@ -61,6 +61,17 @@ firefox # backup browser, opens on the browse workspace (niri rules.kdl)
 meld # diff tool, opens on the code workspace (niri rules.kdl)
 ghostty # terminal, Mod3+Return; opens on the code workspace (niri rules.kdl)
 claude-desktop # Claude Desktop, Mod3+I keybind
+
+# Terminal editor: Neovim with LazyVim (ADR-0018); Zed stays the main editor.
+neovim
+gvim # plain vim with Wayland clipboard; replaces the vim package, no GUI use
+tree-sitter-cli # LazyVim builds its treesitter parsers with it
+gcc # C compiler for the treesitter parsers
+lazygit # LazyVim <leader>gg
+ripgrep # LazyVim grep pickers
+fd # LazyVim file pickers
+fzf # checked by :checkhealth lazyvim
+unzip # Mason unpacks zip releases such as stylua
 
 # Secrets: Secret Service provider (profile-provided) and its CLI secret-tool.
 gnome-keyring

@@ -180,6 +180,7 @@ systemctl --user restart dms.service
 | `currentThemeName`, `currentThemeCategory` | `"dynamic"`: theme colors are generated from the wallpaper instead of a fixed palette. |
 | `matugenSmartMode` | Lets matugen pick light/dark and contrast from the wallpaper automatically. |
 | `runUserMatugenTemplates`, `runDmsMatugenTemplates` | Regenerate both the user's and DMS's own matugen templates when the theme changes, so terminals and GTK/Qt apps stay in sync with the wallpaper too. `runUserMatugenTemplates` is also what makes DMS process `~/.config/matugen/config.toml`; see "matugen templates: Niri backdrop and the Z13 rear-window color" below. |
+| `matugenTemplateNeovim` | Renders DMS's Neovim colorscheme (`~/.config/nvim/colors/dms.lua`) and lualine theme from the wallpaper; off by default in DMS. See [docs/editor.md](editor.md#colours). |
 | `popupTransparency`, `foregroundLayerTransparency` | `0.85`: Control Center, Dashboard, and other popups read as translucent glass over the wallpaper rather than flat opaque panels. |
 | `blurEnabled`, `blurForegroundLayers`, `blurBorderEnabled`, `blurredWallpaperLayer` | DMS blur through Niri's `ext-background-effect` protocol: on, on, on, off. It blurs only behind translucent pixels of DMS's own surfaces. `blurredWallpaperLayer` stays off: it draws a blurred wallpaper copy for the overview and needs a `place-within-backdrop` rule that is not included, so it made the whole wallpaper look blurred. A Niri `layer-rule` blur is not an option: it covers the whole layer surface, which is larger than the visible bar or popup. |
 | `blurBorderEnabled` | `false`: no outline around the blurred glass, for a cleaner edge. |
@@ -290,6 +291,15 @@ in the same matugen run. Once matugen has exited, and only when the palette
 changed, DMS sends `SIGUSR2` to processes named `ghostty` (and `kitty` gets
 `SIGUSR1`), so Ghostty reloads with the new colours; no user template or hook
 is needed. See [docs/terminal.md](terminal.md#colours-and-reloading).
+
+### Neovim colours
+
+With `matugenTemplateNeovim` on, DMS's `dmsneovim-colors` and
+`dmsneovim-lualine` templates write `~/.config/nvim/colors/dms.lua` and
+`~/.config/nvim/lua/lualine/themes/dms.lua` in the same run, but only when
+`nvim` is on `PATH`. DMS sends Neovim no signal; the generated colorscheme
+watches its own file and DMS's `settings.json` and reloads itself. See
+[docs/editor.md](editor.md#colours).
 
 ### Triggering a re-render
 
