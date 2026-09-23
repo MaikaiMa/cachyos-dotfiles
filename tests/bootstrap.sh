@@ -67,7 +67,6 @@ for path in \
 	.config/environment.d/10-ssh-agent.conf \
 	.ssh/config \
 	.config/git/allowed_signers \
-	.config/DankMaterialShell/plugin_settings.json \
 	.config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
 	.config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
 	.config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
@@ -134,7 +133,7 @@ chmod +x "$dms_stub_dir/dms"
 
 look_dry_run=$(PATH="$dms_stub_dir:$PATH" DMS_COMMAND=dms run_bootstrap --dry-run --no-pager)
 case $look_dry_run in
-*'dms-restore-plugins: dry run, restoring would change:'*'install dankLauncherKeys'*'dms-apply-look: dry run, applying would restart dms.service'*) ;;
+*'dms-restore-plugins: dry run, restoring would change:'*'install dankLauncherKeys'*'dms-apply-look: dry run, applying would restart dms.service'*'"pluginSettings"'*) ;;
 *)
 	printf '%s\n' 'Bootstrap dry-run did not preview the DMS plugins and look:' >&2
 	printf '%s\n' "$look_dry_run" >&2
@@ -143,6 +142,10 @@ case $look_dry_run in
 esac
 if [ -e "$test_home/.config/DankMaterialShell/settings.json" ]; then
 	printf '%s\n' 'Bootstrap dry-run wrote the DMS settings file.' >&2
+	exit 1
+fi
+if [ -e "$test_home/.config/DankMaterialShell/plugin_settings.json" ]; then
+	printf '%s\n' 'Bootstrap dry-run wrote the DMS plugin settings file.' >&2
 	exit 1
 fi
 if [ -e "$test_home/.config/DankMaterialShell/plugins.lock.json" ]; then

@@ -22,9 +22,12 @@ is preserved only as the `noctalia-final` Git tag.
   instead, merged the same way into
   `~/.local/state/DankMaterialShell/session.json`; currently only
   `terminalOverride`, see [docs/terminal.md](terminal.md#terminal-for-dms).
+  `dms/plugin_settings.json` holds the pinned plugin settings, merged the
+  same way into `~/.config/DankMaterialShell/plugin_settings.json`; see
+  "Plugin settings" below.
 - **Four repository plugins** under
   `chezmoi/dot_config/DankMaterialShell/plugins/`, enabled through
-  `chezmoi/dot_config/DankMaterialShell/plugin_settings.json`:
+  `dms/plugin_settings.json`:
   - [`dotfilesLauncher`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/README.md)
     draws the built-in apps-grid launcher icon on a filled primary-colour
     pill instead of the default neutral background; a drop-in replacement
@@ -56,8 +59,8 @@ is preserved only as the `noctalia-final` Git tag.
 
 Third-party plugins from the [DMS plugin registry](https://plugins.danklinux.com)
 extend the launcher (Spotlight). Each is enabled in
-`chezmoi/dot_config/DankMaterialShell/plugin_settings.json` and pinned to an
-exact Git commit in `dms/plugins.lock.json`:
+`dms/plugin_settings.json` and pinned to an exact Git commit in
+`dms/plugins.lock.json`:
 
 | Plugin | In the launcher |
 | --- | --- |
@@ -65,7 +68,7 @@ exact Git commit in `dms/plugins.lock.json`:
 | `converter` | Convert units (distance, weight, temperature, and more) and colours (RGB, hex, HSV, HSL). |
 | `webSearch` | Search the web with a keyword-selected engine; opens the result with `xdg-open`. |
 | `emojiLauncher` | Search emoji and Unicode characters and copy (or type) them. |
-| `commandRunner` | Run a shell command, in a terminal or in the background, with history. Runs in Ghostty (`terminal` and `execFlag` in `plugin_settings.json`; the plugin's own default is `kitty`). |
+| `commandRunner` | Run a shell command, in a terminal or in the background, with history. Runs in Ghostty (`terminal` and `execFlag` in `dms/plugin_settings.json`; the plugin's own default is `kitty`). |
 | `dankTranslate` | Translate text with `translate-shell` and copy the result. |
 | `dankGifSearch` | Search GIFs (Klipy) and copy or paste one. |
 | `personalDictionary` | Expand predefined snippets: copy them or type them into the focused window with `wtype`. |
@@ -73,6 +76,26 @@ exact Git commit in `dms/plugins.lock.json`:
 | `obsidianSearch` | Search Obsidian vaults by title, folder, and content. Needs a running Obsidian 1.12.7+ with its CLI registered (Settings, General, Command line interface), which installs `~/.local/bin/obsidian`. |
 
 Their runtime tools are recorded in `packages/pacman.txt`.
+
+### Plugin settings
+
+DMS plugins save their own state into
+`~/.config/DankMaterialShell/plugin_settings.json`: `commandRunner` keeps its
+command history there and `webSearch` the engines edited in its settings. A
+chezmoi-managed copy of the whole file would drift after every use and make a
+non-interactive bootstrap stop at chezmoi's overwrite prompt, so the file is
+not managed by chezmoi; see
+[ADR-0019](adr/ADR-0019-merge-dms-plugin-settings-as-desired-state.md).
+
+`dms/plugin_settings.json` pins only the keys it lists: per plugin id, the
+`enabled` flag and, for `commandRunner`, `terminal` and `execFlag`.
+`scripts/dms-apply-look.sh` deep-merges it into the live file per plugin, so
+those keys take the repository value and every other key stays as it is. It
+creates the file when it is missing and prints only the pinned keys in its
+before/after diff. DMS reads the file only at startup, so the script writes it
+with `dms.service` stopped, like `settings.json`. A setting changed in the
+DMS UI stays machine-local unless you copy it into `dms/plugin_settings.json`
+on purpose.
 
 ### Why the lockfile lives in `dms/`
 
@@ -117,9 +140,10 @@ jq .plugins.webSearch ~/.config/DankMaterialShell/plugins.lock.json
 ```
 
 For a new plugin, also add `"<id>": {"enabled": true}` to
-`chezmoi/dot_config/DankMaterialShell/plugin_settings.json`, its row to the
-table above, and the packages from its registry `Dependencies` (see
-`dms plugins browse`) to `packages/pacman.txt`. `dankLauncherKeys` and
+`dms/plugin_settings.json`, its row to the table above, and the packages from
+its registry `Dependencies` (see `dms plugins browse`) to
+`packages/pacman.txt`. Then apply the settings with
+`./scripts/dms-apply-look.sh`, which restarts DMS so the new plugin loads. `dankLauncherKeys` and
 `dankGifSearch` both come from `AvengeMedia/dms-plugins`, so updating one
 moves the other to the same commit; copy both entries.
 
@@ -158,7 +182,8 @@ Review the printed before/after diff, then apply for real:
 The first real run backs up the previous file to
 `~/.config/DankMaterialShell/settings.json.before-look` (once — later runs
 do not overwrite that backup). The script is idempotent: running it again
-with an unchanged `dms/look.json` reports nothing to do and does not touch
+with unchanged `dms/look.json`, `dms/session.json`, and
+`dms/plugin_settings.json` reports nothing to do and does not touch
 `dms.service`.
 
 ### Iterating on feedback

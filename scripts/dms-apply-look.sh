@@ -10,8 +10,10 @@ repo_root=$(
 )
 look_json="$repo_root/dms/look.json"
 session_look_json="$repo_root/dms/session.json"
+plugin_look_json="$repo_root/dms/plugin_settings.json"
 settings_json="$HOME/.config/DankMaterialShell/settings.json"
 session_json="${XDG_STATE_HOME:-$HOME/.local/state}/DankMaterialShell/session.json"
+plugin_settings_json="$HOME/.config/DankMaterialShell/plugin_settings.json"
 backup_json="$settings_json.before-look"
 dry_run=0
 
@@ -40,23 +42,29 @@ command -v jq >/dev/null 2>&1 || {
 	exit 1
 }
 
-[ -f "$look_json" ] || {
-	printf 'dms-apply-look: %s not found\n' "$look_json" >&2
-	exit 1
-}
-
-for source in "$look_json" "$session_look_json"; do
+for source in "$look_json" "$session_look_json" "$plugin_look_json"; do
+	[ -f "$source" ] || {
+		printf 'dms-apply-look: %s not found\n' "$source" >&2
+		exit 1
+	}
 	jq empty "$source" 2>/dev/null || {
 		printf 'dms-apply-look: %s is not valid JSON\n' "$source" >&2
 		exit 1
 	}
 done
 
+jq -e 'type == "object" and all(.[]; type == "object")' "$plugin_look_json" >/dev/null || {
+	printf 'dms-apply-look: %s must map each plugin id to an object of settings\n' "$plugin_look_json" >&2
+	exit 1
+}
+
 tmp_merged=$(mktemp)
 tmp_settings=$(mktemp)
 tmp_session=$(mktemp)
 tmp_session_merged=$(mktemp)
-trap 'rm -f "$tmp_merged" "$tmp_settings" "$tmp_session" "$tmp_session_merged"' EXIT HUP INT TERM
+tmp_plugins=$(mktemp)
+tmp_plugins_merged=$(mktemp)
+trap 'rm -f "$tmp_merged" "$tmp_settings" "$tmp_session" "$tmp_session_merged" "$tmp_plugins" "$tmp_plugins_merged"' EXIT HUP INT TERM
 
 copy_or_empty() {
 	if [ -f "$1" ]; then
@@ -68,6 +76,7 @@ copy_or_empty() {
 
 copy_or_empty "$settings_json" "$tmp_settings"
 copy_or_empty "$session_json" "$tmp_session"
+copy_or_empty "$plugin_settings_json" "$tmp_plugins"
 
 # DMS drops keys that equal their default from settings.json, so the effective value comes from IPC.
 fill_effective_defaults() {
@@ -111,6 +120,8 @@ merge_filter='
 '
 jq -s "$merge_filter" "$tmp_settings" "$look_json" >"$tmp_merged"
 jq -s '.[0] * .[1]' "$tmp_session" "$session_look_json" >"$tmp_session_merged"
+# Plugins write their own state (command history, search engines) into this file, so only the repo's keys are overlaid.
+jq -s '.[0] * .[1]' "$tmp_plugins" "$plugin_look_json" >"$tmp_plugins_merged"
 
 # shellcheck disable=SC2016
 restrict_filter='($look[0] | keys_unsorted) as $keys | ($obj[0] | with_entries(select(.key as $k | $keys | index($k))))'
@@ -119,25 +130,46 @@ after_touched=$(jq -n --slurpfile look "$look_json" --slurpfile obj "$tmp_merged
 session_before=$(jq -n --slurpfile look "$session_look_json" --slurpfile obj "$tmp_session" "$restrict_filter")
 session_after=$(jq -n --slurpfile look "$session_look_json" --slurpfile obj "$tmp_session_merged" "$restrict_filter")
 
-if [ "$before_touched" = "$after_touched" ] && [ "$session_before" = "$session_after" ]; then
-	printf 'dms-apply-look: settings already match %s and %s\n' "$look_json" "$session_look_json"
+# Restricting per plugin keeps command history and other plugin state out of the printed diff.
+# shellcheck disable=SC2016
+plugin_restrict_filter='
+  $look[0] as $shape
+  | $obj[0] as $live
+  | reduce ($shape | to_entries[]) as $plugin ({};
+      if $live | has($plugin.key) then
+        .[$plugin.key] = ($live[$plugin.key]
+          | if type == "object" then with_entries(select(.key as $k | $plugin.value | has($k))) else . end)
+      else
+        .
+      end
+    )
+'
+plugins_before=$(jq -n --slurpfile look "$plugin_look_json" --slurpfile obj "$tmp_plugins" "$plugin_restrict_filter")
+plugins_after=$(jq -n --slurpfile look "$plugin_look_json" --slurpfile obj "$tmp_plugins_merged" "$plugin_restrict_filter")
+
+if [ "$before_touched" = "$after_touched" ] && [ "$session_before" = "$session_after" ] &&
+	[ "$plugins_before" = "$plugins_after" ]; then
+	printf 'dms-apply-look: settings already match %s, %s and %s\n' "$look_json" "$session_look_json" "$plugin_look_json"
 	exit 0
 fi
 
-if [ "$dry_run" -eq 1 ]; then
-	printf 'dms-apply-look: dry run, applying would restart dms.service and change:\n'
+print_changes() {
 	jq -n --argjson before "$before_touched" --argjson after "$after_touched" \
 		--argjson sessionBefore "$session_before" --argjson sessionAfter "$session_after" \
-		'{before: $before, after: $after, session: {before: $sessionBefore, after: $sessionAfter}}'
+		--argjson pluginsBefore "$plugins_before" --argjson pluginsAfter "$plugins_after" \
+		'{before: $before, after: $after, session: {before: $sessionBefore, after: $sessionAfter}, pluginSettings: {before: $pluginsBefore, after: $pluginsAfter}}'
+}
+
+if [ "$dry_run" -eq 1 ]; then
+	printf 'dms-apply-look: dry run, applying would restart dms.service and change:\n'
+	print_changes
 	exit 0
 fi
 
 printf 'dms-apply-look: applying changes:\n'
-jq -n --argjson before "$before_touched" --argjson after "$after_touched" \
-	--argjson sessionBefore "$session_before" --argjson sessionAfter "$session_after" \
-	'{before: $before, after: $after, session: {before: $sessionBefore, after: $sessionAfter}}'
+print_changes
 
-mkdir -p "$(dirname "$settings_json")" "$(dirname "$session_json")"
+mkdir -p "$(dirname "$settings_json")" "$(dirname "$session_json")" "$(dirname "$plugin_settings_json")"
 
 if [ -f "$settings_json" ] && [ ! -e "$backup_json" ]; then
 	cp -p "$settings_json" "$backup_json"
@@ -150,6 +182,7 @@ fi
 
 mv "$tmp_merged" "$settings_json"
 mv "$tmp_session_merged" "$session_json"
+mv "$tmp_plugins_merged" "$plugin_settings_json"
 
 if ! systemctl --user start dms.service; then
 	printf 'dms-apply-look: failed to start dms.service; settings were written, start it manually\n' >&2

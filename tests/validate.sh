@@ -103,6 +103,7 @@ require_files \
 	docs/adr/ADR-0016-mirror-nautilus-stars-into-the-dms-wallpaper-folder.md \
 	docs/adr/ADR-0017-use-ghostty-as-the-terminal.md \
 	docs/adr/ADR-0018-use-neovim-with-lazyvim-as-the-terminal-editor.md \
+	docs/adr/ADR-0019-merge-dms-plugin-settings-as-desired-state.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -113,7 +114,9 @@ require_files \
 	docs/terminal.md \
 	docs/editor.md \
 	dms/look.json \
+	dms/plugin_settings.json \
 	dms/plugins.lock.json \
+	dms/session.json \
 	scripts/bootstrap.sh \
 	scripts/check-packages.sh \
 	scripts/setup-greetd.sh \
@@ -126,6 +129,7 @@ require_files \
 	system/udev/70-z13-window.rules \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
+	tests/dms-apply-look.sh \
 	tests/dms-restore-plugins.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
@@ -137,7 +141,6 @@ require_files \
 	tests/validate.fish
 
 require_files \
-	chezmoi/dot_config/DankMaterialShell/plugin_settings.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/DotfilesApps.qml \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
@@ -250,6 +253,7 @@ chezmoi --source chezmoi execute-template \
 	<chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl >/dev/null
 
 tests/check-packages.sh
+tests/dms-apply-look.sh
 tests/dms-restore-plugins.sh
 tests/focus-or-spawn.sh
 tests/setup-greetd.sh

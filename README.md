@@ -18,7 +18,7 @@ installed application.
 ```text
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
-  dot_config/DankMaterialShell/ DMS plugins and plugin settings
+  dot_config/DankMaterialShell/ DMS repository plugins
   dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color)
   dot_config/systemd/user/ managed ~/.config/systemd/user units
   dot_config/environment.d/ session environment (SSH agent socket)
@@ -35,6 +35,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_local/bin/          deployed helper scripts
   dot_local/private_share/applications/ desktop-entry overrides (Blip via xwayland-scaled, Noctalia hidden)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
+dms/plugin_settings.json   pinned DMS plugin settings (enabled flags, commandRunner terminal); see docs/dms.md
 dms/plugins.lock.json      DMS registry plugins pinned to exact commits; see docs/dms.md
 dms/session.json           DMS session-state keys (terminal override); see docs/terminal.md
 scripts/                  idempotent operational helpers
@@ -182,7 +183,7 @@ See [docs/pictures.md](docs/pictures.md) and
 
 ## Shell, terminal, editor and defaults
 
-The repository manages DMS's plugins and plugin settings (see
+The repository manages DMS's plugins and pins selected plugin settings (see
 [docs/dms.md](docs/dms.md)), Fish helpers under `conf.d/` and `functions/`,
 the Ghostty and fallback Alacritty configurations, Zed settings, the Neovim
 (LazyVim) configuration, the default-application handlers in `mimeapps.list`,

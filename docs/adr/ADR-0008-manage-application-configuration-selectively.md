@@ -1,6 +1,6 @@
 # ADR-0008: Manage application configuration selectively
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR-0019](ADR-0019-merge-dms-plugin-settings-as-desired-state.md)
 - Date: 2026-09-21
 
 ## Context
@@ -51,3 +51,11 @@ dropped rather than preserved.
   default browser and editor unreproducible.
 - **Copy skel files into the repository:** duplicates packaged defaults and
   hides upstream updates behind a stale copy.
+
+## Update 2026-09-23 (ADR-0019)
+
+DMS's `plugin_settings.json` is no longer managed as a whole file: plugins
+write history and other state into it, so the drift blocked non-interactive
+bootstraps. A desired-state subset in `dms/plugin_settings.json` is merged
+into it instead. The rest of this decision is unchanged. See
+[ADR-0019](ADR-0019-merge-dms-plugin-settings-as-desired-state.md).
