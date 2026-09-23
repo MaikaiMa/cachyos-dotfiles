@@ -18,7 +18,10 @@ is preserved only as the `noctalia-final` Git tag.
   `scripts/dms-apply-look.sh` merges it into
   `~/.config/DankMaterialShell/settings.json`. See "The mat-glass look" below
   for why it edits the file directly instead of using `dms ipc call settings
-  set`.
+  set`. `dms/session.json` holds the few keys DMS keeps in session state
+  instead, merged the same way into
+  `~/.local/state/DankMaterialShell/session.json`; currently only
+  `terminalOverride`, see [docs/terminal.md](terminal.md#terminal-for-dms).
 - **Four repository plugins** under
   `chezmoi/dot_config/DankMaterialShell/plugins/`, enabled through
   `chezmoi/dot_config/DankMaterialShell/plugin_settings.json`:
@@ -62,7 +65,7 @@ exact Git commit in `dms/plugins.lock.json`:
 | `converter` | Convert units (distance, weight, temperature, and more) and colours (RGB, hex, HSV, HSL). |
 | `webSearch` | Search the web with a keyword-selected engine; opens the result with `xdg-open`. |
 | `emojiLauncher` | Search emoji and Unicode characters and copy (or type) them. |
-| `commandRunner` | Run a shell command, in a terminal or in the background, with history. Its terminal defaults to `kitty`; set it in the plugin settings. |
+| `commandRunner` | Run a shell command, in a terminal or in the background, with history. Runs in Ghostty (`terminal` and `execFlag` in `plugin_settings.json`; the plugin's own default is `kitty`). |
 | `dankTranslate` | Translate text with `translate-shell` and copy the result. |
 | `dankGifSearch` | Search GIFs (Klipy) and copy or paste one. |
 | `personalDictionary` | Expand predefined snippets: copy them or type them into the focused window with `wtype`. |
@@ -279,6 +282,14 @@ and is a no-op on other hardware; see (the former) ADR-0004, now superseded
 by ADR-0013, decision 4. This replaces the Noctalia `niri` and
 `z13_window` user templates from `templates.toml`, preserved in the
 `noctalia-final` tag.
+
+### Terminal colours
+
+DMS's own `dmsghostty` template writes `~/.config/ghostty/themes/dankcolors`
+in the same matugen run. Once matugen has exited, and only when the palette
+changed, DMS sends `SIGUSR2` to processes named `ghostty` (and `kitty` gets
+`SIGUSR1`), so Ghostty reloads with the new colours; no user template or hook
+is needed. See [docs/terminal.md](terminal.md#colours-and-reloading).
 
 ### Triggering a re-render
 

@@ -16,7 +16,7 @@ if ! command -v "$qmllint_command" >/dev/null 2>&1; then
 	qmllint_command=/usr/lib/qt6/bin/qmllint
 fi
 
-for tool in chezmoi fish git grep niri "$qmllint_command" shellcheck shfmt; do
+for tool in chezmoi fish ghostty git grep niri "$qmllint_command" shellcheck shfmt; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Missing required validation tool: %s\n' "$tool" >&2
 		exit 1
@@ -50,6 +50,7 @@ require_files \
 	chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_protonmail-bridge.service \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_dms.service \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_app-com.mitchellh.ghostty.service \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_wallpaper-favorites.path \
 	chezmoi/dot_config/systemd/user/wallpaper-favorites.service \
 	chezmoi/dot_config/systemd/user/wallpaper-favorites.path \
@@ -65,6 +66,7 @@ require_files \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
 	chezmoi/dot_config/fish/functions/dms-reset.fish \
+	chezmoi/dot_config/ghostty/config.ghostty \
 	chezmoi/dot_config/alacritty/alacritty.toml \
 	chezmoi/dot_config/zed/settings.json \
 	chezmoi/dot_config/mimeapps.list \
@@ -91,6 +93,7 @@ require_files \
 	docs/adr/ADR-0014-replace-sddm-with-greetd-and-the-quickshell-greeter.md \
 	docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md \
 	docs/adr/ADR-0016-mirror-nautilus-stars-into-the-dms-wallpaper-folder.md \
+	docs/adr/ADR-0017-use-ghostty-as-the-terminal.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -98,6 +101,7 @@ require_files \
 	docs/greeter.md \
 	docs/dms.md \
 	docs/pictures.md \
+	docs/terminal.md \
 	dms/look.json \
 	dms/plugins.lock.json \
 	scripts/bootstrap.sh \
@@ -162,11 +166,28 @@ lint_plugin_qml() {
 	fi
 }
 
+validate_ghostty_config() {
+	ghostty_config_home=$(mktemp -d)
+	# DMS renders the dankcolors theme at runtime; a stub keeps validation
+	# independent of the live home.
+	mkdir -p "$ghostty_config_home/ghostty/themes"
+	: >"$ghostty_config_home/ghostty/themes/dankcolors"
+	ghostty_status=0
+	XDG_CONFIG_HOME=$ghostty_config_home ghostty +validate-config \
+		--config-file=chezmoi/dot_config/ghostty/config.ghostty || ghostty_status=$?
+	rm -rf -- "$ghostty_config_home"
+	if [ "$ghostty_status" -ne 0 ]; then
+		printf '%s\n' 'Ghostty rejected chezmoi/dot_config/ghostty/config.ghostty.' >&2
+		exit 1
+	fi
+}
+
 for config in chezmoi/dot_config/niri/cfg/*.kdl; do
 	niri validate --config "$config"
 done
 
 niri validate --config chezmoi/dot_config/niri/config.kdl
+validate_ghostty_config
 lint_plugin_qml
 
 for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.json dms/*.json; do

@@ -49,7 +49,7 @@ xdg-utils # xdg-open for webSearch and obsidianSearch
 obsidian # obsidianSearch searches vaults through the Obsidian CLI
 
 # Applications launched by managed keybinds or set as default handlers.
-alacritty
+alacritty # fallback terminal without a bind (ADR-0017)
 zed
 nautilus
 loupe # default image viewer (mimeapps.list)
@@ -59,7 +59,7 @@ chatgpt-desktop-bin
 github-cli # git credential helper in .gitconfig
 firefox # backup browser, opens on the browse workspace (niri rules.kdl)
 meld # diff tool, opens on the code workspace (niri rules.kdl)
-ghostty # terminal, opens on the code workspace (niri rules.kdl)
+ghostty # terminal, Mod3+Return; opens on the code workspace (niri rules.kdl)
 claude-desktop # Claude Desktop, Mod3+I keybind
 
 # Secrets: Secret Service provider (profile-provided) and its CLI secret-tool.

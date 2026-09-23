@@ -1,6 +1,8 @@
 {
   "commandRunner": {
-    "enabled": true
+    "enabled": true,
+    "execFlag": "-e",
+    "terminal": "ghostty"
   },
   "converter": {
     "enabled": true

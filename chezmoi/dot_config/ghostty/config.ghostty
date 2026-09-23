@@ -1,0 +1,17 @@
+# DMS writes themes/dankcolors from the wallpaper; see docs/terminal.md.
+theme = dankcolors
+
+window-decoration = none
+window-padding-x = 10
+window-padding-y = 10
+window-padding-balance = true
+
+# Niri's global background-effect rule blurs behind translucent windows.
+background-opacity = 0.9
+
+# The login service stays alive without windows so new ones open instantly;
+# `ghostty -e` processes still quit, Ghostty forces that for -e.
+quit-after-last-window-closed = false
+
+# ssh-terminfo would write into remote home directories; keep it off.
+shell-integration-features = ssh-env,no-ssh-terminfo

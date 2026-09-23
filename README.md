@@ -24,7 +24,8 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/environment.d/ session environment (SSH agent socket)
   dot_config/git/         allowed signers for SSH commit signatures
   dot_config/fish/        Fish helpers (conf.d, functions)
-  dot_config/alacritty/   terminal configuration
+  dot_config/ghostty/     terminal configuration; see docs/terminal.md
+  dot_config/alacritty/   fallback terminal configuration
   dot_config/zed/         editor settings
   dot_config/mimeapps.list default applications
   dot_config/wallpapers/  wallpaper repositories cloned by wallpaper-favorites
@@ -34,6 +35,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_local/private_share/applications/ desktop-entry overrides (Blip via xwayland-scaled, Noctalia hidden)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
 dms/plugins.lock.json      DMS registry plugins pinned to exact commits; see docs/dms.md
+dms/session.json           DMS session-state keys (terminal override); see docs/terminal.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
 packages/                 official, AUR, and Flatpak package manifests
@@ -42,6 +44,7 @@ docs/maintenance.md       shared change and verification workflow
 docs/dms.md               DMS shell: what is deployed, the look, plugins, matugen, idle/lock
 docs/greeter.md           login screen: greetd running the DMS greeter
 docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, viewers
+docs/terminal.md          Ghostty: configuration, opening windows, colours, fallback
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
@@ -178,10 +181,15 @@ See [docs/pictures.md](docs/pictures.md) and
 
 The repository manages DMS's plugins and plugin settings (see
 [docs/dms.md](docs/dms.md)), Fish helpers under `conf.d/` and `functions/`,
-the Alacritty configuration, Zed settings, the default-application handlers in
-`mimeapps.list`, and a `.gitconfig` that uses the GitHub CLI as credential
-helper and signs commits and tags with the SSH key from 1Password. Git
-identity is not managed; set it per repository or locally.
+the Ghostty and fallback Alacritty configurations, Zed settings, the
+default-application handlers in `mimeapps.list`, and a `.gitconfig` that uses
+the GitHub CLI as credential helper and signs commits and tags with the SSH
+key from 1Password. Git identity is not managed; set it per repository or
+locally.
+
+Ghostty is the terminal on `Mod3+Return`; Alacritty stays installed as an
+unbound fallback. See [docs/terminal.md](docs/terminal.md) and
+[ADR-0017](docs/adr/ADR-0017-use-ghostty-as-the-terminal.md).
 
 Files that CachyOS installs from `/etc/skel` and that are unchanged, such as
 `config.fish`, `.zshrc`, and the Micro settings, are deliberately not managed.
