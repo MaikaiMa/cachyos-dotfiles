@@ -59,6 +59,10 @@ A change is ready for review when all applicable items are true:
 - Changed Fish scripts pass `fish -n`.
 - Niri and other supported configuration syntax is validated.
 - Behavior-changing helpers have focused tests.
+- Every new or changed `I18n.trFor` string in a DMS plugin has a Dutch entry
+  in that plugin's `translations/nl.json`. DMS follows the system locale, but
+  the catalogues are kept complete so the interface can be switched back to
+  Dutch.
 - Bootstrap succeeds from an isolated empty home and remains idempotent.
 - Required files are tracked by Git.
 - README, feature documentation, and the ADR index are current.
