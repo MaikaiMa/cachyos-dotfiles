@@ -64,6 +64,7 @@ require_files \
 	chezmoi/dot_local/private_share/applications/dev.noctalia.Noctalia.desktop \
 	chezmoi/dot_config/wallpapers/libraries \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
+	chezmoi/dot_config/matugen/templates/ghostty-background \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
 	chezmoi/dot_config/fish/functions/dms-reset.fish \
 	chezmoi/dot_config/ghostty/config.ghostty \
@@ -181,10 +182,11 @@ lint_plugin_qml() {
 
 validate_ghostty_config() {
 	ghostty_config_home=$(mktemp -d)
-	# DMS renders the dankcolors theme at runtime; a stub keeps validation
-	# independent of the live home.
+	# DMS renders the dankcolors theme and the ghostty_background matugen
+	# template at runtime; stubs keep validation independent of the live home.
 	mkdir -p "$ghostty_config_home/ghostty/themes"
 	: >"$ghostty_config_home/ghostty/themes/dankcolors"
+	: >"$ghostty_config_home/ghostty/dank-background"
 	ghostty_status=0
 	XDG_CONFIG_HOME=$ghostty_config_home ghostty +validate-config \
 		--config-file=chezmoi/dot_config/ghostty/config.ghostty || ghostty_status=$?

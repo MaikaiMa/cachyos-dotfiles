@@ -53,7 +53,9 @@ Alacritty stays installed and in the manifest as a fallback, without a bind.
   terminal must not write to remote hosts on its own.
 - DMS rewrites the theme on a wallpaper change and then signals Ghostty to
   reload, so open windows follow the wallpaper; see
-  [docs/terminal.md](../terminal.md).
+  [docs/terminal.md](../terminal.md). A `ghostty_background` user matugen
+  template overrides the theme's near-black `surface` background with the
+  lighter `surface_container` colour, rendered in the same matugen run.
 - Ghostty 1.3 on Linux only requests blur through KDE's protocol. The blur
   comes from Niri's own window rule instead, which also covers every other
   translucent window.

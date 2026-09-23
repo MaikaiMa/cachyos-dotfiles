@@ -4,3 +4,5 @@ dot_config/niri/matugen/.keep
 # Rendered by DMS from the wallpaper (matugenTemplateNeovim); see docs/editor.md.
 .config/nvim/colors/dms.lua
 .config/nvim/lua/lualine/themes/dms.lua
+# Rendered by the ghostty_background matugen template; see docs/terminal.md.
+.config/ghostty/dank-background

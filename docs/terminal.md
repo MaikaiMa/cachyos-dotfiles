@@ -10,6 +10,10 @@ bind. Why Ghostty was chosen is recorded in
 from Ghostty's defaults:
 
 - `theme = dankcolors`: the colours DMS renders from the wallpaper.
+- `config-file = ?dank-background`: overrides the theme's background with the
+  matugen `surface_container` colour instead of DMS's `surface`, which is
+  near black (`#131314` in the current dark scheme) and made the window feel
+  emptier than the rest of the glass look. See "Colours and reloading" below.
 - `window-decoration = none`: no GTK header bar; Niri draws the focus ring
   and the corners. Tabs still work and the tab bar appears once a window has
   two or more tabs.
@@ -72,10 +76,16 @@ process; "open terminal here" starts plain `ghostty` in that folder.
 ## Colours and reloading
 
 DMS writes `~/.config/ghostty/themes/dankcolors` on every wallpaper or theme
-change. The file is runtime state and is not managed by chezmoi. After
-matugen has finished writing all templates, DMS sends `SIGUSR2` to every
-process named `ghostty`, which makes Ghostty reload its configuration, so
-open windows pick up the new colours without a matugen hook of our own.
+change. The file is runtime state and is not managed by chezmoi. The
+`ghostty_background` user matugen template (see
+[docs/dms.md](dms.md#matugen-templates-niri-backdrop-and-the-z13-rear-window-color))
+writes `~/.config/ghostty/dank-background` in the same matugen run, with a
+single `background = <surface_container colour>` line, and
+`config.ghostty`'s `config-file = ?dank-background` include applies it after
+the theme. After matugen has finished writing all templates, DMS sends
+`SIGUSR2` to every process named `ghostty`, which makes Ghostty reload its
+configuration, so open windows pick up the new colours without a matugen
+hook of our own.
 
 An edited `config.ghostty` is not reloaded automatically. Press
 `Ctrl+Shift+,` in a Ghostty window, or run:

@@ -10,3 +10,7 @@ post_hook = "~/.local/bin/sync-z13-window-color '{{ colors.primary.default.hex_s
 [templates.niri_backdrop]
 input_path = "~/.config/matugen/templates/niri-backdrop"
 output_path = "~/.config/niri/matugen/backdrop.kdl"
+
+[templates.ghostty_background]
+input_path = "~/.config/matugen/templates/ghostty-background"
+output_path = "~/.config/ghostty/dank-background"

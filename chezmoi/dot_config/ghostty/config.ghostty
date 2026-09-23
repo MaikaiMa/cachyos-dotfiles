@@ -1,6 +1,10 @@
 # DMS writes themes/dankcolors from the wallpaper; see docs/terminal.md.
 theme = dankcolors
 
+# The theme's surface background is near black; the ghostty_background matugen
+# template renders surface_container. Optional until its first render.
+config-file = ?dank-background
+
 window-decoration = none
 window-padding-x = 10
 window-padding-y = 10
