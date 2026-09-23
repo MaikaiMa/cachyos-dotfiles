@@ -101,7 +101,9 @@ state, like the Ghostty theme, so they are not in the repository and
 
 `lua/plugins/colorscheme.lua` installs `AvengeMedia/base46` and loads `dms`.
 When the file does not exist yet, as on a fresh install before the first
-wallpaper change, LazyVim's default tokyonight is used instead.
+wallpaper change, LazyVim's default tokyonight is used instead. Both run
+transparent (base46 `transparency`, tokyonight `transparent`), so the editor
+shows Ghostty's background and matches the terminal.
 
 DMS does not signal Neovim. The generated colorscheme watches its own file and
 DMS's `settings.json`, so an open Neovim reloads with the new colours and

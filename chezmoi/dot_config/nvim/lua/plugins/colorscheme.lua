@@ -3,7 +3,9 @@
 -- reloads itself when DMS rewrites the file. Until DMS has rendered it,
 -- as on a fresh install, LazyVim's tokyonight is used instead.
 return {
-  { "AvengeMedia/base46", lazy = true, opts = {} },
+  -- Transparent so the editor shows Ghostty's background.
+  { "AvengeMedia/base46", lazy = true, opts = { transparency = true } },
+  { "folke/tokyonight.nvim", opts = { transparent = true } },
   {
     "LazyVim/LazyVim",
     opts = {
