@@ -31,8 +31,9 @@ window still opens either way, just with a cold start in that case.
 The managed configuration in `chezmoi/dot_config/ghostty/config.ghostty`
 contains only deliberate deviations from Ghostty's defaults: the DMS
 `dankcolors` theme, no client-side decorations because Niri draws the focus
-ring, padding, a slightly translucent background that Niri's global
-background-effect rule blurs, the instance delay, and SSH shell integration.
+ring, padding, a nearly opaque background that Niri's global
+background-effect rule blurs, an instance that stays alive without windows,
+and SSH shell integration.
 The theme file itself stays DMS-owned runtime state.
 
 The DMS `commandRunner` launcher plugin runs its commands in Ghostty, and

@@ -13,16 +13,20 @@ from Ghostty's defaults:
 - `config-file = ?dank-background`: overrides the theme's background with the
   matugen `surface_container` colour instead of DMS's `surface`, which is
   near black (`#131314` in the current dark scheme) and made the window feel
-  emptier than the rest of the glass look. See "Colours and reloading" below.
+  emptier than the rest of the glass look. It also lifts `palette 8` ("bright
+  black", used for dim text such as the prompt's git branch) from the theme's
+  near-black to matugen's `outline`. See "Colours and reloading" below.
 - `window-decoration = none`: no GTK header bar; Niri draws the focus ring
   and the corners. Tabs still work and the tab bar appears once a window has
   two or more tabs.
 - `window-padding-x`, `window-padding-y`, `window-padding-balance`: some
   breathing room, spread evenly around the text grid.
-- `background-opacity = 0.9`: slightly translucent, matching the DMS glass
-  look. Niri blurs behind it through the global `background-effect` window
-  rule in `cfg/rules.kdl`; Ghostty's own `background-blur` only speaks KDE's
-  protocol and is not needed.
+- `background-opacity = 0.95`: nearly opaque. The DMS bar's own 0.6 and its
+  widgets' 0.75 were tried and rejected: with the wallpaper behind it, dim
+  text such as the prompt's git branch became unreadable, and stronger Niri
+  blur did not help. Niri blurs behind it through the global
+  `background-effect` window rule in `cfg/rules.kdl`; Ghostty's own
+  `background-blur` only speaks KDE's protocol and is not needed.
 - `quit-after-last-window-closed = false`: the instance never quits on its
   own, because it is started with the session (see below) and stays warm for
   the whole login. `ghostty -e` (`commandRunner`) still forces
@@ -80,8 +84,8 @@ change. The file is runtime state and is not managed by chezmoi. The
 `ghostty_background` user matugen template (see
 [docs/dms.md](dms.md#matugen-templates-niri-backdrop-and-the-z13-rear-window-color))
 writes `~/.config/ghostty/dank-background` in the same matugen run, with a
-single `background = <surface_container colour>` line, and
-`config.ghostty`'s `config-file = ?dank-background` include applies it after
+`background = <surface_container colour>` and a `palette = 8=<outline colour>`
+line, and `config.ghostty`'s `config-file = ?dank-background` include applies it after
 the theme. After matugen has finished writing all templates, DMS sends
 `SIGUSR2` to every process named `ghostty`, which makes Ghostty reload its
 configuration, so open windows pick up the new colours without a matugen

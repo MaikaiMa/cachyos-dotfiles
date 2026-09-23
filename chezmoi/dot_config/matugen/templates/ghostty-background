@@ -1,1 +1,2 @@
 background = {{colors.surface_container.default.hex}}
+palette = 8={{colors.outline.default.hex}}

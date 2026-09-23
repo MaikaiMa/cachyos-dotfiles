@@ -314,8 +314,9 @@ by ADR-0013, decision 4. This replaces the Noctalia `niri` and
 DMS's own `dmsghostty` template writes `~/.config/ghostty/themes/dankcolors`
 in the same matugen run, using DMS's `surface` colour for the background,
 which is near black (`#131314` in the current dark scheme). The
-`ghostty_background` user template overrides just that background with the
-lighter Material `surface_container` colour instead:
+`ghostty_background` user template overrides that background with the
+lighter Material `surface_container` colour, and the equally near-black
+`palette 8` (dim text) with `outline`:
 
 ```toml
 [templates.ghostty_background]
@@ -323,11 +324,12 @@ input_path = "~/.config/matugen/templates/ghostty-background"
 output_path = "~/.config/ghostty/dank-background"
 ```
 
-The input, `chezmoi/dot_config/matugen/templates/ghostty-background`, is a
-single line, `background = {{colors.surface_container.default.hex}}`.
+The input, `chezmoi/dot_config/matugen/templates/ghostty-background`, holds
+`background = {{colors.surface_container.default.hex}}` and
+`palette = 8={{colors.outline.default.hex}}`.
 `chezmoi/dot_config/ghostty/config.ghostty` includes the rendered output as
-`config-file = ?dank-background`, after `theme = dankcolors`, so its
-`background` line overrides the theme's. It is optional so `ghostty
+`config-file = ?dank-background`, after `theme = dankcolors`, so both lines
+override the theme's. It is optional so `ghostty
 +validate-config` and a fresh machine (before the first matugen render) both
 work without the file; Ghostty then falls back to the theme's own
 background. `dank-background` itself is not chezmoi-managed — it is

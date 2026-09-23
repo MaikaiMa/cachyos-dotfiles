@@ -1,8 +1,9 @@
 # DMS writes themes/dankcolors from the wallpaper; see docs/terminal.md.
 theme = dankcolors
 
-# The theme's surface background is near black; the ghostty_background matugen
-# template renders surface_container. Optional until its first render.
+# The ghostty_background matugen template lifts the theme's near-black surface
+# background to surface_container and its unreadable palette 8 (dim text such
+# as the prompt's git branch) to outline. Optional until its first render.
 config-file = ?dank-background
 
 window-decoration = none
@@ -10,8 +11,8 @@ window-padding-x = 10
 window-padding-y = 10
 window-padding-balance = true
 
-# Niri's global background-effect rule blurs behind translucent windows.
-background-opacity = 0.9
+# Nearly opaque: at the bar's 0.6-0.75 the wallpaper drowned dim text.
+background-opacity = 0.95
 
 # The login service stays alive without windows so new ones open instantly;
 # `ghostty -e` processes still quit, Ghostty forces that for -e.
