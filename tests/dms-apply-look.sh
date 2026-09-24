@@ -89,6 +89,10 @@ run_apply "$home" >/dev/null
 	fail 'webSearch disabledEngines were not preserved.'
 [ "$(plugin_value "$home" '.handInstalled')" = '{"enabled":true}' ] ||
 	fail 'a plugin missing from the repository was not preserved.'
+[ "$(stat -c %a "$home/.config/DankMaterialShell/settings.json")" = 640 ] ||
+	fail 'apply did not leave settings.json at mode 640 for the greeter.'
+[ "$(stat -c %a "$home/.local/state/DankMaterialShell/session.json")" = 640 ] ||
+	fail 'apply did not leave session.json at mode 640 for the greeter.'
 grep -q 'stop dms.service' "$calls" || fail 'apply did not stop dms.service before writing.'
 grep -q 'start dms.service' "$calls" || fail 'apply did not start dms.service after writing.'
 

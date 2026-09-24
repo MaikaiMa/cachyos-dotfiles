@@ -19,6 +19,7 @@ legacy_wrapper_target=${GREETD_LEGACY_WRAPPER_TARGET:-/usr/local/bin/niri-sessio
 niri_config=${GREETD_NIRI_CONFIG:-/etc/greetd/niri/config.kdl}
 greeter_command=${DMS_GREETER_COMMAND:-dms-greeter}
 settings_json=${DMS_SETTINGS_PATH:-$HOME/.config/DankMaterialShell/settings.json}
+session_json=${DMS_SESSION_PATH:-$HOME/.local/state/DankMaterialShell/session.json}
 dry_run=false
 switch=false
 
@@ -80,6 +81,14 @@ legacy_session_is_ours() {
 config_ownership_is_wrong() {
 	[ -f "$config_target" ] || return 1
 	[ "$(stat -c '%U:%G %a' "$config_target" 2>/dev/null)" != 'root:root 644' ]
+}
+
+# dank-greeter's sync sets the greeter-group ACL but not the mode, and a 0600 file masks that ACL.
+lacks_group_read() {
+	[ -f "$1" ] || return 1
+	case $(stat -L -c %A "$1") in
+	????r*) return 1 ;;
+	esac
 }
 
 greetd_missing=false
@@ -145,6 +154,11 @@ if [ "$dry_run" = true ]; then
 		printf '+ sudo chown root:root %s\n' "$config_target"
 		printf '+ sudo chmod 644 %s\n' "$config_target"
 	fi
+	for dms_state_file in "$settings_json" "$session_json"; do
+		if lacks_group_read "$dms_state_file"; then
+			printf '+ chmod g+r %s\n' "$dms_state_file"
+		fi
+	done
 	printf '+ niri validate --config %s\n' "$niri_config"
 	printf '+ %s status\n' "$greeter_command"
 	if [ "$switch" = true ]; then
@@ -204,6 +218,12 @@ if config_ownership_is_wrong; then
 	sudo chown root:root "$config_target"
 	sudo chmod 644 "$config_target"
 fi
+
+for dms_state_file in "$settings_json" "$session_json"; do
+	if lacks_group_read "$dms_state_file"; then
+		chmod g+r "$dms_state_file"
+	fi
+done
 
 niri validate --config "$niri_config"
 

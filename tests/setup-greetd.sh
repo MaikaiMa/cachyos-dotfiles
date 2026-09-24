@@ -23,6 +23,8 @@ legacy_session_target="$test_root/usr/local/share/wayland-sessions/niri.desktop"
 legacy_wrapper_target="$test_root/usr/local/bin/niri-session-quiet"
 niri_config="$test_root/etc/greetd/niri/config.kdl"
 settings_json="$test_root/settings.json"
+session_json="$test_root/session.json"
+real_chmod=$(command -v chmod)
 path_prefix=
 mkdir -p "$fake_bin" "$root_bin" "$test_root/etc/greetd/niri" \
 	"$test_root/usr/local/share/wayland-sessions" "$test_root/usr/local/bin"
@@ -33,6 +35,8 @@ printf '%s\n' '#!/bin/sh' 'exec /usr/bin/niri-session' >"$legacy_wrapper_target"
 chmod +x "$legacy_wrapper_target"
 
 printf '%s\n' '{"greeterPamExternallyManaged": true}' >"$settings_json"
+printf '%s\n' '{}' >"$session_json"
+chmod 600 "$settings_json" "$session_json"
 printf '%s\n' 'output "eDP-1" {}' >"$niri_config"
 printf '%s\n' enabled >"$state.sddm"
 printf '%s\n' disabled >"$state.greetd"
@@ -65,7 +69,8 @@ printf '%s\n' '#!/bin/sh' 'printf "niri %s\n" "$*" >> "$GREETD_SETUP_CALLS"' >"$
 # shellcheck disable=SC2016
 printf '%s\n' '#!/bin/sh' 'printf "chown %s\n" "$*" >> "$GREETD_SETUP_CALLS"' >"$fake_bin/chown"
 # shellcheck disable=SC2016
-printf '%s\n' '#!/bin/sh' 'printf "chmod %s\n" "$*" >> "$GREETD_SETUP_CALLS"' >"$fake_bin/chmod"
+printf '%s\n' '#!/bin/sh' 'printf "chmod %s\n" "$*" >> "$GREETD_SETUP_CALLS"' \
+	'[ "$1" = g+r ] || exit 0' "exec $real_chmod \"\$@\"" >"$fake_bin/chmod"
 printf '%s\n' '#!/bin/sh' 'printf "0\n"' >"$root_bin/id"
 chmod +x "$fake_bin/sudo" "$fake_bin/pacman" "$fake_bin/paru" "$fake_bin/dms-greeter" \
 	"$fake_bin/systemctl" "$fake_bin/niri" "$fake_bin/chown" "$fake_bin/chmod" "$root_bin/id"
@@ -79,6 +84,7 @@ run_setup() {
 		GREETD_LEGACY_WRAPPER_TARGET="$legacy_wrapper_target" \
 		GREETD_NIRI_CONFIG="$niri_config" \
 		DMS_SETTINGS_PATH="$settings_json" \
+		DMS_SESSION_PATH="$session_json" \
 		GREETD_SETUP_CALLS="$calls" \
 		GREETD_TEST_MARKER="$marker" \
 		GREETD_TEST_STATE="$state" \
@@ -100,6 +106,19 @@ expect_no_changes() {
 		fail "$1"
 	fi
 	if [ ! -e "$legacy_session_target" ] || [ ! -e "$legacy_wrapper_target" ]; then
+		fail "$1"
+	fi
+}
+
+group_can_read() {
+	case $(stat -c %A "$1") in
+	????r*) return 0 ;;
+	esac
+	return 1
+}
+
+expect_modes_unchanged() {
+	if group_can_read "$settings_json" || group_can_read "$session_json"; then
 		fail "$1"
 	fi
 }
@@ -132,7 +151,16 @@ case $dry_run_output in
 *"+ niri validate --config $niri_config"*) ;;
 *) fail 'A dry run must report the greeter Niri validation.' ;;
 esac
+case $dry_run_output in
+*"+ chmod g+r $settings_json"*) ;;
+*) fail 'A dry run must report granting group read on a 0600 settings.json.' ;;
+esac
+case $dry_run_output in
+*"+ chmod g+r $session_json"*) ;;
+*) fail 'A dry run must report granting group read on a 0600 session.json.' ;;
+esac
 expect_no_changes 'A dry run must not change anything.'
+expect_modes_unchanged 'A dry run must not change the mode of the DMS state files.'
 
 switch_dry_run_output=$(run_setup --dry-run --switch)
 case $switch_dry_run_output in
@@ -196,6 +224,9 @@ if [ "$(count_calls "^sudo chmod 644 $config_target\$")" -ne 1 ]; then
 fi
 if grep -Eq '^systemctl (disable|enable) ' "$calls"; then
 	fail 'A run without --switch must not change any service.'
+fi
+if ! group_can_read "$settings_json" || ! group_can_read "$session_json"; then
+	fail 'The first run must grant group read on settings.json and session.json.'
 fi
 
 : >"$calls"

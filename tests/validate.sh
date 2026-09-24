@@ -67,8 +67,8 @@ require_files \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
-	chezmoi/dot_local/private_share/applications/net.blip.Blip.desktop \
-	chezmoi/dot_local/private_share/applications/dev.noctalia.Noctalia.desktop \
+	chezmoi/dot_local/share/applications/net.blip.Blip.desktop \
+	chezmoi/dot_local/share/applications/dev.noctalia.Noctalia.desktop \
 	chezmoi/dot_config/wallpapers/libraries \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/matugen/templates/ghostty-background \

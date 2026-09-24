@@ -180,6 +180,8 @@ if ! systemctl --user stop dms.service; then
 	exit 1
 fi
 
+# The greeter reads these two files through a greeter-group ACL; mktemp's 0600 would mask that ACL on every apply.
+chmod 640 "$tmp_merged" "$tmp_session_merged"
 mv "$tmp_merged" "$settings_json"
 mv "$tmp_session_merged" "$session_json"
 mv "$tmp_plugins_merged" "$plugin_settings_json"

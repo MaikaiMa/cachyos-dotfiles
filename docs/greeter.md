@@ -92,6 +92,14 @@ screen follow the desktop:
   three `DankMaterialShell` state directories above and on the wallpaper file
   and its directories, so the `greeter` system account can read what it needs
   to render the same look.
+- That ACL only takes effect when the file's own mode grants group read: on a
+  file with an ACL, the group bits of the mode are the ACL mask, so a 0600
+  `settings.json` or `session.json` masks the `greeter` entry to nothing and
+  the greeter falls back to the default wallpaper. DMS rewrites both files
+  atomically and keeps whatever mode the old file had, so a file born 0600
+  stays 0600 and one fixed once stays fixed. `dms-apply-look.sh` therefore
+  writes both at 0640, and `setup-greetd.sh` adds group read to either one
+  that lacks it after every sync.
 - It extracts the `input`, `output`, `cursor`, and `debug` sections from
   `~/.config/niri/config.kdl` (following includes) into
   `/etc/greetd/niri/dms.kdl`, wrapped by `/etc/greetd/niri/config.kdl`, so the
@@ -191,6 +199,12 @@ After the first login through greetd, confirm:
   ```
 - The last-used session is remembered on the next boot.
 - The wallpaper and colors on the greeter match the desktop.
+- The DMS settings and session files grant group read, so the greeter's ACL
+  applies. Expect `640`, or `650` after a sync, whose ACL mask includes
+  execute; `600` means the greeter cannot read them:
+  ```fish
+  stat -c %a ~/.config/DankMaterialShell/settings.json ~/.local/state/DankMaterialShell/session.json
+  ```
 - DMS starts without an immediate lock screen after login.
 
 ## Rollback
@@ -239,6 +253,13 @@ install command in the README, is harmless; it stays disabled until
 
 ## Known limits
 
+- The traversal ACL on `~/.local/share` sets that directory's group bits to
+  `r-x`. chezmoi manages the directory too, so its source entry is
+  `dot_local/share` (mode 0755), not a `private_` one: a 0700 expectation
+  would make every bootstrap revert the ACL mask and every sync restore it.
+  The sensitive subdirectories (`keyrings`, `protonmail`) stay 0700 on their
+  own.
+
 - `journalctl -b -u greetd` shows `gkr-pam: couldn't unlock the login keyring`
   once per boot for the `greeter` user (uid 952). That is the keyring session
   line of `system/pam.d/greetd` running for the greeter's own session, which
@@ -260,6 +281,9 @@ install command in the README, is harmless; it stays disabled until
   as part of the ACL sync, which includes clipboard and notification history,
   not just theme state. This is an accepted trade-off of using the live
   symlink approach.
+- A `settings.json` or `session.json` recreated at 0600 by anything else, for
+  example a fresh DMS first launch, shows as the default wallpaper on the
+  greeter until `./scripts/setup-greetd.sh` runs again.
 - `/etc/greetd/config.toml` accumulates a timestamped backup on every sync
   run; this is cosmetic and safe to clean up by hand.
 - dank-greeter 1.6.2's sync leaves `/etc/greetd/config.toml` owned by the
