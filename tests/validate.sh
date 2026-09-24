@@ -58,6 +58,8 @@ require_files \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_mobi.phosh.OSK.service \
 	chezmoi/dot_config/systemd/user/auto-rotate.service \
 	chezmoi/dot_config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
+	chezmoi/dot_config/systemd/user/gamescope-xbindkeys.service.d/xbindkeysrc.conf \
+	chezmoi/dot_config/gamescope/xbindkeysrc \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
@@ -117,6 +119,8 @@ require_files \
 	docs/adr/ADR-0019-merge-dms-plugin-settings-as-desired-state.md \
 	docs/adr/ADR-0020-use-stock-niri-with-squeekboard-and-detach-gated-rotation.md \
 	docs/adr/ADR-0021-let-logind-handle-the-power-key.md \
+	docs/adr/ADR-0022-add-a-steam-big-picture-session-with-gamescope-session-cachyos.md \
+	docs/adr/ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -127,6 +131,7 @@ require_files \
 	docs/terminal.md \
 	docs/editor.md \
 	docs/tablet.md \
+	docs/gaming.md \
 	dms/look.json \
 	dms/plugin_settings.json \
 	dms/plugins.lock.json \
@@ -139,9 +144,13 @@ require_files \
 	scripts/dms-restore-plugins.sh \
 	scripts/dms-link-zen-theme.sh \
 	scripts/setup-power-key.sh \
+	scripts/setup-sessions.sh \
 	system/greetd/config.toml \
 	system/pam.d/greetd \
 	system/local/bin/niri-session \
+	system/local/bin/steam-session \
+	system/wayland-sessions/niri.desktop \
+	system/wayland-sessions/steam.desktop \
 	system/udev/70-z13-window.rules \
 	system/logind.conf.d/50-power-key.conf \
 	tests/bootstrap.sh \
@@ -160,6 +169,7 @@ require_files \
 	tests/auto-rotate.sh \
 	tests/osk.sh \
 	tests/setup-power-key.sh \
+	tests/setup-sessions.sh \
 	tests/validate.fish
 
 require_files \
@@ -268,7 +278,8 @@ shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
-	system/local/bin/niri-session
+	system/local/bin/niri-session \
+	system/local/bin/steam-session
 
 shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
@@ -278,7 +289,8 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
-	system/local/bin/niri-session
+	system/local/bin/niri-session \
+	system/local/bin/steam-session
 
 chezmoi --source chezmoi execute-template \
 	<chezmoi/dot_config/chezmoi/chezmoi.toml.tmpl >/dev/null
@@ -297,6 +309,7 @@ tests/tablet-mode.sh
 tests/auto-rotate.sh
 tests/osk.sh
 tests/setup-power-key.sh
+tests/setup-sessions.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

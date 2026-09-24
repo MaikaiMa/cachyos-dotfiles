@@ -88,6 +88,15 @@ gnome-control-center # only UI that can add GNOME Online Accounts
 cachyos-gaming-meta
 cachyos-gaming-applications
 
+# Gaming session (ADR-0022): Steam Big Picture through gamescope, selectable
+# at the greeter instead of niri.
+steam
+gamescope-session-cachyos # its session entry is replaced by scripts/setup-sessions.sh (ADR-0023)
+xbindkeys # run by gamescope-xbindkeys.service for the brightness and media keys
+brightnessctl # brightness keys in the Steam session
+playerctl # media keys in the Steam session
+wireplumber # volume control through wpctl in the Steam session
+
 # CachyOS AUR helper used to install the AUR manifest.
 paru
 

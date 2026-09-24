@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Steam
+Comment=Steam Big Picture in gamescope; Switch to Desktop continues into Niri
+Exec=/usr/local/bin/steam-session
+Type=Application
+DesktopNames=gamescope

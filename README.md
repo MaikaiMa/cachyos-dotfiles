@@ -50,6 +50,7 @@ docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, 
 docs/terminal.md          Ghostty: configuration, opening windows, colours, fallback
 docs/editor.md            Neovim with LazyVim: first start, plugin updates, colours, sudoedit
 docs/tablet.md            Z13 tablet use: keyboard detection, auto-rotation, on-screen keyboard, power key
+docs/gaming.md            Steam session, greeter session list, Steam-to-Niri switch (ADR-0022, ADR-0023)
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
@@ -162,6 +163,14 @@ On a detected 2025 Z13, `scripts/bootstrap.sh` automatically installs
 `z13ctl-bin` with `paru` or `yay`, installs the narrowly scoped lightbar udev
 rule, applies the dotfiles, and applies the DMS look. No logout or separate
 activation step is required. Other hardware skips the entire Z13 setup.
+
+A second login session, "Steam" (Big Picture through gamescope), is
+selectable at the greeter after "Niri"; its "Switch to Desktop" continues
+into Niri without a new login. The session list is a separate, explicitly
+approved step run with `./scripts/setup-sessions.sh`, not part of bootstrap;
+see [docs/gaming.md](docs/gaming.md),
+[ADR-0022](docs/adr/ADR-0022-add-a-steam-big-picture-session-with-gamescope-session-cachyos.md),
+and [ADR-0023](docs/adr/ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md).
 
 ## DMS startup
 

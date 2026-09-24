@@ -30,3 +30,5 @@ alternatives considered.
 - [ADR-0019: Merge DMS plugin settings as desired state](ADR-0019-merge-dms-plugin-settings-as-desired-state.md)
 - [ADR-0020: Use stock niri with squeekboard and detach-gated rotation for tablet use](ADR-0020-use-stock-niri-with-squeekboard-and-detach-gated-rotation.md)
 - [ADR-0021: Let logind handle the power key](ADR-0021-let-logind-handle-the-power-key.md)
+- [ADR-0022: Add a Steam Big Picture session with gamescope-session-cachyos](ADR-0022-add-a-steam-big-picture-session-with-gamescope-session-cachyos.md)
+- [ADR-0023: Own the greeter session list and hand Steam over to Niri](ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md)

@@ -104,6 +104,15 @@ output, cursor, or debug configuration, re-sync the greeter:
 See [docs/greeter.md](greeter.md) for what the sync does and why it is
 needed again after those changes.
 
+After merging a `/etc/pacman.conf.pacnew`, re-apply the greeter session list,
+which keeps its `NoExtract` line in that file:
+
+```fish
+./scripts/setup-sessions.sh
+```
+
+See [docs/gaming.md](gaming.md) and ADR-0023.
+
 ## Deployment and machine verification
 
 After explicit approval, deploy from the reviewed worktree:
@@ -125,8 +134,9 @@ Check that the machine still provides every recorded package:
 ```
 
 Greetd and the login screen are not part of `scripts/bootstrap.sh`. Installing
-or switching the greeter is a separate step that needs its own explicit
-approval; see [docs/greeter.md](greeter.md).
+or switching the greeter, and changing its session list with
+`scripts/setup-sessions.sh`, are separate steps that need their own explicit
+approval; see [docs/greeter.md](greeter.md) and [docs/gaming.md](gaming.md).
 
 Repository tests cannot prove hardware and desktop behavior. After deployment,
 manually verify the affected Niri behavior, that the DMS bar and its plugins

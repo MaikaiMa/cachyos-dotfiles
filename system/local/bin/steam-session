@@ -1,0 +1,25 @@
+#!/bin/sh
+# Steam Big Picture, then Niri in the same login once Steam's "Switch to
+# Desktop" (or an exit or crash of Steam) stops the gamescope session. See
+# ADR-0023.
+set -eu
+
+mkdir -p "$HOME/.local/state"
+
+# greetd shows the session's stderr on the VT, as for the niri-session wrapper.
+/usr/bin/start-gamescope-session >"$HOME/.local/state/steam-session.log" 2>&1 || :
+
+# start-gamescope-session sets this to an empty value, which leaves
+# xdg-desktop-portal without any backend in whatever session starts next.
+systemctl --user unset-environment XDG_DESKTOP_PORTAL_DIR DISPLAY WAYLAND_DISPLAY XAUTHORITY || :
+# The portal is PartOf graphical-session.target and stops with gamescope, but a
+# late D-Bus activation can bring it back with the gamescope environment.
+systemctl --user stop xdg-desktop-portal.service || :
+
+XDG_CURRENT_DESKTOP=niri
+XDG_SESSION_DESKTOP=niri
+DESKTOP_SESSION=niri
+export XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP DESKTOP_SESSION
+
+# By name, so the quiet /usr/local/bin/niri-session wrapper takes over.
+exec niri-session

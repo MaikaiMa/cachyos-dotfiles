@@ -87,6 +87,8 @@ for path in \
 	.config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
 	.config/systemd/user/auto-rotate.service \
 	.config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
+	.config/systemd/user/gamescope-xbindkeys.service.d/xbindkeysrc.conf \
+	.config/gamescope/xbindkeysrc \
 	.local/bin/auto-rotate \
 	.local/bin/osk \
 	.local/bin/tablet-mode \

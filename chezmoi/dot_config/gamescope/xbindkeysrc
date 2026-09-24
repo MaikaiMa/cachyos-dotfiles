@@ -1,0 +1,28 @@
+# xbindkeys in the Steam session (gamescope-xbindkeys.service), see
+# docs/gaming.md. Volume up and down are absent: Steam handles them itself
+# (STEAM_ENABLE_VOLUME_HANDLER=1), so a binding would change the volume twice.
+# Mute (output and input) is bound here; Steam does not handle it, tested on device.
+
+"brightnessctl --quiet set 5%+"
+    XF86MonBrightnessUp
+
+"brightnessctl --quiet --min-value=1% set 5%-"
+    XF86MonBrightnessDown
+
+"playerctl play-pause"
+    XF86AudioPlay
+
+"playerctl pause"
+    XF86AudioPause
+
+"playerctl next"
+    XF86AudioNext
+
+"playerctl previous"
+    XF86AudioPrev
+
+"wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+    XF86AudioMute
+
+"wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+    XF86AudioMicMute

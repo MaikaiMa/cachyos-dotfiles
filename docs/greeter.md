@@ -58,10 +58,11 @@ The absolute path also keeps the wrapper out of its own way, because
 `niri-session` re-execs `$0` through the login shell. The log is truncated at
 every login, so it holds the current or the last session only.
 
-Nothing packaged is modified: `/usr/share/wayland-sessions/niri.desktop` and
-`/usr/bin/niri-session` stay as the package ships them, so a niri upgrade
-cannot conflict with this. Because the shadow works on `PATH`, it applies to
-every launcher that starts the session through a shell, including SDDM after
+`/usr/bin/niri-session` stays as the package ships it, so a niri upgrade
+cannot conflict with this. The session entry itself is repository-owned
+since ADR-0023 (see "Session list" below), with the same
+`Exec=niri-session`. Because the shadow works on `PATH`, it applies to every
+launcher that starts the session through a shell, including SDDM after
 a rollback; there the log simply moves from
 `~/.local/share/sddm/wayland-session.log` to `~/.local/state/niri-session.log`.
 Removing `/usr/local/bin/niri-session` undoes the whole mechanism.
@@ -73,7 +74,29 @@ there) after its hard-coded directories and then reverses the list, so
 `/usr/share/wayland-sessions` is read first and wins the `Name=` deduplication.
 The packaged entry was selected every time. `setup-greetd.sh` removes both
 files of that revision, `/usr/local/share/wayland-sessions/niri.desktop` and
-`/usr/local/bin/niri-session-quiet`, on its next run.
+`/usr/local/bin/niri-session-quiet`, on its next run; it recognises that
+revision's entry by its `Exec=/usr/local/bin/niri-session-quiet` line and
+leaves the current one from `setup-sessions.sh` alone.
+
+## Session list
+
+The greeter lists exactly "Niri" and then "Steam".
+[ADR-0023](adr/ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md)
+records why and how; [docs/gaming.md](gaming.md) has the install step and
+the checks.
+
+dms-greeter cannot order, rename, or hide sessions: it reads every
+`wayland-sessions` and `xsessions` directory described above, keeps the
+first entry per `Name=`, and ignores `NoDisplay=` and `Hidden=`. So
+`scripts/setup-sessions.sh` makes pacman stop extracting the packaged
+`niri.desktop`, `gamescope-session.desktop`, and `gnome.desktop` (a
+`NoExtract` line in `/etc/pacman.conf`), removes them, and installs
+`system/wayland-sessions/niri.desktop` and `steam.desktop` in
+`/usr/local/share/wayland-sessions`. With the `/usr/share` copies gone, the
+reading order above no longer matters. `niri.desktop` keeps its ID, so the
+remembered last session still matches. The greeter reads the directories
+when it starts; the new list shows at the next logout or reboot, and no
+re-sync is needed.
 
 ## How sync works
 
@@ -296,6 +319,8 @@ install command in the README, is harmless; it stays disabled until
   and until it does the greeter renders an older UI against newer settings.
 - `greetd-dms-greeter-bin` is AUR-maintained, not an official package; see
   ADR-0009 for how this repository treats AUR dependencies.
-- The Big Picture session appears in the greeter's session picker only once
-  `gamescope-session-cachyos` is installed; no greeter change is needed for
-  that.
+- The "Steam" session appears in the greeter's session picker only once
+  `gamescope-session-cachyos` is installed and `scripts/setup-sessions.sh`
+  has run; see [docs/gaming.md](gaming.md). A newly installed session package
+  (another compositor) appears under its own name until its entry is added to
+  that script's `NoExtract` list.
