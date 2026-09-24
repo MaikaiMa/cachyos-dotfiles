@@ -18,6 +18,9 @@ that workspace has a notification waiting in the notification centre.
 - Left click switches to the workspace, right click toggles the niri overview, and
   scrolling over the widget cycles through the workspaces (mouse wheel and touchpad,
   honouring `reverseScrolling`).
+- A long press (press and hold, for example by touch) toggles the niri overview
+  too. A long press never also switches workspace: Qt's `pressAndHold` suppresses
+  the click on release. Holding the right button counts as a right click.
 - No app icons inside the pills; this widget is deliberately compact.
 
 ## Settings honoured
@@ -34,6 +37,10 @@ The plugin's own settings:
 
 - `notificationHighlightEnabled` - the red notification pill (default on)
 - `overviewOnRightClick` - toggle the niri overview on right click (default on)
+- `overviewOnLongPress` - toggle the niri overview on a long press (default on).
+  It is separate from `overviewOnRightClick` so a mouse user can turn off the
+  right click without losing the touch gesture, and the other way round. With it
+  off, a long press does nothing rather than switching workspace.
 
 ## Placing it in the bar
 
@@ -54,7 +61,7 @@ can be pulled into a shared location later; do not edit one without the other.
 
 ## Translations
 
-The two settings strings go through `I18n.trFor("dotfilesWorkspaces", ...)`, and
+The settings strings go through `I18n.trFor("dotfilesWorkspaces", ...)`, and
 `translations/nl.json` holds the Dutch catalogue. DMS reads the file that
 matches `SessionData.locale` (Settings, Locale) and reloads it when the locale
 changes; the English strings in the QML are the source and the fallback.

@@ -8,6 +8,7 @@ PluginComponent {
 
     readonly property bool notificationHighlightEnabled: pluginData.notificationHighlightEnabled ?? true
     readonly property bool overviewOnRightClick: pluginData.overviewOnRightClick ?? true
+    readonly property bool overviewOnLongPress: pluginData.overviewOnLongPress ?? true
 
     readonly property string outputName: parentScreen?.name ?? ""
     readonly property real pillIconSize: Theme.barIconSize(barThickness, -6, barConfig?.maximizeWidgetIcons, barConfig?.iconScale)
@@ -142,8 +143,13 @@ PluginComponent {
             root.activateWorkspace(list[toIndex]);
     }
 
-    function toggleOverview() {
+    function toggleOverviewFromRightClick() {
         if (root.overviewOnRightClick)
+            NiriService.toggleOverview();
+    }
+
+    function toggleOverviewFromLongPress() {
+        if (root.overviewOnLongPress)
             NiriService.toggleOverview();
     }
 

@@ -20,7 +20,9 @@ PluginComponent {
         PopoutService.toggleAppDrawer(x, y, width, section, screen);
     }
 
-    pillRightClickAction: () => {
+    pillRightClickAction: () => root.toggleOverview()
+
+    function toggleOverview() {
         if (CompositorService.isNiri)
             NiriService.toggleOverview();
     }
@@ -40,13 +42,25 @@ PluginComponent {
                 anchors.fill: parent
                 anchors.margins: -root.horizontalPadding
                 radius: Theme.cornerRadius
-                color: hoverArea.containsMouse ? Theme.hoverTint(Theme.primary) : Theme.primary
+                color: pressArea.containsMouse ? Theme.hoverTint(Theme.primary) : Theme.primary
 
+                DankRipple {
+                    id: ripple
+                    rippleColor: Theme.primaryText
+                    cornerRadius: fill.radius
+                }
+
+                // BasePill fires its click on press, which leaves no room for a long
+                // press; the left button is taken here and right clicks still reach BasePill.
                 MouseArea {
-                    id: hoverArea
+                    id: pressArea
                     anchors.fill: parent
                     hoverEnabled: true
-                    acceptedButtons: Qt.NoButton
+                    cursorShape: Qt.PointingHandCursor
+                    acceptedButtons: Qt.LeftButton
+                    onPressed: mouse => ripple.trigger(mouse.x, mouse.y)
+                    onClicked: root.triggerPopout()
+                    onPressAndHold: root.toggleOverview()
                 }
             }
 

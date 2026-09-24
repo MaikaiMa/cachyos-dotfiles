@@ -19,4 +19,11 @@ PluginSettings {
         description: I18n.trFor("dotfilesWorkspaces", "Toggle the niri overview when the widget is right clicked")
         defaultValue: true
     }
+
+    ToggleSetting {
+        settingKey: "overviewOnLongPress"
+        label: I18n.trFor("dotfilesWorkspaces", "Overview on long press")
+        description: I18n.trFor("dotfilesWorkspaces", "Toggle the niri overview when the widget is pressed and held, for example by touch")
+        defaultValue: true
+    }
 }

@@ -10,5 +10,11 @@
     },
     "Toggle the niri overview when the widget is right clicked": {
         "Toggle the niri overview when the widget is right clicked": "Open of sluit het niri-overzicht bij een rechtermuisklik op de widget"
+    },
+    "Overview on long press": {
+        "Overview on long press": "Overzicht bij lang indrukken"
+    },
+    "Toggle the niri overview when the widget is pressed and held, for example by touch": {
+        "Toggle the niri overview when the widget is pressed and held, for example by touch": "Open of sluit het niri-overzicht als de widget wordt ingedrukt gehouden, bijvoorbeeld met aanraking"
     }
 }

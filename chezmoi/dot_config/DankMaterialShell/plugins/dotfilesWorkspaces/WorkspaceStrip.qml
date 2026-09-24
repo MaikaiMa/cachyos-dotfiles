@@ -116,7 +116,7 @@ Item {
 
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton) {
-                strip.controller?.toggleOverview();
+                strip.controller?.toggleOverviewFromRightClick();
                 return;
             }
 
@@ -124,6 +124,15 @@ Item {
             const list = strip.controller?.workspaceList ?? [];
             if (index >= 0 && index < list.length)
                 strip.controller.activateWorkspace(list[index]);
+        }
+
+        // A handled press-and-hold suppresses onClicked, so a long press never also
+        // switches workspace. Holding the right button counts as a right click.
+        onPressAndHold: mouse => {
+            if (mouse.button === Qt.RightButton)
+                strip.controller?.toggleOverviewFromRightClick();
+            else
+                strip.controller?.toggleOverviewFromLongPress();
         }
 
         onWheel: wheel => {
