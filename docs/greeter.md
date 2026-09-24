@@ -219,6 +219,11 @@ Re-run the sync after:
 Without `--switch`, this only re-installs the three system files if they
 differ and re-runs the sync; it does not touch the SDDM/greetd boot path.
 
+The synced `input` section includes `disable-power-key-handling`
+([ADR-0021](adr/ADR-0021-let-logind-handle-the-power-key.md)), so the
+greeter's niri leaves the power key to logind as well, and a short press at
+the login screen suspends through logind's `HandlePowerKey=suspend`.
+
 If a package upgrade of `greetd` or `dms-greeter` leaves a `.pacnew` next to
 `/etc/greetd/config.toml` or `/etc/pam.d/greetd`, compare it against the
 repository's `system/greetd/config.toml` and `system/pam.d/greetd`: the

@@ -31,6 +31,14 @@ if "$repo_root/scripts/setup-z13-window.sh" --check; then
 	fi
 fi
 
+# Before niri's power-key handling is disabled by the applied config, so a
+# short press never falls back to logind's default power-off.
+if [ "$dry_run" = true ]; then
+	"$repo_root/scripts/setup-power-key.sh" --dry-run
+else
+	"$repo_root/scripts/setup-power-key.sh"
+fi
+
 chezmoi --source "$source_dir" apply "$@"
 
 if command -v "$dms_command" >/dev/null 2>&1; then

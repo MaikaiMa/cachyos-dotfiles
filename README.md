@@ -49,7 +49,7 @@ docs/greeter.md           login screen: greetd running the DMS greeter
 docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, viewers
 docs/terminal.md          Ghostty: configuration, opening windows, colours, fallback
 docs/editor.md            Neovim with LazyVim: first start, plugin updates, colours, sudoedit
-docs/tablet.md            Z13 tablet use: keyboard detection, auto-rotation, on-screen keyboard
+docs/tablet.md            Z13 tablet use: keyboard detection, auto-rotation, on-screen keyboard, power key
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
@@ -310,8 +310,11 @@ These are POSIX `sh` scripts and can be run directly from Fish because their
 shebang selects `sh`. If an explicit Fish command is preferred, use
 `fish tests/validate.fish`; do not invoke `fish tests/validate.sh`.
 
-When the source tree contains reviewed configuration, apply it explicitly. On
-a Z13 this one command also completes the rear-window setup:
+When the source tree contains reviewed configuration, apply it explicitly. It
+also installs, with sudo, the logind drop-in that makes a short power-key
+press suspend (niri's own handling is disabled for niri-wm/niri#2233; see
+[ADR-0021](docs/adr/ADR-0021-let-logind-handle-the-power-key.md)). On a Z13
+this one command also completes the rear-window setup:
 
 ```fish
 ./scripts/bootstrap.sh

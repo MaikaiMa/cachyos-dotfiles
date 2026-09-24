@@ -163,6 +163,27 @@ A long press on the launcher pill or on the workspace strip toggles the niri
 overview; right click keeps doing the same, and a normal tap keeps its own
 action. See the plugin READMEs for the details.
 
+## Power key and suspend
+
+niri suspends again on the power-key press that wakes the system
+([niri-wm/niri#2233](https://github.com/niri-wm/niri/issues/2233)). With the
+keyboard detached the power button is the only way to wake the Z13, so it
+looped straight back into suspend. niri's power-key handling is therefore
+disabled in `cfg/input.kdl`, and logind suspends on a short press instead
+through `/etc/systemd/logind.conf.d/50-power-key.conf`, installed and
+reloaded (not restarted) by `scripts/setup-power-key.sh`, which bootstrap
+runs. See [ADR-0021](adr/ADR-0021-let-logind-handle-the-power-key.md).
+
+Check that logind picked it up; it should print `s "suspend"`:
+
+```fish
+busctl get-property org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager HandlePowerKey
+```
+
+If it still prints `poweroff`, reboot. Once niri fixes #2233, remove
+`disable-power-key-handling` and the drop-in, then run
+`./scripts/setup-greetd.sh`.
+
 ## Known issues
 
 - [niri#3598](https://github.com/niri-wm/niri/issues/3598): on the Z13 the

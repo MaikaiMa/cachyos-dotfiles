@@ -44,9 +44,10 @@ git diff
 ```
 
 Do not run the live bootstrap until the dry-run is understood and the user has
-explicitly approved deployment. On a detected Z13, a real bootstrap may install
-the recorded AUR dependency and update the repository-owned udev rule in
-addition to applying chezmoi.
+explicitly approved deployment. A real bootstrap installs the logind
+power-key drop-in when it differs (ADR-0021), and on a detected Z13 it may
+also install the recorded AUR dependency and update the repository-owned udev
+rule, in addition to applying chezmoi.
 
 ## Definition of done
 

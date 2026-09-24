@@ -15,7 +15,18 @@ trap 'rm -rf "$test_root"' EXIT HUP INT TERM
 test_home=$test_root/home
 dmi_root=$test_root/dmi
 rule_target=$test_root/system/70-z13-window.rules
-mkdir -p "$test_home" "$dmi_root"
+power_key_target=$test_root/system/logind.conf.d/50-power-key.conf
+power_key_bin=$test_root/power-key-bin
+mkdir -p "$test_home" "$dmi_root" "$power_key_bin"
+
+# Only the logind reload is faked; every other systemctl call stays real.
+# shellcheck disable=SC2016
+printf '%s\n' '#!/bin/sh' 'exec "$@"' >"$power_key_bin/sudo"
+# shellcheck disable=SC2016
+printf '%s\n' '#!/bin/sh' \
+	'[ "$*" = "reload systemd-logind.service" ] && exit 0' \
+	'exec /usr/bin/systemctl "$@"' >"$power_key_bin/systemctl"
+chmod +x "$power_key_bin/sudo" "$power_key_bin/systemctl"
 
 printf '%s\n' 'Not a Z13' >"$dmi_root/product_family"
 printf '%s\n' 'OTHER' >"$dmi_root/board_name"
@@ -27,13 +38,15 @@ run_bootstrap() {
 		XDG_STATE_HOME=$test_home/.local/state \
 		Z13_DMI_ROOT=$dmi_root \
 		Z13_UDEV_RULE_TARGET=$rule_target \
+		LOGIND_POWER_KEY_DROPIN_TARGET=$power_key_target \
+		PATH=$power_key_bin:$PATH \
 		DMS_COMMAND=${DMS_COMMAND:-missing-dms} \
 		"$bootstrap" "$@"
 }
 
 run_bootstrap --dry-run --no-pager >/dev/null
-if [ -e "$test_home/.config/niri/config.kdl" ]; then
-	printf '%s\n' 'Bootstrap dry-run changed the isolated home.' >&2
+if [ -e "$test_home/.config/niri/config.kdl" ] || [ -e "$power_key_target" ]; then
+	printf '%s\n' 'Bootstrap dry-run changed the isolated home or system.' >&2
 	exit 1
 fi
 
@@ -133,6 +146,11 @@ fi
 
 if find "$test_home" -name .keep -print -quit | grep -q .; then
 	printf '%s\n' 'Bootstrap deployed a repository-only .keep file.' >&2
+	exit 1
+fi
+
+if ! cmp -s "$repo_root/system/logind.conf.d/50-power-key.conf" "$power_key_target"; then
+	printf '%s\n' 'Bootstrap did not install the logind power-key drop-in.' >&2
 	exit 1
 fi
 

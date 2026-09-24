@@ -23,6 +23,11 @@ input {
     }
 
     workspace-auto-back-and-forth
+
+    // niri-wm/niri#2233: niri receives the power-key press that woke the system
+    // and suspends again. logind suspends instead and ignores the wake press;
+    // see system/logind.conf.d/50-power-key.conf. Drop both once #2233 is fixed.
+    disable-power-key-handling
 }
 
 gestures {

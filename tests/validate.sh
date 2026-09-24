@@ -116,6 +116,7 @@ require_files \
 	docs/adr/ADR-0018-use-neovim-with-lazyvim-as-the-terminal-editor.md \
 	docs/adr/ADR-0019-merge-dms-plugin-settings-as-desired-state.md \
 	docs/adr/ADR-0020-use-stock-niri-with-squeekboard-and-detach-gated-rotation.md \
+	docs/adr/ADR-0021-let-logind-handle-the-power-key.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -137,10 +138,12 @@ require_files \
 	scripts/dms-apply-look.sh \
 	scripts/dms-restore-plugins.sh \
 	scripts/dms-link-zen-theme.sh \
+	scripts/setup-power-key.sh \
 	system/greetd/config.toml \
 	system/pam.d/greetd \
 	system/local/bin/niri-session \
 	system/udev/70-z13-window.rules \
+	system/logind.conf.d/50-power-key.conf \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
 	tests/dms-apply-look.sh \
@@ -156,6 +159,7 @@ require_files \
 	tests/tablet-mode.sh \
 	tests/auto-rotate.sh \
 	tests/osk.sh \
+	tests/setup-power-key.sh \
 	tests/validate.fish
 
 require_files \
@@ -292,6 +296,7 @@ tests/xwayland-scaled.sh
 tests/tablet-mode.sh
 tests/auto-rotate.sh
 tests/osk.sh
+tests/setup-power-key.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then
