@@ -1,0 +1,200 @@
+@import url("dms-colors.css");
+
+:root {
+  /* DMS glass: 0 shows the blurred desktop, 1 is opaque. */
+  --dms-zen-glass-opacity: 0.75;
+  /* Space colour cues; 0 turns one off. */
+  --dms-zen-tab-indicator-width: 3px;
+  --dms-zen-space-label-opacity: 0.35;
+  --dms-zen-space-label-border-width: 1.5px;
+  --dms-zen-compact-glow-size: 12px;
+  --dms-zen-compact-glow-opacity: 0.35;
+}
+
+/* Zen sets --zen-primary-color per space on the window and on each
+   zen-workspace, hence both selectors: every space resolves its own colour.
+   The cue keeps the space's hue and chroma but clamps its lightness so it
+   stands out from the DMS surface in dark and light mode. */
+:root,
+zen-workspace {
+  --dms-space-cue: oklch(from var(--zen-primary-color)
+      clamp(calc(0.42 + 0.3 * var(--dms-dark)), l, calc(0.58 + 0.3 * var(--dms-dark))) c h);
+  --dms-space-accent: color-mix(in oklab, var(--dms-primary) 70%, var(--zen-primary-color));
+  --dms-space-selected: color-mix(in oklab, var(--dms-secondary-container) 80%, var(--zen-primary-color));
+}
+
+/* #zen-browser-background keeps painting the space gradient, but off screen,
+   so the space label can show it through -moz-element(). The glass takes its
+   place on #browser, its parent. */
+:root:not([zen-private-window="true"]) {
+  & #browser {
+    background-color: oklch(from var(--dms-surface-container) l c h / var(--dms-zen-glass-opacity)) !important;
+  }
+
+  & #zen-browser-background {
+    left: -300vw !important;
+    right: 300vw !important;
+  }
+
+  /* The compact-mode sidebar floats over pages, not the desktop. */
+  & #zen-toolbar-background {
+    background-color: var(--dms-surface-container) !important;
+
+    &::before,
+    &::after {
+      display: none !important;
+    }
+  }
+}
+
+/* Every page is a transparent browser with the transparency pref on. */
+.browserSidebarContainer {
+  --zen-transparent-browser-background: color-mix(in oklab, var(--dms-on-surface) 5%, transparent) !important;
+}
+
+/* Private windows stay dark whatever the DMS mode. */
+:root:not([zen-private-window="true"]),
+:root:not([zen-private-window="true"]) zen-workspace {
+  --toolbox-textcolor: var(--dms-on-surface) !important;
+}
+
+:root {
+  --toolbarbutton-background-color-hover: color-mix(in oklab, var(--dms-on-surface) 8%, transparent) !important;
+  --toolbarbutton-background-color-active: color-mix(in oklab, var(--dms-on-surface) 12%, transparent) !important;
+  --toolbar-field-focus-color: var(--dms-on-surface) !important;
+  --focus-outline-color: var(--dms-space-accent) !important;
+
+  --arrowpanel-background: var(--dms-surface-container) !important;
+  --arrowpanel-color: var(--dms-on-surface) !important;
+  --arrowpanel-border-color: var(--dms-outline-variant) !important;
+  --panel-separator-color: var(--dms-outline-variant) !important;
+  --panel-item-hover-bgcolor: color-mix(in oklab, var(--dms-on-surface) 8%, transparent) !important;
+  --panel-item-active-bgcolor: color-mix(in oklab, var(--dms-on-surface) 12%, transparent) !important;
+}
+
+menupopup {
+  --panel-text-color: var(--dms-on-surface) !important;
+  --panel-border-color: var(--dms-outline-variant) !important;
+}
+
+menupopup :is(menu, menuitem)[_moz-menuactive]:not([disabled]) {
+  color: var(--dms-on-surface) !important;
+  background-color: var(--panel-item-hover-bgcolor) !important;
+}
+
+zen-workspace,
+.tabbrowser-tab[zen-essential] {
+  --tab-background-color-selected: var(--dms-space-selected) !important;
+  --tab-selected-textcolor: var(--dms-on-secondary-container) !important;
+}
+
+.tabbrowser-tab:not([zen-essential]):is([selected], [multiselected]) > .tab-stack > .tab-background {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: 25%;
+    inset-inline-start: 3px;
+    width: var(--dms-zen-tab-indicator-width);
+    border-radius: var(--dms-zen-tab-indicator-width);
+    background: var(--dms-space-cue);
+  }
+}
+
+/* ::before is Zen's own rounded label background; isolation keeps it under
+   the text. Zen only paints the active space's gradient, so a space seen
+   while switching falls back to its cue colour. ::after copies Zen's
+   ::before geometry for the hover border, which must not fade. */
+:root:not([zen-private-window="true"]) .zen-current-workspace-indicator {
+  isolation: isolate;
+
+  &::before {
+    z-index: -1;
+    opacity: var(--dms-zen-space-label-opacity);
+    background: linear-gradient(to right, var(--dms-space-cue), oklch(from var(--dms-space-cue) l c h / 0.3)) !important;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: calc(var(--zen-toolbox-padding) + 2px);
+    width: calc(100% - var(--zen-toolbox-padding) * 2.5);
+    height: calc(100% - 8px);
+    border-radius: var(--border-radius-medium);
+    pointer-events: none;
+  }
+
+  &:is(:hover, [open="true"])::after {
+    box-shadow: inset 0 0 0 var(--dms-zen-space-label-border-width) var(--dms-space-cue);
+  }
+}
+
+:root:not([zen-private-window="true"]) zen-workspace[active] .zen-current-workspace-indicator::before {
+  /* Scaled uniformly so the gradient keeps Zen's angle; the label shows a
+     centred band of the window instead of the whole window squashed. */
+  background: -moz-element(#zen-browser-background) center / 100% auto no-repeat !important;
+}
+
+/* The page paints over the container, so the glow needs an overlay. */
+:root:not([inDOMFullscreen="true"], [popup-window]) .browserSidebarContainer:not(.zen-glance-overlay) {
+  &:not([is-zen-split="true"]) {
+    position: relative;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 var(--dms-zen-compact-glow-size) oklch(from var(--dms-space-cue) l c h / var(--dms-zen-compact-glow-opacity));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+}
+
+:root[zen-compact-mode="true"]:not([inDOMFullscreen="true"], [popup-window]) .browserSidebarContainer:not(.zen-glance-overlay)::after {
+  opacity: 1;
+}
+
+#zen-workspaces-button toolbarbutton[active="true"] {
+  background-color: color-mix(in oklab, var(--dms-space-cue) 20%, transparent) !important;
+
+  & .zen-workspace-icon {
+    fill: var(--dms-space-cue) !important;
+  }
+
+  & .zen-workspace-icon[no-icon="true"] {
+    background: var(--dms-space-cue) !important;
+  }
+}
+
+#urlbar[focused="true"]:not([suppress-focus-border]) > .urlbar-background {
+  outline: 1px solid var(--dms-space-accent) !important;
+  outline-offset: -1px !important;
+}
+
+#urlbar[breakout-extend] .urlbar-background {
+  --zen-urlbar-background-base: var(--dms-surface-container-high) !important;
+}
+
+.urlbar-input::selection {
+  color: var(--dms-on-primary) !important;
+  background-color: var(--dms-primary) !important;
+}
+
+.urlbarView-row[selected] {
+  --zen-selected-bg: var(--dms-space-selected) !important;
+}
+
+.urlbarView-row[selected],
+.urlbarView-row[selected] *,
+.urlbarView-row[selected] .urlbarView-title-separator::before {
+  color: var(--dms-on-secondary-container) !important;
+}

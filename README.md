@@ -19,7 +19,7 @@ installed application.
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
   dot_config/DankMaterialShell/ DMS repository plugins
-  dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color)
+  dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen)
   dot_config/systemd/user/ managed ~/.config/systemd/user units
   dot_config/environment.d/ session environment (SSH agent socket)
   dot_config/git/         allowed signers for SSH commit signatures
@@ -27,6 +27,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/ghostty/     terminal configuration; see docs/terminal.md
   dot_config/alacritty/   fallback terminal configuration
   dot_config/zed/         editor settings
+  dot_config/private_zen/ Zen Browser userChrome.css on DMS colours; see docs/dms.md
   dot_config/nvim/        Neovim (LazyVim) configuration and plugin lockfile; see docs/editor.md
   dot_config/mimeapps.list default applications
   dot_config/wallpapers/  wallpaper repositories cloned by wallpaper-favorites
@@ -71,6 +72,9 @@ plugin rebuilds the former Noctalia dashboard as a centered popout on
 `Mod+S`, with the original DMS Control Center and Settings still reachable
 from its header. Registry plugins for the launcher are pinned in
 `dms/plugins.lock.json` and installed by `scripts/dms-restore-plugins.sh`.
+Zen Browser takes the DMS glass and colours, with each space's colour shown
+only in small cues, through a matugen template and a managed
+`userChrome.css` linked into the profile by `scripts/dms-link-zen-theme.sh`.
 DMS's own built-in lock screen stays; see
 [ADR-0015](docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
 All of this, including how to iterate on the look, restart the shell, and

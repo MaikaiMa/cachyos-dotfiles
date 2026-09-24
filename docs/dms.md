@@ -53,7 +53,9 @@ is preserved only as the `noctalia-final` Git tag.
   x-ray background effects for layers matching `^dms:`, so DMS's own blurred
   surfaces are not see-through. `chezmoi/dot_config/niri/cfg/layout.kdl` sets
   `gaps 10` and struts that align tiled windows with the bar.
-- **matugen templates**, Niri backdrop and the Z13 template, see below.
+- **matugen templates**, Niri backdrop, the Z13 template, and the Zen Browser
+  colours (`zen_colors`, linked in by `scripts/dms-link-zen-theme.sh`), see
+  below.
 
 ## Registry plugins
 
@@ -242,8 +244,8 @@ DMS also merges in the user's own `~/.config/matugen/config.toml`, extracting
 its `[config]` section and everything from `[templates]` onward and appending
 them to the config it builds for the real (non-dry-run) matugen invocation.
 
-`chezmoi/dot_config/matugen/config.toml` declares three user templates,
-`niri_backdrop`, `z13_window`, and `ghostty_background`.
+`chezmoi/dot_config/matugen/config.toml` declares four user templates,
+`niri_backdrop`, `z13_window`, `ghostty_background`, and `zen_colors`.
 
 ### Niri backdrop
 
@@ -352,9 +354,115 @@ With `matugenTemplateNeovim` on, DMS's `dmsneovim-colors` and
 watches its own file and DMS's `settings.json` and reloads itself. See
 [docs/editor.md](editor.md#colours).
 
+### Zen Browser colours
+
+Zen does not follow the GTK theme, and DMS's own `zen` template
+(`~/.config/DankMaterialShell/zen.css`) is not used: it forces an opaque
+background and overrides Zen's per-space colours. Instead Zen reads as the
+same translucent DMS glass as Ghostty and the bar, and the space you are in
+shows only in a few small cues.
+
+- **Background:** DMS `surface_container` at `--dms-zen-glass-opacity`
+  (default `0.75`), so the Niri blur still shows through. The blur comes
+  from the global `background-effect` window rule in
+  `chezmoi/dot_config/niri/cfg/rules.kdl`, its strength from
+  `cfg/misc.kdl`. Zen's space gradient is not shown behind the window, and
+  switching spaces still works. A blank or loading page shows the same
+  glass with a faint `on_surface` lift, because with the transparency prefs
+  on every page is a transparent browser. The compact-mode sidebar, which
+  floats over pages, is opaque `surface_container`.
+- **Space name** at the top of the tab list: the space's own configured
+  colours, as Zen draws them, at `--dms-zen-space-label-opacity` (default
+  `0.35`). One colour is a solid fill, several are a diagonal gradient of
+  those colours at Zen's own angle. Zen paints only the active space's
+  gradient, into `#zen-browser-background`; the stylesheet moves that
+  element off screen instead of hiding it and shows it in the label with
+  `-moz-element()`, scaled to the label's width so the angle survives. The
+  label then shows a centred band of the window's gradient, about 70% of
+  the colour range for a diagonal. While switching, the other space's label
+  falls back to a fade of its cue colour. On hover, or while its menu is
+  open, the label gets a border in the cue colour
+  (`--dms-zen-space-label-border-width`, default `1.5px`).
+- **Other space cues:**
+  - a small bar on the inline-start edge of the selected tab
+    (`--dms-zen-tab-indicator-width`, default `3px`), on a
+    `secondary_container` background with 20% of the space colour;
+  - the active space in the footer switcher: a tinted button, and its icon
+    or dot in the space colour (emoji icons keep their own colours);
+  - the focus ring and the focused URL bar's border, DMS `primary` with 30%
+    of the space colour;
+  - in compact mode only, a soft inner glow around the web page
+    (`--dms-zen-compact-glow-size`, default `12px`, and
+    `--dms-zen-compact-glow-opacity`, default `0.35`). It fades in and out
+    over 0.3s when compact mode is toggled, without animation when reduced
+    motion is requested, and is skipped in fullscreen, popups and Glance.
+
+  These cues use the space colour Zen sets per space
+  (`--zen-primary-color`) with its hue and chroma kept but its lightness
+  clamped (oklch) to a band that stands out from the DMS surface, using the
+  `--dms-dark` flag the template writes: at least 3:1 against
+  `surface_container` in both modes, even for a white, black or yellow
+  space. The space name uses the raw colours, so its opacity stays low:
+  `on_surface` text keeps at least 4:1 at `0.35`, even over a fully opaque
+  white space in dark mode.
+- **Everything else is DMS:** text and icons, hover and pressed states, the
+  expanded URL bar, popups, panels and context menus. Private windows keep
+  Zen's own dark look.
+
+The variables sit at the top of
+`chezmoi/dot_config/private_zen/dms-userChrome.css`. Tune them in small
+steps (`0.1` for the opacities), set a width or opacity to `0` to turn that
+cue off, apply the change with chezmoi and restart Zen. Zen mods in
+`chrome/zen-themes.css` load at the same cascade level and can override
+these rules; they were checked with all mods off.
+
+The pieces:
+
+- `chezmoi/dot_config/matugen/templates/zen-colors`, registered as
+  `[templates.zen_colors]`, renders the palette as `--dms-*` custom
+  properties, plus the `--dms-dark` flag (`1` or `0`), to
+  `~/.config/zen/dms-colors.css` on every theme or wallpaper change. It is
+  generated, so chezmoi ignores it.
+- `chezmoi/dot_config/private_zen/dms-userChrome.css`, deployed to
+  `~/.config/zen/dms-userChrome.css`, imports `dms-colors.css` and maps it
+  onto Zen's variables. chezmoi manages only this file in `~/.config/zen`;
+  profiles are never touched, and the `private_` prefix keeps the
+  directory at mode 0700, as Zen creates it.
+- `scripts/dms-link-zen-theme.sh` links both files into the profile's
+  `chrome/` directory (`userChrome.css` and `dms-colors.css`, side by side so
+  the relative import resolves) and adds these prefs, all `true`, to the
+  profile's `user.js`, which Zen reapplies on every start:
+  `toolkit.legacyUserProfileCustomizations.stylesheets` (load
+  `userChrome.css`), `zen.widget.linux.transparency` and
+  `browser.tabs.allow_transparent_browser` (translucent window), and
+  `zen.theme.use-system-colors`, so Zen picks light or dark from the system
+  mode that DMS sets instead of from each space's gradient, matching the DMS
+  text colours.
+
+The script picks the profile Zen actually uses from
+`~/.config/zen/profiles.ini`, preferring the `Default=` in an `[Install...]`
+section over a `[Profile*]` section's own `Default=1`. It replaces an older
+symlink, such as the former link to DMS's `zen.css`, and says so; it never
+overwrites a regular `userChrome.css` (move it aside first), fails on a pref
+already set to something other than `true`, and never edits `prefs.js` or
+`chrome/zen-themes.css` (Zen mods). It fails when
+`~/.config/zen/dms-userChrome.css` is missing (apply the dotfiles first) or
+`dms-colors.css` has not been rendered yet. To render it, switch the DMS
+theme mode in the Control Center (and back); see also "Triggering a
+re-render" below. Preview the script, then apply it:
+
+```fish
+./scripts/dms-link-zen-theme.sh --dry-run
+./scripts/dms-link-zen-theme.sh
+```
+
+Restart Zen afterwards, and after every theme or wallpaper change: unlike the
+terminal and Neovim colours above, Zen reads `userChrome.css` and its import
+only at startup.
+
 ### Triggering a re-render
 
-Both templates render together on every real matugen invocation. Any
+All user templates render together on every real matugen invocation. Any
 wallpaper or theme change re-renders them. Trigger one explicitly with:
 
 ```fish
@@ -367,6 +475,7 @@ output files:
 ```fish
 cat ~/.config/niri/matugen/backdrop.kdl
 cat ~/.cache/matugen/z13-window-color
+cat ~/.config/zen/dms-colors.css
 ```
 
 On a detected 2025 Z13 the rear lightbar should update to that color within a

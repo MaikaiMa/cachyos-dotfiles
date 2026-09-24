@@ -65,6 +65,8 @@ require_files \
 	chezmoi/dot_config/wallpapers/libraries \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/matugen/templates/ghostty-background \
+	chezmoi/dot_config/matugen/templates/zen-colors \
+	chezmoi/dot_config/private_zen/dms-userChrome.css \
 	chezmoi/dot_config/fish/config.fish \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
 	chezmoi/dot_config/fish/functions/dms-reset.fish \
@@ -125,6 +127,7 @@ require_files \
 	scripts/setup-z13-window.sh \
 	scripts/dms-apply-look.sh \
 	scripts/dms-restore-plugins.sh \
+	scripts/dms-link-zen-theme.sh \
 	system/greetd/config.toml \
 	system/pam.d/greetd \
 	system/local/bin/niri-session \
@@ -133,6 +136,7 @@ require_files \
 	tests/check-packages.sh \
 	tests/dms-apply-look.sh \
 	tests/dms-restore-plugins.sh \
+	tests/dms-link-zen-theme.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/setup-greetd.sh \
@@ -258,6 +262,7 @@ chezmoi --source chezmoi execute-template \
 tests/check-packages.sh
 tests/dms-apply-look.sh
 tests/dms-restore-plugins.sh
+tests/dms-link-zen-theme.sh
 tests/focus-or-spawn.sh
 tests/setup-greetd.sh
 tests/setup-z13-window.sh

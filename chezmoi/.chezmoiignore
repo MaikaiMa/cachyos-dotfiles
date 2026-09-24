@@ -6,3 +6,5 @@ dot_config/niri/matugen/.keep
 .config/nvim/lua/lualine/themes/dms.lua
 # Rendered by the ghostty_background matugen template; see docs/terminal.md.
 .config/ghostty/dank-background
+# Rendered by the zen_colors matugen template; see docs/dms.md.
+.config/zen/dms-colors.css

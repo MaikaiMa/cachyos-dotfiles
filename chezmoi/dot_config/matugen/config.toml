@@ -14,3 +14,7 @@ output_path = "~/.config/niri/matugen/backdrop.kdl"
 [templates.ghostty_background]
 input_path = "~/.config/matugen/templates/ghostty-background"
 output_path = "~/.config/ghostty/dank-background"
+
+[templates.zen_colors]
+input_path = "~/.config/matugen/templates/zen-colors"
+output_path = "~/.config/zen/dms-colors.css"
