@@ -69,8 +69,14 @@ for path in \
 	.config/git/allowed_signers \
 	.config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
 	.config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
+	.config/DankMaterialShell/plugins/dotfilesKeyboard/plugin.json \
 	.config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
 	.config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
+	.config/systemd/user/auto-rotate.service \
+	.config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
+	.local/bin/auto-rotate \
+	.local/bin/osk \
+	.local/bin/tablet-mode \
 	.local/bin/focus-or-spawn \
 	.local/bin/sync-z13-window-color; do
 	if [ ! -f "$test_home/$path" ]; then
@@ -80,6 +86,9 @@ for path in \
 done
 
 for path in \
+	.local/bin/auto-rotate \
+	.local/bin/osk \
+	.local/bin/tablet-mode \
 	.local/bin/focus-or-spawn \
 	.local/bin/sync-z13-window-color; do
 	if [ ! -x "$test_home/$path" ]; then
@@ -109,6 +118,14 @@ if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "/usr/lib/systemd/
 	printf '%s\n' 'Bootstrap did not enable dms.service for niri.service.' >&2
 	exit 1
 fi
+for wanted_unit in auto-rotate.service:../auto-rotate.service \
+	mobi.phosh.OSK.service:/usr/lib/systemd/user/mobi.phosh.OSK.service; do
+	wants_link=$test_home/.config/systemd/user/niri.service.wants/${wanted_unit%%:*}
+	if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "${wanted_unit#*:}" ]; then
+		printf 'Bootstrap did not enable %s for niri.service.\n' "${wanted_unit%%:*}" >&2
+		exit 1
+	fi
+done
 if grep -q 'spawn-at-startup "dms"' "$test_home/.config/niri/cfg/autostart.kdl"; then
 	printf '%s\n' 'Niri autostart still spawns the shell; see ADR-0007.' >&2
 	exit 1

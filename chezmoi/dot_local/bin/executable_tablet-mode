@@ -1,0 +1,111 @@
+#!/bin/sh
+# Report whether the 2025 ROG Flow Z13 is used as a tablet, i.e. whether its
+# detachable keyboard is disconnected. Detaching the cover removes its USB
+# device, which sysfs and udev report without extra privileges.
+set -eu
+
+keyboard_id=${TABLET_MODE_KEYBOARD_ID:-0b05:1a30}
+usb_root=${TABLET_MODE_USB_ROOT:-/sys/bus/usb/devices}
+dmi_root=${Z13_DMI_ROOT:-/sys/devices/virtual/dmi/id}
+settle_seconds=${TABLET_MODE_SETTLE_SECONDS:-1}
+
+usage() {
+	cat <<EOF
+Usage: ${0##*/} [status|watch|supported]
+
+  status     Print "tablet" when the keyboard is detached, else "laptop"
+             (default). Exits 0 for tablet and 1 for laptop.
+  watch      Print the current mode, then one line on every change.
+  supported  Exit 0 on a GZ302 Flow Z13 and 1 elsewhere.
+
+Environment:
+  TABLET_MODE_KEYBOARD_ID          vendor:product of the keyboard (0b05:1a30)
+  TABLET_MODE_USB_ROOT             sysfs USB device directory
+  TABLET_MODE_SETTLE_SECONDS       wait before trusting a detach (1)
+  Z13_DMI_ROOT                     sysfs DMI directory
+EOF
+}
+
+require_command() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		printf 'Missing required command: %s\n' "$1" >&2
+		exit 127
+	fi
+}
+
+is_supported() {
+	[ -r "$dmi_root/product_family" ] &&
+		[ -r "$dmi_root/board_name" ] &&
+		[ "$(cat "$dmi_root/product_family")" = "ROG Flow Z13" ] &&
+		case $(cat "$dmi_root/board_name") in
+		GZ302*) return 0 ;;
+		*) return 1 ;;
+		esac
+}
+
+keyboard_present() {
+	wanted_vendor=${keyboard_id%%:*}
+	wanted_product=${keyboard_id#*:}
+	for device in "$usb_root"/*; do
+		[ -r "$device/idVendor" ] && [ -r "$device/idProduct" ] || continue
+		if [ "$(cat "$device/idVendor")" = "$wanted_vendor" ] &&
+			[ "$(cat "$device/idProduct")" = "$wanted_product" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+current_mode() {
+	if is_supported && ! keyboard_present; then
+		printf '%s\n' tablet
+	else
+		printf '%s\n' laptop
+	fi
+}
+
+# USB devices re-enumerate on resume, which briefly looks like a detach.
+settled_mode() {
+	mode=$(current_mode)
+	if [ "$mode" = tablet ] && [ "$settle_seconds" != 0 ]; then
+		sleep "$settle_seconds"
+		mode=$(current_mode)
+	fi
+	printf '%s\n' "$mode"
+}
+
+watch_mode() {
+	require_command udevadm
+	udevadm monitor --udev --subsystem-match=usb | {
+		last_mode=$(current_mode)
+		printf '%s\n' "$last_mode"
+		while IFS= read -r _event; do
+			mode=$(settled_mode)
+			if [ "$mode" != "$last_mode" ]; then
+				last_mode=$mode
+				printf '%s\n' "$mode"
+			fi
+		done
+	}
+}
+
+case ${1:-status} in
+status)
+	mode=$(current_mode)
+	printf '%s\n' "$mode"
+	[ "$mode" = tablet ]
+	;;
+watch)
+	watch_mode
+	;;
+supported)
+	is_supported
+	;;
+-h | --help)
+	usage
+	;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac

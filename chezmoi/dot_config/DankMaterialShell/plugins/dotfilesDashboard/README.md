@@ -12,9 +12,9 @@ The popout is a mat-glass panel with, top to bottom:
 
 - a header "Dashboard" with buttons for the DMS dash, the notification center,
   shell settings and close;
-- a row of five toggle tiles: Wallpaper (opens the dash wallpaper tab and shows
-  the current wallpaper as its background), Wifi, Bluetooth, Caffeine and
-  Do not disturb, filled with the primary colour when active;
+- a row of six toggle tiles: Wallpaper (opens the dash wallpaper tab and shows
+  the current wallpaper as its background), Rotation lock, Wifi, Bluetooth,
+  Caffeine and Do not disturb, filled with the primary colour when active;
 - a media card with album art, title, artist, previous/play/next and a seekbar
   with elapsed and total time;
 - a "Display & audio" card with a brightness slider and output and input volume
@@ -59,9 +59,18 @@ are untouched.
 - The header's settings button uses `focusOrToggleSettings()`, so an open
   settings window is focused rather than closed.
 
+## Rotation lock
+
+The Rotation lock tile runs `~/.local/bin/auto-rotate lock toggle` and shows
+the state the command prints; the state is re-read with `auto-rotate lock
+status` every time the dashboard opens, because it can also change from a
+terminal. `auto-rotate.service` keeps a detached Z13 in its current
+orientation while the lock is on; with the keyboard attached the panel stays
+upright regardless. See [docs/tablet.md](../../../../../docs/tablet.md).
+
 ## Services used
 
-Everything reads and writes live DMS state; nothing shells out.
+Everything else reads and writes live DMS state and does not shell out.
 
 | Area | Service |
 | --- | --- |
@@ -76,6 +85,7 @@ Everything reads and writes live DMS state; nothing shells out.
 | Battery | `BatteryService` |
 | Power profiles | `PowerProfileWatcher` |
 | System stats | `DgopService` |
+| Rotation lock | `auto-rotate lock` through a `Quickshell.Io` `Process` |
 | Header actions | `PopoutService` (dash, notification center, settings); the dash and notification-center loaders are activated first because DMS 1.6 loads them lazily and the toggles are no-ops before |
 
 ## Known limits

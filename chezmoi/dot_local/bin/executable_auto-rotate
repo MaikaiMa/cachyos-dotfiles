@@ -1,0 +1,216 @@
+#!/bin/sh
+# Follow the accelerometer with the internal panel's niri transform while the
+# Z13 keyboard is detached; keep the panel upright while it is attached.
+set -eu
+
+state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles
+lock_file=$state_dir/rotation-lock
+events_fifo=${XDG_RUNTIME_DIR:-}/auto-rotate.events
+tablet_mode_command=${AUTO_ROTATE_TABLET_MODE:-tablet-mode}
+output_name=${AUTO_ROTATE_OUTPUT:-}
+
+usage() {
+	cat <<EOF
+Usage: ${0##*/} run
+       ${0##*/} lock [status|on|off|toggle]
+
+  run    Rotate the internal panel until stopped; the systemd user service
+         auto-rotate.service runs this.
+  lock   Print or change the rotation lock. While locked, a detached Z13
+         keeps its current rotation. The state survives a reboot.
+
+Environment:
+  AUTO_ROTATE_OUTPUT        niri output to rotate (first eDP-* output)
+  AUTO_ROTATE_TABLET_MODE   keyboard detection command (tablet-mode)
+EOF
+}
+
+require_command() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		printf 'Missing required command: %s\n' "$1" >&2
+		exit 127
+	fi
+}
+
+# iio-sensor-proxy names the screen edge that points up; niri rotates
+# counter-clockwise. Correct a wrong direction here.
+transform_for_orientation() {
+	case $1 in
+	normal) printf '%s\n' normal ;;
+	left-up) printf '%s\n' 90 ;;
+	bottom-up) printf '%s\n' 180 ;;
+	right-up) printf '%s\n' 270 ;;
+	*) return 1 ;;
+	esac
+}
+
+lock_state() {
+	if [ -r "$lock_file" ] && [ "$(cat "$lock_file")" = locked ]; then
+		printf '%s\n' locked
+	else
+		printf '%s\n' unlocked
+	fi
+}
+
+notify_service() {
+	# Opening a FIFO read-write never blocks on Linux, even without a reader.
+	if [ -p "$events_fifo" ]; then
+		printf '%s\n' 'lock changed' 1<>"$events_fifo"
+	fi
+}
+
+set_lock() {
+	mkdir -p "$state_dir"
+	printf '%s\n' "$1" >"$lock_file.tmp"
+	mv -f "$lock_file.tmp" "$lock_file"
+	notify_service
+	printf '%s\n' "$1"
+}
+
+lock_command() {
+	case ${1:-status} in
+	status) lock_state ;;
+	on) set_lock locked ;;
+	off) set_lock unlocked ;;
+	toggle)
+		if [ "$(lock_state)" = locked ]; then
+			set_lock unlocked
+		else
+			set_lock locked
+		fi
+		;;
+	*)
+		usage >&2
+		exit 2
+		;;
+	esac
+}
+
+internal_output() {
+	niri msg --json outputs |
+		jq -r 'keys[] | select(startswith("eDP"))' |
+		head -n 1
+}
+
+current_transform() {
+	niri msg --json outputs |
+		jq -r --arg name "$output_name" '.[$name].logical.transform // "Normal"' |
+		tr '[:upper:]' '[:lower:]' |
+		sed 's/^_//'
+}
+
+desired_transform() {
+	if [ "$keyboard_mode" != tablet ]; then
+		printf '%s\n' normal
+		return
+	fi
+	if [ "$(lock_state)" = locked ]; then
+		return 1
+	fi
+	transform_for_orientation "$orientation"
+}
+
+watch_keyboard() {
+	"$tablet_mode_command" watch | while IFS= read -r mode; do
+		printf 'keyboard %s\n' "$mode"
+	done
+	printf '%s\n' 'exit keyboard'
+}
+
+watch_orientation() {
+	monitor-sensor --accel | while IFS= read -r line; do
+		case $line in
+		*"orientation changed: "*) value=${line##*: } ;;
+		*"Has accelerometer (orientation: "*)
+			value=${line#*orientation: }
+			value=${value%%,*}
+			;;
+		*) continue ;;
+		esac
+		printf 'orientation %s\n' "$value"
+	done
+	printf '%s\n' 'exit sensor'
+}
+
+kill_tree() {
+	for child_pid in $(pgrep -P "$1" || true); do
+		kill_tree "$child_pid"
+	done
+	kill "$1" 2>/dev/null || true
+}
+
+stop_watchers() {
+	trap - EXIT
+	rm -f -- "$events_fifo"
+	for watcher_pid in $watcher_pids; do
+		kill_tree "$watcher_pid"
+	done
+}
+
+run() {
+	require_command niri
+	require_command jq
+	require_command monitor-sensor
+	require_command "$tablet_mode_command"
+	if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+		printf '%s\n' 'XDG_RUNTIME_DIR is not set.' >&2
+		exit 1
+	fi
+	if ! "$tablet_mode_command" supported; then
+		printf '%s\n' 'Not a GZ302 Flow Z13; nothing to rotate.' >&2
+		exit 0
+	fi
+
+	if [ -z "$output_name" ]; then
+		output_name=$(internal_output)
+	fi
+	if [ -z "$output_name" ]; then
+		printf '%s\n' 'No internal eDP output found in niri.' >&2
+		exit 1
+	fi
+
+	applied=$(current_transform)
+	keyboard_mode=laptop
+	orientation=normal
+
+	watcher_pids=
+	rm -f -- "$events_fifo"
+	mkfifo -m 600 "$events_fifo"
+	trap stop_watchers EXIT
+	trap 'exit 143' HUP INT TERM
+	exec 3<>"$events_fifo"
+	watch_keyboard >&3 &
+	watcher_pids=$!
+	watch_orientation >&3 &
+	watcher_pids="$watcher_pids $!"
+
+	while IFS=' ' read -r kind value <&3; do
+		case $kind in
+		keyboard) keyboard_mode=$value ;;
+		orientation) orientation=$value ;;
+		exit)
+			printf 'The %s watcher stopped.\n' "$value" >&2
+			exit 1
+			;;
+		esac
+
+		target=$(desired_transform) || continue
+		if [ "$target" != "$applied" ] &&
+			niri msg output "$output_name" transform "$target"; then
+			applied=$target
+		fi
+	done
+}
+
+case ${1:-} in
+run) run ;;
+lock)
+	shift
+	lock_command "$@"
+	;;
+-h | --help) usage ;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac

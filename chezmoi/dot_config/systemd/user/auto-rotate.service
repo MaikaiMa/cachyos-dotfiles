@@ -1,0 +1,9 @@
+[Unit]
+Description=Rotate the Z13 panel with the accelerometer while the keyboard is detached
+PartOf=niri.service
+After=niri.service
+
+[Service]
+ExecStart=%h/.local/bin/auto-rotate run
+Restart=on-failure
+RestartSec=2

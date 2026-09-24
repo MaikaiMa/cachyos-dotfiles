@@ -1,0 +1,113 @@
+#!/bin/sh
+# Show, hide, or toggle squeekboard through its sm.puri.OSK0 D-Bus interface.
+set -eu
+
+bus_name=sm.puri.OSK0
+object_path=/sm/puri/OSK0
+unit=${OSK_UNIT:-mobi.phosh.OSK.service}
+
+usage() {
+	cat <<EOF
+Usage: ${0##*/} [toggle|show|hide|status|watch]
+
+  toggle  Show the on-screen keyboard when hidden, else hide it (default).
+  show    Show it, starting $unit when it is not running.
+  hide    Hide it; does nothing when squeekboard is not running.
+  status  Print "visible" or "hidden".
+  watch   Print "visible" or "hidden" now and on every change, including
+          squeekboard hiding itself, stopping, or restarting.
+EOF
+}
+
+require_command() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		printf 'Missing required command: %s\n' "$1" >&2
+		exit 127
+	fi
+}
+
+is_running() {
+	busctl --user status "$bus_name" >/dev/null 2>&1
+}
+
+ensure_running() {
+	if ! is_running; then
+		systemctl --user start "$unit"
+	fi
+}
+
+is_visible() {
+	is_running &&
+		[ "$(busctl --user get-property "$bus_name" "$object_path" "$bus_name" Visible)" = "b true" ]
+}
+
+set_visible() {
+	busctl --user call "$bus_name" "$object_path" "$bus_name" SetVisible b "$1"
+}
+
+# gdbus monitor follows the bus name: it reports the current owner at start,
+# every new owner after a restart, and when the name disappears.
+watch_visibility() {
+	require_command gdbus
+	gdbus monitor --session --dest "$bus_name" --object-path "$object_path" | {
+		last_state=
+		while IFS= read -r line; do
+			case $line in
+			*"PropertiesChanged ('$bus_name', "*"'Visible': <true>"*) state=visible ;;
+			*"PropertiesChanged ('$bus_name', "*"'Visible': <false>"*) state=hidden ;;
+			"The name $bus_name is owned by "*)
+				if is_visible; then
+					state=visible
+				else
+					state=hidden
+				fi
+				;;
+			"The name $bus_name does not have an owner"*) state=hidden ;;
+			*) continue ;;
+			esac
+			if [ "$state" != "$last_state" ]; then
+				last_state=$state
+				printf '%s\n' "$state"
+			fi
+		done
+	}
+}
+
+require_command busctl
+
+case ${1:-toggle} in
+toggle)
+	if is_visible; then
+		set_visible false
+	else
+		ensure_running
+		set_visible true
+	fi
+	;;
+show)
+	ensure_running
+	set_visible true
+	;;
+hide)
+	if is_running; then
+		set_visible false
+	fi
+	;;
+status)
+	if is_visible; then
+		printf '%s\n' visible
+	else
+		printf '%s\n' hidden
+	fi
+	;;
+watch)
+	watch_visibility
+	;;
+-h | --help)
+	usage
+	;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac

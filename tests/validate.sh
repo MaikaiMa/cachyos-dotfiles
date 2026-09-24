@@ -54,12 +54,19 @@ require_files \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_wallpaper-favorites.path \
 	chezmoi/dot_config/systemd/user/wallpaper-favorites.service \
 	chezmoi/dot_config/systemd/user/wallpaper-favorites.path \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_auto-rotate.service \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_mobi.phosh.OSK.service \
+	chezmoi/dot_config/systemd/user/auto-rotate.service \
+	chezmoi/dot_config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
 	chezmoi/dot_config/niri/config.kdl \
 	chezmoi/dot_config/niri/cfg/*.kdl \
 	chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
 	chezmoi/dot_local/bin/executable_wallpaper-favorites \
 	chezmoi/dot_local/bin/executable_xwayland-scaled \
+	chezmoi/dot_local/bin/executable_tablet-mode \
+	chezmoi/dot_local/bin/executable_auto-rotate \
+	chezmoi/dot_local/bin/executable_osk \
 	chezmoi/dot_local/private_share/applications/net.blip.Blip.desktop \
 	chezmoi/dot_local/private_share/applications/dev.noctalia.Noctalia.desktop \
 	chezmoi/dot_config/wallpapers/libraries \
@@ -108,6 +115,7 @@ require_files \
 	docs/adr/ADR-0017-use-ghostty-as-the-terminal.md \
 	docs/adr/ADR-0018-use-neovim-with-lazyvim-as-the-terminal-editor.md \
 	docs/adr/ADR-0019-merge-dms-plugin-settings-as-desired-state.md \
+	docs/adr/ADR-0020-use-stock-niri-with-squeekboard-and-detach-gated-rotation.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -117,6 +125,7 @@ require_files \
 	docs/pictures.md \
 	docs/terminal.md \
 	docs/editor.md \
+	docs/tablet.md \
 	dms/look.json \
 	dms/plugin_settings.json \
 	dms/plugins.lock.json \
@@ -144,6 +153,9 @@ require_files \
 	tests/sync-z13-window-color.sh \
 	tests/wallpaper-favorites.sh \
 	tests/xwayland-scaled.sh \
+	tests/tablet-mode.sh \
+	tests/auto-rotate.sh \
+	tests/osk.sh \
 	tests/validate.fish
 
 require_files \
@@ -151,6 +163,8 @@ require_files \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/DotfilesApps.qml \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/DotfilesDashboard.qml \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesKeyboard/plugin.json \
+	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesKeyboard/DotfilesKeyboard.qml \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/DotfilesLauncher.qml \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
@@ -247,6 +261,9 @@ shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
 	chezmoi/dot_local/bin/executable_wallpaper-favorites \
 	chezmoi/dot_local/bin/executable_xwayland-scaled \
+	chezmoi/dot_local/bin/executable_tablet-mode \
+	chezmoi/dot_local/bin/executable_auto-rotate \
+	chezmoi/dot_local/bin/executable_osk \
 	system/local/bin/niri-session
 
 shfmt -d scripts/*.sh tests/*.sh \
@@ -254,6 +271,9 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_sync-z13-window-color \
 	chezmoi/dot_local/bin/executable_wallpaper-favorites \
 	chezmoi/dot_local/bin/executable_xwayland-scaled \
+	chezmoi/dot_local/bin/executable_tablet-mode \
+	chezmoi/dot_local/bin/executable_auto-rotate \
+	chezmoi/dot_local/bin/executable_osk \
 	system/local/bin/niri-session
 
 chezmoi --source chezmoi execute-template \
@@ -269,6 +289,9 @@ tests/setup-z13-window.sh
 tests/sync-z13-window-color.sh
 tests/wallpaper-favorites.sh
 tests/xwayland-scaled.sh
+tests/tablet-mode.sh
+tests/auto-rotate.sh
+tests/osk.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

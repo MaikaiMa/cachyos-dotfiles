@@ -1,0 +1,14 @@
+{
+    "id": "dotfilesKeyboard",
+    "name": "Dotfiles Keyboard",
+    "description": "Shows or hides the squeekboard on-screen keyboard; visible only while the Z13 keyboard is detached",
+    "version": "1.0.0",
+    "author": "Maikel",
+    "type": "widget",
+    "capabilities": [
+        "dankbar-widget"
+    ],
+    "component": "./DotfilesKeyboard.qml",
+    "icon": "keyboard",
+    "requires_dms": ">=1.6.0"
+}

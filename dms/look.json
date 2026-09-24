@@ -38,6 +38,7 @@
         },
         "systemTray",
         "dotfilesDashboard",
+        "dotfilesKeyboard",
         {
           "id": "systemUpdate",
           "hideWhenIdle": true

@@ -28,3 +28,4 @@ alternatives considered.
 - [ADR-0017: Use Ghostty as the terminal](ADR-0017-use-ghostty-as-the-terminal.md)
 - [ADR-0018: Use Neovim with LazyVim as the terminal editor](ADR-0018-use-neovim-with-lazyvim-as-the-terminal-editor.md)
 - [ADR-0019: Merge DMS plugin settings as desired state](ADR-0019-merge-dms-plugin-settings-as-desired-state.md)
+- [ADR-0020: Use stock niri with squeekboard and detach-gated rotation for tablet use](ADR-0020-use-stock-niri-with-squeekboard-and-detach-gated-rotation.md)

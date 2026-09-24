@@ -25,24 +25,31 @@ is preserved only as the `noctalia-final` Git tag.
   `dms/plugin_settings.json` holds the pinned plugin settings, merged the
   same way into `~/.config/DankMaterialShell/plugin_settings.json`; see
   "Plugin settings" below.
-- **Four repository plugins** under
+- **Five repository plugins** under
   `chezmoi/dot_config/DankMaterialShell/plugins/`, enabled through
   `dms/plugin_settings.json`:
   - [`dotfilesLauncher`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/README.md)
     draws the built-in apps-grid launcher icon on a filled primary-colour
     pill instead of the default neutral background; a drop-in replacement
-    for the built-in `launcherButton` widget.
+    for the built-in `launcherButton` widget. A long press toggles the Niri
+    overview, like right click.
   - [`dotfilesWorkspaces`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/README.md)
     replaces the built-in workspace switcher with compact pills that turn
-    red when a window on that workspace has a notification waiting.
+    red when a window on that workspace has a notification waiting. A long
+    press toggles the Niri overview.
   - [`dotfilesApps`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/README.md)
     shows the running and pinned applications as bar icons, with a focus
     highlight, a red notification dot, and dismissal of that app's
     notifications once it has held focus for a moment.
   - [`dotfilesDashboard`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md)
     rebuilds the former Noctalia dashboard as a DMS popout on `Mod+S`
-    (wallpaper, Wi-Fi, Bluetooth, caffeine, do-not-disturb toggles, media,
-    display and audio, power, and system stats), centred under the bar.
+    (wallpaper, rotation lock, Wi-Fi, Bluetooth, caffeine, do-not-disturb
+    toggles, media, display and audio, power, and system stats), centred
+    under the bar.
+  - [`dotfilesKeyboard`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesKeyboard/README.md)
+    shows a keyboard button that toggles the squeekboard on-screen keyboard,
+    only while the Z13 keyboard cover is detached; see
+    [docs/tablet.md](tablet.md).
 - **Registry plugins** for the launcher, pinned in
   `dms/plugins.lock.json` and installed by `scripts/dms-restore-plugins.sh`;
   see "Registry plugins" below.
@@ -220,7 +227,7 @@ systemctl --user restart dms.service
 | `showWorkspaceApps`, `showOccupiedWorkspacesOnly` | The workspace switcher shows per-app icons grouped in each workspace pill, and hides empty workspaces — this is what gives the left group its "workspace pills with running app icons" look without a separate running-apps widget. |
 | `barConfigs[id=default].leftWidgets` | `dotfilesLauncher`, `dotfilesWorkspaces`, `dotfilesApps` — the repository launcher button, workspace pills, and app icons with focus highlight and notification dot. |
 | `barConfigs[id=default].centerWidgets` | `weather`, `clock`, `battery`. |
-| `barConfigs[id=default].rightWidgets` | `music` (with `mediaSize` 2, where `audioVisualizerEnabled` draws its bars), `systemTray`, `dotfilesDashboard`, `systemUpdate` (with `hideWhenIdle`), `notificationButton`, `powerMenuButton`. The dashboard plugin's button shows the Wi-Fi, Bluetooth and audio state and opens the dashboard; DMS 1.6.2 has no separate toggle widgets. |
+| `barConfigs[id=default].rightWidgets` | `music` (with `mediaSize` 2, where `audioVisualizerEnabled` draws its bars), `systemTray`, `dotfilesDashboard`, `dotfilesKeyboard`, `systemUpdate` (with `hideWhenIdle`), `notificationButton`, `powerMenuButton`. The dashboard plugin's button shows the Wi-Fi, Bluetooth and audio state and opens the dashboard; DMS 1.6.2 has no separate toggle widgets. `dotfilesKeyboard` sits directly to its right and is visible only while the Z13 keyboard is detached. |
 | `barConfigs[id=default].spacing`, `.widgetPadding`, `.barLengthPadding`, `.bottomGap`, `.innerPadding` | `6`, `10`, `12`, `0`, `4` — spacing between widgets, padding inside each capsule, and the margins from the screen edges, close to Noctalia's `widget_spacing = 6`, capsule `padding = 8-10`, and `margin_ends = 12`. `bottomGap` stays `0` because it widens the bar's exclusive zone, which `maximize-window-to-edges` (Mod+M) fills exactly; the `top -2` strut in `cfg/layout.kdl` keeps tiled windows at the same distance from the bar. |
 | `barConfigs[id=default].transparency`, `.widgetTransparency`, `.noBackground` | `0.6`, `0.75`, `false` — a translucent, blurred bar strip with a capsule per widget. In DMS `noBackground` removes the widget capsules, not the bar surface, so it stays off. |
 | `barConfigs[id=default].squareCorners`, `.gothCornersEnabled`, `.borderEnabled`, `.widgetOutlineEnabled`, `.shadowIntensity` | `false`, `false`, `false`, `false`, `0` — rounded corners (via the global `cornerRadius`), no borders or outlines, no shadow. |
@@ -508,7 +515,8 @@ dms ipc call plugins reload dotfilesApps
 ```
 
 Replace `dotfilesApps` with the plugin id (`dotfilesLauncher`,
-`dotfilesWorkspaces`, `dotfilesApps`, or `dotfilesDashboard`). DMS
+`dotfilesWorkspaces`, `dotfilesApps`, `dotfilesDashboard`, or
+`dotfilesKeyboard`). DMS
 cache-busts only the manifest's `component` file on a reload. After editing
 one of a plugin's other QML files (for example `AppIconDelegate.qml` or
 `NotificationMatcher.qml`), the first reload still uses the cached helper and

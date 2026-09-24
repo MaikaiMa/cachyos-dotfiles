@@ -49,6 +49,7 @@ docs/greeter.md           login screen: greetd running the DMS greeter
 docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, viewers
 docs/terminal.md          Ghostty: configuration, opening windows, colours, fallback
 docs/editor.md            Neovim with LazyVim: first start, plugin updates, colours, sudoedit
+docs/tablet.md            Z13 tablet use: keyboard detection, auto-rotation, on-screen keyboard
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
@@ -75,6 +76,11 @@ from its header. Registry plugins for the launcher are pinned in
 Zen Browser takes the DMS glass and colours, with each space's colour shown
 only in small cues, through a matugen template and a managed
 `userChrome.css` linked into the profile by `scripts/dms-link-zen-theme.sh`.
+With the Z13 keyboard cover detached, the panel follows the accelerometer, a
+bar button toggles the squeekboard on-screen keyboard, and a long press on
+the launcher or workspaces opens the Niri overview; see
+[docs/tablet.md](docs/tablet.md) and
+[ADR-0020](docs/adr/ADR-0020-use-stock-niri-with-squeekboard-and-detach-gated-rotation.md).
 DMS's own built-in lock screen stays; see
 [ADR-0015](docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
 All of this, including how to iterate on the look, restart the shell, and

@@ -70,6 +70,7 @@ PopoutComponent {
     TogglesCard {
         width: parent.width
         dashboard: dashboardPopout.dashboard
+        popoutVisible: dashboardPopout.popoutVisible
     }
 
     MediaCard {

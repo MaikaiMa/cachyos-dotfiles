@@ -38,6 +38,8 @@ jq # focus-or-spawn, scripts/dms-apply-look.sh and scripts/dms-restore-plugins.s
 util-linux # flock in focus-or-spawn
 tinysparql # wallpaper-favorites reads Nautilus stars
 xorg-xprop # xwayland-scaled sets Xft.dpi for X11 apps such as Blip
+iio-sensor-proxy # monitor-sensor for auto-rotate (docs/tablet.md)
+squeekboard # on-screen keyboard for the dotfilesKeyboard bar widget (docs/tablet.md)
 
 # Runtime tools for the DMS registry plugins in dms/plugins.lock.json.
 curl # dankGifSearch fetches GIFs

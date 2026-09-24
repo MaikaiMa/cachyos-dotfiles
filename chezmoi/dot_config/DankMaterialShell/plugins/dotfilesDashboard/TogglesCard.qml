@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import qs.Common
 import qs.Services
 
@@ -6,8 +8,23 @@ Row {
     id: toggles
 
     property var dashboard: null
+    property bool popoutVisible: false
+    property bool rotationLocked: false
 
-    readonly property real tileWidth: (width - spacing * 4) / 5
+    readonly property real tileWidth: (width - spacing * (children.length - 1)) / children.length
+    readonly property string autoRotateCommand: Quickshell.env("HOME") + "/.local/bin/auto-rotate"
+
+    function runRotationLock(action) {
+        rotationLockProcess.command = [toggles.autoRotateCommand, "lock", action];
+        rotationLockProcess.running = true;
+    }
+
+    // The lock can also change from a terminal, so it is re-read on every open.
+    onPopoutVisibleChanged: {
+        if (popoutVisible)
+            runRotationLock("status");
+    }
+    Component.onCompleted: runRotationLock("status")
 
     spacing: Theme.spacingS
 
@@ -17,6 +34,14 @@ Row {
         label: I18n.trFor("dotfilesDashboard", "Wallpaper")
         imagePath: SessionData.wallpaperPath.startsWith("#") ? "" : SessionData.wallpaperPath
         onClicked: toggles.dashboard?.openDashTab("wallpaper")
+    }
+
+    ToggleTile {
+        width: toggles.tileWidth
+        iconName: toggles.rotationLocked ? "screen_lock_rotation" : "screen_rotation"
+        label: I18n.trFor("dotfilesDashboard", "Rotation lock")
+        isActive: toggles.rotationLocked
+        onClicked: toggles.runRotationLock("toggle")
     }
 
     ToggleTile {
@@ -51,5 +76,14 @@ Row {
         label: I18n.trFor("dotfilesDashboard", "Do not disturb")
         isActive: SessionData.doNotDisturb
         onClicked: SessionData.setDoNotDisturb(!SessionData.doNotDisturb)
+    }
+
+    Process {
+        id: rotationLockProcess
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => toggles.rotationLocked = data.trim() === "locked"
+        }
     }
 }
