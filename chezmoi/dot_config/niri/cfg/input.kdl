@@ -15,6 +15,10 @@ input {
     touchpad {
         tap
         natural-scroll
+        // Clickfinger: a two-finger click is a right click and the bottom 10 mm
+        // stops being libinput's software-button strip, which ignored resting
+        // fingers during scrolls. Corner clicks become plain left clicks.
+        click-method "clickfinger"
     }
 
     mouse {
