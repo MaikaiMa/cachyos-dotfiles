@@ -205,7 +205,7 @@ systemctl --user restart dms.service
 | `cornerRadius` | Global corner radius (`16`, matching Noctalia's `bar.radius`); DMS bar pills and popups use it unless a bar overrides its own corners. |
 | `niriLayoutGapsOverride`, `niriLayoutRadiusOverride` | Niri window gap and corner radius, already set live (`-2`, `20`); included so the file is a complete description of the look. |
 | `currentThemeName`, `currentThemeCategory` | `"dynamic"`: theme colors are generated from the wallpaper instead of a fixed palette. |
-| `matugenSmartMode` | Lets matugen pick light/dark and contrast from the wallpaper automatically. |
+| `matugenSmartMode` | Lets matugen pick light/dark and contrast from the wallpaper automatically. DMS turns it off whenever light/dark mode is switched by hand (Control Center, Settings, `dms ipc call theme`) or "Automatic Control" is enabled; `scripts/dms-apply-look.sh` turns it back on. |
 | `runUserMatugenTemplates`, `runDmsMatugenTemplates` | Regenerate both the user's and DMS's own matugen templates when the theme changes, so terminals and GTK/Qt apps stay in sync with the wallpaper too. `runUserMatugenTemplates` is also what makes DMS process `~/.config/matugen/config.toml`; see "matugen templates: Niri backdrop and the Z13 rear-window color" below. |
 | `matugenTemplateNeovim` | Renders DMS's Neovim colorscheme (`~/.config/nvim/colors/dms.lua`) and lualine theme from the wallpaper; off by default in DMS. See [docs/editor.md](editor.md#colours). |
 | `popupTransparency`, `foregroundLayerTransparency` | `0.85`: Control Center, Dashboard, and other popups read as translucent glass over the wallpaper rather than flat opaque panels. |
@@ -447,9 +447,8 @@ overwrites a regular `userChrome.css` (move it aside first), fails on a pref
 already set to something other than `true`, and never edits `prefs.js` or
 `chrome/zen-themes.css` (Zen mods). It fails when
 `~/.config/zen/dms-userChrome.css` is missing (apply the dotfiles first) or
-`dms-colors.css` has not been rendered yet. To render it, switch the DMS
-theme mode in the Control Center (and back); see also "Triggering a
-re-render" below. Preview the script, then apply it:
+`dms-colors.css` has not been rendered yet; render it as described in
+"Triggering a re-render" below. Preview the script, then apply it:
 
 ```fish
 ./scripts/dms-link-zen-theme.sh --dry-run
@@ -463,13 +462,17 @@ only at startup.
 ### Triggering a re-render
 
 All user templates render together on every real matugen invocation. Any
-wallpaper or theme change re-renders them. Trigger one explicitly with:
+wallpaper or theme change re-renders them. Setting the current wallpaper
+again re-renders them explicitly (DMS regenerates on every `set`, even for
+the same path):
 
 ```fish
-dms ipc call wallpaper set ~/Pictures/wallpaper.jpg
+dms ipc call wallpaper set (dms ipc call wallpaper get)
 ```
 
-or by switching the DMS theme mode from the Control Center. Then verify the
+Do not switch light/dark mode by hand to force a render: DMS 1.6.2 turns
+`matugenSmartMode` off on every manual mode change (`Theme.setLightMode`),
+which drifts the live settings away from `dms/look.json`. Then verify the
 output files:
 
 ```fish

@@ -36,7 +36,7 @@ done
 }
 
 [ -f "$colors_css" ] || {
-	printf 'dms-link-zen-theme: %s not found; switch the DMS theme mode in the Control Center to render it, see "Triggering a re-render" in docs/dms.md\n' "$colors_css" >&2
+	printf 'dms-link-zen-theme: %s not found; render it with "dms ipc call wallpaper set (dms ipc call wallpaper get)", see "Triggering a re-render" in docs/dms.md\n' "$colors_css" >&2
 	exit 1
 }
 
