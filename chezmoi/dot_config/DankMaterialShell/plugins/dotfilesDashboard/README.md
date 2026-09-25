@@ -15,6 +15,8 @@ The popout is a mat-glass panel with, top to bottom:
 - a row of six toggle tiles: Wallpaper (opens the dash wallpaper tab and shows
   the current wallpaper as its background), Rotation lock, Wifi, Bluetooth,
   Caffeine and Do not disturb, filled with the primary colour when active;
+- directly under that row, a folding details section for the Wifi or Bluetooth
+  tile (see [Connection details](#connection-details));
 - a media card with album art, title, artist, previous/play/next and a seekbar
   with elapsed and total time;
 - a "Display & audio" card with a brightness slider and output and input volume
@@ -42,6 +44,52 @@ popout's own `alignedX` / `alignedY` bindings then follow. DMS rewrites those
 three values on every open, so the placement is re-applied from `Connections` on
 the popout. The DMS open/close animation, backdrop and click-outside-to-close
 are untouched.
+
+## Connection details
+
+The Wifi and Bluetooth tiles still toggle their radio on a click. Details are
+only available while the radio is on: a chevron at the tile's right edge, on
+the vertical centre, then opens that tile's details, and a right click or a
+long press (the system press-and-hold interval, 800 ms by default) on the tile
+does the same without toggling. While the radio is off the chevron is hidden
+and there is no right-click handling, but a long press on the tile turns the
+radio on and, once it reports itself on, opens that tile's details; a plain
+click still just toggles the radio. The section opens below the toggle row,
+one tile at a time: requesting the open tile again closes it, requesting the
+other tile swaps the content. The open tile gets a primary ring and a flipped
+chevron. Turning a radio off while its section is open collapses that section.
+The section also collapses once the dashboard has finished closing, so it
+always opens collapsed. If a radio is still turning on when the dashboard
+closes, or the user opens a different section in the meantime, the pending
+long-press-to-expand is dropped rather than popping the section open later.
+
+The content is DMS's own Control Center panels, `NetworkDetail` and
+`BluetoothDetail` from `qs.Modules.ControlCenter.Details`, hosted by
+`ConnectionDetails.qml` the way the Control Center's `DetailHost` hosts them:
+
+- 350 pixels high, less when the screen has no room below the dashboard;
+- loaded only while the section is open or folding, because `NetworkDetail`
+  holds a `NetworkService` ref for its lifetime and that ref keeps DMS scanning
+  for Wi-Fi networks every 10 seconds;
+- Bluetooth discovery started with the panel's Scan button is stopped when the
+  panel unloads, which the Control Center otherwise does on close;
+- the panel's audio-codec menu entry opens a `BluetoothCodecSelector` overlay
+  over the whole dashboard.
+
+Escape works in layers: it first closes the Bluetooth device menu or the codec
+selector when one is open, then collapses an open section with its animation,
+and only then closes the dashboard. The dashboard takes the keyboard while a
+section is open, and takes it back from the Bluetooth panel after its device
+menu and from the codec selector when that hides, so the layers hold wherever
+the focus was.
+
+The dashboard closes when NetworkManager asks for Wi-Fi credentials or polkit
+asks for authentication, as the Control Center does, because the open popout
+holds the keyboard those prompts need.
+
+The popout height is bound to the height the dashboard will have once the
+section has finished moving, rather than to its animated height, so DMS's own
+resize animation runs alongside the section's instead of chasing it.
 
 ## Extra actions
 
@@ -74,8 +122,8 @@ Everything else reads and writes live DMS state and does not shell out.
 
 | Area | Service |
 | --- | --- |
-| Wi-Fi | `NetworkService` (`wifiEnabled`, `toggleWifiRadio`, `wifiSignalIcon`) |
-| Bluetooth | `BluetoothService` (`enabled`, `connected`, `toggleBluetooth`) |
+| Wi-Fi | `NetworkService` (`wifiEnabled`, `toggleWifiRadio`, `wifiSignalIcon`, `credentialsRequested`); details: `NetworkDetail` |
+| Bluetooth | `BluetoothService` (`enabled`, `connected`, `toggleBluetooth`, `adapter.discovering`); details: `BluetoothDetail`, `BluetoothCodecSelector` |
 | Caffeine | `SessionService.idleInhibited` / `toggleIdleInhibit` |
 | Do not disturb | `SessionData.doNotDisturb` / `setDoNotDisturb` |
 | Wallpaper | `SessionData.wallpaperPath`, `PopoutService.toggleDankDash("wallpaper")` |
@@ -103,6 +151,15 @@ Everything else reads and writes live DMS state and does not shell out.
   not something DMS reports, so it is a constant in `DashboardPopout.qml`.
 - DMS keeps the popout content loaded after a close, so the stat timers and the
   `DgopService` refs are tied to `parentPopout.shouldBeVisible` by hand.
+- The details panels are DMS internals, not plugin API, so a DMS update can
+  change their properties or behaviour. Their buttons that open DMS settings
+  close the Control Center rather than the dashboard.
+- `BluetoothDetail` has its own Escape handler that closes the Control Center, so
+  `ConnectionDetails.qml` moves the keyboard off that panel whenever it takes
+  it; a DMS change to how the panel grabs focus could bring that handler back.
+- `DashboardPopout.bindPopoutHeight()` replaces the height binding that
+  `PluginPopout` sets on load; a DMS change to that loader would bring back the
+  animated binding, which still works but resizes less smoothly.
 - A plugin cannot reach its own bar pill's visual geometry, so the notification
   centre is opened from the dashboard popout's trigger values instead, which puts
   it in the same centred place as the dashboard.

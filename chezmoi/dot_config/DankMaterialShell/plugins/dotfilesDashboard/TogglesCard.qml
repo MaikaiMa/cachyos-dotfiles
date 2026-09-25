@@ -10,6 +10,10 @@ Row {
     property var dashboard: null
     property bool popoutVisible: false
     property bool rotationLocked: false
+    property string expandedDetails: ""
+
+    signal detailsRequested(string section)
+    signal enableAndExpandRequested(string section)
 
     readonly property real tileWidth: (width - spacing * (children.length - 1)) / children.length
     readonly property string autoRotateCommand: Quickshell.env("HOME") + "/.local/bin/auto-rotate"
@@ -50,7 +54,12 @@ Row {
         label: I18n.trFor("dotfilesDashboard", "Wifi")
         isActive: NetworkService.wifiEnabled
         enabled: NetworkService.wifiAvailable
+        hasDetails: true
+        detailsAvailable: NetworkService.wifiEnabled
+        detailsOpen: toggles.expandedDetails === "wifi"
         onClicked: NetworkService.toggleWifiRadio()
+        onDetailsRequested: toggles.detailsRequested("wifi")
+        onEnableAndExpandRequested: toggles.enableAndExpandRequested("wifi")
     }
 
     ToggleTile {
@@ -59,7 +68,12 @@ Row {
         label: I18n.trFor("dotfilesDashboard", "Bluetooth")
         isActive: BluetoothService.enabled
         enabled: BluetoothService.available
+        hasDetails: true
+        detailsAvailable: BluetoothService.enabled
+        detailsOpen: toggles.expandedDetails === "bluetooth"
         onClicked: BluetoothService.toggleBluetooth()
+        onDetailsRequested: toggles.detailsRequested("bluetooth")
+        onEnableAndExpandRequested: toggles.enableAndExpandRequested("bluetooth")
     }
 
     ToggleTile {
