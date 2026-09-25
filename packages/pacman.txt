@@ -47,10 +47,10 @@ qt6-imageformats # dankGifSearch renders animated GIF/WebP previews
 translate-shell # dankTranslate runs trans
 wl-clipboard # wl-copy for dankTranslate, personalDictionary, svglSearch and emojiLauncher; Neovim clipboard
 wtype # personalDictionary, emojiLauncher and dankGifSearch type into the focused window
-xdg-utils # xdg-open for webSearch and obsidianSearch
-obsidian # obsidianSearch searches vaults through the Obsidian CLI
+xdg-utils # xdg-open for webSearch
 
 # Applications launched by managed keybinds or set as default handlers.
+obsidian # note app
 alacritty # fallback terminal without a bind (ADR-0017)
 zed
 nautilus

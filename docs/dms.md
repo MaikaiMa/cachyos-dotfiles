@@ -67,7 +67,7 @@ is preserved only as the `noctalia-final` Git tag.
 ## Registry plugins
 
 Third-party plugins from the [DMS plugin registry](https://plugins.danklinux.com)
-extend the launcher (Spotlight). Each is enabled in
+extend the launcher (Spotlight). Each is enabled or disabled in
 `dms/plugin_settings.json` and pinned to an exact Git commit in
 `dms/plugins.lock.json`:
 
@@ -82,7 +82,7 @@ extend the launcher (Spotlight). Each is enabled in
 | `dankGifSearch` | Search GIFs (Klipy) and copy or paste one. |
 | `personalDictionary` | Expand predefined snippets: copy them or type them into the focused window with `wtype`. |
 | `svglSearch` | Search SVGL brand logos and copy one. It ships a prebuilt helper binary and is not yet marked reviewed in the registry. |
-| `obsidianSearch` | Search Obsidian vaults by title, folder, and content. Needs a running Obsidian 1.12.7+ with its CLI registered (Settings, General, Command line interface), which installs `~/.local/bin/obsidian`. |
+| `obsidianSearch` | Disabled. Searches Obsidian vaults, but needs the Obsidian CLI (`~/.local/bin/obsidian`), which Obsidian refuses to register when it runs on the system Electron as the Arch `obsidian` package does. Enabled, it shows a startup error at every login; re-enabling needs Obsidian's official build. |
 
 Their runtime tools are recorded in `packages/pacman.txt`.
 
