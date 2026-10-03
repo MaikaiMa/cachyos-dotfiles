@@ -1,0 +1,11 @@
+[Unit]
+Description=Handy offline dictation, toggled by handy --toggle-transcription
+PartOf=niri.service
+After=niri.service
+
+[Service]
+ExecStart=/usr/bin/handy --start-hidden
+# Updates come from the AUR package, not from Handy's built-in updater.
+Environment=HANDY_DISABLE_UPDATER=1
+Restart=on-failure
+RestartSec=2

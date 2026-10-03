@@ -9,9 +9,37 @@ repo_root=$(
 	pwd
 )
 script="$repo_root/scripts/dms-restore-plugins.sh"
-repo_lock="$repo_root/dms/plugins.lock.json"
 test_root=$(mktemp -d)
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
+repo_lock="$test_root/plugins.lock.json"
+
+# The repository lockfile may be empty, so the restore logic runs on a fixture.
+cat >"$repo_lock" <<'EOF'
+{
+  "lockfileVersion": 1,
+  "plugins": {
+    "sharedOne": {
+      "repo": "https://example.invalid/shared",
+      "path": "SharedOne",
+      "commit": "1111111111111111111111111111111111111111"
+    },
+    "sharedTwo": {
+      "repo": "https://example.invalid/shared",
+      "path": "SharedTwo",
+      "commit": "1111111111111111111111111111111111111111"
+    },
+    "pathed": {
+      "repo": "https://example.invalid/pathed",
+      "path": "pathed",
+      "commit": "2222222222222222222222222222222222222222"
+    },
+    "plain": {
+      "repo": "https://example.invalid/plain",
+      "commit": "3333333333333333333333333333333333333333"
+    }
+  }
+}
+EOF
 
 config_home="$test_root/config"
 dms_dir="$config_home/DankMaterialShell"
@@ -42,7 +70,8 @@ printf '%s\n' '#!/bin/sh' \
 chmod +x "$fake_bin/systemctl"
 
 run_restore() {
-	PATH="$fake_bin:$PATH" \
+	DMS_PLUGIN_LOCKFILE="${DMS_PLUGIN_LOCKFILE:-$repo_lock}" \
+		PATH="$fake_bin:$PATH" \
 		HOME="$test_root" \
 		XDG_CONFIG_HOME="$config_home" \
 		DMS_STUB_CALLS="$calls" \
@@ -59,7 +88,7 @@ plugin_count=$(jq '.plugins | length' "$repo_lock")
 
 dry_run=$(run_restore --dry-run)
 case $dry_run in
-*'dry run, restoring would change:'*'install dankLauncherKeys at '*) ;;
+*'dry run, restoring would change:'*'install sharedOne at '*) ;;
 *) fail "Dry-run did not list the plugins to install: $dry_run" ;;
 esac
 if [ "$(printf '%s\n' "$dry_run" | grep -c '^  install ')" -ne "$plugin_count" ]; then
@@ -80,9 +109,9 @@ case $second_run in
 esac
 [ "$(wc -l <"$calls")" -eq 1 ] || fail 'An up-to-date config must not call dms again.'
 
-jq '.plugins.webSearch.commit = "0000000000000000000000000000000000000000"' "$repo_lock" >"$live_lock"
+jq '.plugins.plain.commit = "0000000000000000000000000000000000000000"' "$repo_lock" >"$live_lock"
 case $(run_restore --dry-run) in
-*'update webSearch 0000000 -> '*) ;;
+*'update plain 0000000 -> '*) ;;
 *) fail 'Dry-run did not report a changed commit.' ;;
 esac
 
@@ -91,14 +120,14 @@ case $(SYSTEMCTL_ACTIVE=1 run_restore --dry-run) in
 *) ;;
 esac
 
-jq '.plugins.webSearch.commit = "0000000000000000000000000000000000000000"' "$repo_lock" >"$live_lock"
+jq '.plugins.plain.commit = "0000000000000000000000000000000000000000"' "$repo_lock" >"$live_lock"
 restore_out=$(SYSTEMCTL_ACTIVE=1 run_restore)
 case $restore_out in
 *'restart DMS to load the new plugins: dms-reset'*) ;;
 *) fail "Restore did not print a DMS restart notice when something changed and dms.service is active: $restore_out" ;;
 esac
 
-jq '.plugins.webSearch.commit = "0000000000000000000000000000000000000000"' "$repo_lock" >"$live_lock"
+jq '.plugins.plain.commit = "0000000000000000000000000000000000000000"' "$repo_lock" >"$live_lock"
 restore_out=$(SYSTEMCTL_ACTIVE=0 run_restore)
 case $restore_out in
 *'restart DMS'*) fail "Restore printed the DMS restart notice while dms.service is inactive: $restore_out" ;;
@@ -117,7 +146,7 @@ esac
 
 rm -f "$live_lock"
 case $(run_restore --dry-run) in
-*'conflict webSearch: installed outside the DMS lockfile'*) ;;
+*'conflict plain: installed outside the DMS lockfile'*) ;;
 *) fail 'Dry-run did not report a plugin installed outside the lockfile.' ;;
 esac
 
@@ -128,10 +157,17 @@ expect_invalid() {
 	fi
 }
 expect_invalid '.lockfileVersion = 2'
-expect_invalid '.plugins.webSearch.commit = "main"'
-expect_invalid '.plugins.webSearch.repo = ""'
-expect_invalid '.plugins.converter.path = "../escape"'
-expect_invalid '.plugins.dankGifSearch.commit = "1111111111111111111111111111111111111111"'
+expect_invalid '.plugins.plain.commit = "main"'
+expect_invalid '.plugins.plain.repo = ""'
+expect_invalid '.plugins.pathed.path = "../escape"'
+expect_invalid '.plugins.sharedTwo.commit = "4444444444444444444444444444444444444444"'
+
+repo_dry_run=$(DMS_PLUGIN_LOCKFILE="$repo_root/dms/plugins.lock.json" run_restore --dry-run) ||
+	fail 'The repository lockfile is not a valid DMS plugin lockfile.'
+case $repo_dry_run in
+*'plugins already match'* | *'dry run, restoring would change:'*) ;;
+*) fail "The repository lockfile gave an unexpected dry-run: $repo_dry_run" ;;
+esac
 
 if PATH="$fake_bin:$PATH" DMS_COMMAND=missing-dms "$script" --dry-run >/dev/null 2>&1; then
 	fail 'A missing dms command must fail.'

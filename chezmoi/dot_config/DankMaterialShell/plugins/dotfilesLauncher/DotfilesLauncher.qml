@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.Common
 import qs.Modules.Plugins
 import qs.Services
@@ -11,14 +12,7 @@ PluginComponent {
     // BasePill's padding is not exposed to plugins; recomputed so the fill covers the whole pill.
     readonly property real horizontalPadding: (barConfig?.removeWidgetPadding ?? false) ? 0 : Theme.snap((barConfig?.widgetPadding ?? 12) * (widgetThickness / 30), dpr)
 
-    pillClickAction: (x, y, width, section, screen) => {
-        // DMS 1.6 loads the app drawer lazily and toggleAppDrawer is a no-op until
-        // the loader is active; the built-in launcher activates it before toggling.
-        const loader = PopoutService.appDrawerLoader;
-        if (loader)
-            loader.active = true;
-        PopoutService.toggleAppDrawer(x, y, width, section, screen);
-    }
+    pillClickAction: () => Quickshell.execDetached(["vicinae", "toggle"])
 
     pillRightClickAction: () => root.toggleOverview()
 

@@ -29,9 +29,9 @@ from Ghostty's defaults:
   `background-blur` only speaks KDE's protocol and is not needed.
 - `quit-after-last-window-closed = false`: the instance never quits on its
   own, because it is started with the session (see below) and stays warm for
-  the whole login. `ghostty -e` (`commandRunner`) still forces
-  `quit-after-last-window-closed = true` for that one-off process, so those
-  still exit normally.
+  the whole login. `ghostty -e` (terminal applications started by DMS or
+  Vicinae) still forces `quit-after-last-window-closed = true` for that
+  one-off process, so those still exit normally.
 - `shell-integration-features = ssh-env,no-ssh-terminfo`: over SSH, `TERM`
   falls back to `xterm-256color`; nothing is installed on the remote host.
 
@@ -64,12 +64,20 @@ systemctl --user restart app-com.mitchellh.ghostty.service
 This closes all open Ghostty windows; it does not reload configuration
 in place the way `pkill -USR2 -x ghostty` does (see below).
 
-The DMS launcher's `commandRunner` plugin (`>` prefix) runs commands in
-Ghostty as well; see [docs/dms.md](dms.md#registry-plugins).
+## Terminal for Vicinae
+
+Vicinae, the launcher, opens `Terminal=true` applications in the terminal
+named by `~/.config/xdg-terminals.list` (the xdg-terminal-exec
+specification), managed as `chezmoi/dot_config/xdg-terminals.list` with
+`com.mitchellh.ghostty.desktop`. Without that file it would take the first
+terminal it finds, which can be Alacritty. Ghostty's desktop entry supplies
+`-e` for the command. Running arbitrary shell commands from the launcher (the
+former DMS `commandRunner`) is not set up yet; Vicinae script commands can do
+that later. See [docs/launcher.md](launcher.md).
 
 ## Terminal for DMS
 
-DMS opens `Terminal=true` applications from the launcher and "open terminal
+DMS opens `Terminal=true` applications from its own surfaces and "open terminal
 here" in the terminal named by its `terminalOverride` session key; without
 it, DMS falls back to `$TERMINAL` and then `xterm`, which is not installed. `dms/session.json`
 sets it to `ghostty`, and `scripts/dms-apply-look.sh` merges it into

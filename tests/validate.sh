@@ -57,6 +57,10 @@ require_files \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_auto-rotate.service \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_mobi.phosh.OSK.service \
 	chezmoi/dot_config/systemd/user/auto-rotate.service \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_vicinae.service \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_handy.service \
+	chezmoi/dot_config/systemd/user/handy.service \
+	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	chezmoi/dot_config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
 	chezmoi/dot_config/systemd/user/gamescope-xbindkeys.service.d/xbindkeysrc.conf \
 	chezmoi/dot_config/gamescope/xbindkeysrc \
@@ -91,6 +95,7 @@ require_files \
 	chezmoi/dot_config/nvim/lua/plugins/colorscheme.lua \
 	chezmoi/dot_config/zed/settings.json \
 	chezmoi/dot_config/mimeapps.list \
+	chezmoi/dot_config/xdg-terminals.list \
 	chezmoi/dot_gitconfig \
 	chezmoi/dot_config/environment.d/10-ssh-agent.conf \
 	chezmoi/private_dot_ssh/private_config \
@@ -121,6 +126,7 @@ require_files \
 	docs/adr/ADR-0021-let-logind-handle-the-power-key.md \
 	docs/adr/ADR-0022-add-a-steam-big-picture-session-with-gamescope-session-cachyos.md \
 	docs/adr/ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md \
+	docs/adr/ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -132,6 +138,7 @@ require_files \
 	docs/editor.md \
 	docs/tablet.md \
 	docs/gaming.md \
+	docs/launcher.md \
 	dms/look.json \
 	dms/plugin_settings.json \
 	dms/plugins.lock.json \
@@ -158,6 +165,7 @@ require_files \
 	tests/dms-apply-look.sh \
 	tests/dms-restore-plugins.sh \
 	tests/dms-link-zen-theme.sh \
+	tests/dms-clipboard-settings.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/setup-greetd.sh \
@@ -278,6 +286,7 @@ shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
+	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session
 
@@ -289,6 +298,7 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
+	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session
 
@@ -299,6 +309,7 @@ tests/check-packages.sh
 tests/dms-apply-look.sh
 tests/dms-restore-plugins.sh
 tests/dms-link-zen-theme.sh
+tests/dms-clipboard-settings.sh
 tests/focus-or-spawn.sh
 tests/setup-greetd.sh
 tests/setup-z13-window.sh

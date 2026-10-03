@@ -34,8 +34,8 @@ window-rule {
     open-on-workspace "inbox"
 }
 
-// X11 windows cannot use the activation token that Spotlight hands out, so
-// niri would leave Blip unfocused on its workspace; force the focus.
+// X11 windows cannot use an xdg-activation token from the launcher, so niri
+// would leave Blip unfocused on its workspace; force the focus.
 window-rule {
     match app-id=r#"^MainKt$"#
     open-focused true

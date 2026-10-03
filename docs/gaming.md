@@ -35,9 +35,10 @@ to Desktop" continues into Niri without a new login.
   `chezmoi/dot_config/systemd/user/gamescope-xbindkeys.service.d/xbindkeysrc.conf`
   give the packaged `gamescope-xbindkeys.service` a configuration; it
   otherwise reads `/etc/xbindkeysrc`, which nothing installs.
-- The Niri-only user services (DMS, Ghostty, auto-rotate, squeekboard) stay
-  under `niri.service.wants`, so they do not start in the Steam session; see
-  ADR-0022 for the pattern to keep when adding a new user service.
+- The Niri-only user services (DMS, Ghostty, auto-rotate, squeekboard,
+  Vicinae, and Handy) stay under `niri.service.wants`, so they do not start
+  in the Steam session; see ADR-0022 for the pattern to keep when adding a
+  new user service.
 
 ## Install
 

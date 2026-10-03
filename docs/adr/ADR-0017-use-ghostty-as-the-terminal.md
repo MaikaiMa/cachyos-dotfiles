@@ -1,6 +1,9 @@
 # ADR-0017: Use Ghostty as the terminal
 
-- Status: Accepted
+- Status: Accepted; amended 2026-10-03 by
+  [ADR-0024](ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md):
+  `commandRunner` is removed, so nothing runs launcher commands in Ghostty
+  any more
 - Date: 2026-09-23
 
 ## Context

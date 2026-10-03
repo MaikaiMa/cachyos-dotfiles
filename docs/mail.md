@@ -26,10 +26,10 @@ flatpak install --user --from https://hylki.hyprlab.co/flatpak/co.hyprlab.Hylki.
 Flatpak exports desktop entries through `XDG_DATA_DIRS`, which a systemd
 environment generator sets for the user session. Processes that were already
 running when Flatpak was first installed do not see the new path. Restart the
-shell so its launcher lists Hylki, or log out and in:
+launcher so it lists Hylki, or log out and in:
 
 ```fish
-dms-reset
+systemctl --user restart vicinae.service
 ```
 
 ## Accounts

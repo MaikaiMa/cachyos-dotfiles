@@ -48,15 +48,13 @@ live_plugins="$home/.config/DankMaterialShell/plugin_settings.json"
 mkdir -p "$(dirname "$live_plugins")"
 cat >"$live_plugins" <<'EOF'
 {
-  "commandRunner": {
+  "dotfilesDashboard": {
     "enabled": false,
-    "terminal": "kitty",
     "history": ["private-history-command"]
   },
-  "webSearch": {
+  "retiredPlugin": {
     "enabled": true,
-    "searchEngines": [{"id": "private-engine"}],
-    "disabledEngines": ["duckduckgo"]
+    "searchEngines": [{"id": "private-engine"}]
   },
   "handInstalled": {
     "enabled": true
@@ -79,14 +77,11 @@ cmp -s "$live_plugins" "$test_root/before.json" || fail 'dry-run changed plugin_
 [ ! -s "$calls" ] || fail 'dry-run stopped or started dms.service.'
 
 run_apply "$home" >/dev/null
-[ "$(plugin_value "$home" '.commandRunner.enabled')" = true ] || fail 'repository enabled flag did not win.'
-[ "$(plugin_value "$home" '.commandRunner.terminal')" = '"ghostty"' ] || fail 'repository terminal did not win.'
-[ "$(plugin_value "$home" '.commandRunner.history')" = '["private-history-command"]' ] ||
-	fail 'commandRunner history was not preserved.'
-[ "$(plugin_value "$home" '.webSearch.searchEngines')" = '[{"id":"private-engine"}]' ] ||
-	fail 'webSearch searchEngines were not preserved.'
-[ "$(plugin_value "$home" '.webSearch.disabledEngines')" = '["duckduckgo"]' ] ||
-	fail 'webSearch disabledEngines were not preserved.'
+[ "$(plugin_value "$home" '.dotfilesDashboard.enabled')" = true ] || fail 'repository enabled flag did not win.'
+[ "$(plugin_value "$home" '.dotfilesDashboard.history')" = '["private-history-command"]' ] ||
+	fail 'unpinned dotfilesDashboard state was not preserved.'
+[ "$(plugin_value "$home" '.retiredPlugin')" = '{"enabled":true,"searchEngines":[{"id":"private-engine"}]}' ] ||
+	fail 'a plugin no longer in the repository was not preserved.'
 [ "$(plugin_value "$home" '.handInstalled')" = '{"enabled":true}' ] ||
 	fail 'a plugin missing from the repository was not preserved.'
 [ "$(stat -c %a "$home/.config/DankMaterialShell/settings.json")" = 640 ] ||

@@ -1,7 +1,9 @@
 # ADR-0013: Replace Noctalia with DankMaterialShell and repository-owned Quickshell surfaces
 
 - Status: Accepted (2026-09-22); DMS is the deployed shell; decision 3 is
-  amended by [ADR-0015](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md)
+  amended by [ADR-0015](ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md);
+  decisions 1 and 2 are amended by
+  [ADR-0024](ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md)
 - Date: 2026-09-21
 - Supersedes: ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0011
 
@@ -57,6 +59,8 @@ Facts that drove the choice (verified 2026-09-21):
    owns the bar, control center, notifications, launcher, OSD, clipboard
    history, and the polkit agent. It starts from its packaged systemd user
    unit, wanted by `niri.service` in the same way ADR-0007 wired Noctalia.
+   *Amended 2026-10-03:* Vicinae replaces the DMS launcher and clipboard
+   history (ADR-0024).
 2. **Extend DMS only through its plugin API.** Repository-owned QML plugins
    provide the application-icon indicators (running dot in the primary color
    below, notification dot above) and the dashboard panel. Plugins declare
@@ -67,6 +71,8 @@ Facts that drove the choice (verified 2026-09-21):
    `dms/plugins.lock.json` as desired state and installed with
    `dms plugins restore`, not deployed by chezmoi, because DMS rewrites its
    live lockfile on every install and update; see `docs/dms.md`.
+   *Amended 2026-10-03:* the lockfile is empty since ADR-0024 removed the
+   registry plugins; the mechanism stays for future plugins.
 3. **Lock screen and greeter are repository-owned Quickshell configurations.**
    A single source directory, `~/.config/quickshell/session/`, contains the
    shared components plus a `lock` and a `greeter` entry point. The lock uses

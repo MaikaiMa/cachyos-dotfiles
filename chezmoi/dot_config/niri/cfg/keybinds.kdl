@@ -26,10 +26,13 @@ binds {
     Mod+Return                          hotkey-overlay-title="Wallpaper Selector" { spawn-sh "dms ipc call dash toggle wallpaper"; }
     Mod+S                               hotkey-overlay-title="Dashboard" { spawn-sh "dms ipc call widget toggle dotfilesDashboard"; }
     Mod+Shift+S                         hotkey-overlay-title=null { spawn-sh "dms ipc call settings focusOrToggle"; }
-    Mod+Space                           hotkey-overlay-title="App Launcher" { spawn-sh "dms ipc call spotlight toggle"; }
-    Mod+V                               repeat=false hotkey-overlay-title="Clipboard History" { spawn-sh "dms ipc call clipboard toggle"; }
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen" { spawn-sh "dms ipc call lock lock"; }
     Mod+ESCAPE                          hotkey-overlay-title="Session Menu" { spawn-sh "dms ipc call powermenu toggle"; }
+
+    // Launcher and dictation (ADR-0024, docs/launcher.md):
+    Mod+Space                           repeat=false hotkey-overlay-title="App Launcher" { spawn "vicinae" "toggle"; }
+    Mod+V                               repeat=false hotkey-overlay-title="Clipboard History" { spawn "vicinae" "vicinae://launch/clipboard/history?toggle=true"; }
+    Mod+D                               repeat=false hotkey-overlay-title="Dictation" { spawn "handy" "--toggle-transcription"; }
 
     // Media Controls:
     XF86AudioRaiseVolume                allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call audio increment 5"; }

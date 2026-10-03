@@ -1,7 +1,8 @@
 # dotfilesLauncher
 
 A DankMaterialShell bar widget: the built-in apps-grid launcher icon on a filled
-`Theme.primary` pill instead of the default neutral widget background.
+`Theme.primary` pill instead of the default neutral widget background. A click
+opens Vicinae, the launcher (`docs/launcher.md` in the repository).
 
 ## What it does
 
@@ -9,19 +10,18 @@ A DankMaterialShell bar widget: the built-in apps-grid launcher icon on a filled
   `Theme.hoverTint` hover state.
 - Drop-in replacement for the built-in `launcherButton` widget id in
   `barConfigs[<n>].leftWidgets`.
-- Left click opens the app drawer, right click toggles the Niri overview, the same
-  as the built-in widget.
+- Left click runs `vicinae toggle`, the same as `Mod+Space`; right click toggles
+  the Niri overview, the same as the built-in widget.
 - A long press (press and hold, for example by touch) also toggles the Niri
-  overview and does not open the app drawer. `BasePill` fires its click on
+  overview and does not open Vicinae. `BasePill` fires its click on
   press and has no long-press hook, so the pill takes the left button in its
-  own `MouseArea`: a tap now opens the drawer on release, with the pill's own
+  own `MouseArea`: a tap opens Vicinae on release, with the pill's own
   ripple. Right clicks still go through `BasePill`'s `pillRightClickAction`.
   There is no setting for it; the widget has no settings UI.
 
 ## Services used
 
-- `PopoutService` - `appDrawerLoader`, `toggleAppDrawer` (the loader is activated
-  first, because DMS 1.6 loads the drawer lazily and the toggle is a no-op before)
+- `Quickshell` - `execDetached`, which runs `vicinae toggle`
 - `CompositorService` - `isNiri`, `getScreenScale`
 - `NiriService` - `toggleOverview`
 - `Theme` - `primary`, `primaryText`, `hoverTint`, `cornerRadius`, `barIconSize`,
@@ -33,8 +33,8 @@ A DankMaterialShell bar widget: the built-in apps-grid launcher icon on a filled
 - Right click and long press do nothing outside niri, because the overview is a
   niri feature.
 - The pill's own `MouseArea` covers the visible pill only; a left click in the
-  bar spacing next to it still reaches `BasePill`, which opens the drawer on
-  press as before.
+  bar spacing next to it still reaches `BasePill`, which opens Vicinae on
+  press.
 - `BasePill`'s padding is not exposed to plugins, so the fill inset is recomputed
   from `widgetPadding` and `removeWidgetPadding`; a change to that formula in DMS
   will misalign the fill until this copy follows.

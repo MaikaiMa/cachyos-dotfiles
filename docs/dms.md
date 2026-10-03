@@ -30,8 +30,9 @@ is preserved only as the `noctalia-final` Git tag.
   `dms/plugin_settings.json`:
   - [`dotfilesLauncher`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/README.md)
     draws the built-in apps-grid launcher icon on a filled primary-colour
-    pill instead of the default neutral background; a drop-in replacement
-    for the built-in `launcherButton` widget. A long press toggles the Niri
+    pill instead of the default neutral background, in the place of the
+    built-in `launcherButton` widget. A click opens Vicinae, the launcher
+    (see [docs/launcher.md](launcher.md)); a long press toggles the Niri
     overview, like right click.
   - [`dotfilesWorkspaces`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/README.md)
     replaces the built-in workspace switcher with compact pills that turn
@@ -50,9 +51,16 @@ is preserved only as the `noctalia-final` Git tag.
     shows a keyboard button that toggles the squeekboard on-screen keyboard,
     only while the Z13 keyboard cover is detached; see
     [docs/tablet.md](tablet.md).
-- **Registry plugins** for the launcher, pinned in
-  `dms/plugins.lock.json` and installed by `scripts/dms-restore-plugins.sh`;
-  see "Registry plugins" below.
+- **No registry plugins.** `dms/plugins.lock.json` is empty; the launcher
+  and clipboard history are Vicinae's, not DMS's (see
+  [docs/launcher.md](launcher.md) and
+  [ADR-0024](adr/ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md)).
+  The lockfile and `scripts/dms-restore-plugins.sh` stay for a future
+  plugin; see "Registry plugins" below.
+- **Clipboard history off.** The chezmoi `modify_` script
+  `chezmoi/dot_config/DankMaterialShell/modify_clsettings.json` sets
+  `disabled` in `~/.config/DankMaterialShell/clsettings.json`, so DMS no
+  longer records the clipboard; DMS reloads that file on change.
 - **Niri integration.** `chezmoi/dot_config/niri/config.kdl` includes
   `dms/layout.kdl` and `dms/colors.kdl`, which DMS itself writes, so the Niri
   focus ring width and colour follow the DMS primary colour on every theme
@@ -66,38 +74,26 @@ is preserved only as the `noctalia-final` Git tag.
 
 ## Registry plugins
 
-Third-party plugins from the [DMS plugin registry](https://plugins.danklinux.com)
-extend the launcher (Spotlight). Each is enabled or disabled in
-`dms/plugin_settings.json` and pinned to an exact Git commit in
-`dms/plugins.lock.json`:
-
-| Plugin | In the launcher |
-| --- | --- |
-| `dankLauncherKeys` | Search and browse Niri and application keyboard shortcuts. |
-| `converter` | Convert units (distance, weight, temperature, and more) and colours (RGB, hex, HSV, HSL). |
-| `webSearch` | Search the web with a keyword-selected engine; opens the result with `xdg-open`. |
-| `emojiLauncher` | Search emoji and Unicode characters and copy (or type) them. |
-| `commandRunner` | Run a shell command, in a terminal or in the background, with history. Runs in Ghostty (`terminal` and `execFlag` in `dms/plugin_settings.json`; the plugin's own default is `kitty`). |
-| `dankTranslate` | Translate text with `translate-shell` and copy the result. |
-| `dankGifSearch` | Search GIFs (Klipy) and copy or paste one. |
-| `personalDictionary` | Expand predefined snippets: copy them or type them into the focused window with `wtype`. |
-| `svglSearch` | Search SVGL brand logos and copy one. It ships a prebuilt helper binary and is not yet marked reviewed in the registry. |
-| `obsidianSearch` | Disabled. Searches Obsidian vaults, but needs the Obsidian CLI (`~/.local/bin/obsidian`), which Obsidian refuses to register when it runs on the system Electron as the Arch `obsidian` package does. Enabled, it shows a startup error at every login; re-enabling needs Obsidian's official build. |
-
-Their runtime tools are recorded in `packages/pacman.txt`.
+No third-party plugins from the [DMS plugin registry](https://plugins.danklinux.com)
+are installed. The ten launcher plugins that extended Spotlight were removed
+when Vicinae replaced it; see
+[ADR-0024](adr/ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md)
+and, for the one-time removal from a machine that still has them,
+[docs/launcher.md](launcher.md#removing-the-old-dms-plugins). The mechanism
+below stays so a future plugin can be pinned the same way.
 
 ### Plugin settings
 
 DMS plugins save their own state into
-`~/.config/DankMaterialShell/plugin_settings.json`: `commandRunner` keeps its
-command history there and `webSearch` the engines edited in its settings. A
-chezmoi-managed copy of the whole file would drift after every use and make a
-non-interactive bootstrap stop at chezmoi's overwrite prompt, so the file is
-not managed by chezmoi; see
+`~/.config/DankMaterialShell/plugin_settings.json` (the former `commandRunner`
+kept its command history there, for example). A chezmoi-managed copy of the
+whole file would drift after every use and make a non-interactive bootstrap
+stop at chezmoi's overwrite prompt, so the file is not managed by chezmoi;
+see
 [ADR-0019](adr/ADR-0019-merge-dms-plugin-settings-as-desired-state.md).
 
 `dms/plugin_settings.json` pins only the keys it lists: per plugin id, the
-`enabled` flag and, for `commandRunner`, `terminal` and `execFlag`.
+`enabled` flag of the repository plugins.
 `scripts/dms-apply-look.sh` deep-merges it into the live file per plugin, so
 those keys take the repository value and every other key stays as it is. It
 creates the file when it is missing and prints only the pinned keys in its
@@ -134,27 +130,28 @@ leaving them stuck `[disabled]`.
 ### Adding or updating a plugin
 
 Install or update it through DMS, which records the new commit in the live
-lockfile:
+lockfile (replace `PLUGIN_ID` with the plugin's id):
 
 ```fish
-dms plugins install webSearch
-dms plugins update webSearch
+dms plugins install PLUGIN_ID
+dms plugins update PLUGIN_ID
 ```
 
 Then copy that plugin's entry from the live lockfile into
 `dms/plugins.lock.json`; this prints it:
 
 ```fish
-jq .plugins.webSearch ~/.config/DankMaterialShell/plugins.lock.json
+jq .plugins.PLUGIN_ID ~/.config/DankMaterialShell/plugins.lock.json
 ```
 
 For a new plugin, also add `"<id>": {"enabled": true}` to
-`dms/plugin_settings.json`, its row to the table above, and the packages from
-its registry `Dependencies` (see `dms plugins browse`) to
+`dms/plugin_settings.json`, a line about it to this guide, and the packages
+from its registry `Dependencies` (see `dms plugins browse`) to
 `packages/pacman.txt`. Then apply the settings with
-`./scripts/dms-apply-look.sh`, which restarts DMS so the new plugin loads. `dankLauncherKeys` and
-`dankGifSearch` both come from `AvengeMedia/dms-plugins`, so updating one
-moves the other to the same commit; copy both entries.
+`./scripts/dms-apply-look.sh`, which restarts DMS so the new plugin loads.
+Plugins from one repository (such as `AvengeMedia/dms-plugins`) must share a
+commit, so updating one moves the others to the same commit; copy every
+entry from that repository.
 
 ## The mat-glass look
 

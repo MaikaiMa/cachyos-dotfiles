@@ -1,6 +1,9 @@
 # ADR-0019: Merge DMS plugin settings as desired state
 
-- Status: Accepted
+- Status: Accepted; amended 2026-10-03 by
+  [ADR-0024](ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md):
+  the registry plugins, `commandRunner` included, are gone, so the file pins
+  only the repository plugins' `enabled` flags
 - Date: 2026-09-23
 - Amends: ADR-0008
 

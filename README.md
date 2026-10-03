@@ -30,14 +30,15 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/private_zen/ Zen Browser userChrome.css on DMS colours; see docs/dms.md
   dot_config/nvim/        Neovim (LazyVim) configuration and plugin lockfile; see docs/editor.md
   dot_config/mimeapps.list default applications
+  dot_config/xdg-terminals.list terminal for launcher-started terminal apps (Ghostty)
   dot_config/wallpapers/  wallpaper repositories cloned by wallpaper-favorites
   dot_gitconfig           Git credential helper
   private_dot_ssh/        SSH client configuration
   dot_local/bin/          deployed helper scripts
   dot_local/share/applications/ desktop-entry overrides (Blip via xwayland-scaled, Noctalia hidden)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
-dms/plugin_settings.json   pinned DMS plugin settings (enabled flags, commandRunner terminal); see docs/dms.md
-dms/plugins.lock.json      DMS registry plugins pinned to exact commits; see docs/dms.md
+dms/plugin_settings.json   pinned DMS plugin settings (enabled flags of the repository plugins); see docs/dms.md
+dms/plugins.lock.json      DMS registry plugins pinned to exact commits (currently none); see docs/dms.md
 dms/session.json           DMS session-state keys (terminal override); see docs/terminal.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
@@ -51,6 +52,7 @@ docs/terminal.md          Ghostty: configuration, opening windows, colours, fall
 docs/editor.md            Neovim with LazyVim: first start, plugin updates, colours, sudoedit
 docs/tablet.md            Z13 tablet use: keyboard detection, auto-rotation, on-screen keyboard, power key
 docs/gaming.md            Steam session, greeter session list, Steam-to-Niri switch (ADR-0022, ADR-0023)
+docs/launcher.md          Vicinae launcher, clipboard history, and Handy dictation (ADR-0024)
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
@@ -72,8 +74,8 @@ notification dot replace the built-in bar widgets. The [Dotfiles
 Dashboard](chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md)
 plugin rebuilds the former Noctalia dashboard as a centered popout on
 `Mod+S`, with the original DMS Control Center and Settings still reachable
-from its header. Registry plugins for the launcher are pinned in
-`dms/plugins.lock.json` and installed by `scripts/dms-restore-plugins.sh`.
+from its header. The launcher button opens Vicinae (see below); DMS runs
+no registry plugins and records no clipboard history.
 Zen Browser takes the DMS glass and colours, with each space's colour shown
 only in small cues, through a matugen template and a managed
 `userChrome.css` linked into the profile by `scripts/dms-link-zen-theme.sh`.
@@ -214,6 +216,11 @@ Ghostty is the terminal on `Mod3+Return`; Alacritty stays installed as an
 unbound fallback. See [docs/terminal.md](docs/terminal.md) and
 [ADR-0017](docs/adr/ADR-0017-use-ghostty-as-the-terminal.md).
 
+Vicinae is the launcher on `Mod+Space` and the clipboard history on `Mod+V`;
+Handy is offline dictation on `Mod+D`. They replace DMS Spotlight and its
+registry plugins. See [docs/launcher.md](docs/launcher.md) and
+[ADR-0024](docs/adr/ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md).
+
 Zed is the main editor. Neovim with LazyVim is the terminal editor and what
 `EDITOR`, `VISUAL`, and thus `sudoedit` open; its first start downloads the
 plugins pinned in `lazy-lock.json`. Plain `vim` comes from `gvim`. See
@@ -240,8 +247,9 @@ current workspace.
 The Niri hotkey overlay (Mod+Shift+/) is curated by hand: every bind in
 `cfg/keybinds.kdl` carries either `hotkey-overlay-title="..."` or
 `hotkey-overlay-title=null`, so a new bind must choose one. The list is kept
-at about 40 keyboard-only entries: window, workspace, layout, DMS and
-screenshot binds, without the application launchers and media keys.
+at about 40 keyboard-only entries: window, workspace, layout, DMS, launcher,
+dictation and screenshot binds, without the application launchers and media
+keys.
 `hide-not-bound` in `cfg/misc.kdl` drops Niri's hardcoded actions that have
 no bind. Niri re-renders the overlay on a config reload only when the binds
 or the Mod key change; a change to the `hotkey-overlay` section alone shows
@@ -260,8 +268,8 @@ Fractional factors are truncated by the JDK, so on the 1.75 display Blip
 renders at 2x, slightly larger than native apps. The resource is set per
 launch because Xwayland starts on demand and the scale may differ per
 display, so restart Blip after moving it. Any X11 app that reads `Xft.dpi`
-benefits as well. DMS Spotlight parses desktop entries with quickshell, which
-rejects `\$` escapes in Exec, hence the `~` form.
+benefits as well. The entry uses the `~` form because Quickshell, which DMS
+uses to read desktop entries, rejects `\$` escapes in Exec.
 
 ## Secrets
 

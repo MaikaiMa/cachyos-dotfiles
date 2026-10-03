@@ -1,0 +1,22 @@
+#!/bin/sh
+# chezmoi passes the live file on stdin and writes stdout back. DMS's own
+# clipboard history stays off because Vicinae keeps it (ADR-0024); every other
+# key DMS writes here is left as it is.
+set -eu
+
+command -v jq >/dev/null 2>&1 || {
+	printf '%s\n' 'modify_clsettings.json: jq is required but not installed' >&2
+	exit 1
+}
+
+live=$(mktemp)
+trap 'rm -f "$live"' EXIT HUP INT TERM
+cat >"$live"
+
+if [ ! -s "$live" ]; then
+	printf '{\n  "disabled": true\n}\n'
+elif jq -e '.disabled == true' "$live" >/dev/null; then
+	cat "$live"
+else
+	jq '.disabled = true' "$live"
+fi

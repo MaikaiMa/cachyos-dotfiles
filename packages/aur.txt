@@ -15,3 +15,14 @@ greetd-dms-greeter-bin
 # Blip file transfer, opened on the chat workspace by a window rule; upstream
 # publishes only an AUR package (blipnet), no official one.
 blipnet
+
+# Vicinae, the launcher and clipboard history (ADR-0024). Not in the
+# official repositories; -bin repackages the upstream release instead of a
+# long Qt/C++ and Node build. Its install script grants the snippet input
+# server cap_dac_override and loads uinput for pasting.
+vicinae-bin
+
+# Handy offline push-to-talk dictation (ADR-0024). Upstream ships
+# only release binaries and an AUR package; -bin repackages the upstream .deb
+# instead of a Rust/Tauri and whisper build.
+handy-bin

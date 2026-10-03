@@ -41,13 +41,11 @@ xorg-xprop # xwayland-scaled sets Xft.dpi for X11 apps such as Blip
 iio-sensor-proxy # monitor-sensor for auto-rotate (docs/tablet.md)
 squeekboard # on-screen keyboard for the dotfilesKeyboard bar widget (docs/tablet.md)
 
-# Runtime tools for the DMS registry plugins in dms/plugins.lock.json.
-curl # dankGifSearch fetches GIFs
-qt6-imageformats # dankGifSearch renders animated GIF/WebP previews
-translate-shell # dankTranslate runs trans
-wl-clipboard # wl-copy for dankTranslate, personalDictionary, svglSearch and emojiLauncher; Neovim clipboard
-wtype # personalDictionary, emojiLauncher and dankGifSearch type into the focused window
-xdg-utils # xdg-open for webSearch
+# Runtime tools for the launcher, dictation, and editor (docs/launcher.md, docs/editor.md).
+curl # Mason downloads in Neovim
+qt6-imageformats # WebP and other image formats in Vicinae and Raycast-store extensions
+wl-clipboard # Neovim clipboard
+wtype # Handy types dictation into the focused window
 
 # Applications launched by managed keybinds or set as default handlers.
 obsidian # note app
