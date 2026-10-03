@@ -83,3 +83,12 @@ layer-rule {
         xray false
     }
 }
+
+// Vicinae requests its own blur; like the DMS surfaces it blurs the windows
+// behind it, not only the wallpaper.
+layer-rule {
+    match namespace="^vicinae"
+    background-effect {
+        xray false
+    }
+}

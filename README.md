@@ -19,7 +19,7 @@ installed application.
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
   dot_config/DankMaterialShell/ DMS repository plugins
-  dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen)
+  dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen, Vicinae)
   dot_config/systemd/user/ managed ~/.config/systemd/user units
   dot_config/environment.d/ session environment (SSH agent socket)
   dot_config/git/         allowed signers for SSH commit signatures
@@ -29,6 +29,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/zed/         editor settings
   dot_config/private_zen/ Zen Browser userChrome.css on DMS colours; see docs/dms.md
   dot_config/nvim/        Neovim (LazyVim) configuration and plugin lockfile; see docs/editor.md
+  dot_config/vicinae/     launcher theme and glass, imported into settings.json; see docs/launcher.md
   dot_config/mimeapps.list default applications
   dot_config/xdg-terminals.list terminal for launcher-started terminal apps (Ghostty)
   dot_config/wallpapers/  wallpaper repositories cloned by wallpaper-favorites

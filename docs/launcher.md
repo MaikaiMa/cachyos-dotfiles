@@ -13,7 +13,7 @@ Why, what they replaced, and the acceptance checks are recorded in
 | Package | AUR `vicinae-bin` | AUR `handy-bin` |
 | Started by | the packaged `/usr/lib/systemd/user/vicinae.service` (`vicinae server --replace`) | the repository's `~/.config/systemd/user/handy.service` (`handy --start-hidden`) |
 | Enabled through | `niri.service.wants/vicinae.service` | `niri.service.wants/handy.service` |
-| Settings (unmanaged) | `~/.config/vicinae/settings.json`; data in `~/.local/share/vicinae` | `~/.local/share/com.pais.handy/settings_store.json`; models and logs in the same directory |
+| Settings | `~/.config/vicinae/settings.json`, which imports the managed `dotfiles.json` (see "Colours and glass"); data in `~/.local/share/vicinae` | `~/.local/share/com.pais.handy/settings_store.json` (unmanaged); models and logs in the same directory |
 
 Both units follow the pattern of `dms.service` and Ghostty: they start with
 the Niri session and stop with it, and they do not start in the Steam
@@ -45,6 +45,67 @@ DMS no longer records the clipboard: the managed
 `~/.config/DankMaterialShell/clsettings.json`, so Vicinae is the only
 clipboard history. Screenshot binds still copy to the clipboard; DMS does
 that with its own process.
+
+## Colours and glass
+
+Vicinae follows the wallpaper colours like Ghostty and Neovim, and its window
+uses the same translucent glass as the DMS popups.
+
+- **Colours:** the `vicinae_theme` matugen template
+  (`chezmoi/dot_config/matugen/templates/vicinae-theme`) renders the theme
+  `dms` to `~/.local/share/vicinae/themes/dms.toml` on every wallpaper or
+  theme change; Vicinae takes a theme's id from the file name. It is based
+  on upstream's `extra/matugen.toml`. The background is `surface_container`,
+  the same colour as the Ghostty background, with `surface_container_high`
+  for the footer, buttons and grid tiles. Orange, yellow and cyan have no
+  Material role and come from Vicinae's own `vicinae-dark` or
+  `vicinae-light` theme, which the file inherits; upstream derived them with
+  Qt's `lighter()` below 100, which darkens them instead. The file is
+  generated, so chezmoi ignores it.
+- **Glass:** `chezmoi/dot_config/vicinae/dotfiles.json` sets the theme for
+  light and dark mode, `launcher_window.opacity` `0.85` (DMS
+  `popupTransparency`), `material` `blur` and `rounding` `16` (DMS
+  `cornerRadius`). The blur comes from Niri's `ext-background-effect`
+  protocol, like the DMS blur; a `layer-rule` for the `vicinae` namespace in
+  `cfg/rules.kdl` turns `xray` off, as for the DMS layers.
+- **Settings file:** Vicinae rewrites `settings.json` whenever a setting is
+  changed in its GUI, and keys in that file win over imported files. The
+  managed `modify_settings.json` therefore keeps every key Vicinae writes,
+  adds `./dotfiles.json` to `imports` (a relative import is resolved next to
+  `settings.json`), and removes the keys `dotfiles.json` owns: the theme
+  names and the three `launcher_window` values above. That is the
+  merge-desired-keys approach of ADR-0019; it is safe here because Vicinae
+  watches `settings.json` and reads it from disk before every write.
+
+To change the opacity or rounding, edit `dotfiles.json` and apply it with
+chezmoi; Vicinae watches the file and applies it live. A theme or window
+value chosen in the Vicinae settings window lasts until the next apply,
+which removes it from `settings.json` again, and a theme choice also until
+the next wallpaper change.
+
+Vicinae only rescans its theme directory when a file is added or removed,
+and matugen rewrites `dms.toml` in place. The template's post hook therefore
+runs `vicinae theme set dms`, which rescans and reloads the current theme;
+it does nothing when Vicinae is not running and never starts it. Do not use
+`systemctl --user reload vicinae.service`: the unit's `ExecReload` sends
+`SIGHUP`, which Vicinae does not handle, so it quits and the unit restarts
+it only after 60 seconds.
+
+When the theme `dms` does not exist yet, Vicinae keeps the theme it has
+(`vicinae-dark` at startup), and a later `theme set dms` reloads that theme
+instead of switching. After the first apply, render the theme and restart
+Vicinae once:
+
+```fish
+dms ipc call wallpaper set (dms ipc call wallpaper get)
+systemctl --user restart vicinae.service
+```
+
+Check the rendered file:
+
+```fish
+head -n 12 ~/.local/share/vicinae/themes/dms.toml
+```
 
 ## Installing
 

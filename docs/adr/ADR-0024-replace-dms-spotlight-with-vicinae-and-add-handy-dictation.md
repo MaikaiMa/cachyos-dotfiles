@@ -71,7 +71,9 @@ Dictation is part of the same workflow and is not covered by DMS at all.
    process and is unaffected.
 
 Vicinae and Handy settings are not managed yet; which of them the repository
-should own is decided once they have settled.
+should own is decided once they have settled. (Since then the Vicinae theme
+and window glass are managed through an imported `dotfiles.json`; see the
+consequences below.)
 
 The setup is accepted when all of the following hold over a few days of
 normal work (the checklist is in [docs/launcher.md](../launcher.md#acceptance-checks)):
@@ -105,9 +107,14 @@ for colour preview and conversion come later.
 - Clipboard history now lives in Vicinae's data directory; DMS's existing
   history stays on disk in `~/.cache/DankMaterialShell/clipboard` until it
   is cleared.
-- Vicinae does not follow the DMS/matugen colours yet. Upstream publishes a
-  matugen template (`extra/matugen.toml`) that the package does not install;
-  wiring it in is a follow-up.
+- Vicinae follows the DMS/matugen colours through a `vicinae_theme` user
+  template based on upstream's `extra/matugen.toml`, and matches the DMS
+  glass (opacity `0.85`, blur, rounding `16`) through a managed
+  `~/.config/vicinae/dotfiles.json`. A chezmoi `modify_` script adds that
+  file to `imports` in `settings.json` and removes only the keys it owns,
+  the ADR-0019 approach; it is safe because Vicinae re-reads
+  `settings.json` from disk before every write. The first render needs one
+  Vicinae restart. See [docs/launcher.md](../launcher.md#colours-and-glass).
 - Global shortcuts come from Niri binds. Vicinae's own global shortcuts need
   the `ext-hotkey-v1` protocol, which Niri does not ship yet
   (niri-wm/niri#4145).

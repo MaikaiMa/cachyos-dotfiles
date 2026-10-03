@@ -61,6 +61,8 @@ require_files \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_handy.service \
 	chezmoi/dot_config/systemd/user/handy.service \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
+	chezmoi/dot_config/vicinae/modify_settings.json \
+	chezmoi/dot_config/vicinae/dotfiles.json \
 	chezmoi/dot_config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
 	chezmoi/dot_config/systemd/user/gamescope-xbindkeys.service.d/xbindkeysrc.conf \
 	chezmoi/dot_config/gamescope/xbindkeysrc \
@@ -81,6 +83,7 @@ require_files \
 	chezmoi/dot_config/matugen/templates/niri-backdrop \
 	chezmoi/dot_config/matugen/templates/ghostty-background \
 	chezmoi/dot_config/matugen/templates/zen-colors \
+	chezmoi/dot_config/matugen/templates/vicinae-theme \
 	chezmoi/dot_config/private_zen/dms-userChrome.css \
 	chezmoi/dot_config/fish/config.fish \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
@@ -168,6 +171,7 @@ require_files \
 	tests/dms-restore-plugins.sh \
 	tests/dms-link-zen-theme.sh \
 	tests/dms-clipboard-settings.sh \
+	tests/vicinae-settings.sh \
 	tests/fish-docs.sh \
 	tests/focus-or-spawn.sh \
 	tests/setup-greetd.sh \
@@ -275,7 +279,7 @@ validate_nvim_lua
 lint_plugin_qml
 
 for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.json dms/*.json \
-	chezmoi/dot_config/nvim/lazy-lock.json; do
+	chezmoi/dot_config/nvim/lazy-lock.json chezmoi/dot_config/vicinae/dotfiles.json; do
 	jq empty "$catalogue"
 done
 shellcheck scripts/*.sh tests/*.sh
@@ -291,6 +295,7 @@ shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_osk \
 	chezmoi/dot_local/bin/executable_system-update \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
+	chezmoi/dot_config/vicinae/modify_settings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session
 
@@ -304,6 +309,7 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_osk \
 	chezmoi/dot_local/bin/executable_system-update \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
+	chezmoi/dot_config/vicinae/modify_settings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session
 
@@ -315,6 +321,7 @@ tests/dms-apply-look.sh
 tests/dms-restore-plugins.sh
 tests/dms-link-zen-theme.sh
 tests/dms-clipboard-settings.sh
+tests/vicinae-settings.sh
 tests/focus-or-spawn.sh
 tests/setup-greetd.sh
 tests/setup-z13-window.sh

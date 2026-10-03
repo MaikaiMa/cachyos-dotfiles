@@ -68,9 +68,9 @@ is preserved only as the `noctalia-final` Git tag.
   x-ray background effects for layers matching `^dms:`, so DMS's own blurred
   surfaces are not see-through. `chezmoi/dot_config/niri/cfg/layout.kdl` sets
   `gaps 10` and struts that align tiled windows with the bar.
-- **matugen templates**, Niri backdrop, the Z13 template, and the Zen Browser
-  colours (`zen_colors`, linked in by `scripts/dms-link-zen-theme.sh`), see
-  below.
+- **matugen templates**, Niri backdrop, the Z13 template, the Zen Browser
+  colours (`zen_colors`, linked in by `scripts/dms-link-zen-theme.sh`), and
+  the Vicinae theme (`vicinae_theme`), see below.
 
 ## Registry plugins
 
@@ -249,8 +249,9 @@ DMS also merges in the user's own `~/.config/matugen/config.toml`, extracting
 its `[config]` section and everything from `[templates]` onward and appending
 them to the config it builds for the real (non-dry-run) matugen invocation.
 
-`chezmoi/dot_config/matugen/config.toml` declares four user templates,
-`niri_backdrop`, `z13_window`, `ghostty_background`, and `zen_colors`.
+`chezmoi/dot_config/matugen/config.toml` declares five user templates,
+`niri_backdrop`, `z13_window`, `ghostty_background`, `zen_colors`, and
+`vicinae_theme`.
 
 ### Niri backdrop
 
@@ -358,6 +359,14 @@ With `matugenTemplateNeovim` on, DMS's `dmsneovim-colors` and
 `nvim` is on `PATH`. DMS sends Neovim no signal; the generated colorscheme
 watches its own file and DMS's `settings.json` and reloads itself. See
 [docs/editor.md](editor.md#colours).
+
+### Vicinae colours
+
+The `vicinae_theme` template renders the Vicinae theme `dms` to
+`~/.local/share/vicinae/themes/dms.toml`, with the same `surface_container`
+background as Ghostty. Its post hook runs `vicinae theme set dms`, because
+Vicinae does not notice a theme file that is rewritten in place. See
+[docs/launcher.md](launcher.md#colours-and-glass).
 
 ### Zen Browser colours
 
@@ -484,6 +493,7 @@ output files:
 cat ~/.config/niri/matugen/backdrop.kdl
 cat ~/.cache/matugen/z13-window-color
 cat ~/.config/zen/dms-colors.css
+head -n 12 ~/.local/share/vicinae/themes/dms.toml
 ```
 
 On a detected 2025 Z13 the rear lightbar should update to that color within a

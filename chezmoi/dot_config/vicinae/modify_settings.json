@@ -1,0 +1,90 @@
+#!/bin/sh
+# chezmoi passes the live file on stdin and writes stdout back. Vicinae rewrites
+# settings.json from its GUI, so only the import of the managed dotfiles.json is
+# ensured here, and the keys that file owns are removed because settings.json
+# would override them (ADR-0019); every other key Vicinae writes is kept.
+set -eu
+
+command -v jq >/dev/null 2>&1 || {
+	printf '%s\n' 'modify_settings.json: jq is required but not installed' >&2
+	exit 1
+}
+
+managed_import=./dotfiles.json
+
+live=$(mktemp)
+json=$(mktemp)
+trap 'rm -f "$live" "$json"' EXIT HUP INT TERM
+cat >"$live"
+
+# Vicinae writes JSONC with a // header; jq needs plain JSON. Strings are
+# skipped so a "//" inside a URL value survives.
+awk '
+BEGIN { in_string = 0; in_block = 0 }
+{
+	line = $0
+	out = ""
+	i = 1
+	n = length(line)
+	while (i <= n) {
+		c = substr(line, i, 1)
+		pair = substr(line, i, 2)
+		if (in_block) {
+			if (pair == "*/") { in_block = 0; i += 2 } else { i++ }
+			continue
+		}
+		if (in_string) {
+			out = out c
+			if (c == "\\") { out = out substr(line, i + 1, 1); i += 2; continue }
+			if (c == "\"") { in_string = 0 }
+			i++
+			continue
+		}
+		if (pair == "//") { break }
+		if (pair == "/*") { in_block = 1; i += 2; continue }
+		if (c == "\"") { in_string = 1 }
+		out = out c
+		i++
+	}
+	print out
+}
+' "$live" >"$json"
+
+if ! grep -q '[^[:space:]]' "$json"; then
+	jq -n --indent 3 --arg import "$managed_import" '{imports: [$import]}'
+	exit 0
+fi
+
+jq -e 'type == "object"' "$json" >/dev/null || {
+	printf '%s\n' 'modify_settings.json: settings.json is not a JSON object' >&2
+	exit 1
+}
+
+desired=$(jq --indent 3 --arg import "$managed_import" '
+	def drop_if_empty(path): if getpath(path) == {} then delpaths([path]) else . end;
+	.imports = ((.imports // []) | if any(.[]; . == $import) then . else . + [$import] end)
+	| delpaths([
+		["theme", "light", "name"],
+		["theme", "dark", "name"],
+		["launcher_window", "opacity"],
+		["launcher_window", "material"],
+		["launcher_window", "rounding"]
+	])
+	| drop_if_empty(["theme", "light"])
+	| drop_if_empty(["theme", "dark"])
+	| drop_if_empty(["theme"])
+	| drop_if_empty(["launcher_window"])
+' "$json")
+
+if [ "$(printf '%s' "$desired" | jq -S -c .)" = "$(jq -S -c . "$json")" ]; then
+	cat "$live"
+	exit 0
+fi
+
+awk '/^[[:space:]]*\/\// { print; next } { exit }' "$live" | {
+	header=$(cat)
+	if [ -n "$header" ]; then
+		printf '%s\n\n' "$header"
+	fi
+}
+printf '%s\n' "$desired"

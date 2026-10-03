@@ -1,0 +1,11 @@
+{
+  "theme": {
+    "light": { "name": "dms" },
+    "dark": { "name": "dms" }
+  },
+  "launcher_window": {
+    "opacity": 0.85,
+    "material": "blur",
+    "rounding": 16
+  }
+}
