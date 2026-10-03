@@ -112,12 +112,13 @@ requires it; a managed desktop-entry override
 (`chezmoi/dot_local/share/applications/dev.noctalia.Noctalia.desktop`)
 hides it from the launcher. `packages/pacman.txt` records only what the managed
 configuration, helpers, validation, and documented setup need on top of or
-from within that baseline — including `dms-shell-niri`, `quickshell`,
+from within that baseline — including `dms-shell`, `quickshell`,
 `matugen`, and `cava`. Kernel, bootloader, driver, and other installer-owned
 packages are deliberately not recorded; see ADR-0009.
 
 Pending updates from all three sources show in the bar through the DMS
-`systemUpdate` widget; see the maintenance guide for the update command.
+`systemUpdate` widget, whose "Update All" runs the managed `system-update`
+helper; see the maintenance guide for what it checks (ADR-0025).
 Compare the manifests with the machine at any time:
 
 ```fish

@@ -67,6 +67,8 @@
   "batterySuspendTimeout": 900,
   "greeterPamExternallyManaged": true,
   "updaterCheckOnStart": true,
+  "updaterUseCustomCommand": true,
+  "updaterCustomCommand": "system-update",
   "trayMaxVisibleItems": 1,
   "trayAutoOverflow": true,
   "niriLayoutBorderSize": 1

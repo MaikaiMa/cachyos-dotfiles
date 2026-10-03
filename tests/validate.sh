@@ -73,6 +73,8 @@ require_files \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
+	chezmoi/dot_local/bin/executable_system-update \
+	chezmoi/dot_config/paru/paru.conf \
 	chezmoi/dot_local/share/applications/net.blip.Blip.desktop \
 	chezmoi/dot_local/share/applications/dev.noctalia.Noctalia.desktop \
 	chezmoi/dot_config/wallpapers/libraries \
@@ -178,6 +180,7 @@ require_files \
 	tests/osk.sh \
 	tests/setup-power-key.sh \
 	tests/setup-sessions.sh \
+	tests/system-update.sh \
 	tests/validate.fish
 
 require_files \
@@ -286,6 +289,7 @@ shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
+	chezmoi/dot_local/bin/executable_system-update \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session
@@ -298,6 +302,7 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_tablet-mode \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
+	chezmoi/dot_local/bin/executable_system-update \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session
@@ -321,6 +326,7 @@ tests/auto-rotate.sh
 tests/osk.sh
 tests/setup-power-key.sh
 tests/setup-sessions.sh
+tests/system-update.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

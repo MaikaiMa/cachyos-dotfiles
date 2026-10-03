@@ -78,13 +78,50 @@ The DMS bar shows pending pacman, AUR, and Flatpak updates through its
 built-in `systemUpdate` widget, which hides itself while nothing is pending
 (`hideWhenIdle`). Clicking the widget opens the update popout. The check
 interval (`updaterIntervalSeconds`, 30 minutes by default) is a DMS setting;
-the repository only sets `updaterCheckOnStart` in `dms/look.json`.
+the repository sets `updaterCheckOnStart` and the update command in
+`dms/look.json`.
 
-Update everything from a terminal with:
+"Update All" in that popout runs the managed helper `system-update` in the
+terminal, and so does this from any shell:
 
 ```fish
-paru -Syu; and flatpak update
+system-update
 ```
+
+The helper is the guarded version of `paru -Syu; and flatpak update`
+(ADR-0025). paru prints unread Arch news first (`NewsOnUpgrade`), the helper
+upgrades the repositories, the AUR, and Flatpak, and then reports what a plain
+upgrade leaves silent:
+
+- unmerged `.pacnew` files, with the `pacdiff` command to merge them;
+- a reminder to re-run `scripts/setup-sessions.sh` when
+  `/etc/pacman.conf.pacnew` is among them (ADR-0023);
+- a reminder to re-sync the greeter when `greetd-dms-greeter-bin` was updated;
+- the updated packages that keep running old code until a reboot: kernels,
+  Mesa, niri, Quickshell, DMS, systemd, greetd.
+
+On a normal day that report is one line saying nothing needs attention. Daily
+or weekly makes no difference to the risk; the package count only reflects the
+days since the last run. The real protection is `snap-pac`: every pacman
+transaction gets a Btrfs snapshot that Limine can boot. Never install a single
+package without a full upgrade, and prefer updating at the end of the day so
+the reboot is cheap.
+
+Merge `.pacnew` files when the helper lists them. `m` in `pacdiff` needs the
+previous package in the pacman cache and fails with "Unable to find an older
+package to base merge on" after a cache clean; use `v` to view and then `o`
+(overwrite), `r` (remove the pacnew), or `s` (skip):
+
+```fish
+sudo DIFFPROG='nvim -d' pacdiff
+```
+
+The news check lives in the managed `~/.config/paru/paru.conf`
+(`NewsOnUpgrade`), so a manual `paru -Syu` shows it too; the helper only
+warns when that option is missing. `paru` reads only the first configuration
+it finds, so that file replaces `/etc/paru.conf` and repeats its defaults.
+archlinux.org rate-limits the news feed (`429 Too Many Requests`) when it is
+fetched repeatedly in a short time; the message is harmless and paru carries on.
 
 Neovim plugins are not part of this; update them with `:Lazy update` and copy
 the lockfile back as described in [docs/editor.md](editor.md#updating-plugins-and-the-lockfile).

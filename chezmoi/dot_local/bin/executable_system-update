@@ -1,0 +1,113 @@
+#!/bin/sh
+# Update pacman, AUR, and Flatpak with the checks a plain `paru -Syu` skips:
+# Arch news before (through paru), .pacnew files and reboot-worthy packages after.
+set -eu
+
+paru_command=${PARU_COMMAND:-paru}
+checkupdates_command=${CHECKUPDATES_COMMAND:-checkupdates}
+flatpak_command=${FLATPAK_COMMAND:-flatpak}
+pacdiff_command=${PACDIFF_COMMAND:-pacdiff}
+# These keep running the old code until the kernel or the session restarts.
+reboot_pattern='^(linux-|mesa$|niri$|quickshell$|dms-shell|systemd$|greetd)'
+greeter_package=greetd-dms-greeter-bin
+
+usage() {
+	printf 'Usage: %s\n' "${0##*/}"
+	printf '%s\n' 'Run paru -Syu (with unread Arch news) and flatpak update, then list .pacnew files and packages that need a reboot.'
+}
+
+case ${1:-} in
+'') ;;
+-h | --help)
+	usage
+	exit 0
+	;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac
+
+for tool in "$paru_command" "$checkupdates_command" "$pacdiff_command"; do
+	if ! command -v "$tool" >/dev/null 2>&1; then
+		printf 'Required command is missing: %s (pacman-contrib provides checkupdates and pacdiff)\n' "$tool" >&2
+		exit 1
+	fi
+done
+
+heading() {
+	printf '\n== %s ==\n' "$1"
+}
+
+heading 'Arch news'
+# paru fetches the news once during -Syu when NewsOnUpgrade is set; fetching
+# it here as well gets the feed rate-limited (429). paru reads only the first
+# of these files.
+paru_conf=''
+for candidate in "${PARU_CONF:-}" "$HOME/.config/paru/paru.conf" /etc/paru.conf; do
+	if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+		paru_conf=$candidate
+		break
+	fi
+done
+if [ -n "$paru_conf" ] && grep -Eq '^[[:space:]]*NewsOnUpgrade' "$paru_conf"; then
+	printf '%s\n' "paru prints unread Arch news before the upgrade (NewsOnUpgrade in $paru_conf)."
+else
+	printf '%s\n' 'NewsOnUpgrade is off in the paru configuration; check https://archlinux.org/news/ yourself.' >&2
+fi
+
+heading 'Pending updates'
+# checkupdates exits 2 and paru -Qua exits 1 when nothing is pending.
+pending=$(
+	{
+		"$checkupdates_command" || true
+		"$paru_command" -Qua || true
+	} | awk 'NF { print $1 }'
+)
+if [ -n "$pending" ]; then
+	printf '%s\n' "$pending" | wc -l | sed 's/$/ package(s) from the repositories and the AUR./'
+else
+	printf '%s\n' 'Nothing pending from the repositories or the AUR.'
+fi
+reboot_candidates=$(printf '%s\n' "$pending" | grep -E "$reboot_pattern" || true)
+
+heading 'Repositories and AUR'
+"$paru_command" -Syu
+
+heading 'Flatpak'
+if command -v "$flatpak_command" >/dev/null 2>&1; then
+	"$flatpak_command" update
+else
+	printf '%s\n' 'flatpak is not installed; skipped.'
+fi
+
+heading 'After the update'
+pacnews=$("$pacdiff_command" -o || true)
+follow_up=false
+
+if [ -n "$pacnews" ]; then
+	follow_up=true
+	printf '%s\n' 'Unmerged configuration files:'
+	printf '  %s\n' "$pacnews"
+	printf '%s\n' "Merge them with: sudo DIFFPROG='nvim -d' pacdiff"
+	case $pacnews in
+	*/etc/pacman.conf.pacnew*)
+		printf '%s\n' 'After merging pacman.conf, re-run scripts/setup-sessions.sh so its NoExtract line survives (ADR-0023).'
+		;;
+	esac
+fi
+
+if printf '%s\n' "$pending" | grep -qx "$greeter_package"; then
+	follow_up=true
+	printf '%s\n' 'The greeter was updated; re-sync it with scripts/setup-greetd.sh.'
+fi
+
+if [ -n "$reboot_candidates" ]; then
+	follow_up=true
+	printf '%s\n' 'Reboot soon; these keep running the old code until then:'
+	printf '  %s\n' "$reboot_candidates"
+fi
+
+if [ "$follow_up" = false ]; then
+	printf '%s\n' 'No .pacnew files and nothing that needs a reboot.'
+fi

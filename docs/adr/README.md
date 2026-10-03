@@ -33,3 +33,4 @@ alternatives considered.
 - [ADR-0022: Add a Steam Big Picture session with gamescope-session-cachyos](ADR-0022-add-a-steam-big-picture-session-with-gamescope-session-cachyos.md)
 - [ADR-0023: Own the greeter session list and hand Steam over to Niri](ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md)
 - [ADR-0024: Replace DMS Spotlight with Vicinae and add Handy dictation](ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md)
+- [ADR-0025: Guard system updates with a helper behind the DMS updater](ADR-0025-guard-system-updates-with-a-helper-behind-the-dms-updater.md)
