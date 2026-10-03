@@ -116,9 +116,9 @@ from within that baseline — including `dms-shell-niri`, `quickshell`,
 `matugen`, and `cava`. Kernel, bootloader, driver, and other installer-owned
 packages are deliberately not recorded; see ADR-0009.
 
-Pending updates from all three sources show in the bar through the
-`yuuto/arch-updater` plugin; see the maintenance guide for the update
-command. Compare the manifests with the machine at any time:
+Pending updates from all three sources show in the bar through the DMS
+`systemUpdate` widget; see the maintenance guide for the update command.
+Compare the manifests with the machine at any time:
 
 ```fish
 ./scripts/check-packages.sh

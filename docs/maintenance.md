@@ -74,10 +74,11 @@ A change is ready for review when all applicable items are true:
 
 ## Updating the machine
 
-The `dotfiles` bar shows pending pacman, AUR, and Flatpak updates through the
-`yuuto/arch-updater` plugin; left click lists them, right click checks now.
-The plugin's own settings, such as the automatic check interval, are plugin
-state edited from its widget (middle click), not repository configuration.
+The DMS bar shows pending pacman, AUR, and Flatpak updates through its
+built-in `systemUpdate` widget, which hides itself while nothing is pending
+(`hideWhenIdle`). Clicking the widget opens the update popout. The check
+interval (`updaterIntervalSeconds`, 30 minutes by default) is a DMS setting;
+the repository only sets `updaterCheckOnStart` in `dms/look.json`.
 
 Update everything from a terminal with:
 
