@@ -34,3 +34,4 @@ alternatives considered.
 - [ADR-0023: Own the greeter session list and hand Steam over to Niri](ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md)
 - [ADR-0024: Replace DMS Spotlight with Vicinae and add Handy dictation](ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md)
 - [ADR-0025: Guard system updates with a helper behind the DMS updater](ADR-0025-guard-system-updates-with-a-helper-behind-the-dms-updater.md)
+- [ADR-0026: Local-first writing tools with Ollama, Claude on request](ADR-0026-local-first-writing-tools-with-ollama-and-claude-on-request.md)

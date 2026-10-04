@@ -1,0 +1,60 @@
+{
+	"$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+	"name": "writing-tools",
+	"title": "Writing Tools",
+	"description": "Fix, improve, rewrite and translate text between Dutch and English with a local Ollama model, or with Claude on request",
+	"categories": ["Productivity"],
+	"license": "MIT",
+	"author": "maikel",
+	"icon": "icon.png",
+	"platforms": ["Linux"],
+	"commands": [
+		{
+			"name": "writing-tools",
+			"title": "Writing Tools",
+			"description": "Fix, improve, rewrite or translate the selected text and paste the result over it",
+			"mode": "view",
+			"keywords": ["translate", "vertalen", "spelling", "grammar", "rewrite", "tone", "ai"]
+		}
+	],
+	"preferences": [
+		{
+			"name": "ollamaModel",
+			"title": "Ollama model",
+			"description": "Local model used by default; pull it first with ollama pull",
+			"type": "textfield",
+			"required": false,
+			"default": "gemma4:26b-a4b-it-qat"
+		},
+		{
+			"name": "ollamaUrl",
+			"title": "Ollama address",
+			"description": "Base URL of the Ollama API",
+			"type": "textfield",
+			"required": false,
+			"default": "http://127.0.0.1:11434"
+		},
+		{
+			"name": "claudeModel",
+			"title": "Claude model",
+			"description": "Model alias passed to claude -p for the Claude actions",
+			"type": "textfield",
+			"required": false,
+			"default": "sonnet"
+		}
+	],
+	"scripts": {
+		"build": "vici build",
+		"dev": "vici develop",
+		"lint": "vici lint",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@vicinae/api": "0.29.1"
+	},
+	"devDependencies": {
+		"@types/node": "^24.9.2",
+		"@types/react": "^19.2.17",
+		"typescript": "^5.9.2"
+	}
+}

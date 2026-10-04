@@ -41,6 +41,8 @@ run_bootstrap() {
 		LOGIND_POWER_KEY_DROPIN_TARGET=$power_key_target \
 		PATH=$power_key_bin:$PATH \
 		DMS_COMMAND=${DMS_COMMAND:-missing-dms} \
+		VICINAE_COMMAND=${VICINAE_COMMAND:-missing-vicinae} \
+		OLLAMA_COMMAND=${OLLAMA_COMMAND:-missing-ollama} \
 		"$bootstrap" "$@"
 }
 
@@ -86,6 +88,7 @@ for path in \
 	.config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
 	.config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
 	.config/systemd/user/auto-rotate.service \
+	.config/systemd/user/ollama.service \
 	.config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
 	.config/systemd/user/gamescope-xbindkeys.service.d/xbindkeysrc.conf \
 	.config/gamescope/xbindkeysrc \
@@ -134,6 +137,7 @@ if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "/usr/lib/systemd/
 	exit 1
 fi
 for wanted_unit in auto-rotate.service:../auto-rotate.service \
+	ollama.service:../ollama.service \
 	mobi.phosh.OSK.service:/usr/lib/systemd/user/mobi.phosh.OSK.service; do
 	wants_link=$test_home/.config/systemd/user/niri.service.wants/${wanted_unit%%:*}
 	if [ ! -L "$wants_link" ] || [ "$(readlink "$wants_link")" != "${wanted_unit#*:}" ]; then
@@ -187,6 +191,23 @@ if [ -e "$test_home/.config/DankMaterialShell/plugin_settings.json" ]; then
 fi
 if [ -e "$test_home/.config/DankMaterialShell/plugins.lock.json" ]; then
 	printf '%s\n' 'Bootstrap dry-run wrote the DMS plugin lockfile.' >&2
+	exit 1
+fi
+
+printf '%s\n' '#!/bin/sh' 'printf "%s\n" "NAME ID SIZE MODIFIED"' >"$dms_stub_dir/ollama"
+chmod +x "$dms_stub_dir/ollama"
+writing_dry_run=$(PATH="$dms_stub_dir:$PATH" VICINAE_COMMAND=dms OLLAMA_COMMAND=ollama \
+	run_bootstrap --dry-run --no-pager 2>&1)
+case $writing_dry_run in
+*'+ npm ci and vici build in '*'/extensions/vicinae-writing'*'The writing model is not installed; pull it with: ollama pull '*) ;;
+*)
+	printf '%s\n' 'Bootstrap dry-run did not preview the extension build and the model hint:' >&2
+	printf '%s\n' "$writing_dry_run" >&2
+	exit 1
+	;;
+esac
+if [ -e "$test_home/.local/share/vicinae" ]; then
+	printf '%s\n' 'Bootstrap dry-run installed a Vicinae extension.' >&2
 	exit 1
 fi
 

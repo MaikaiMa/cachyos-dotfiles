@@ -41,6 +41,7 @@ dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
 dms/plugin_settings.json   pinned DMS plugin settings (enabled flags of the repository plugins); see docs/dms.md
 dms/plugins.lock.json      DMS registry plugins pinned to exact commits (currently none); see docs/dms.md
 dms/session.json           DMS session-state keys (terminal override); see docs/terminal.md
+extensions/vicinae-writing/ Vicinae Writing Tools extension (TypeScript), built by scripts/build-vicinae-extensions.sh; see docs/writing.md
 scripts/                  idempotent operational helpers
 system/                   explicitly installed system integration files
 packages/                 official, AUR, and Flatpak package manifests
@@ -54,6 +55,7 @@ docs/editor.md            Neovim with LazyVim: first start, plugin updates, colo
 docs/tablet.md            Z13 tablet use: keyboard detection, auto-rotation, on-screen keyboard, power key
 docs/gaming.md            Steam session, greeter session list, Steam-to-Niri switch (ADR-0022, ADR-0023)
 docs/launcher.md          Vicinae launcher, clipboard history, and Handy dictation (ADR-0024)
+docs/writing.md           Writing Tools: fix, rewrite, and translate with Ollama, Claude on request (ADR-0026)
 docs/desktop-migration.md phased plan for the Noctalia to DMS / greetd migration (ADR-0013, ADR-0015)
 tests/                    repository validation
 ```
@@ -222,6 +224,12 @@ Vicinae is the launcher on `Mod+Space` and the clipboard history on `Mod+V`;
 Handy is offline dictation on `Mod+D`. They replace DMS Spotlight and its
 registry plugins. See [docs/launcher.md](docs/launcher.md) and
 [ADR-0024](docs/adr/ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md).
+
+`Mod+I` opens Writing Tools, a repository-built Vicinae extension that fixes,
+rewrites, or translates the selected text (Dutch and English) with a local
+Ollama model and pastes the result over the selection; Claude is one
+shortcut away for a second opinion. See [docs/writing.md](docs/writing.md)
+and [ADR-0026](docs/adr/ADR-0026-local-first-writing-tools-with-ollama-and-claude-on-request.md).
 
 Zed is the main editor. Neovim with LazyVim is the terminal editor and what
 `EDITOR`, `VISUAL`, and thus `sudoedit` open; its first start downloads the

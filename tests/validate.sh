@@ -60,6 +60,8 @@ require_files \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_vicinae.service \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_handy.service \
 	chezmoi/dot_config/systemd/user/handy.service \
+	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_ollama.service \
+	chezmoi/dot_config/systemd/user/ollama.service \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \
 	chezmoi/dot_config/vicinae/dotfiles.json \
@@ -132,6 +134,8 @@ require_files \
 	docs/adr/ADR-0022-add-a-steam-big-picture-session-with-gamescope-session-cachyos.md \
 	docs/adr/ADR-0023-own-the-greeter-session-list-and-hand-steam-over-to-niri.md \
 	docs/adr/ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md \
+	docs/adr/ADR-0025-guard-system-updates-with-a-helper-behind-the-dms-updater.md \
+	docs/adr/ADR-0026-local-first-writing-tools-with-ollama-and-claude-on-request.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \
@@ -144,6 +148,7 @@ require_files \
 	docs/tablet.md \
 	docs/gaming.md \
 	docs/launcher.md \
+	docs/writing.md \
 	dms/look.json \
 	dms/plugin_settings.json \
 	dms/plugins.lock.json \
@@ -157,6 +162,7 @@ require_files \
 	scripts/dms-link-zen-theme.sh \
 	scripts/setup-power-key.sh \
 	scripts/setup-sessions.sh \
+	scripts/build-vicinae-extensions.sh \
 	system/greetd/config.toml \
 	system/pam.d/greetd \
 	system/local/bin/niri-session \
@@ -185,7 +191,19 @@ require_files \
 	tests/setup-power-key.sh \
 	tests/setup-sessions.sh \
 	tests/system-update.sh \
+	tests/build-vicinae-extensions.sh \
 	tests/validate.fish
+
+require_files \
+	extensions/vicinae-writing/.gitignore \
+	extensions/vicinae-writing/package.json \
+	extensions/vicinae-writing/package-lock.json \
+	extensions/vicinae-writing/tsconfig.json \
+	extensions/vicinae-writing/assets/icon.png \
+	extensions/vicinae-writing/src/writing-tools.tsx \
+	extensions/vicinae-writing/src/prompts.ts \
+	extensions/vicinae-writing/src/ollama.ts \
+	extensions/vicinae-writing/src/claude.ts
 
 require_files \
 	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
@@ -269,6 +287,23 @@ EOF
 	fi
 }
 
+# Validation stays offline: the TypeScript checks need the dependencies that
+# scripts/build-vicinae-extensions.sh (or npm ci) installs, so they only run
+# where node_modules already exists.
+check_vicinae_extensions() {
+	for extension in extensions/*/; do
+		extension=${extension%/}
+		if [ ! -x "$extension/node_modules/.bin/tsc" ] || [ ! -x "$extension/node_modules/.bin/vici" ]; then
+			printf 'Skipping the type check of %s: run npm ci there first.\n' "$extension"
+			continue
+		fi
+		if ! (cd "$extension" && node_modules/.bin/tsc --noEmit && node_modules/.bin/vici lint >/dev/null); then
+			printf 'The Vicinae extension %s failed its type check or manifest lint.\n' "$extension" >&2
+			exit 1
+		fi
+	done
+}
+
 for config in chezmoi/dot_config/niri/cfg/*.kdl; do
 	niri validate --config "$config"
 done
@@ -279,9 +314,11 @@ validate_nvim_lua
 lint_plugin_qml
 
 for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.json dms/*.json \
-	chezmoi/dot_config/nvim/lazy-lock.json chezmoi/dot_config/vicinae/dotfiles.json; do
+	chezmoi/dot_config/nvim/lazy-lock.json chezmoi/dot_config/vicinae/dotfiles.json \
+	extensions/*/package.json extensions/*/package-lock.json extensions/*/tsconfig.json; do
 	jq empty "$catalogue"
 done
+check_vicinae_extensions
 shellcheck scripts/*.sh tests/*.sh
 fish -n tests/*.fish chezmoi/dot_config/fish/config.fish chezmoi/dot_config/fish/conf.d/*.fish chezmoi/dot_config/fish/functions/*.fish
 tests/fish-docs.sh
@@ -334,6 +371,7 @@ tests/osk.sh
 tests/setup-power-key.sh
 tests/setup-sessions.sh
 tests/system-update.sh
+tests/build-vicinae-extensions.sh
 tests/bootstrap.sh
 
 if [ "$untracked_required" = true ]; then

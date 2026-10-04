@@ -47,6 +47,12 @@ qt6-imageformats # WebP and other image formats in Vicinae and Raycast-store ext
 wl-clipboard # Neovim clipboard
 wtype # Handy types dictation into the focused window
 
+# Writing tools (ADR-0026, docs/writing.md): local models and the Vicinae extension build.
+ollama # model server; run as the managed user unit, the packaged system unit stays disabled
+ollama-vulkan # Vulkan backend for the Radeon 8060S iGPU
+nodejs # runs npm and vici build for extensions/
+npm # installs the extension dependencies from package-lock.json
+
 # Applications launched by managed keybinds or set as default handlers.
 obsidian # note app
 alacritty # fallback terminal without a bind (ADR-0017)

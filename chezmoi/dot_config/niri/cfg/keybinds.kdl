@@ -29,12 +29,13 @@ binds {
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen" { spawn-sh "dms ipc call lock lock"; }
     Mod+ESCAPE                          hotkey-overlay-title="Session Menu" { spawn-sh "dms ipc call powermenu toggle"; }
 
-    // Launcher and dictation (ADR-0024, docs/launcher.md):
+    // Launcher, dictation and writing tools (ADR-0024, ADR-0026, docs/launcher.md, docs/writing.md):
     Mod+Space                           repeat=false hotkey-overlay-title="App Launcher" { spawn "vicinae" "toggle"; }
     Mod+V                               repeat=false hotkey-overlay-title="Clipboard History" { spawn "vicinae" "vicinae://launch/clipboard/history?toggle=true"; }
     Mod+D                               repeat=false hotkey-overlay-title="Dictation" { spawn "handy" "--toggle-transcription"; }
     Mod+E                               repeat=false hotkey-overlay-title="Emoji" { spawn "vicinae" "vicinae://launch/core/search-emojis?toggle=true"; }
     Mod+G                               repeat=false hotkey-overlay-title="GIF Search" { spawn "vicinae" "vicinae://launch/@josephschmitt/store.raycast.gif-search/search?toggle=true"; }
+    Mod+I                               repeat=false hotkey-overlay-title="Writing Tools" { spawn "vicinae" "vicinae://launch/@maikel/writing-tools/writing-tools?toggle=true"; }
 
     // Media Controls:
     XF86AudioRaiseVolume                allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call audio increment 5"; }

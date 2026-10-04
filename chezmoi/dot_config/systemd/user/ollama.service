@@ -1,0 +1,19 @@
+[Unit]
+Description=Ollama local model server for the Vicinae writing tools
+PartOf=niri.service
+After=niri.service
+
+[Service]
+ExecStart=/usr/bin/ollama serve
+# The packaged system ollama.service must stay disabled: it binds the same port.
+Environment=OLLAMA_HOST=127.0.0.1:11434
+Environment=OLLAMA_VULKAN=1
+# Without it Ollama skips the integrated Radeon 8060S and runs on the CPU.
+Environment=OLLAMA_IGPU_ENABLE=1
+# Two loaded models once made systemd-oomd kill a whole Ghostty scope.
+Environment=OLLAMA_MAX_LOADED_MODELS=1
+Environment=OLLAMA_CONTEXT_LENGTH=4096
+Environment=OLLAMA_KEEP_ALIVE=10m
+MemoryMax=20G
+Restart=on-failure
+RestartSec=2
