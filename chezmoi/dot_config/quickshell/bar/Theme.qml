@@ -6,8 +6,9 @@ import Quickshell
 // Sizes and fonts from the Tokens table in docs/shell-design.md.
 Singleton {
     readonly property int barHeight: 36
-    // The layer surface cannot draw outside itself, so it is as tall as the largest panel.
-    readonly property int windowHeight: 480
+    // The layer surface cannot draw outside itself, so it is as tall as the largest
+    // panel plus the shadow under it: Settings with a full notification list.
+    readonly property int windowHeight: Math.max(480, islandTop + settingsMaxHeight + shadowOffsetY + shadowBlur)
 
     readonly property int islandHeight: 30
     readonly property int islandDetailHeight: 48
@@ -49,6 +50,35 @@ Singleton {
             wallpaper: 560,
             updates: 420
         })
+    readonly property int panelPadding: 12
+    readonly property int tileGap: 12
+    readonly property int tileRadius: 16
+    readonly property int toggleIconSize: 18
+
+    readonly property int settingsColumns: 4
+    readonly property int settingsTileHeight: 64
+    readonly property int settingsTileRows: 2
+    readonly property int tileIconDisc: 34
+    readonly property int sliderHeight: 32
+    readonly property int sliderGap: 8
+    readonly property int sliderCount: 3
+    readonly property int sliderIconZone: 32
+    readonly property int sliderValueZone: 44
+    readonly property int sliderValueFontSize: 12
+    // Movement below this is a click, not a drag.
+    readonly property int sliderDragThreshold: 4
+    // One arrow key press or one wheel notch.
+    readonly property int sliderStep: 5
+    readonly property int notificationHeaderGap: 10
+    readonly property int notificationHeaderHeight: 28
+    readonly property int notificationRowHeight: 62
+    readonly property int notificationRowGap: 6
+    readonly property int notificationRowRadius: 14
+    readonly property int notificationListMaxHeight: 240
+    readonly property int settingsGridHeight: settingsTileRows * settingsTileHeight + (settingsTileRows - 1) * tileGap
+    readonly property int settingsSlidersHeight: sliderCount * sliderHeight + (sliderCount - 1) * sliderGap
+    readonly property int settingsMaxHeight: 2 * panelPadding + settingsGridHeight + tileGap + settingsSlidersHeight + notificationHeaderGap + notificationHeaderHeight + notificationListMaxHeight
+
     // Placeholder bodies until the real panels set their own height.
     readonly property int placeholderPanelHeight: 240
     readonly property int musicBarWidth: 360

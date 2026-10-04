@@ -3,3 +3,6 @@ IslandAnimation 1.0 IslandAnimation.qml
 Hairline 1.0 Hairline.qml
 Clock 1.0 Clock.qml
 Icon 1.0 Icon.qml
+Tile 1.0 Tile.qml
+CapsuleSlider 1.0 CapsuleSlider.qml
+NotificationRow 1.0 NotificationRow.qml

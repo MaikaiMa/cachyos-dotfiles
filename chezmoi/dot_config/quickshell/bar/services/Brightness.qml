@@ -19,10 +19,20 @@ Singleton {
         reader.running = true;
     }
 
+    // A slider drag sets faster than brightnessctl runs: only the newest value
+    // waits, and it is written as soon as the running write ends.
+    property int pendingValue: -1
+
     // Never 0: a black screen is not a brightness.
     function set(value: int) {
-        const target = Math.max(1, Math.min(100, Math.round(value)));
-        writer.command = ["brightnessctl", "--class=backlight", "set", target + "%"];
+        pendingValue = Math.max(1, Math.min(100, Math.round(value)));
+        if (!writer.running)
+            writePending();
+    }
+
+    function writePending() {
+        writer.command = ["brightnessctl", "--class=backlight", "set", pendingValue + "%"];
+        pendingValue = -1;
         writer.running = true;
     }
 
@@ -59,7 +69,11 @@ Singleton {
         id: writer
 
         onRunningChanged: {
-            if (!running)
+            if (running)
+                return;
+            if (root.pendingValue >= 0)
+                root.writePending();
+            else
                 root.refresh();
         }
     }

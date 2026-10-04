@@ -28,11 +28,14 @@ Item {
         font.pixelSize: icon.size
         font.weight: icon.weight
         font.hintingPreference: Font.PreferNoHinting
+        // The variable outlines overlap where FILL and wght blend them; Qt's
+        // distance-field and curve renderers break up on overlapping contours
+        // (holes and fringes in filled glyphs), FreeType rasterises them cleanly.
+        renderType: Text.NativeRendering
         // opsz only spans 20..48; smaller icons use the 20 cut.
         font.variableAxes: ({
                 FILL: icon.fill,
                 wght: icon.weight,
-                GRAD: 0,
                 opsz: Math.min(48, Math.max(20, icon.size))
             })
     }

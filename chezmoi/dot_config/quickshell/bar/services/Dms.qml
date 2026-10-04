@@ -55,6 +55,11 @@ Singleton {
         call(["settings", "open"]);
     }
 
+    // A tab id from `dms ipc call settings tabs`, such as network_wifi.
+    function openSettingsTab(tab: string) {
+        call(["settings", "openWith", tab]);
+    }
+
     // Writes DMS's matugenScheme setting (scheme-tonal-spot, scheme-fruit-salad, ...).
     // Re-render to be verified: DMS may only persist the key and keep the colours
     // until the next wallpaper or theme change.

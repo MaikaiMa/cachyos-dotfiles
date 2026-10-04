@@ -19,12 +19,12 @@ records this as an amendment.
 
 ## What is built
 
-Steps 0 to 2 of the build (see "Phases"). Every screen gets one tall,
+Steps 0 to 3 of the build (see "Phases"). Every screen gets one tall,
 transparent layer-shell window with three islands: a placeholder "bar" on
 the left, the centre island, and a placeholder ring on the right. The centre
 island runs the real state machine and morphs: hover rests open Detail, a
-click opens a placeholder Home panel, the right island opens a placeholder
-Settings panel, Escape and a click outside close.
+click opens a placeholder Home panel, the right island opens the Settings
+panel, Escape and a click outside close.
 
 Step 2 made the centre pill real: a weather icon from `Weather`, the clock
 and a battery icon from `Battery` (red when low), separated by hairlines.
@@ -32,11 +32,18 @@ In Detail the hairlines fade out and each column gets one label, the
 temperature, the Dutch short date ("Zo 04-10") and the battery percentage,
 while the clock stays on the centre line.
 
+Step 3 made Settings real: a toggle grid (Wi-Fi, Bluetooth, power profile,
+do not disturb, caffeine), capsule sliders for volume, microphone and
+brightness that drag, click, scroll and take arrow keys, and the
+notification list with dismiss and "Clear all". A right click or a long
+press on the Wi-Fi or Bluetooth tile opens the DMS settings window. The island grows to the panel's own height,
+so it shrinks in one island animation when notifications leave.
+
 ### Window architecture
 
 - **One tall window per screen.** `shell.qml` creates a `PanelWindow`
-  anchored top, left and right, `Theme.windowHeight` (480 px, the largest
-  panel) tall, on the `Top` layer with namespace `dotfiles-bar`. Its
+  anchored top, left and right, `Theme.windowHeight` tall: the tallest
+  panel plus its shadow, 601 px for Settings with a full notification list, on the `Top` layer with namespace `dotfiles-bar`. Its
   exclusive zone is set explicitly to `Theme.barHeight` (36 px), so windows
   tile below the bar and not below the panels.
 - **Input mask.** `mask` is a `Region` with one rounded child region per
@@ -51,7 +58,10 @@ while the clock stays on the centre line.
   only gives an on-demand layer the keyboard after a click on it. Quickshell
   also has no signal for losing on-demand focus, so a panel could not close
   when focus moved away. Exclusive means no other window takes keys while a
-  panel is open, which is what Escape-to-close needs.
+  panel is open, which is what Escape-to-close needs. Every state change
+  hands the focus back to the window's root item, so a panel opens with
+  nothing focused and Escape reaches the root from any control; Tab then
+  walks the panel's controls.
 - **Click outside.** While a panel is open, every screen also maps a
   transparent full-screen `PanelWindow` (namespace `dotfiles-click-catcher`)
   whose mask is the screen minus the islands; a press on it closes the
@@ -92,6 +102,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     CentreIsland.qml                    weather, clock and battery pill, Detail, OSD and panel states
     RightIsland.qml                     placeholder pill, click opens Settings
   panels/                               centre panel bodies
+    SettingsPanel.qml                   toggle grid, three sliders, notification list
     PlaceholderPanel.qml                stands in for a panel until its step lands
   components/                           shared pieces
     Island.qml                          island surface: colour, radius, shadow, size animation
@@ -99,6 +110,9 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Hairline.qml                        1 x 14 px separator
     Clock.qml                           SystemClock text in a given format or formatter
     Icon.qml                            Material Symbols glyph by name, placeholder without the font
+    Tile.qml                            Settings grid toggle, wide with state or small icon-only
+    CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer
+    NotificationRow.qml                 one notification with dismiss, collapses when it leaves
 chezmoi/dot_config/systemd/user/quickshell-bar.service
 scripts/bar-switch.sh                   switches between the DMS and the own bar
 tests/bar-switch.sh                     switch script test with stubs
@@ -189,7 +203,7 @@ restart.
 To test the window architecture spike, check on each screen:
 
 - Clicks and scrolling outside the three islands reach the windows and the
-  desktop below, also in the 480 px strip under the bar.
+  desktop below, also in the tall transparent strip under the bar.
 - Windows tile 36 px below the top edge, not below the tallest panel.
 - The pill shows the current weather and battery icons as glyphs, not as
   dim squares, and the battery icon matches the charge and turns red under
@@ -210,6 +224,18 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
 ```
 
 - The islands are blurred and the area around them is not.
+- Settings: each tile toggles its setting and turns accent when on; the
+  power profile tile cycles through the profiles. Dragging a slider (also
+  by touch) follows the finger, a click on the track jumps there with a
+  glide, a click on the icon mutes (volume, microphone) or steps the
+  brightness. A wheel notch over a slider moves it 5, a touchpad scroll
+  moves it 5 per notch's worth of travel, with the same glide as a key.
+  Tab walks the tiles and sliders, arrow keys (5 per press), Home and End
+  move a focused slider, and Escape still closes. Right click or a 500 ms
+  long press on Wi-Fi opens the DMS settings on the Wi-Fi tab and closes
+  the panel; on Bluetooth it opens the Network tab, because DMS 1.6 has no
+  Bluetooth settings tab. Dismissing a notification
+  collapses its row and the island shrinks; "Clear all" removes the section.
 
 Bring the service back with:
 
@@ -231,7 +257,10 @@ scripts/bar-switch.sh
    name (`name: "battery_5_bar"`, see fonts.google.com/icons). The glyphs
    come from the "Material Symbols Rounded" font of the
    `ttf-material-symbols-variable` package, the set DMS embeds; `fill` and
-   `weight` drive the font's variable axes. Without the font, or with an
+   `weight` drive the font's variable axes. The glyph uses
+   `Text.NativeRendering`: the variable outlines overlap, and Qt's default
+   distance-field renderer (and the curve renderer) draw filled glyphs with
+   holes and fringes. Without the font, or with an
    empty name, the icon draws a dim rounded square of the same size and
    `Theme` logs one warning at start.
 4. Run `tests/quickshell-bar.sh`; it fails when a type is missing from its
@@ -289,7 +318,9 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `setVolume(v)`, `toggleMute()`, `setMicVolume(v)`, `toggleMicMute()`.
 - `Brightness`: `percentage` (-1 until read), `device`, `available`;
   `set(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
-  backlight class every 5 s and after each write.
+  backlight class every 5 s and after each write. While a write runs, only
+  the newest `set` waits and follows it, so a slider drag never loses its
+  last value.
 - `Network`: `wifiEnabled`, `connected` (any device), `wifiConnected`,
   `ssid`, `strength`, `weak` (under 40); `toggleWifi()`.
 - `Bluetooth`: `btEnabled`, `connectedDevices`, `available`;
@@ -297,6 +328,7 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
 - `Dms`: `nightLight`, `doNotDisturb`, `caffeine`, `themeMode`, polled every
   10 s and after each call; `toggleNightLight()`, `toggleDoNotDisturb()`,
   `toggleCaffeine()`, `setLight()`, `setDark()`, `openSettingsWindow()`,
+  `openSettingsTab(tab)` (a tab id from `dms ipc call settings tabs`),
   `setScheme(name)` (whether DMS re-renders the colours is to be verified),
   `refresh()`.
 - `Notifications`: `items` (newest first: `id`, `appName`, `summary`,

@@ -126,8 +126,11 @@ and value are each drawn twice, in `on_surface` on the empty track and
 in `on_primary` clipped to the fill width, so their colour flips exactly
 where the fill passes. Press and drag anywhere sets the value; a click on
 the icon zone without movement toggles: Volume mute, Microphone mute,
-Brightness auto when the machine exposes it, otherwise a cycle through
-25, 50, 75, 100, never 0. Muted dims the fill to 40 %, not the row.
+Brightness a cycle through 25, 50, 75, 100, never 0 (the Z13 has no
+ambient light sensor). Scrolling over any capsule changes its value by 5
+per wheel step, as the DMS sliders do. Right click or long press on the
+Wi-Fi and Bluetooth tiles opens the DMS settings window on the matching
+tab; the other tiles have no secondary action. Muted dims the fill to 40 %, not the row.
 
 Notifications only when there are any: the section is absent on an empty
 list and the panel ends at the brightness slider. With items: "Clear all"

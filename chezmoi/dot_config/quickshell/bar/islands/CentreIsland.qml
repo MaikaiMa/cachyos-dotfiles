@@ -144,7 +144,7 @@ Island {
     }
 
     targetWidth: panelOpen ? Theme.panelWidths[centreState] : centreState === "musicbar" ? Theme.musicBarWidth : osd ? Theme.osdWidth : detail ? detailWidth : pillWidth
-    targetHeight: panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
+    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
     targetOpacity: panelOpen ? Theme.panelOpacity : Theme.islandOpacity
     targetBlend: detail ? 1 : 0
     expanded: panelOpen || detail
@@ -274,8 +274,18 @@ Island {
         }
     }
 
+    // Centred on the island at its own width; the island clips it while it grows.
+    SettingsPanel {
+        id: settingsPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "settings"
+    }
+
     Repeater {
-        model: Shell.panelStates.concat(["musicbar"])
+        model: Shell.panelStates.filter(state => state !== "settings").concat(["musicbar"])
 
         PlaceholderPanel {
             required property string modelData

@@ -68,9 +68,22 @@ ShellRoot {
                 }
 
                 Item {
+                    id: keyRoot
+
                     anchors.fill: parent
                     focus: true
                     Keys.onEscapePressed: Shell.close()
+
+                    // Every state change hands the keys back here: a panel opens with
+                    // nothing focused, and a control focused with Tab in a closed panel
+                    // cannot keep Escape away from this item.
+                    Connections {
+                        target: Shell
+
+                        function onCentreStateChanged() {
+                            keyRoot.forceActiveFocus();
+                        }
+                    }
 
                     LeftIsland {
                         id: left

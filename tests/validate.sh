@@ -89,12 +89,16 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/islands/RightIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/qmldir \
 	chezmoi/dot_config/quickshell/bar/panels/PlaceholderPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/SettingsPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
 	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \
 	chezmoi/dot_config/quickshell/bar/components/Hairline.qml \
 	chezmoi/dot_config/quickshell/bar/components/Clock.qml \
 	chezmoi/dot_config/quickshell/bar/components/Icon.qml \
+	chezmoi/dot_config/quickshell/bar/components/Tile.qml \
+	chezmoi/dot_config/quickshell/bar/components/CapsuleSlider.qml \
+	chezmoi/dot_config/quickshell/bar/components/NotificationRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/qmldir \
 	chezmoi/dot_config/quickshell/bar/README.md \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
