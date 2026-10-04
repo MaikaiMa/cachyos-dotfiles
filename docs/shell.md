@@ -17,16 +17,20 @@ the daily bar until the own bar is good enough: `scripts/bar-switch.sh own`
 tries the bar, `scripts/bar-switch.sh dms` goes back to work. ADR-0027
 records this as an amendment.
 
-## What the scaffold is
+## What is built
 
-The current state is step 0 of the build (see "Phases"): the window
-architecture spike. Every screen gets one tall, transparent layer-shell
-window with three placeholder islands: "bar" on the left, a centre pill with
-the clock between two hairlines, and a ring on the right. The centre island
-already runs the real state machine and morphs: hover rests open Detail, a
+Steps 0 to 2 of the build (see "Phases"). Every screen gets one tall,
+transparent layer-shell window with three islands: a placeholder "bar" on
+the left, the centre island, and a placeholder ring on the right. The centre
+island runs the real state machine and morphs: hover rests open Detail, a
 click opens a placeholder Home panel, the right island opens a placeholder
-Settings panel, Escape and a click outside close. It does not yet replace any
-function of the DMS bar.
+Settings panel, Escape and a click outside close.
+
+Step 2 made the centre pill real: a weather icon from `Weather`, the clock
+and a battery icon from `Battery` (red when low), separated by hairlines.
+In Detail the hairlines fade out and each column gets one label, the
+temperature, the Dutch short date ("Zo 04-10") and the battery percentage,
+while the clock stays on the centre line.
 
 ### Window architecture
 
@@ -85,7 +89,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Niri.qml ... Updates.qml            data services, see "Services"
   islands/                              the three islands
     LeftIsland.qml                      placeholder pill
-    CentreIsland.qml                    pill, Detail, OSD and panel states
+    CentreIsland.qml                    weather, clock and battery pill, Detail, OSD and panel states
     RightIsland.qml                     placeholder pill, click opens Settings
   panels/                               centre panel bodies
     PlaceholderPanel.qml                stands in for a panel until its step lands
@@ -93,7 +97,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Island.qml                          island surface: colour, radius, shadow, size animation
     IslandAnimation.qml                 grow or shrink animation from the Motion tokens
     Hairline.qml                        1 x 14 px separator
-    Clock.qml                           SystemClock text in a given format
+    Clock.qml                           SystemClock text in a given format or formatter
+    Icon.qml                            Material Symbols glyph by name, placeholder without the font
 chezmoi/dot_config/systemd/user/quickshell-bar.service
 scripts/bar-switch.sh                   switches between the DMS and the own bar
 tests/bar-switch.sh                     switch script test with stubs
@@ -117,8 +122,8 @@ DMS runs matugen on every wallpaper change and writes
 `~/.cache/DankMaterialShell/dms-colors.json` with a `mode` (`dark` or
 `light`) and a Material colour set per mode. `Colors.qml` reads that file
 with a `FileView`, watches it for changes, and exposes the colours of the
-active mode (`primary`, `onPrimary`, `primaryContainer`, `surface`,
-`surfaceContainer`, `surfaceContainerHigh`, `onSurface`, `onSurfaceVariant`,
+active mode (`primary`, `primaryForeground`, `primaryContainer`, `surface`,
+`surfaceContainer`, `surfaceContainerHigh`, `foreground`, `foregroundVariant`,
 `outline`, `error`) and `dark`. Every colour falls back to a Material dark
 default when the file or the key is missing, and a missing file is retried
 every five seconds, so the bar renders on a fresh machine and picks up the
@@ -186,8 +191,12 @@ To test the window architecture spike, check on each screen:
 - Clicks and scrolling outside the three islands reach the windows and the
   desktop below, also in the 480 px strip under the bar.
 - Windows tile 36 px below the top edge, not below the tallest panel.
-- Resting the pointer on the centre pill for a moment opens Detail; the
-  clock does not move. Leaving closes it.
+- The pill shows the current weather and battery icons as glyphs, not as
+  dim squares, and the battery icon matches the charge and turns red under
+  15 %.
+- Resting the pointer on the centre pill for a moment opens Detail with the
+  temperature, the date and the percentage under the icons; the clock does
+  not move. Leaving closes it.
 - A click on the pill opens Home, a click on the right island morphs it into
   Settings. Escape closes the panel, and so does a click anywhere outside
   the islands, on any screen.
@@ -218,6 +227,13 @@ scripts/bar-switch.sh
    that directory's `qmldir`. A hand-written `qmldir` stops Quickshell from
    synthesising one, so a type that is not listed is not found.
 3. Import it by relative directory where it is used.
+   For an icon use `components/Icon.qml` with a Material Symbols ligature
+   name (`name: "battery_5_bar"`, see fonts.google.com/icons). The glyphs
+   come from the "Material Symbols Rounded" font of the
+   `ttf-material-symbols-variable` package, the set DMS embeds; `fill` and
+   `weight` drive the font's variable axes. Without the font, or with an
+   empty name, the icon draws a dim rounded square of the same size and
+   `Theme` logs one warning at start.
 4. Run `tests/quickshell-bar.sh`; it fails when a type is missing from its
    `qmldir` and on any qmllint warning other than the known
    `PanelWindow is not creatable` one.

@@ -14,7 +14,7 @@ Island {
 
         anchors.centerIn: parent
         text: "bar"
-        color: Colors.onSurface
+        color: Colors.foreground
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
         font.weight: Theme.fontWeight

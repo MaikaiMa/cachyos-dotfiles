@@ -8,7 +8,7 @@ Item {
 
     property string name: ""
     property int size: Theme.iconSize
-    property color color: Colors.onSurface
+    property color color: Colors.foreground
     property real fill: 0
     property int weight: 400
 
@@ -41,6 +41,6 @@ Item {
         anchors.fill: parent
         visible: !icon.glyphShown
         radius: icon.size / 4
-        color: Qt.alpha(Colors.onSurfaceVariant, 0.4)
+        color: Qt.alpha(Colors.foregroundVariant, 0.4)
     }
 }

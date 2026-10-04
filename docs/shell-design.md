@@ -255,7 +255,7 @@ every screen; the music dot and OSD only on the screen with the pointer.
 | Island padding | 10 px horizontal, 6 px vertical |
 | Gap between items inside an island | 8 px |
 | Hairline separator | 1 px wide, 14 px tall, `outline` at 40 % |
-| Island background | `surface` at 92 % over the blurred wallpaper (the bar requests blur behind the islands itself through `BackgroundEffect.blurRegion`; the Niri layer rule for `dotfiles-bar` only sets `xray false`) |
+| Island background | `surface_container` at 92 % over the blurred wallpaper, collapsed and expanded (the bar requests blur behind the islands itself through `BackgroundEffect.blurRegion`; the Niri layer rule for `dotfiles-bar` only sets `xray false`) |
 | Island border | none |
 | Text | Inter Variable 13 px, 500 weight; secondary text 11 px, `on_surface_variant` |
 | Icons | 16 px, `on_surface`; 18 px inside toggles |
@@ -275,7 +275,8 @@ Material keys of that file.
 | --- | --- | --- |
 | Island grows or morphs between states | 280 ms | spring-like: cubic-bezier(0.2, 0.8, 0.2, 1) |
 | Island shrinks | 220 ms | cubic-bezier(0.4, 0, 0.2, 1) |
-| Content cross-fade inside an island | 140 ms | ease-out |
+| Content cross-fade inside an island | 140 ms | ease-out; Detail labels start 60 ms after the grow starts and finish before it settles |
+| Hover rest before Detail / leave grace | 250 ms / 120 ms | the hover area never resizes with the island |
 | Workspace pill slide | 200 ms | cubic-bezier(0.2, 0.8, 0.2, 1) |
 | Indicator appears or disappears in the right island | 180 ms width + opacity | ease-out |
 | Tray fans out or folds | 200 ms spacing | cubic-bezier(0.2, 0.8, 0.2, 1) |

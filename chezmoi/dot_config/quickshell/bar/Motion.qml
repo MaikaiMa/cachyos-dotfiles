@@ -13,6 +13,8 @@ Singleton {
     readonly property var shrinkEasing: [0.4, 0, 0.2, 1]
     readonly property int crossfadeDuration: reduceMotion ? 0 : 140
     readonly property int crossfadeEasing: Easing.OutCubic
+    // Detail labels start fading in this long after the island starts growing.
+    readonly property int detailLabelDelay: reduceMotion ? 0 : 60
     readonly property int workspaceSlideDuration: reduceMotion ? 0 : 200
     readonly property int indicatorDuration: reduceMotion ? 0 : 180
     readonly property int trayDuration: reduceMotion ? 0 : 200
@@ -28,4 +30,5 @@ Singleton {
 
     // Interaction timing, not animation: reduce motion leaves it alone.
     readonly property int hoverRestDelay: 250
+    readonly property int hoverLeaveGrace: 120
 }

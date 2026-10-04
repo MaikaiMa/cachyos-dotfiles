@@ -25,7 +25,7 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: panel.name
-            color: Colors.onSurface
+            color: Colors.foreground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
             font.weight: Theme.fontWeight
@@ -34,7 +34,7 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "placeholder"
-            color: Colors.onSurfaceVariant
+            color: Colors.foregroundVariant
             font.family: Theme.fontFamily
             font.pixelSize: Theme.secondaryFontSize
         }

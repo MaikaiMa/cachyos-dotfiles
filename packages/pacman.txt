@@ -23,6 +23,7 @@ niri
 dms-shell # DankMaterialShell; 1.6.2-2 replaced the dms-shell-niri split package and pulls in quickshell
 quickshell # runs the repository-owned bar directly (ADR-0027, docs/shell.md)
 inter-font # Inter Variable for the own bar; fontconfig has no Inter without it
+ttf-material-symbols-variable # icons for the own bar, same glyph set DMS embeds
 capitaine-cursors # cursor theme in niri misc.kdl
 
 # Login: greetd with the DMS greeter (ADR-0015); acl provides setfacl for

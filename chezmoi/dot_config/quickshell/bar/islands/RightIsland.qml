@@ -21,7 +21,7 @@ Island {
         radius: width / 2
         color: "transparent"
         border.width: 2
-        border.color: Colors.onSurface
+        border.color: Colors.foreground
     }
 
     TapHandler {

@@ -14,7 +14,9 @@ Singleton {
     readonly property int islandTop: (barHeight - islandHeight) / 2
     readonly property int islandRadius: 15
     readonly property int islandRadiusExpanded: 20
+    // The DMS bar and popup transparency, over the blur behind the islands.
     readonly property real islandOpacity: 0.92
+    readonly property real panelOpacity: 0.92
     readonly property int paddingHorizontal: 10
     readonly property int paddingVertical: 6
     readonly property int gap: 8

@@ -7,7 +7,7 @@ Text {
     // Optional date => string, for text a Qt format string cannot express.
     property var formatter: null
 
-    color: Colors.onSurface
+    color: Colors.foreground
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
     font.weight: Theme.fontWeight
