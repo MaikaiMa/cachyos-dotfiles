@@ -12,16 +12,19 @@ reboot_pattern='^(linux-|mesa$|niri$|quickshell$|dms-shell|systemd$|greetd)'
 greeter_package=greetd-dms-greeter-bin
 
 usage() {
-	printf 'Usage: %s [--yes]\n' "${0##*/}"
+	printf 'Usage: %s [--yes | --pending]\n' "${0##*/}"
 	printf '%s\n' 'Run paru -Syu (with unread Arch news) and flatpak update, then list .pacnew files and packages that need a reboot.'
 	printf '%s\n' 'Asks before upgrading fragile packages when run in a terminal; --yes skips that question.'
 	printf '%s\n' 'Writes last-report.md to SYSTEM_UPDATE_STATE_DIR (default: the system-update directory under XDG_STATE_HOME).'
+	printf '%s\n' '--pending only lists pending updates, one tab-separated line each: source, name, old, new, fragile (0 or 1).'
 }
 
 assume_yes=false
+pending_only=false
 for argument in "$@"; do
 	case $argument in
 	--yes) assume_yes=true ;;
+	--pending) pending_only=true ;;
 	-h | --help)
 		usage
 		exit 0
@@ -37,11 +40,46 @@ state_dir=${SYSTEM_UPDATE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/syste
 report_file=$state_dir/last-report.md
 
 for tool in "$paru_command" "$checkupdates_command" "$pacdiff_command"; do
+	if [ "$pending_only" = true ] && [ "$tool" = "$pacdiff_command" ]; then
+		continue
+	fi
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Required command is missing: %s (pacman-contrib provides checkupdates and pacdiff)\n' "$tool" >&2
 		exit 1
 	fi
 done
+
+# Read-only: for the bar. No news check, no question, no upgrade, no report.
+# checkupdates and paru -Qua print "name old -> new" (paru may append
+# "[ignored]"); flatpak remote-ls knows only the new version, so the old one
+# comes from flatpak list.
+print_pending() {
+	{
+		"$checkupdates_command" | sed 's/^/repo /' || true
+		"$paru_command" -Qua | sed 's/^/aur /' || true
+	} | awk -v pattern="$reboot_pattern" -v greeter="$greeter_package" '$4 == "->" && NF >= 5 {
+		printf "%s\t%s\t%s\t%s\t%d\n", $1, $2, $3, $5, ($2 ~ pattern || $2 == greeter) ? 1 : 0
+	}'
+	if command -v "$flatpak_command" >/dev/null 2>&1; then
+		installed=$("$flatpak_command" list --columns=application,version || true)
+		"$flatpak_command" remote-ls --updates --columns=application,version | FLATPAK_INSTALLED=$installed awk -F '\t' '
+			BEGIN {
+				count = split(ENVIRON["FLATPAK_INSTALLED"], rows, "\n")
+				for (i = 1; i <= count; i++) {
+					split(rows[i], columns, "\t")
+					if (!(columns[1] in old)) old[columns[1]] = columns[2]
+				}
+			}
+			$1 != "" {
+				printf "flatpak\t%s\t%s\t%s\t0\n", $1, (old[$1] == "" ? "-" : old[$1]), ($2 == "" ? "-" : $2)
+			}' || true
+	fi
+}
+
+if [ "$pending_only" = true ]; then
+	print_pending
+	exit 0
+fi
 
 heading() {
 	printf '\n== %s ==\n' "$1"

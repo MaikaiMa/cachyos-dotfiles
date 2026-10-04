@@ -91,6 +91,12 @@ before it runs.
   prints during `-Syu` is not copied into the report, because the only way
   to get it a second time is a second feed fetch, which the rate limit above
   rules out. The report says so and points at the news site instead.
+- **A read-only listing for the own bar.** `system-update --pending` prints
+  one tab-separated line per pending package (`source`, `name`, old
+  version, new version, `fragile` as 0 or 1; source is `repo`, `aur` or
+  `flatpak`) and exits 0. It checks no news, asks nothing, upgrades nothing
+  and writes no report, so the bar's Updates service can run it every 30
+  minutes instead of asking DMS's updater, whose status call starts a check.
 
 ## Consequences
 

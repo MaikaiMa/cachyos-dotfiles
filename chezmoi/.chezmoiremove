@@ -13,3 +13,6 @@
 
 # Renamed to xwayland-scaled; J2D_UISCALE was overridden by Skiko.
 .local/bin/java-uiscale
+
+# Moved to components/Clock.qml in the bar window architecture spike (docs/shell.md).
+.config/quickshell/bar/Clock.qml

@@ -64,10 +64,37 @@ require_files \
 	chezmoi/dot_config/systemd/user/ollama.service \
 	chezmoi/dot_config/systemd/user/quickshell-bar.service \
 	chezmoi/dot_config/quickshell/bar/shell.qml \
-	chezmoi/dot_config/quickshell/bar/Clock.qml \
 	chezmoi/dot_config/quickshell/bar/Colors.qml \
 	chezmoi/dot_config/quickshell/bar/Theme.qml \
+	chezmoi/dot_config/quickshell/bar/Motion.qml \
 	chezmoi/dot_config/quickshell/bar/qmldir \
+	chezmoi/dot_config/quickshell/bar/services/Shell.qml \
+	chezmoi/dot_config/quickshell/bar/services/Niri.qml \
+	chezmoi/dot_config/quickshell/bar/services/Battery.qml \
+	chezmoi/dot_config/quickshell/bar/services/Audio.qml \
+	chezmoi/dot_config/quickshell/bar/services/Brightness.qml \
+	chezmoi/dot_config/quickshell/bar/services/Network.qml \
+	chezmoi/dot_config/quickshell/bar/services/Bluetooth.qml \
+	chezmoi/dot_config/quickshell/bar/services/Dms.qml \
+	chezmoi/dot_config/quickshell/bar/services/Notifications.qml \
+	chezmoi/dot_config/quickshell/bar/services/Music.qml \
+	chezmoi/dot_config/quickshell/bar/services/Cava.qml \
+	chezmoi/dot_config/quickshell/bar/services/Tray.qml \
+	chezmoi/dot_config/quickshell/bar/services/Weather.qml \
+	chezmoi/dot_config/quickshell/bar/services/System.qml \
+	chezmoi/dot_config/quickshell/bar/services/Updates.qml \
+	chezmoi/dot_config/quickshell/bar/services/qmldir \
+	chezmoi/dot_config/quickshell/bar/islands/LeftIsland.qml \
+	chezmoi/dot_config/quickshell/bar/islands/CentreIsland.qml \
+	chezmoi/dot_config/quickshell/bar/islands/RightIsland.qml \
+	chezmoi/dot_config/quickshell/bar/islands/qmldir \
+	chezmoi/dot_config/quickshell/bar/panels/PlaceholderPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/qmldir \
+	chezmoi/dot_config/quickshell/bar/components/Island.qml \
+	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \
+	chezmoi/dot_config/quickshell/bar/components/Hairline.qml \
+	chezmoi/dot_config/quickshell/bar/components/Clock.qml \
+	chezmoi/dot_config/quickshell/bar/components/qmldir \
 	chezmoi/dot_config/quickshell/bar/README.md \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \

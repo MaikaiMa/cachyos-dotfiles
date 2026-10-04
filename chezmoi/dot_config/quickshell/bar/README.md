@@ -7,15 +7,22 @@ chezmoi deploys this directory to `~/.config/quickshell/bar/`;
 [docs/shell.md](../../../../docs/shell.md).
 
 ```text
-shell.qml    entry point: one PanelWindow per screen, left / centre / right
-Clock.qml    HH:mm from SystemClock
-Colors.qml   singleton: DMS palette from dms-colors.json, with dark fallbacks
-Theme.qml    singleton: font, font size, radius, spacing, bar height
-qmldir       registers the singletons and components of this directory
+shell.qml        entry point: per screen the bar window (islands, mask, blur,
+                 keyboard focus) and the click catcher while a panel is open
+Colors.qml       singleton: DMS palette from dms-colors.json, with dark fallbacks
+Theme.qml        singleton: bar, island and panel sizes, radii, fonts
+Motion.qml       singleton: durations and curves, reduce motion
+qmldir           registers the token singletons
+services/        singletons that own state or data; Shell.qml is the centre island state machine
+islands/         LeftIsland, CentreIsland, RightIsland
+panels/          centre panel bodies; PlaceholderPanel until the real ones land
+components/      Island surface and its animation, Hairline, Clock
 ```
 
+Every directory with types has its own `qmldir` that lists all of them.
+
 Run the deployed copy by hand, after stopping the service (otherwise two bars
-are drawn):
+are drawn); docs/shell.md lists what to check:
 
 ```fish
 systemctl --user stop quickshell-bar.service

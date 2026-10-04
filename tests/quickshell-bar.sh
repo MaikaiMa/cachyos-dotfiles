@@ -24,15 +24,30 @@ command -v "$qmllint_command" >/dev/null 2>&1 || {
 	exit 1
 }
 
-for name in Colors Theme Clock; do
-	grep -Eq "(^| )$name 1.0 $name.qml\$" "$bar_dir/qmldir" || {
-		printf 'quickshell-bar: %s.qml is missing from qmldir\n' "$name" >&2
+# A hand-written qmldir switches off the one Quickshell would generate, so every
+# type in a directory must be listed in that directory's qmldir.
+qml_files=$(find "$bar_dir" -name '*.qml' -type f | sort)
+[ -n "$qml_files" ] || {
+	printf 'quickshell-bar: no QML files under %s\n' "$bar_dir" >&2
+	exit 1
+}
+for file in $qml_files; do
+	[ "$file" = "$bar_dir/shell.qml" ] && continue
+	dir=$(dirname -- "$file")
+	name=$(basename -- "$file" .qml)
+	[ -f "$dir/qmldir" ] || {
+		printf 'quickshell-bar: %s has no qmldir\n' "${dir#"$repo_root"/}" >&2
+		exit 1
+	}
+	grep -Eq "(^| )$name 1.0 $name.qml\$" "$dir/qmldir" || {
+		printf 'quickshell-bar: %s is missing from %s/qmldir\n' "$name.qml" "${dir#"$repo_root"/}" >&2
 		exit 1
 	}
 done
 
 qml_status=0
-qml_report=$(cd "$bar_dir" && "$qmllint_command" -I "$qml_import_path" -I . ./*.qml 2>&1) || qml_status=$?
+# shellcheck disable=SC2086 # the file list is newline-separated paths without spaces
+qml_report=$(cd "$bar_dir" && "$qmllint_command" -I "$qml_import_path" -I . $qml_files 2>&1) || qml_status=$?
 # PanelWindow is registered through an interface type, so qmllint warns that
 # it is not creatable; every other warning (a misspelt property) fails.
 unexpected=$(printf '%s\n' "$qml_report" | grep -E '^(Warning|Error):' | grep -v 'Type PanelWindow is not creatable' || true)

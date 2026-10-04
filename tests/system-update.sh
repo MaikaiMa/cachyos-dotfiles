@@ -39,7 +39,11 @@ printf '%s\n' \
 # shellcheck disable=SC2016
 printf '%s\n' \
 	'#!/bin/sh' \
-	'printf "%s\n" "flatpak $*" >>"$FAKE_CALLS"' >"$fake_bin/flatpak-test"
+	'printf "%s\n" "flatpak $*" >>"$FAKE_CALLS"' \
+	'case $1 in' \
+	'list) [ -z "${FAKE_FLATPAK_INSTALLED:-}" ] || printf "%s\n" "$FAKE_FLATPAK_INSTALLED" ;;' \
+	'remote-ls) [ -z "${FAKE_FLATPAK_UPDATES:-}" ] || printf "%s\n" "$FAKE_FLATPAK_UPDATES" ;;' \
+	'esac' >"$fake_bin/flatpak-test"
 # shellcheck disable=SC2016
 printf '%s\n' \
 	'#!/bin/sh' \
@@ -160,6 +164,32 @@ case $(cat "$report") in
 *"### $test_dir/etc/foo.conf.pacnew"*'```diff'*'+setting = new'*'```'*) ;;
 *) fail "A readable .pacnew must get a diff block: $(cat "$report")" ;;
 esac
+
+pending_state=$test_dir/pending-state
+output=$(
+	FAKE_REPO=$(printf '%s\n' 'linux-cachyos 7.2.8-1 -> 7.2.9-1' 'fish 4.1.0-1 -> 4.1.1-1') \
+	FAKE_AUR=$(printf '%s\n' 'greetd-dms-greeter-bin 1.6.1-1 -> 1.6.2-1' 'some-tool 1.0-1 -> 1.1-1 [ignored]') \
+	FAKE_FLATPAK_INSTALLED=$(printf 'co.hyprlab.Hylki\t1.41.0\norg.freedesktop.Platform.codecs-extra\n') \
+	FAKE_FLATPAK_UPDATES=$(printf 'co.hyprlab.Hylki\t1.42.0\norg.freedesktop.Platform.codecs-extra\n') \
+	SYSTEM_UPDATE_STATE_DIR=$pending_state \
+		run_update --pending
+) || fail '--pending must exit 0.'
+expected=$(
+	printf 'repo\tlinux-cachyos\t7.2.8-1\t7.2.9-1\t1\n'
+	printf 'repo\tfish\t4.1.0-1\t4.1.1-1\t0\n'
+	printf 'aur\tgreetd-dms-greeter-bin\t1.6.1-1\t1.6.2-1\t1\n'
+	printf 'aur\tsome-tool\t1.0-1\t1.1-1\t0\n'
+	printf 'flatpak\tco.hyprlab.Hylki\t1.41.0\t1.42.0\t0\n'
+	printf 'flatpak\torg.freedesktop.Platform.codecs-extra\t-\t-\t0\n'
+)
+[ "$output" = "$expected" ] || fail "--pending printed the wrong lines: $output"
+case $(cat "$calls") in
+*-Syu* | *'flatpak update'* | *pacdiff*) fail "--pending must not upgrade or look for .pacnew files: $(cat "$calls")" ;;
+esac
+[ ! -e "$pending_state" ] || fail '--pending must not write a report.'
+
+output=$(SYSTEM_UPDATE_STATE_DIR=$pending_state run_update --pending) || fail 'An idle --pending must exit 0.'
+[ -z "$output" ] || fail "An idle --pending must print nothing: $output"
 
 run_update --help >/dev/null || fail '--help must succeed.'
 if run_update --bogus >/dev/null 2>&1; then

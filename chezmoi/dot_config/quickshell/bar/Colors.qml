@@ -21,6 +21,7 @@ Singleton {
     readonly property color onSurfaceVariant: pick("on_surface_variant", "#cac4d0")
     readonly property color outline: pick("outline", "#938f99")
     readonly property color error: pick("error", "#f2b8b5")
+    readonly property color shadow: pick("shadow", "#000000")
 
     function pick(key: string, fallback: string): string {
         const value = scheme.colors ? scheme.colors[key] : undefined;

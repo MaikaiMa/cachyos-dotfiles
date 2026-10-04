@@ -84,6 +84,15 @@ layer-rule {
     }
 }
 
+// The own Quickshell bar (docs/shell.md) requests blur behind its islands
+// itself, like DMS; a blur set here would cover the whole tall bar window.
+layer-rule {
+    match namespace="^dotfiles-bar"
+    background-effect {
+        xray false
+    }
+}
+
 // Vicinae requests its own blur; like the DMS surfaces it blurs the windows
 // behind it, not only the wallpaper.
 layer-rule {

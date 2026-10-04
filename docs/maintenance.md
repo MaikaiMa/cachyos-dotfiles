@@ -96,6 +96,9 @@ the helper runs in a terminal, it asks `Continue with the upgrade? [Y/n]` once;
 Enter continues, anything else cancels before anything is installed.
 `system-update --yes` skips the question, and so does running the helper
 without a terminal. On a normal day the list is empty and nothing is asked.
+The own Quickshell bar reads the pending packages through
+`system-update --pending`, which only prints one tab-separated line per
+package (source, name, old and new version, fragile) and changes nothing.
 
 paru then prints unread Arch news (`NewsOnUpgrade`), and the helper upgrades
 the repositories, the AUR, and Flatpak, and reports what a plain upgrade leaves

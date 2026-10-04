@@ -93,7 +93,7 @@ elsewhere (no music, no calendar, no user block).
 | Tile | Content |
 | --- | --- |
 | Time | Large `HH:mm` stacked, date `zo 04 okt` under it, the whole group centred horizontally and vertically in the tile. |
-| Weather | Current: icon, temperature, condition, feels-like, place. Under it an Hourly / Daily segmented control, Hourly selected by default, and a single row of compact cards: hour or day, icon, temperature or high/low. Only human-readable values; no humidity, pressure or visibility. Lower than the DMS weather tab. |
+| Weather | Current: icon, temperature, condition, feels-like, place (Open-Meteo, auto location). Under it an Hourly / Daily segmented control, Hourly selected by default, and a single row of compact cards: hour or day, icon, temperature or high/low. Only human-readable values; no humidity, pressure or visibility. Lower than the DMS weather tab. |
 | Performance | Three thin vertical bars with icons: CPU load, CPU temperature, memory. |
 | Power | Top row: battery icon, large percentage, state ("Discharging", "Fully charged"). Below it a full-width charge capsule in the Settings slider language, filled to the percentage, `primary`, `error` under 15 %, read-only. Then one row of small labelled values: time remaining or time to full, Health, Capacity. Bottom: the power profile as a three-segment control (Power Saver, Balanced, Performance). |
 
@@ -255,7 +255,7 @@ every screen; the music dot and OSD only on the screen with the pointer.
 | Island padding | 10 px horizontal, 6 px vertical |
 | Gap between items inside an island | 8 px |
 | Hairline separator | 1 px wide, 14 px tall, `outline` at 40 % |
-| Island background | `surface` at 92 % over the blurred wallpaper (Niri blur applies to the layer namespace `dotfiles-bar`) |
+| Island background | `surface` at 92 % over the blurred wallpaper (the bar requests blur behind the islands itself through `BackgroundEffect.blurRegion`; the Niri layer rule for `dotfiles-bar` only sets `xray false`) |
 | Island border | none |
 | Text | Inter Variable 13 px, 500 weight; secondary text 11 px, `on_surface_variant` |
 | Icons | 16 px, `on_surface`; 18 px inside toggles |
