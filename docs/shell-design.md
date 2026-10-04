@@ -39,8 +39,10 @@ islands' geometry.
 - Collapsed: one island. Workspace pills as today (compact, the active one
   filled with `primary`, a pill turns `error` when a window on that
   workspace has a notification waiting), then a small `>` separator, then
-  the icons of the apps on the current workspace. The separator and the
-  icons disappear when the workspace has no windows.
+  the icons of the apps on the current workspace. The focused window's
+  icon is at full opacity with a 4 px `primary` dot centred under it; the
+  other icons sit at 50 % opacity, so the active app reads at a glance.
+  The separator and the icons disappear when the workspace has no windows.
 - Click a pill: focus that workspace. Click an app icon: focus that window.
   Long press on either: Niri overview, as today. Scroll over the island:
   previous or next workspace.
@@ -191,8 +193,13 @@ attention indicators on the right. The island is read from its right
 edge inward, so everything grows and orders leftward. Nothing in it
 grows downward on hover.
 
-**Attention group** (approved 2026-10-04). Fixed order from the far right inward:
-notifications, updates, Wi-Fi, muted, do not disturb, caffeine. Each
+**Attention group** (approved 2026-10-04, do-not-disturb merged into the
+bell 2026-10-04 evening). Fixed order from the far right inward:
+notifications, updates, Wi-Fi, muted, caffeine. There is no separate
+do-not-disturb indicator: the bell shows `notifications_off` while do not
+disturb is on, with the count when there are unread notifications and
+without it when there are none, and it stays visible in that state even
+with zero unread. Each
 indicator is one 16 px icon plus a count where it matters; its state is
 in the glyph itself (signal strength, struck speaker, moon, cup) and in
 the tint (updates turn `error` when a fragile package is pending). No
@@ -205,11 +212,10 @@ tints that pill, nothing moves or grows. Every indicator has one click:
 
 | Indicator | Shown when | Click |
 | --- | --- | --- |
-| Notifications (bell + count), far right | unread exist | Settings panel scrolled to the list; middle click clears all |
+| Notifications (bell + count, crossed bell while do not disturb is on), far right | unread exist, or do not disturb is on | Settings panel scrolled to the list; middle click clears all; right click toggles do not disturb |
 | Updates (arrow + count) | packages pending | Updates panel |
 | Wi-Fi | off or weak | Settings panel |
 | Muted | output muted | unmute; scroll on it changes the volume |
-| Do not disturb | on | turns it off |
 | Caffeine | idle inhibit on | turns it off |
 
 **Tray group.** Collapsed to one stack at the left end of the island,
@@ -226,10 +232,14 @@ in, and the chevron glides to the far left and rotates to point right.
 Nothing scales. Folding reverses it. Click on an icon
 activates the app; right click opens its DBus menu as the island growing
 down into a short list. The menu is not anchored to the clicked disc: it
-always hangs from the island's left padding, items left-aligned, 160 px
-wide, and the island widens leftward only as far as the menu needs; the
-geometry is the same whichever disc was clicked, so no dead space
-appears. The group is absent when no tray items exist.
+always hangs from the island's left padding, items left-aligned, at
+least 160 px and at most 280 px wide (the widest entry decides, measured
+once when the menu opens), and the island widens leftward only as far as
+the menu needs; the geometry is the same whichever disc was clicked, so
+no dead space appears. Rows are at least 32 px and grow with their text:
+multi-line entries (some apps put status text in their menus) wrap to at
+most three lines and never overlap the next row; disabled entries are
+dimmed. The group is absent when no tray items exist.
 
 Stacking order: an open centre panel is always drawn above the right
 island, including a fanned tray; the right island never overlaps a panel.
@@ -298,8 +308,5 @@ durations to 0.
 - Theme state: confirm that setting `matugenScheme` through
   `dms ipc call settings set` re-renders the palette without a restart.
 - Whether the left island needs an expanded state (window titles) later.
-- `system-update --pending` (one line per package: source, name, old and
-  new version, fragile flag) still has to be added to the helper with a
-  test; ADR-0025 gets a note when it lands.
 - Niri struts in `layout.kdl` are tuned to the DMS bar and may need a pixel
   change for the 36 px bar.

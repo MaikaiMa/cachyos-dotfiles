@@ -36,8 +36,39 @@ Singleton {
     readonly property int shadowBlur: 24
     readonly property real shadowOpacity: 0.35
 
+    // Left island: dots in 3 px padded slots; the active one is wider and filled.
+    readonly property int workspaceDot: 8
+    readonly property int workspaceActiveDot: 22
+    readonly property int workspaceDotPadding: 3
+    readonly property int workspaceSeparatorSize: 12
+    // Under the focused app icon, this far below it.
+    readonly property int focusDot: 4
+    readonly property int focusDotGap: 2
+    // Right island: tray discs and attention pills.
+    readonly property int trayDisc: 24
+    readonly property int trayOverlap: 10
+    readonly property int trayGap: 4
+    readonly property int trayStack: 2
+    readonly property int trayChevronSize: 10
+    // The widest entry sets the menu width, within these bounds.
+    readonly property int trayMenuWidth: 160
+    readonly property int trayMenuMaxWidth: 280
+    readonly property int trayMenuMaxLines: 3
+    // Vertical padding of a row, both sides together.
+    readonly property int trayMenuRowPadding: 8
+    readonly property int trayMenuRowHeight: 32
+    readonly property int trayMenuSeparatorHeight: 9
+    readonly property int trayMenuInset: 6
+    readonly property int trayMenuSubmenuIndent: 12
+    readonly property int indicatorPill: 24
+    readonly property int indicatorGap: 2
+    readonly property int indicatorCountGap: 4
+    readonly property int indicatorCountFontSize: 12
+    // Keeps an end pill's 12 px corner concentric with the island's 15 px corner.
+    readonly property int rightEndInset: 3
+
     readonly property int powerButtonSize: 72
-    // Updates has no width in the contract yet; it borrows the Settings width.
+    // Updates is 420 px in the prototype; the contract table does not list it.
     readonly property var panelWidths: ({
             home: 560,
             settings: 420,
@@ -102,6 +133,21 @@ Singleton {
     readonly property int homeTopRowHeight: 2 * homeTilePadding + weatherNowHeight + 2 * homeSectionGap + segmentedHeight + weatherCardHeight
     readonly property int homeBottomRowHeight: 2 * homeTilePadding + powerHeadHeight + 3 * homeSectionGap + chargeCapsuleHeight + powerStatsHeight + segmentedHeight
     readonly property int homeHeight: 2 * panelPadding + homeTopRowHeight + tileGap + homeBottomRowHeight
+
+    // Updates: count line, fragile rows, a scrolling list and three buttons.
+    readonly property int updatesHeadHeight: 20
+    readonly property int updatesSectionGap: 8
+    readonly property int updatesRowHeight: 32
+    readonly property int updatesRowGap: 2
+    readonly property int updatesFragileRowHeight: 48
+    readonly property int updatesFragileRowGap: 6
+    readonly property int updatesListMaxHeight: 280
+    readonly property int updatesChipWidth: 50
+    readonly property int updatesChipHeight: 18
+    readonly property int updatesChipFontSize: 10
+    readonly property int updatesRowRadius: 12
+    readonly property int updatesActionsGap: 12
+    readonly property int updatesButtonHeight: 36
 
     // Placeholder bodies until the real panels set their own height.
     readonly property int placeholderPanelHeight: 240

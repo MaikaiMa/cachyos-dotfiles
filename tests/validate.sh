@@ -91,6 +91,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/panels/PlaceholderPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/SettingsPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/HomePanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/UpdatesPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
 	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \

@@ -22,6 +22,42 @@ Singleton {
     readonly property var items: history.filter(item => item.timestamp > clearedBefore && !dismissedIds.includes(item.id))
     readonly property int count: items.length
 
+    // Name keys of the apps with a notification younger than recentWindow, for the
+    // workspace pills; `now` ticks so entries age out without a new notification.
+    readonly property real recentWindow: 10 * 60 * 1000
+    property real now: Date.now()
+    readonly property var recentAppKeys: {
+        const keys = new Set();
+        for (const item of items) {
+            if (item.timestamp < now - recentWindow)
+                continue;
+            for (const key of appKeys(item.appName).concat(appKeys(item.desktopEntry)))
+                keys.add(key);
+        }
+        return keys;
+    }
+
+    // Ported from the DMS plugins' NotificationMatcher: notifications name an app
+    // ("Claude", "com.anthropic.Claude.desktop") and windows an app_id
+    // ("com.anthropic.Claude"), so both reduce to the whole name and its last
+    // dotted part, lower case, letters and digits only.
+    function appKeys(value: string): var {
+        let name = value.toLowerCase().trim();
+        if (name.endsWith(".desktop"))
+            name = name.slice(0, -8);
+        const full = name.replace(/[^a-z0-9]/g, "");
+        const tail = name.slice(name.lastIndexOf(".") + 1).replace(/[^a-z0-9]/g, "");
+        const keys = full ? [full] : [];
+        if (tail && tail !== full)
+            keys.push(tail);
+        return keys;
+    }
+
+    function hasRecentFor(appId: string): bool {
+        const keys = recentAppKeys;
+        return appKeys(appId).some(key => keys.has(key));
+    }
+
     function dismiss(id: string) {
         if (dismissedIds.includes(id))
             return;
@@ -96,6 +132,13 @@ Singleton {
             root.history = [];
             retry.restart();
         }
+    }
+
+    Timer {
+        interval: 30000
+        repeat: true
+        running: true
+        onTriggered: root.now = Date.now()
     }
 
     Timer {

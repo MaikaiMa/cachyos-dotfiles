@@ -99,6 +99,10 @@ without a terminal. On a normal day the list is empty and nothing is asked.
 The own Quickshell bar reads the pending packages through
 `system-update --pending`, which only prints one tab-separated line per
 package (source, name, old and new version, fragile) and changes nothing.
+Its Updates panel runs the full helper with "Update all" in DMS's terminal
+(`terminalOverride`, else `xdg-terminal-exec`, else `ghostty -e`), which
+waits for Enter at the end like DMS's own updater; see
+[shell.md](shell.md#what-is-built).
 
 paru then prints unread Arch news (`NewsOnUpgrade`), and the helper upgrades
 the repositories, the AUR, and Flatpak, and reports what a plain upgrade leaves

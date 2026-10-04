@@ -11,6 +11,9 @@ Singleton {
     id: root
 
     readonly property string helper: Quickshell.env("HOME") + "/.local/bin/system-update"
+    readonly property string reportPath: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/system-update/last-report.md"
+    property bool reportAvailable: false
+    readonly property bool upgrading: upgrade.running
 
     // Fragile first: {source (repo, aur, flatpak), name, oldVersion, newVersion, fragile}.
     property var items: []
@@ -25,6 +28,27 @@ Singleton {
 
     function refresh() {
         pending.running = true;
+        report.reload();
+    }
+
+    function quoted(text: string): string {
+        return "'" + text.replace(/'/g, "'\\''") + "'";
+    }
+
+    // Runs the full helper with its fragile prompt in a terminal: DMS's
+    // terminalOverride, else xdg-terminal-exec, else Ghostty. Like DMS's own
+    // updater the window waits for Enter, so the summary stays readable.
+    // Checks again once the terminal is closed.
+    function upgradeAll() {
+        if (upgrade.running)
+            return;
+        const script = root.quoted(root.helper) + "; printf '\\nPress Enter to close. '; read -r _";
+        upgrade.command = ["sh", "-c", "if [ -n \"$1\" ]; then exec \"$1\" -e sh -c \"$2\"; elif command -v xdg-terminal-exec >/dev/null 2>&1; then exec xdg-terminal-exec sh -c \"$2\"; else exec ghostty -e sh -c \"$2\"; fi", "sh", Dms.terminal, script];
+        upgrade.running = true;
+    }
+
+    function openReport() {
+        Quickshell.execDetached(["xdg-open", reportPath]);
     }
 
     // One line per package: source<TAB>name<TAB>old<TAB>new<TAB>fragile (0 or 1).
@@ -62,6 +86,26 @@ Singleton {
             ready = true;
         } else {
             console.warn("Updates: system-update --pending exited with " + exitCode);
+        }
+    }
+
+    FileView {
+        id: report
+
+        path: root.reportPath
+        printErrors: false
+        onLoaded: root.reportAvailable = true
+        onLoadFailed: root.reportAvailable = false
+    }
+
+    Process {
+        id: upgrade
+
+        // QProcess::ExitStatus is not exposed to qmllint.
+        onExited: code => { // qmllint disable signal-handler-parameters
+            if (code !== 0)
+                console.warn("Updates: the update terminal exited with " + code);
+            root.refresh();
         }
     }
 

@@ -17,7 +17,10 @@ Singleton {
     readonly property int detailLabelDelay: reduceMotion ? 0 : 60
     readonly property int workspaceSlideDuration: reduceMotion ? 0 : 200
     readonly property int indicatorDuration: reduceMotion ? 0 : 180
+    // CSS ease-out.
+    readonly property var indicatorEasing: [0, 0, 0.58, 1]
     readonly property int trayDuration: reduceMotion ? 0 : 200
+    readonly property int refreshSpinDuration: reduceMotion ? 0 : 600
     readonly property int osdInDuration: reduceMotion ? 0 : 160
     readonly property int osdOutDuration: reduceMotion ? 0 : 240
     readonly property int musicContentDelay: reduceMotion ? 0 : 120
@@ -27,8 +30,10 @@ Singleton {
     // Easing.BezierSpline wants the end point (1, 1) after the CSS control points.
     readonly property var growCurve: growEasing.concat([1, 1])
     readonly property var shrinkCurve: shrinkEasing.concat([1, 1])
+    readonly property var indicatorCurve: indicatorEasing.concat([1, 1])
 
     // Interaction timing, not animation: reduce motion leaves it alone.
     readonly property int hoverRestDelay: 250
     readonly property int hoverLeaveGrace: 120
+    readonly property int longPressInterval: 500
 }

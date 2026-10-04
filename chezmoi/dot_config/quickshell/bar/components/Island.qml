@@ -16,6 +16,10 @@ Rectangle {
     property real targetOpacity: Theme.islandOpacity
     // Free for the owner: content that moves with the island reads blend.
     property real targetBlend: 0
+    // An owner whose change has its own Motion token (a workspace slide, a tray
+    // fan) sets these before changing a target; -1 and [] keep grow and shrink.
+    property int morphDuration: -1
+    property var morphCurve: []
 
     readonly property real targetRadius: expanded ? Theme.islandRadiusExpanded : Theme.islandRadius
     readonly property real targetShadow: expanded ? 1 : 0
@@ -100,6 +104,8 @@ Rectangle {
     IslandAnimation {
         id: morph
 
+        duration: island.morphDuration >= 0 ? island.morphDuration : shrinking ? Motion.shrinkDuration : Motion.growDuration
+        easing.bezierCurve: island.morphCurve.length > 0 ? island.morphCurve : shrinking ? Motion.shrinkCurve : Motion.growCurve
         target: island
         property: "progress"
         from: 0

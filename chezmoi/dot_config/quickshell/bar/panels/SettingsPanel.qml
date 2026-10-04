@@ -37,6 +37,12 @@ Item {
         }
     }
 
+    // The notifications indicator opens Settings for the list: newest first, on top.
+    onShownChanged: {
+        if (shown)
+            list.positionViewAtBeginning();
+    }
+
     function spanWidth(cells: int): real {
         return cells * cellWidth + (cells - 1) * Theme.tileGap;
     }

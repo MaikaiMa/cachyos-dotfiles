@@ -19,12 +19,12 @@ records this as an amendment.
 
 ## What is built
 
-Steps 0 to 4 of the build (see "Phases"). Every screen gets one tall,
-transparent layer-shell window with three islands: a placeholder "bar" on
-the left, the centre island, and a placeholder ring on the right. The centre
-island runs the real state machine and morphs: hover rests open Detail, a
-click opens the Home panel, the right island opens the Settings panel,
-Escape and a click outside close.
+Steps 0 to 5 of the build (see "Phases"). Every screen gets one tall,
+transparent layer-shell window with three islands: workspaces and apps on
+the left, the centre island, and the tray and attention indicators on the
+right. The centre island runs the real state machine and morphs: hover
+rests open Detail, a click opens the Home panel, the right island opens the
+Settings and Updates panels, Escape and a click outside close.
 
 Step 2 made the centre pill real: a weather icon from `Weather`, the clock
 and a battery icon from `Battery` (red when low), separated by hairlines.
@@ -52,6 +52,67 @@ the two segmented controls, Left and Right change the focused one. With
 Home the own bar covers the DMS dashboard as well as the control center;
 music, calendar and the user block are left out on purpose, they get their
 own panels.
+
+Step 5 made the side islands and the Updates panel real.
+
+- **Left island.** One dot per workspace of the island's own screen:
+  `shell.qml` passes the screen name and the island filters
+  `Niri.workspaces` by `output`, because `Niri.focusedOutput` names only
+  the one focused output. Dots are 8 px in 3 px padded slots; the active
+  one is 22 px and a separate `primary` pill slides over the row to it in
+  200 ms. A dot turns `error` when a window on that workspace is urgent or
+  belongs to an app with a notification younger than ten minutes
+  (`Notifications.hasRecentFor(appId)`, the name matching of the DMS
+  plugins' `NotificationMatcher`); the active pill turns `error` then. A
+  `chevron_right` separator and 16 px icons (`Niri.iconFor`) follow for the
+  windows of the active workspace: the active window at full opacity with
+  a 4 px `primary` dot 2 px under it that slides to the next icon on a
+  focus change (200 ms), the others at 0.5. Two icon rows take turns, so a
+  switch cross-fades them. Click focuses the workspace or window, a 500 ms long press toggles
+  the overview, the wheel steps through the workspaces with the
+  accumulator of DMS's switcher. The island animates its width in the
+  workspace slide timing.
+- **Right island.** Tray group, hairline, then caffeine, muted, Wi-Fi,
+  updates and notifications, each a 24 px pill hit area
+  that appears and disappears with a 180 ms width and opacity change; the
+  outer pills sit 3 px inside the island edge. The hairline is only drawn
+  when both the tray and an indicator are there. The tray folds to the
+  first two icons on overlapping 24 px discs with a chevron; hover, a tap
+  on the chevron or a tap on the folded stack fans it out to the left at a
+  28 px pitch with the rightmost disc fixed, and leaving or a tap elsewhere
+  on the island folds it. A click on a fanned disc activates the item; a
+  right click grows the island down into the item's DBus menu, hanging
+  from the island's left padding, submenus flattened one level under a
+  header. The menu is as wide as its widest entry on one line, 160 to
+  280 px, measured when it opens and when its entries arrive, not when an
+  entry's text changes. Rows are at least 32 px and otherwise their text
+  plus 8 px: multi-line entries (Hylki puts its status text in its menu)
+  wrap to at most three lines and elide after that; disabled entries are
+  at half opacity. While that menu is open the window takes the keyboard and the
+  full mask like a panel, so Escape or a press anywhere on that screen
+  closes it, and so does opening a centre panel. The island's size change
+  uses the token of what caused it: indicator, tray fan, or the island
+  grow and shrink for the menu (`Island.morphDuration`, `morphCurve`).
+  Do not disturb has no indicator of its own: the bell shows
+  `notifications_off` while it is on, with the count when there are
+  unread notifications, and stays visible with none. Clicks: the bell
+  opens Settings with its list scrolled to the top (middle click clears
+  all, right click toggles do not disturb), updates toggles the Updates
+  panel, Wi-Fi (shown when off or weak) opens Settings, muted unmutes and
+  its wheel changes the volume, caffeine turns itself off; a click on the
+  background opens Settings. The do not disturb tile stays in Settings.
+- **Updates panel**, 420 px: "48 updates · checked 3 min ago", the fragile
+  packages first in `error` with a reason (kernel, shell, greeter, else a
+  reboot), then the rest with a source chip and `old → new` in a list that
+  scrolls inside 280 px, then Update all, Refresh (its icon spins while
+  checking) and Report (disabled until
+  `~/.local/state/system-update/last-report.md` exists, opened with
+  `xdg-open`). Update all closes the panel and runs `system-update` in a
+  terminal: DMS's `terminalOverride` session key (Ghostty here, so the same
+  terminal DMS's own updater used), else `xdg-terminal-exec`, else
+  `ghostty -e`. Like DMS's updater the window waits for Enter at the end,
+  so the summary stays readable, and the list is checked again once the
+  terminal closes.
 
 ### Window architecture
 
@@ -119,12 +180,13 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Shell.qml                           centre island state machine and IPC target `bar`
     Niri.qml ... Updates.qml            data services, see "Services"
   islands/                              the three islands
-    LeftIsland.qml                      placeholder pill
+    LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
     CentreIsland.qml                    weather, clock and battery pill, Detail, OSD and panel states
-    RightIsland.qml                     placeholder pill, click opens Settings
+    RightIsland.qml                     tray stack, fan and menu, attention indicators
   panels/                               centre panel bodies
     HomePanel.qml                       Time, Weather, Performance and Power tiles
     SettingsPanel.qml                   toggle grid, three sliders, notification list
+    UpdatesPanel.qml                    pending packages, Update all, Refresh, Report
     PlaceholderPanel.qml                stands in for a panel until its step lands
   components/                           shared pieces
     Island.qml                          island surface: colour, radius, shadow, size animation
@@ -366,14 +428,17 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
 - `Bluetooth`: `btEnabled`, `connectedDevices`, `available`;
   `toggleBluetooth()`.
 - `Dms`: `nightLight`, `doNotDisturb`, `caffeine`, `themeMode`, polled every
-  10 s and after each call; `toggleNightLight()`, `toggleDoNotDisturb()`,
+  10 s and after each call, and `terminal` (DMS's `terminalOverride` from
+  its `session.json`, watched); `toggleNightLight()`, `toggleDoNotDisturb()`,
   `toggleCaffeine()`, `setLight()`, `setDark()`, `openSettingsWindow()`,
   `openSettingsTab(tab)` (a tab id from `dms ipc call settings tabs`),
   `setScheme(name)` (whether DMS re-renders the colours is to be verified),
   `refresh()`.
 - `Notifications`: `items` (newest first: `id`, `appName`, `summary`,
   `body`, `timestamp` in ms, `appIcon`, `image`, `urgency`,
-  `desktopEntry`), `count`; `dismiss(id)`, `clearAll()`. A missing or
+  `desktopEntry`), `count`, `recentAppKeys` (name keys of the apps with a
+  notification from the last ten minutes); `dismiss(id)`, `clearAll()`,
+  `appKeys(name)`, `hasRecentFor(appId)`. A missing or
   malformed history file is an empty list. Dismissals live in
   `$XDG_STATE_HOME/dotfiles-bar/notifications.json`; `clearAll()` also
   clears DMS's active notifications through `dms ipc`.
@@ -403,8 +468,10 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   every 2 s only while `active` is true.
 - `Updates`: `items` (fragile first: `source`, `name`, `oldVersion`,
   `newVersion`, `fragile`), `count`, `fragileCount`, `checking`, `ready`,
-  `lastChecked`; `refresh()`. Runs `~/.local/bin/system-update --pending`
-  every 30 minutes.
+  `lastChecked`, `upgrading`, `reportPath`, `reportAvailable`; `refresh()`,
+  `upgradeAll()` (the full helper in a terminal, see step 5 above),
+  `openReport()`. Runs `~/.local/bin/system-update --pending` every 30
+  minutes, on `refresh()` and after the update terminal closes.
 
 The services are linted with the rest of the bar:
 
@@ -428,7 +495,7 @@ the approach come first, the things that are only work come last.
 | 2 | Centre pill with Detail: clock, weather icon, battery (UPower). | First visible value, exercises the state machine. |
 | 3 | Settings panel: toggles, three capsule sliders (Pipewire, brightness), notifications list. | With 2 and 3 the own bar covers the DMS control center. |
 | 4 | Home panel (built 2026-10-04; the optional Network and Next event row is not). | With 4 the DMS dashboard is covered; the own bar becomes the daily bar and DMS drops to fallback. |
-| 5 | Left island (Niri), right island (tray, indicators), Updates panel plus `system-update --pending`. | Replaces the remaining DMS bar plugins. |
+| 5 | Left island (Niri), right island (tray, indicators), Updates panel plus `system-update --pending` (built 2026-10-04). It takes over the function of the DMS plugins `dotfilesWorkspaces`, `dotfilesApps`, `dotfilesLauncher`, `dotfilesKeyboard` and `dotfilesDashboard`; they stay in the repository while DMS is the fallback bar and are deleted when the user switches bars for good. | Replaces the remaining DMS bar plugins. |
 | 6 | Music: orb, music bar, Player, top-edge wave (Mpris, cava). | Highest render cost, least risk to daily use. |
 | 7 | Theme, Wallpaper, Power, OSD; hide toggle; shortcuts moved. | Mostly plumbing to `dms ipc`. |
 

@@ -16,6 +16,8 @@ Singleton {
     property bool caffeine: false
     // dark or light.
     property string themeMode: "dark"
+    // DMS's terminalOverride session key (ghostty here); empty when unset.
+    property string terminal: ""
 
     function refresh() {
         nightStatus.running = true;
@@ -96,6 +98,21 @@ Singleton {
                     console.warn("Dms: " + ipcCall.command.join(" ") + " exited with " + code);
                 afterCall.restart();
                 ipcCall.destroy();
+            }
+        }
+    }
+
+    FileView {
+        path: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/DankMaterialShell/session.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                const override = JSON.parse(text()).terminalOverride;
+                root.terminal = typeof override === "string" ? override.trim() : "";
+            } catch (error) {
+                console.warn("Dms: cannot parse session.json: " + error);
             }
         }
     }

@@ -14,8 +14,10 @@ Theme.qml        singleton: bar, island and panel sizes, radii, fonts
 Motion.qml       singleton: durations and curves, reduce motion
 qmldir           registers the token singletons
 services/        singletons that own state or data; Shell.qml is the centre island state machine
-islands/         LeftIsland, CentreIsland (weather, clock, battery, Detail), RightIsland
-panels/          centre panel bodies: HomePanel, SettingsPanel; PlaceholderPanel until the others land
+islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, battery,
+                 Detail), RightIsland (tray, attention indicators)
+panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel;
+                 PlaceholderPanel until the others land
 components/      Island surface and its animation, Hairline, Clock, Icon (Material Symbols),
                  WeatherIcon, BatteryIcon, SegmentedControl; Tile, CapsuleSlider and
                  NotificationRow for Settings; TimeTile, WeatherTile, PerformanceTile and

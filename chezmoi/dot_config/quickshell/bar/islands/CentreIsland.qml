@@ -118,7 +118,7 @@ Island {
     }
 
     targetWidth: panelOpen ? Theme.panelWidths[centreState] : centreState === "musicbar" ? Theme.musicBarWidth : osd ? Theme.osdWidth : detail ? detailWidth : pillWidth
-    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : centreState === "home" ? homePanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
+    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : centreState === "home" ? homePanel.implicitHeight : centreState === "updates" ? updatesPanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
     targetOpacity: panelOpen ? Theme.panelOpacity : Theme.islandOpacity
     targetBlend: detail ? 1 : 0
     expanded: panelOpen || detail
@@ -281,8 +281,17 @@ Island {
         shown: island.centreState === "settings"
     }
 
+    UpdatesPanel {
+        id: updatesPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "updates"
+    }
+
     Repeater {
-        model: Shell.panelStates.filter(state => state !== "home" && state !== "settings").concat(["musicbar"])
+        model: Shell.panelStates.filter(state => !["home", "settings", "updates"].includes(state)).concat(["musicbar"])
 
         PlaceholderPanel {
             required property string modelData

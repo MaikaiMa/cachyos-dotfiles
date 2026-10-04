@@ -39,8 +39,10 @@ ShellRoot {
                 WlrLayershell.namespace: "dotfiles-bar"
                 // Exclusive, not OnDemand: panels also open from shortcuts without a
                 // click, and Niri only hands on-demand focus to a layer on a click.
-                WlrLayershell.keyboardFocus: screenScope.panelOpenHere ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-                mask: Shell.panelOpen ? fullRegion : islandRegion
+                // A tray menu is handled like a panel on its own screen: Escape and
+                // a press outside close it.
+                WlrLayershell.keyboardFocus: screenScope.panelOpenHere || right.menuOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+                mask: Shell.panelOpen || right.menuOpen ? fullRegion : islandRegion
                 // The blur type lives in Quickshell core, which the BackgroundEffect
                 // type info does not declare, so qmllint cannot resolve it.
                 BackgroundEffect.blurRegion: islandRegion // qmllint disable missing-type
@@ -83,7 +85,10 @@ ShellRoot {
 
                     anchors.fill: parent
                     focus: true
-                    Keys.onEscapePressed: Shell.close()
+                    Keys.onEscapePressed: {
+                        right.closeMenu();
+                        Shell.close();
+                    }
 
                     // Every state change hands the keys back here: a panel opens with
                     // nothing focused, and a control focused with Tab in a closed panel
@@ -100,14 +105,18 @@ ShellRoot {
                     // panel guard keeps presses inside an open panel from reaching it.
                     MouseArea {
                         anchors.fill: parent
-                        enabled: Shell.panelOpen
+                        enabled: Shell.panelOpen || right.menuOpen
                         acceptedButtons: Qt.AllButtons
-                        onPressed: Shell.close()
+                        onPressed: {
+                            right.closeMenu();
+                            Shell.close();
+                        }
                     }
 
                     LeftIsland {
                         id: left
 
+                        screenName: screenScope.modelData.name
                         x: Theme.gap
                         y: Theme.islandTop
                     }
