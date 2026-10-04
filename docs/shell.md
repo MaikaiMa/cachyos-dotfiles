@@ -6,6 +6,17 @@ DMS stays the service layer: notifications, OSD, control center, lock screen,
 polkit, theming. This page is the index for the own bar; [dms.md](dms.md)
 keeps describing DMS.
 
+## Known limitation while DMS panels are still in use
+
+Switching to the own bar disables the DMS bar window, and the DMS
+dashboard, control center and settings panel are anchored to that window:
+they do not open while the own bar is active, even though the shortcuts
+still fire. Whether notifications, OSD, lock and the standalone settings
+window are unaffected still has to be confirmed on the machine. DMS stays
+the daily bar until the own bar is good enough: `scripts/bar-switch.sh own`
+tries the bar, `scripts/bar-switch.sh dms` goes back to work. ADR-0027
+records this as an amendment.
+
 ## What the scaffold is
 
 The current state is the bar scaffold: a 36 px layer-shell panel on every

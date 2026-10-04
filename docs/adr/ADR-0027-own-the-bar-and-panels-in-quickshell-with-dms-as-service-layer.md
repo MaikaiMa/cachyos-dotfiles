@@ -101,6 +101,17 @@ new one matures.
 
 ## Consequences
 
+- *Amended 2026-10-04 after the first live switch:* DMS popouts (dashboard,
+  control center, settings panel) are anchored to the DMS bar window and
+  do not open while `barConfigs[].enabled` is false. Decision 2's "the
+  widget calls the matching `dms ipc` function until a panel exists" does
+  not hold for those panels. Until the own panels exist, the own bar is
+  therefore not usable as the daily bar. Decided: DMS remains the daily
+  bar until the own bar, including its Home and Settings panels, is good
+  enough; `bar-switch.sh` is the way to try it in between, and no bridge
+  (such as a hidden DMS bar that keeps the popouts alive) is built. After
+  the hand-over the DMS bar stays available as the fallback.
+
 - Breakage in the bar moves from "wait for a DMS release" to "fix it
   yourself". Quickshell releases about twice a year and announced 0.3 as
   non-breaking, so the platform under it is calm; DMS updates can still

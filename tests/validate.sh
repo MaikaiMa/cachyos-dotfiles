@@ -152,6 +152,7 @@ require_files \
 	docs/dms.md \
 	docs/shell.md \
 	docs/shell-design.md \
+	docs/design/bar-prototype.html \
 	docs/pictures.md \
 	docs/terminal.md \
 	docs/editor.md \
