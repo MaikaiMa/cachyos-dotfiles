@@ -19,6 +19,7 @@ installed application.
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
   dot_config/DankMaterialShell/ DMS repository plugins
+  dot_config/quickshell/bar/ repository-owned Quickshell bar; see docs/shell.md
   dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen, Vicinae)
   dot_config/systemd/user/ managed ~/.config/systemd/user units
   dot_config/environment.d/ session environment (SSH agent socket)
@@ -48,6 +49,8 @@ packages/                 official, AUR, and Flatpak package manifests
 docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
 docs/dms.md               DMS shell: what is deployed, the look, plugins, matugen, idle/lock
+docs/shell.md             own Quickshell bar: layout, switching bars, colours, widgets (ADR-0027)
+docs/shell-design.md      design contract for the own bar: islands, states, tokens, motion; interactive prototype in docs/design/
 docs/greeter.md           login screen: greetd running the DMS greeter
 docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, viewers
 docs/terminal.md          Ghostty: configuration, opening windows, colours, fallback

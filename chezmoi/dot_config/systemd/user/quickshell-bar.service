@@ -1,0 +1,14 @@
+[Unit]
+Description=Repository-owned Quickshell bar (ADR-0027)
+PartOf=niri.service
+After=niri.service
+# The bar reads its colours from the palette file that DMS writes.
+After=dms.service
+
+[Service]
+ExecStart=/usr/bin/quickshell -c bar -n
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=niri.service

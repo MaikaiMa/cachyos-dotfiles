@@ -174,9 +174,9 @@ chmod +x "$dms_stub_dir/dms"
 
 look_dry_run=$(PATH="$dms_stub_dir:$PATH" DMS_COMMAND=dms run_bootstrap --dry-run --no-pager)
 case $look_dry_run in
-*'dms-restore-plugins: plugins already match'*'dms-apply-look: dry run, applying would restart dms.service'*'"pluginSettings"'*) ;;
+*'dms-restore-plugins: plugins already match'*'dms-apply-look: dry run, applying would restart dms.service'*'"pluginSettings"'*'bar-switch: '*) ;;
 *)
-	printf '%s\n' 'Bootstrap dry-run did not preview the DMS plugins and look:' >&2
+	printf '%s\n' 'Bootstrap dry-run did not preview the DMS plugins, look and bar:' >&2
 	printf '%s\n' "$look_dry_run" >&2
 	exit 1
 	;;

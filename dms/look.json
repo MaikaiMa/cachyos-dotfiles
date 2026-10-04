@@ -58,7 +58,8 @@
       "borderEnabled": false,
       "widgetOutlineEnabled": false,
       "shadowIntensity": 0,
-      "gothCornersEnabled": false
+      "gothCornersEnabled": false,
+      "enabled": false
     }
   ],
   "acLockTimeout": 600,

@@ -68,6 +68,9 @@ is preserved only as the `noctalia-final` Git tag.
   x-ray background effects for layers matching `^dms:`, so DMS's own blurred
   surfaces are not see-through. `chezmoi/dot_config/niri/cfg/layout.kdl` sets
   `gaps 10` and struts that align tiled windows with the bar.
+- **The bar can be handed over.** `scripts/bar-switch.sh own` turns the DMS
+  bar off and starts the repository-owned Quickshell bar, which reads the
+  DMS palette; see [docs/shell.md](shell.md).
 - **matugen templates**, Niri backdrop, the Z13 template, the Zen Browser
   colours (`zen_colors`, linked in by `scripts/dms-link-zen-theme.sh`), and
   the Vicinae theme (`vicinae_theme`), see below.

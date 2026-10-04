@@ -62,6 +62,13 @@ require_files \
 	chezmoi/dot_config/systemd/user/handy.service \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_ollama.service \
 	chezmoi/dot_config/systemd/user/ollama.service \
+	chezmoi/dot_config/systemd/user/quickshell-bar.service \
+	chezmoi/dot_config/quickshell/bar/shell.qml \
+	chezmoi/dot_config/quickshell/bar/Clock.qml \
+	chezmoi/dot_config/quickshell/bar/Colors.qml \
+	chezmoi/dot_config/quickshell/bar/Theme.qml \
+	chezmoi/dot_config/quickshell/bar/qmldir \
+	chezmoi/dot_config/quickshell/bar/README.md \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \
 	chezmoi/dot_config/vicinae/dotfiles.json \
@@ -143,6 +150,8 @@ require_files \
 	docs/desktop-migration.md \
 	docs/greeter.md \
 	docs/dms.md \
+	docs/shell.md \
+	docs/shell-design.md \
 	docs/pictures.md \
 	docs/terminal.md \
 	docs/editor.md \
@@ -159,6 +168,7 @@ require_files \
 	scripts/setup-greetd.sh \
 	scripts/setup-z13-window.sh \
 	scripts/dms-apply-look.sh \
+	scripts/bar-switch.sh \
 	scripts/dms-restore-plugins.sh \
 	scripts/dms-link-zen-theme.sh \
 	scripts/setup-power-key.sh \
@@ -175,6 +185,8 @@ require_files \
 	tests/bootstrap.sh \
 	tests/check-packages.sh \
 	tests/dms-apply-look.sh \
+	tests/bar-switch.sh \
+	tests/quickshell-bar.sh \
 	tests/dms-restore-plugins.sh \
 	tests/dms-link-zen-theme.sh \
 	tests/dms-clipboard-settings.sh \
@@ -356,6 +368,8 @@ chezmoi --source chezmoi execute-template \
 
 tests/check-packages.sh
 tests/dms-apply-look.sh
+tests/bar-switch.sh
+tests/quickshell-bar.sh
 tests/dms-restore-plugins.sh
 tests/dms-link-zen-theme.sh
 tests/dms-clipboard-settings.sh

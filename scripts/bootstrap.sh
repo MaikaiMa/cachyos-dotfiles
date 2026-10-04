@@ -55,6 +55,12 @@ if command -v "$dms_command" >/dev/null 2>&1; then
 	elif ! "$repo_root/scripts/dms-apply-look.sh"; then
 		printf '%s\n' 'Applying the DMS look failed; run scripts/dms-apply-look.sh yourself.' >&2
 	fi
+
+	if [ "$dry_run" = true ]; then
+		"$repo_root/scripts/bar-switch.sh" --dry-run --apply
+	elif ! "$repo_root/scripts/bar-switch.sh" --apply; then
+		printf '%s\n' 'Switching the bar failed; run scripts/bar-switch.sh yourself.' >&2
+	fi
 fi
 
 if command -v "$vicinae_command" >/dev/null 2>&1; then
