@@ -63,6 +63,14 @@ Singleton {
         osdTimer.restart();
     }
 
+    // One owner for the sampling switch: every screen has a Home panel, but only
+    // one state is open at a time.
+    Binding {
+        target: System
+        property: "active"
+        value: root.centreState === "home"
+    }
+
     Timer {
         id: osdTimer
 

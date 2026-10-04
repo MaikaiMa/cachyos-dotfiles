@@ -90,6 +90,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/islands/qmldir \
 	chezmoi/dot_config/quickshell/bar/panels/PlaceholderPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/SettingsPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/HomePanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
 	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \
@@ -99,6 +100,13 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/Tile.qml \
 	chezmoi/dot_config/quickshell/bar/components/CapsuleSlider.qml \
 	chezmoi/dot_config/quickshell/bar/components/NotificationRow.qml \
+	chezmoi/dot_config/quickshell/bar/components/WeatherIcon.qml \
+	chezmoi/dot_config/quickshell/bar/components/BatteryIcon.qml \
+	chezmoi/dot_config/quickshell/bar/components/SegmentedControl.qml \
+	chezmoi/dot_config/quickshell/bar/components/TimeTile.qml \
+	chezmoi/dot_config/quickshell/bar/components/WeatherTile.qml \
+	chezmoi/dot_config/quickshell/bar/components/PerformanceTile.qml \
+	chezmoi/dot_config/quickshell/bar/components/PowerTile.qml \
 	chezmoi/dot_config/quickshell/bar/components/qmldir \
 	chezmoi/dot_config/quickshell/bar/README.md \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \

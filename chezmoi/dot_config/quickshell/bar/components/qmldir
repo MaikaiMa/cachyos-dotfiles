@@ -6,3 +6,10 @@ Icon 1.0 Icon.qml
 Tile 1.0 Tile.qml
 CapsuleSlider 1.0 CapsuleSlider.qml
 NotificationRow 1.0 NotificationRow.qml
+WeatherIcon 1.0 WeatherIcon.qml
+BatteryIcon 1.0 BatteryIcon.qml
+SegmentedControl 1.0 SegmentedControl.qml
+TimeTile 1.0 TimeTile.qml
+WeatherTile 1.0 WeatherTile.qml
+PerformanceTile 1.0 PerformanceTile.qml
+PowerTile 1.0 PowerTile.qml

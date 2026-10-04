@@ -42,7 +42,7 @@ Singleton {
     readonly property real healthPercentage: laptopBattery && laptopBattery.healthSupported ? laptopBattery.healthPercentage : 0
     // Wh at full charge today.
     readonly property real energyCapacity: laptopBattery ? laptopBattery.energyCapacity : 0
-    readonly property bool isLow: available && percentage < 15
+    readonly property bool isLow: available && percentage <= 20
 
     // power-saver, balanced or performance, the names powerprofilesctl uses.
     readonly property string profile: profileName(PowerProfiles.profile)

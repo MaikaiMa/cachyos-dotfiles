@@ -8,7 +8,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // Set by the Home panel while it is open.
+    // Set by Shell while the Home panel is open.
     property bool active: false
 
     // 0..1 over the last sample interval.

@@ -15,8 +15,12 @@ ShellRoot {
 
             readonly property bool panelOpenHere: Shell.panelOpen && Shell.screenName === modelData.name
 
-            // One tall window per screen: islands grow inside it instead of opening
-            // popups. Only the islands take input and get blur; the rest is click-through.
+            // One window per screen, as tall as the screen: islands grow inside it instead
+            // of opening popups. Not anchored to the bottom edge: with all four edges
+            // anchored, layer-shell drops the exclusive zone. The window starts below
+            // any other top exclusive zone and runs past the screen bottom by that much.
+            // Only the islands take input and get blur; while a panel is open anywhere
+            // the whole window takes input so a press outside the islands closes it.
             PanelWindow {
                 id: bar
 
@@ -26,7 +30,7 @@ ShellRoot {
                     left: true
                     right: true
                 }
-                implicitHeight: Theme.windowHeight
+                implicitHeight: screenScope.modelData.height
                 exclusionMode: ExclusionMode.Normal
                 exclusiveZone: Theme.barHeight
                 aboveWindows: true
@@ -36,10 +40,17 @@ ShellRoot {
                 // Exclusive, not OnDemand: panels also open from shortcuts without a
                 // click, and Niri only hands on-demand focus to a layer on a click.
                 WlrLayershell.keyboardFocus: screenScope.panelOpenHere ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-                mask: islandRegion
+                mask: Shell.panelOpen ? fullRegion : islandRegion
                 // The blur type lives in Quickshell core, which the BackgroundEffect
                 // type info does not declare, so qmllint cannot resolve it.
                 BackgroundEffect.blurRegion: islandRegion // qmllint disable missing-type
+
+                Region {
+                    id: fullRegion
+
+                    width: bar.width
+                    height: bar.height
+                }
 
                 Region {
                     id: islandRegion
@@ -85,6 +96,15 @@ ShellRoot {
                         }
                     }
 
+                    // Below the islands, so they keep their input; the centre island's
+                    // panel guard keeps presses inside an open panel from reaching it.
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: Shell.panelOpen
+                        acceptedButtons: Qt.AllButtons
+                        onPressed: Shell.close()
+                    }
+
                     LeftIsland {
                         id: left
 
@@ -109,60 +129,6 @@ ShellRoot {
                         y: Theme.islandTop
                         z: 1
                     }
-                }
-            }
-
-            // While a panel is open anywhere, a press outside the islands on any
-            // screen closes it. The islands are cut out, so they keep their clicks
-            // whichever of the two windows Niri stacks on top.
-            PanelWindow {
-                id: clickCatcher
-
-                screen: screenScope.modelData
-                visible: Shell.panelOpen
-                anchors {
-                    top: true
-                    bottom: true
-                    left: true
-                    right: true
-                }
-                exclusionMode: ExclusionMode.Ignore
-                color: "transparent"
-                WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.namespace: "dotfiles-click-catcher"
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-                mask: Region {
-                    Region {
-                        width: clickCatcher.width
-                        height: clickCatcher.height
-                    }
-                    Region {
-                        intersection: Intersection.Subtract
-                        x: left.x
-                        y: left.y
-                        width: left.width
-                        height: left.height
-                    }
-                    Region {
-                        intersection: Intersection.Subtract
-                        x: centre.x
-                        y: centre.y
-                        width: centre.width
-                        height: centre.height
-                    }
-                    Region {
-                        intersection: Intersection.Subtract
-                        x: right.x
-                        y: right.y
-                        width: right.width
-                        height: right.height
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.AllButtons
-                    onPressed: Shell.close()
                 }
             }
         }

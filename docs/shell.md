@@ -19,12 +19,12 @@ records this as an amendment.
 
 ## What is built
 
-Steps 0 to 3 of the build (see "Phases"). Every screen gets one tall,
+Steps 0 to 4 of the build (see "Phases"). Every screen gets one tall,
 transparent layer-shell window with three islands: a placeholder "bar" on
 the left, the centre island, and a placeholder ring on the right. The centre
 island runs the real state machine and morphs: hover rests open Detail, a
-click opens a placeholder Home panel, the right island opens the Settings
-panel, Escape and a click outside close.
+click opens the Home panel, the right island opens the Settings panel,
+Escape and a click outside close.
 
 Step 2 made the centre pill real: a weather icon from `Weather`, the clock
 and a battery icon from `Battery` (red when low), separated by hairlines.
@@ -39,19 +39,39 @@ notification list with dismiss and "Clear all". A right click or a long
 press on the Wi-Fi or Bluetooth tile opens the DMS settings window. The island grows to the panel's own height,
 so it shrinks in one island animation when notifications leave.
 
+Step 4 made Home real, 560 px wide and 384 px tall: a narrow and a wide
+column on the 12 px tile grid. Time (hours over minutes, "zo 04 okt") and
+Weather (current conditions, "Voelt als", an Hourly / Daily segmented
+control that cross-fades five forecast cards) on top; Performance (CPU
+load, CPU temperature on a 30 to 95 °C scale, memory as thin vertical bars)
+and Power (percentage, state, a read-only charge capsule that turns red
+at 20 % or below, time remaining or to full, health, capacity, and the power
+profile as a segmented control) below. `System` samples only while Home is
+open: `Shell` binds `System.active` to the `home` state. Tab moves between
+the two segmented controls, Left and Right change the focused one. With
+Home the own bar covers the DMS dashboard as well as the control center;
+music, calendar and the user block are left out on purpose, they get their
+own panels.
+
 ### Window architecture
 
-- **One tall window per screen.** `shell.qml` creates a `PanelWindow`
-  anchored top, left and right, `Theme.windowHeight` tall: the tallest
-  panel plus its shadow, 601 px for Settings with a full notification list, on the `Top` layer with namespace `dotfiles-bar`. Its
-  exclusive zone is set explicitly to `Theme.barHeight` (36 px), so windows
-  tile below the bar and not below the panels.
+- **One window per screen, as tall as the screen.** `shell.qml` creates a
+  single `PanelWindow` anchored top, left and right and as tall as its
+  screen, on the `Top` layer with namespace `dotfiles-bar`. Its exclusive
+  zone is set explicitly to `Theme.barHeight` (36 px), so windows tile below
+  the bar and not below the panels. It is not anchored to the bottom edge:
+  layer-shell ignores the exclusive zone of a surface anchored to all four
+  edges, and Quickshell 0.3 cannot name the exclusive edge. When another
+  surface reserves the top edge (the DMS bar while both run), the window
+  starts below it and runs past the bottom of the screen by that much.
 - **Input mask.** `mask` is a `Region` with one rounded child region per
   island, bound to the island's live `x`, `y`, `width`, `height` and
   `radius`. Each animation frame updates it, so the mask follows the island
   while it grows or shrinks; everything else in the window is click-through.
-  The same region is the blur region (`BackgroundEffect.blurRegion`), so
-  Niri blurs only behind the islands.
+  While a panel is open on any screen, the mask of every bar window switches
+  to a region covering the whole window. The island region stays the blur
+  region (`BackgroundEffect.blurRegion`) in both states, so Niri blurs only
+  behind the islands.
 - **Keyboard focus.** `None` while no panel is open, `Exclusive` on the
   screen with an open panel. `OnDemand` is not enough: panels also open from
   shortcuts (`quickshell ipc`, later Niri binds) without a click, and Niri
@@ -62,14 +82,15 @@ so it shrinks in one island animation when notifications leave.
   hands the focus back to the window's root item, so a panel opens with
   nothing focused and Escape reaches the root from any control; Tab then
   walks the panel's controls.
-- **Click outside.** While a panel is open, every screen also maps a
-  transparent full-screen `PanelWindow` (namespace `dotfiles-click-catcher`)
-  whose mask is the screen minus the islands; a press on it closes the
-  panel. Because the islands are cut out, it does not matter which of the
-  two windows Niri stacks on top. The cut-out assumes the bar window starts
-  at the top-left of the screen, which holds unless another surface reserves
-  an exclusive zone on the top edge (for instance the DMS bar while both
-  run).
+- **Click outside.** At the bottom of the window's root item sits a
+  `MouseArea` over the whole window, enabled while a panel is open; a press
+  on it closes the panel. The islands are above it and keep their own input,
+  and the centre island's panel guard stops presses on empty panel space
+  from reaching it. Because the mask is full on every screen while a panel
+  is open, a press outside the islands on any screen closes the panel. The
+  close area lives in the same window as the islands, so it does not depend
+  on where other exclusive zones push that window; a press on a surface
+  above it, such as the DMS bar, does not close the panel.
 - **State machine.** `services/Shell.qml` holds `centreState` (`collapsed`,
   `detail`, `home`, `settings`, `player`, `power`, `theme`, `wallpaper`,
   `updates`, `musicbar`), the screen it applies to, and `osdVisible`, with
@@ -88,7 +109,7 @@ so it shrinks in one island animation when notifications leave.
 
 ```text
 chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
-  shell.qml                             entry point: per screen the bar window and the click catcher
+  shell.qml                             entry point: per screen the bar window, its mask and close area
   Colors.qml                            singleton: DMS palette, watched
   Theme.qml                             singleton: sizes, radii, fonts, panel widths
   Motion.qml                            singleton: durations, curves, reduce motion
@@ -102,6 +123,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     CentreIsland.qml                    weather, clock and battery pill, Detail, OSD and panel states
     RightIsland.qml                     placeholder pill, click opens Settings
   panels/                               centre panel bodies
+    HomePanel.qml                       Time, Weather, Performance and Power tiles
     SettingsPanel.qml                   toggle grid, three sliders, notification list
     PlaceholderPanel.qml                stands in for a panel until its step lands
   components/                           shared pieces
@@ -110,6 +132,13 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Hairline.qml                        1 x 14 px separator
     Clock.qml                           SystemClock text in a given format or formatter
     Icon.qml                            Material Symbols glyph by name, placeholder without the font
+    WeatherIcon.qml                     Icon for a Weather service icon name
+    BatteryIcon.qml                     Icon for the battery charge and state, red when low
+    SegmentedControl.qml                pill of segments with a sliding accent, Left and Right keys
+    TimeTile.qml                        Home: hours over minutes and the Dutch date
+    WeatherTile.qml                     Home: current weather, Hourly / Daily, five cards
+    PerformanceTile.qml                 Home: CPU, temperature and memory bars
+    PowerTile.qml                       Home: charge, capsule, time, health, capacity, profile
     Tile.qml                            Settings grid toggle, wide with state or small icon-only
     CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer
     NotificationRow.qml                 one notification with dismiss, collapses when it leaves
@@ -202,12 +231,16 @@ restart.
 
 To test the window architecture spike, check on each screen:
 
-- Clicks and scrolling outside the three islands reach the windows and the
-  desktop below, also in the tall transparent strip under the bar.
+- While no panel is open, clicks and scrolling outside the three islands
+  reach the windows and the desktop below, anywhere on the screen: the bar
+  window covers it all but takes input only on the islands.
 - Windows tile 36 px below the top edge, not below the tallest panel.
+- With the DMS bar running alongside, every click inside an open panel
+  works across its whole height, including the bottom edge, and the
+  pointer cursor shows over its controls there.
 - The pill shows the current weather and battery icons as glyphs, not as
-  dim squares, and the battery icon matches the charge and turns red under
-  15 %.
+  dim squares, and the battery icon matches the charge and turns red at
+  20 % or below.
 - Resting the pointer on the centre pill for a moment opens Detail with the
   temperature, the date and the percentage under the icons; the clock does
   not move. Leaving closes it.
@@ -236,6 +269,13 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   the panel; on Bluetooth it opens the Network tab, because DMS 1.6 has no
   Bluetooth settings tab. Dismissing a notification
   collapses its row and the island shrinks; "Clear all" removes the section.
+- Home: the time and the date sit centred in their tile, the weather icon
+  and the forecast icons are glyphs, Hourly is selected when the bar starts
+  and Daily cross-fades the cards to weekday, high and low. The three bars
+  move every 2 s while Home is open. The capsule matches the percentage,
+  the profile control shows the active profile and a click (or Tab to it,
+  then Left or Right) switches the profile. Escape still closes from a
+  focused segmented control.
 
 Bring the service back with:
 
@@ -311,7 +351,7 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   with a backoff of 1 s doubling to 30 s; each request opens its own.
 - `Battery`: `percentage`, `state` (`charging`, `discharging`, `full`,
   `unknown`), `onBattery`, `timeToEmpty`, `timeToFull` (seconds),
-  `healthPercentage`, `energyCapacity` (Wh), `isLow` (under 15), `available`;
+  `healthPercentage`, `energyCapacity` (Wh), `isLow` (20 or below), `available`;
   `profile`, `profiles` (`power-saver`, `balanced`, `performance`),
   `setProfile(name)`.
 - `Audio`: `volume`, `muted`, `micVolume`, `micMuted`, `ready`;
@@ -358,7 +398,7 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   (51.84, 5.86) with a warning. `place` stays empty: where-am-i names its
   source (GeoIP, Wi-Fi), not a place, and Open-Meteo has no reverse
   geocoding.
-- `System`: `active` (set by the Home panel), `cpu`, `temp` (°C, NaN
+- `System`: `active` (bound by `Shell` to the `home` state), `cpu`, `temp` (°C, NaN
   without k10temp), `memory`, `memoryUsedGiB`, `memoryTotalGiB`. Samples
   every 2 s only while `active` is true.
 - `Updates`: `items` (fragile first: `source`, `name`, `oldVersion`,
@@ -387,7 +427,7 @@ the approach come first, the things that are only work come last.
 | 1 | **Data-layer spike.** Niri event stream for workspaces and windows, where notifications come from while DMS owns the notification daemon, cava raw output for audio levels, album-art colour, which toggles go through `dms ipc`, weather source. | Each of these is a service the widgets sit on; an unknown here changes the design more than any widget. |
 | 2 | Centre pill with Detail: clock, weather icon, battery (UPower). | First visible value, exercises the state machine. |
 | 3 | Settings panel: toggles, three capsule sliders (Pipewire, brightness), notifications list. | With 2 and 3 the own bar covers the DMS control center. |
-| 4 | Home panel. | With 4 the DMS dashboard is covered; the own bar becomes the daily bar and DMS drops to fallback. |
+| 4 | Home panel (built 2026-10-04; the optional Network and Next event row is not). | With 4 the DMS dashboard is covered; the own bar becomes the daily bar and DMS drops to fallback. |
 | 5 | Left island (Niri), right island (tray, indicators), Updates panel plus `system-update --pending`. | Replaces the remaining DMS bar plugins. |
 | 6 | Music: orb, music bar, Player, top-edge wave (Mpris, cava). | Highest render cost, least risk to daily use. |
 | 7 | Theme, Wallpaper, Power, OSD; hide toggle; shortcuts moved. | Mostly plumbing to `dms ipc`. |

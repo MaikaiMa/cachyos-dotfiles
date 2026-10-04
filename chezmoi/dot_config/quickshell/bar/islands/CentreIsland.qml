@@ -111,32 +111,6 @@ Island {
 
     Component.onCompleted: measureDetail()
 
-    // Weather service icon names to Material Symbols ligatures.
-    readonly property var weatherSymbols: ({
-            "clear-day": "clear_day",
-            "clear-night": "clear_night",
-            "partly-cloudy-day": "partly_cloudy_day",
-            "partly-cloudy-night": "partly_cloudy_night",
-            "cloudy": "cloud",
-            "fog": "foggy",
-            "drizzle": "rainy",
-            "rain": "rainy",
-            "snow": "weather_snowy",
-            "thunderstorm": "thunderstorm"
-        })
-    readonly property string weatherSymbol: Weather.ready ? weatherSymbols[Weather.iconName] ?? "" : ""
-    readonly property string batterySymbol: {
-        if (!Battery.available)
-            return "";
-        if (Battery.state === "charging")
-            return "battery_charging_full";
-        if (Battery.isLow && Battery.state === "discharging")
-            return "battery_alert";
-        if (Battery.percentage >= 95)
-            return "battery_full";
-        return "battery_" + Math.min(6, Math.max(1, Math.round(Battery.percentage / 100 * 6))) + "_bar";
-    }
-
     // "Zo 04-10": Dutch short weekday with a capital, then day and month.
     function shortDate(date: date): string {
         const day = Qt.locale("nl_NL").dayName(date.getDay(), Locale.ShortFormat);
@@ -144,7 +118,7 @@ Island {
     }
 
     targetWidth: panelOpen ? Theme.panelWidths[centreState] : centreState === "musicbar" ? Theme.musicBarWidth : osd ? Theme.osdWidth : detail ? detailWidth : pillWidth
-    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
+    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : centreState === "home" ? homePanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
     targetOpacity: panelOpen ? Theme.panelOpacity : Theme.islandOpacity
     targetBlend: detail ? 1 : 0
     expanded: panelOpen || detail
@@ -167,10 +141,10 @@ Island {
             }
         }
 
-        Icon {
+        WeatherIcon {
             x: island.centreX - island.iconOffset - width / 2
             y: (Theme.islandHeight - height) / 2
-            name: island.weatherSymbol
+            condition: Weather.ready ? Weather.iconName : ""
         }
 
         PillHairline {
@@ -188,11 +162,9 @@ Island {
             x: island.onPixel(island.centreX + island.clockWidth / 2 + Theme.gap)
         }
 
-        Icon {
+        BatteryIcon {
             x: island.centreX + island.iconOffset - width / 2
             y: (Theme.islandHeight - height) / 2
-            name: island.batterySymbol
-            color: Battery.isLow ? Colors.error : Colors.foreground
         }
 
         // The label row is always there with its full height; only its opacity
@@ -225,6 +197,14 @@ Island {
                 x: island.centreX + island.iconOffset - width / 2
                 text: Battery.available ? Math.round(Battery.percentage) + "%" : "–"
             }
+        }
+
+        // Only the pill toggles Home; the handler lives on it, not on the island,
+        // so no click inside an open panel can reach it.
+        TapHandler {
+            objectName: "pillTap"
+            enabled: island.showsPill
+            onTapped: Shell.toggle("home", island.screenName)
         }
 
         TextMetrics {
@@ -274,7 +254,24 @@ Island {
         }
     }
 
-    // Centred on the island at its own width; the island clips it while it grows.
+    // Under the panel bodies: a click on empty panel space stops here and does nothing.
+    MouseArea {
+        objectName: "panelGuard"
+        anchors.fill: parent
+        enabled: island.panelOpen
+        acceptedButtons: Qt.AllButtons
+    }
+
+    // Centred on the island at their own width; the island clips them while it grows.
+    HomePanel {
+        id: homePanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "home"
+    }
+
     SettingsPanel {
         id: settingsPanel
 
@@ -285,7 +282,7 @@ Island {
     }
 
     Repeater {
-        model: Shell.panelStates.filter(state => state !== "settings").concat(["musicbar"])
+        model: Shell.panelStates.filter(state => state !== "home" && state !== "settings").concat(["musicbar"])
 
         PlaceholderPanel {
             required property string modelData
@@ -355,8 +352,4 @@ Island {
         }
     }
 
-    TapHandler {
-        enabled: island.showsPill
-        onTapped: Shell.toggle("home", island.screenName)
-    }
 }

@@ -6,9 +6,6 @@ import Quickshell
 // Sizes and fonts from the Tokens table in docs/shell-design.md.
 Singleton {
     readonly property int barHeight: 36
-    // The layer surface cannot draw outside itself, so it is as tall as the largest
-    // panel plus the shadow under it: Settings with a full notification list.
-    readonly property int windowHeight: Math.max(480, islandTop + settingsMaxHeight + shadowOffsetY + shadowBlur)
 
     readonly property int islandHeight: 30
     readonly property int islandDetailHeight: 48
@@ -77,7 +74,34 @@ Singleton {
     readonly property int notificationListMaxHeight: 240
     readonly property int settingsGridHeight: settingsTileRows * settingsTileHeight + (settingsTileRows - 1) * tileGap
     readonly property int settingsSlidersHeight: sliderCount * sliderHeight + (sliderCount - 1) * sliderGap
-    readonly property int settingsMaxHeight: 2 * panelPadding + settingsGridHeight + tileGap + settingsSlidersHeight + notificationHeaderGap + notificationHeaderHeight + notificationListMaxHeight
+
+    // Home: a narrow and a wide column; row heights are fixed so the panel has one height.
+    readonly property int homeTimeColumnWidth: 150
+    readonly property int homeTilePadding: 12
+    readonly property int homeSectionGap: 10
+    readonly property int homeTimeFontSize: 44
+    readonly property int homeLargeFontSize: 22
+    readonly property int homeDetailFontSize: 12
+    readonly property int segmentedHeight: 28
+    readonly property int segmentedInset: 3
+    readonly property int weatherNowHeight: 40
+    readonly property int weatherNowIconSize: 28
+    readonly property int weatherTabsWidth: 150
+    readonly property int weatherCardCount: 5
+    readonly property int weatherCardWidth: 64
+    readonly property int weatherCardHeight: 72
+    readonly property int weatherCardRadius: 12
+    readonly property int meterWidth: 6
+    // The temperature bar runs from empty at 30 °C to full at 95 °C.
+    readonly property int tempScaleMin: 30
+    readonly property int tempScaleMax: 95
+    readonly property int powerHeadHeight: 28
+    readonly property int powerIconSize: 20
+    readonly property int chargeCapsuleHeight: 20
+    readonly property int powerStatsHeight: 34
+    readonly property int homeTopRowHeight: 2 * homeTilePadding + weatherNowHeight + 2 * homeSectionGap + segmentedHeight + weatherCardHeight
+    readonly property int homeBottomRowHeight: 2 * homeTilePadding + powerHeadHeight + 3 * homeSectionGap + chargeCapsuleHeight + powerStatsHeight + segmentedHeight
+    readonly property int homeHeight: 2 * panelPadding + homeTopRowHeight + tileGap + homeBottomRowHeight
 
     // Placeholder bodies until the real panels set their own height.
     readonly property int placeholderPanelHeight: 240

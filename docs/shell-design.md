@@ -95,7 +95,7 @@ elsewhere (no music, no calendar, no user block).
 | Time | Large `HH:mm` stacked, date `zo 04 okt` under it, the whole group centred horizontally and vertically in the tile. |
 | Weather | Current: icon, temperature, condition, feels-like, place (Open-Meteo, auto location). Under it an Hourly / Daily segmented control, Hourly selected by default, and a single row of compact cards: hour or day, icon, temperature or high/low. Only human-readable values; no humidity, pressure or visibility. Lower than the DMS weather tab. |
 | Performance | Three thin vertical bars with icons: CPU load, CPU temperature, memory. |
-| Power | Top row: battery icon, large percentage, state ("Discharging", "Fully charged"). Below it a full-width charge capsule in the Settings slider language, filled to the percentage, `primary`, `error` under 15 %, read-only. Then one row of small labelled values: time remaining or time to full, Health, Capacity. Bottom: the power profile as a three-segment control (Power Saver, Balanced, Performance). |
+| Power | Top row: battery icon, large percentage, state ("Discharging", "Fully charged"). Below it a full-width charge capsule in the Settings slider language, filled to the percentage, `primary`, `error` at 20 % or below, read-only. Then one row of small labelled values: time remaining or time to full, Health, Capacity. Bottom: the power profile as a three-segment control (Power Saver, Balanced, Performance). |
 
 Home approved as prototyped (r3 · tray+) on 2026-10-04.
 
