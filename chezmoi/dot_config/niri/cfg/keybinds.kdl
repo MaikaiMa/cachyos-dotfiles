@@ -33,6 +33,8 @@ binds {
     Mod+Space                           repeat=false hotkey-overlay-title="App Launcher" { spawn "vicinae" "toggle"; }
     Mod+V                               repeat=false hotkey-overlay-title="Clipboard History" { spawn "vicinae" "vicinae://launch/clipboard/history?toggle=true"; }
     Mod+D                               repeat=false hotkey-overlay-title="Dictation" { spawn "handy" "--toggle-transcription"; }
+    Mod+E                               repeat=false hotkey-overlay-title="Emoji" { spawn "vicinae" "vicinae://launch/core/search-emojis?toggle=true"; }
+    Mod+G                               repeat=false hotkey-overlay-title="GIF Search" { spawn "vicinae" "vicinae://launch/@josephschmitt/store.raycast.gif-search/search?toggle=true"; }
 
     // Media Controls:
     XF86AudioRaiseVolume                allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call audio increment 5"; }

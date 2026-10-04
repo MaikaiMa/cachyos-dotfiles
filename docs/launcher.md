@@ -32,6 +32,8 @@ opens take focus. `Terminal=true` applications open in Ghostty through
 | `Mod+Space` | `vicinae toggle` | Open or close the launcher. The `dotfilesLauncher` bar button does the same. |
 | `Mod+V` | `vicinae vicinae://launch/clipboard/history?toggle=true` | Open or close the clipboard history. |
 | `Mod+D` | `handy --toggle-transcription` | Start dictation; press again to stop and type the text into the focused window. |
+| `Mod+E` | `vicinae vicinae://launch/core/search-emojis?toggle=true` | Open or close the emoji picker. |
+| `Mod+G` | `vicinae vicinae://launch/@josephschmitt/store.raycast.gif-search/search?toggle=true` | Open or close GIF search (the Raycast-store `gif-search` extension, installed from Vicinae's store; not managed by the repository). Store extensions are addressed as `@<author>/<install directory>`, here `@josephschmitt/store.raycast.gif-search`. |
 
 Handy types with `wtype` on Niri (recorded in `packages/pacman.txt`). The
 `Mod+D` bind only reaches a running Handy: when none runs, the same command
