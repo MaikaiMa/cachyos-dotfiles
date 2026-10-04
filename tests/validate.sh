@@ -136,6 +136,7 @@ require_files \
 	docs/adr/ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md \
 	docs/adr/ADR-0025-guard-system-updates-with-a-helper-behind-the-dms-updater.md \
 	docs/adr/ADR-0026-local-first-writing-tools-with-ollama-and-claude-on-request.md \
+	docs/adr/ADR-0027-own-the-bar-and-panels-in-quickshell-with-dms-as-service-layer.md \
 	docs/mail.md \
 	docs/secrets.md \
 	docs/maintenance.md \

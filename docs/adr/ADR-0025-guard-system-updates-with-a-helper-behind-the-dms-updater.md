@@ -1,6 +1,6 @@
 # ADR-0025: Guard system updates with a helper behind the DMS updater
 
-- Status: Accepted
+- Status: Accepted; amended 2026-10-04 (fragile-package prompt and agent report, see below)
 - Date: 2026-10-03
 - Amends: [ADR-0011](ADR-0011-declare-noctalia-plugins-and-show-updates-in-the-bar.md)
   (a repository update script was rejected there as duplication; it now adds
@@ -58,6 +58,39 @@ Three things are not covered by snapshots and were being skipped:
   the CachyOS defaults instead of overriding one option.
 - The checks are reports, not gates. The helper never merges `.pacnew` files
   or reboots by itself; both remain visible, manual actions.
+
+### Amendment 2026-10-04
+
+Two days of use showed two gaps. The fragile packages were only named after
+the upgrade, when the old code was already replaced, and the report scrolled
+away in the updater terminal as soon as Enter was pressed, so there was
+nothing to hand to someone (or an agent) who could read release notes and
+`.pacnew` diffs. [ADR-0027](ADR-0027-own-the-bar-and-panels-in-quickshell-with-dms-as-service-layer.md)
+adds a repository-owned Quickshell bar that treats DMS as an external
+interface, which makes a DMS, Quickshell, or niri update worth one look
+before it runs.
+
+- **One gate, before the upgrade.** The helper lists the pending fragile
+  packages (the reboot pattern plus the greeter package) with their version
+  jump and, when that list is not empty and stdin is a terminal, asks once
+  whether to continue. `--yes` or a non-interactive run skips the question.
+  On a normal day the list is empty and nothing is asked, so the one-click
+  bar action is unchanged. Everything after the upgrade stays a report.
+- **A report file for a second reader.** After the upgrade the helper
+  writes `~/.local/state/system-update/last-report.md` (overwritten per run,
+  `SYSTEM_UPDATE_STATE_DIR` overrides the directory for tests): the fragile
+  packages, every package that was pending, each `.pacnew` with a unified
+  diff against the live file, the follow-up reminders, and a fixed "For an
+  agent" section asking for release-note checks per fragile package, a
+  merge or drop verdict per `.pacnew` hunk, and a post-reboot checklist,
+  with the instruction to run nothing. When there is a follow-up or a
+  fragile package was updated, the terminal ends with the one-line prompt
+  that points an agent at the report. The agent advises; merging,
+  re-syncing the greeter, and rebooting remain the user's actions.
+- The helper still does not capture paru's own output. The Arch news paru
+  prints during `-Syu` is not copied into the report, because the only way
+  to get it a second time is a second feed fetch, which the rate limit above
+  rules out. The report says so and points at the news site instead.
 
 ## Consequences
 

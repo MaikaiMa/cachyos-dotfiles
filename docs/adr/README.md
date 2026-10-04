@@ -35,3 +35,4 @@ alternatives considered.
 - [ADR-0024: Replace DMS Spotlight with Vicinae and add Handy dictation](ADR-0024-replace-dms-spotlight-with-vicinae-and-add-handy-dictation.md)
 - [ADR-0025: Guard system updates with a helper behind the DMS updater](ADR-0025-guard-system-updates-with-a-helper-behind-the-dms-updater.md)
 - [ADR-0026: Local-first writing tools with Ollama, Claude on request](ADR-0026-local-first-writing-tools-with-ollama-and-claude-on-request.md)
+- [ADR-0027: Own the bar and panels in Quickshell, keep DMS as the service layer](ADR-0027-own-the-bar-and-panels-in-quickshell-with-dms-as-service-layer.md)

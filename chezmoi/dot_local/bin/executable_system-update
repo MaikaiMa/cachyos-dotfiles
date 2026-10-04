@@ -12,21 +12,29 @@ reboot_pattern='^(linux-|mesa$|niri$|quickshell$|dms-shell|systemd$|greetd)'
 greeter_package=greetd-dms-greeter-bin
 
 usage() {
-	printf 'Usage: %s\n' "${0##*/}"
+	printf 'Usage: %s [--yes]\n' "${0##*/}"
 	printf '%s\n' 'Run paru -Syu (with unread Arch news) and flatpak update, then list .pacnew files and packages that need a reboot.'
+	printf '%s\n' 'Asks before upgrading fragile packages when run in a terminal; --yes skips that question.'
+	printf '%s\n' 'Writes last-report.md to SYSTEM_UPDATE_STATE_DIR (default: the system-update directory under XDG_STATE_HOME).'
 }
 
-case ${1:-} in
-'') ;;
--h | --help)
-	usage
-	exit 0
-	;;
-*)
-	usage >&2
-	exit 2
-	;;
-esac
+assume_yes=false
+for argument in "$@"; do
+	case $argument in
+	--yes) assume_yes=true ;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*)
+		usage >&2
+		exit 2
+		;;
+	esac
+done
+
+state_dir=${SYSTEM_UPDATE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/system-update}
+report_file=$state_dir/last-report.md
 
 for tool in "$paru_command" "$checkupdates_command" "$pacdiff_command"; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
@@ -62,14 +70,37 @@ pending=$(
 	{
 		"$checkupdates_command" || true
 		"$paru_command" -Qua || true
-	} | awk 'NF { print $1 }'
+	} | awk 'NF'
 )
+pending_names=$(printf '%s\n' "$pending" | awk 'NF { print $1 }')
 if [ -n "$pending" ]; then
 	printf '%s\n' "$pending" | wc -l | sed 's/$/ package(s) from the repositories and the AUR./'
 else
 	printf '%s\n' 'Nothing pending from the repositories or the AUR.'
 fi
-reboot_candidates=$(printf '%s\n' "$pending" | grep -E "$reboot_pattern" || true)
+reboot_candidates=$(printf '%s\n' "$pending_names" | grep -E "$reboot_pattern" || true)
+fragile=$(printf '%s\n' "$pending" | awk -v pattern="$reboot_pattern" -v greeter="$greeter_package" 'NF && ($1 ~ pattern || $1 == greeter)')
+
+# These keep running old code until a reboot or a greeter re-sync and are the
+# ones that tend to break the desktop, so they deserve one look before the
+# upgrade runs.
+if [ -n "$fragile" ]; then
+	heading 'Fragile packages'
+	printf '%s\n' "$fragile" | sed 's/^/  /'
+	if [ -t 0 ] && [ "$assume_yes" = false ]; then
+		printf '%s' 'Continue with the upgrade? [Y/n] '
+		if ! read -r answer; then
+			answer=n
+		fi
+		case $answer in
+		'' | y | Y) ;;
+		*)
+			printf '%s\n' 'Upgrade cancelled.'
+			exit 0
+			;;
+		esac
+	fi
+fi
 
 heading 'Repositories and AUR'
 "$paru_command" -Syu
@@ -84,30 +115,107 @@ fi
 heading 'After the update'
 pacnews=$("$pacdiff_command" -o || true)
 follow_up=false
+follow_ups=''
+
+add_follow_up() {
+	follow_up=true
+	follow_ups=$follow_ups$1'
+'
+}
 
 if [ -n "$pacnews" ]; then
-	follow_up=true
 	printf '%s\n' 'Unmerged configuration files:'
-	printf '  %s\n' "$pacnews"
-	printf '%s\n' "Merge them with: sudo DIFFPROG='nvim -d' pacdiff"
+	printf '%s\n' "$pacnews" | sed 's/^/  /'
+	merge_message="Merge them with: sudo DIFFPROG='nvim -d' pacdiff"
+	printf '%s\n' "$merge_message"
+	add_follow_up "Unmerged .pacnew files. $merge_message"
 	case $pacnews in
 	*/etc/pacman.conf.pacnew*)
-		printf '%s\n' 'After merging pacman.conf, re-run scripts/setup-sessions.sh so its NoExtract line survives (ADR-0023).'
+		sessions_message='After merging pacman.conf, re-run scripts/setup-sessions.sh so its NoExtract line survives (ADR-0023).'
+		printf '%s\n' "$sessions_message"
+		add_follow_up "$sessions_message"
 		;;
 	esac
 fi
 
-if printf '%s\n' "$pending" | grep -qx "$greeter_package"; then
-	follow_up=true
-	printf '%s\n' 'The greeter was updated; re-sync it with scripts/setup-greetd.sh.'
+if printf '%s\n' "$pending_names" | grep -qx "$greeter_package"; then
+	greeter_message='The greeter was updated; re-sync it with scripts/setup-greetd.sh.'
+	printf '%s\n' "$greeter_message"
+	add_follow_up "$greeter_message"
 fi
 
 if [ -n "$reboot_candidates" ]; then
-	follow_up=true
-	printf '%s\n' 'Reboot soon; these keep running the old code until then:'
-	printf '  %s\n' "$reboot_candidates"
+	reboot_message='Reboot soon; these keep running the old code until then:'
+	printf '%s\n' "$reboot_message"
+	printf '%s\n' "$reboot_candidates" | sed 's/^/  /'
+	add_follow_up "$reboot_message $(printf '%s\n' "$reboot_candidates" | paste -sd ' ' - | sed 's/ /, /g')."
 fi
 
 if [ "$follow_up" = false ]; then
 	printf '%s\n' 'No .pacnew files and nothing that needs a reboot.'
+fi
+
+bullets() {
+	printf '%s\n' "$1" | sed '/^$/d; s/^/- /'
+}
+
+write_pacnew_diffs() {
+	printf '%s\n' "$pacnews" | while IFS= read -r pacnew; do
+		[ -n "$pacnew" ] || continue
+		printf '\n### %s\n\n' "$pacnew"
+		diff_status=0
+		diff_output=$(diff -u "${pacnew%.pacnew}" "$pacnew" 2>/dev/null) || diff_status=$?
+		if [ "$diff_status" -gt 1 ]; then
+			printf '%s\n' 'No diff: the live file is missing or not readable without sudo.'
+		else
+			printf '%s\n' '```diff' "$diff_output" '```'
+		fi
+	done
+}
+
+write_report() {
+	printf '# System update %s\n' "$(date '+%Y-%m-%d %H:%M')"
+	printf '\n## Arch news\n\n'
+	printf '%s\n' 'paru printed the unread posts before the upgrade; they are not copied here because a second feed fetch gets rate-limited. Re-read them at https://archlinux.org/news/ if needed.'
+	printf '\n## Fragile packages\n\n'
+	if [ -n "$fragile" ]; then
+		bullets "$fragile"
+	else
+		printf '%s\n' 'None.'
+	fi
+	printf '\n## Updated packages\n\n'
+	if [ -n "$pending" ]; then
+		printf '%s\n\n' 'These were pending before paru -Syu, which is what a normal run upgrades.'
+		bullets "$pending"
+	else
+		printf '%s\n' 'None pending before the run.'
+	fi
+	printf '\n## Unmerged .pacnew files\n'
+	if [ -n "$pacnews" ]; then
+		write_pacnew_diffs
+	else
+		printf '\n%s\n' 'None.'
+	fi
+	printf '\n## Follow-ups\n\n'
+	if [ -n "$follow_ups" ]; then
+		bullets "$follow_ups"
+	else
+		printf '%s\n' 'None.'
+	fi
+	printf '\n## For an agent\n\n'
+	printf '%s\n' 'Read this report. For every fragile package, find the upstream release notes for the version jump and tell me what changed that could affect a CachyOS machine running Niri, Quickshell, DankMaterialShell, greetd with dms-greeter, and Btrfs snapshots via snap-pac. For every .pacnew diff, tell me which hunks to merge and which to drop, and give me the pacdiff choice per file. End with a short checklist of what to verify after the reboot. Do not run anything; I will.'
+}
+
+mkdir -p "$state_dir"
+write_report >"$report_file.tmp"
+mv -f "$report_file.tmp" "$report_file"
+report_path=$(
+	CDPATH='' cd -- "$state_dir"
+	pwd
+)/last-report.md
+
+printf '\n%s\n' "Report written to $report_path."
+if [ "$follow_up" = true ] || [ -n "$fragile" ]; then
+	printf '%s\n' 'Hand the report to an agent with:'
+	printf '%s\n' "Read $report_path and follow its \"For an agent\" section."
 fi

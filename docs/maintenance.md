@@ -89,9 +89,17 @@ system-update
 ```
 
 The helper is the guarded version of `paru -Syu; and flatpak update`
-(ADR-0025). paru prints unread Arch news first (`NewsOnUpgrade`), the helper
-upgrades the repositories, the AUR, and Flatpak, and then reports what a plain
-upgrade leaves silent:
+(ADR-0025). Before it upgrades anything it lists the fragile pending packages
+with their version jump: kernels, Mesa, niri, Quickshell, DMS (`dms-shell`),
+systemd, greetd, and `greetd-dms-greeter-bin`. When that list is not empty and
+the helper runs in a terminal, it asks `Continue with the upgrade? [Y/n]` once;
+Enter continues, anything else cancels before anything is installed.
+`system-update --yes` skips the question, and so does running the helper
+without a terminal. On a normal day the list is empty and nothing is asked.
+
+paru then prints unread Arch news (`NewsOnUpgrade`), and the helper upgrades
+the repositories, the AUR, and Flatpak, and reports what a plain upgrade leaves
+silent:
 
 - unmerged `.pacnew` files, with the `pacdiff` command to merge them;
 - a reminder to re-run `scripts/setup-sessions.sh` when
@@ -100,12 +108,29 @@ upgrade leaves silent:
 - the updated packages that keep running old code until a reboot: kernels,
   Mesa, niri, Quickshell, DMS, systemd, greetd.
 
-On a normal day that report is one line saying nothing needs attention. Daily
-or weekly makes no difference to the risk; the package count only reflects the
-days since the last run. The real protection is `snap-pac`: every pacman
-transaction gets a Btrfs snapshot that Limine can boot. Never install a single
-package without a full upgrade, and prefer updating at the end of the day so
-the reboot is cheap.
+On a normal day that report is one line saying nothing needs attention. The
+same information goes to a Markdown report at
+`~/.local/state/system-update/last-report.md`, overwritten on every run: the
+fragile packages, every package that was pending, each unmerged `.pacnew` with
+a unified diff against the live file, the follow-up reminders, and a fixed
+"For an agent" section with instructions for an AI agent (check the upstream
+release notes of the fragile packages, advise per `.pacnew` hunk, give a
+post-reboot checklist, run nothing). When there is a follow-up or a fragile
+package was updated, the terminal ends with a line to paste into an agent:
+
+```text
+Read ~/.local/state/system-update/last-report.md and follow its "For an agent" section.
+```
+
+The terminal of the DMS updater waits for Enter before it closes, so the line
+can be copied from there. The agent only advises; merging `.pacnew` files,
+re-syncing the greeter, and rebooting stay manual.
+
+Daily or weekly makes no difference to the risk; the package count only
+reflects the days since the last run. The real protection is `snap-pac`: every
+pacman transaction gets a Btrfs snapshot that Limine can boot. Never install a
+single package without a full upgrade, and prefer updating at the end of the
+day so the reboot is cheap.
 
 Merge `.pacnew` files when the helper lists them. `m` in `pacdiff` needs the
 previous package in the pacman cache and fails with "Unable to find an older
