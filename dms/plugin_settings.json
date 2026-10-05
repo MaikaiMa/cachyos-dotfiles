@@ -1,17 +1,1 @@
-{
-  "dotfilesApps": {
-    "enabled": true
-  },
-  "dotfilesDashboard": {
-    "enabled": true
-  },
-  "dotfilesKeyboard": {
-    "enabled": true
-  },
-  "dotfilesLauncher": {
-    "enabled": true
-  },
-  "dotfilesWorkspaces": {
-    "enabled": true
-  }
-}
+{}

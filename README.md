@@ -18,7 +18,7 @@ installed application.
 ```text
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
-  dot_config/DankMaterialShell/ DMS repository plugins
+  dot_config/DankMaterialShell/ DMS settings merge script
   dot_config/quickshell/bar/ repository-owned Quickshell bar; see docs/shell.md
   dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen, Vicinae)
   dot_config/systemd/user/ managed ~/.config/systemd/user units
@@ -39,7 +39,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_local/bin/          deployed helper scripts
   dot_local/share/applications/ desktop-entry overrides (Blip via xwayland-scaled, Noctalia hidden)
 dms/look.json              DMS settings for the mat-glass look; see docs/dms.md
-dms/plugin_settings.json   pinned DMS plugin settings (enabled flags of the repository plugins); see docs/dms.md
+dms/plugin_settings.json   pinned DMS plugin settings (currently none); see docs/dms.md
 dms/plugins.lock.json      DMS registry plugins pinned to exact commits (currently none); see docs/dms.md
 dms/session.json           DMS session-state keys (terminal override); see docs/terminal.md
 extensions/vicinae-writing/ Vicinae Writing Tools extension (TypeScript), built by scripts/build-vicinae-extensions.sh; see docs/writing.md
@@ -48,7 +48,7 @@ system/                   explicitly installed system integration files
 packages/                 official, AUR, and Flatpak package manifests
 docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
-docs/dms.md               DMS shell: what is deployed, the look, plugins, matugen, idle/lock
+docs/dms.md               DMS shell: service layer and fallback bar, the look, matugen, idle/lock
 docs/shell.md             own Quickshell bar: layout, switching bars, colours, widgets (ADR-0027)
 docs/shell-design.md      design contract for the own bar: islands, states, tokens, motion; interactive prototype in docs/design/
 docs/greeter.md           login screen: greetd running the DMS greeter
@@ -73,27 +73,24 @@ the Niri focus ring width and color follow DMS's theme on every change. These
 generated, wallpaper-dependent files are runtime state and are intentionally
 not stored in Git.
 
-DMS is deployed with the mat-glass bar look from `dms/look.json`, applied by
-`scripts/dms-apply-look.sh`: a launcher button, workspace pills that turn red
-on a notification, and application icons with a focus highlight and
-notification dot replace the built-in bar widgets. The [Dotfiles
-Dashboard](chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md)
-plugin rebuilds the former Noctalia dashboard as a centered popout on
-`Mod+S`, with the original DMS Control Center and Settings still reachable
-from its header. The launcher button opens Vicinae (see below); DMS runs
-no registry plugins and records no clipboard history.
+DMS is the service layer under the own Quickshell bar (see docs/shell.md),
+which has been the daily bar since 2026-10-05, and stays available as the
+fallback bar. Its mat-glass look comes from `dms/look.json`, applied by
+`scripts/dms-apply-look.sh`, with the built-in launcher button, workspace
+switcher and running-apps widgets. The five repository bar plugins were
+retired when the own bar took over. DMS runs no registry plugins and records
+no clipboard history; the launcher is Vicinae (see below).
 Zen Browser takes the DMS glass and colours, with each space's colour shown
 only in small cues, through a matugen template and a managed
 `userChrome.css` linked into the profile by `scripts/dms-link-zen-theme.sh`.
-With the Z13 keyboard cover detached, the panel follows the accelerometer, a
-bar button toggles the squeekboard on-screen keyboard, and a long press on
-the launcher or workspaces opens the Niri overview; see
+With the Z13 keyboard cover detached, the panel follows the accelerometer and
+the squeekboard on-screen keyboard is available; see
 [docs/tablet.md](docs/tablet.md) and
 [ADR-0020](docs/adr/ADR-0020-use-stock-niri-with-squeekboard-and-detach-gated-rotation.md).
 DMS's own built-in lock screen stays; see
 [ADR-0015](docs/adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
-All of this, including how to iterate on the look, restart the shell, and
-reload a plugin, is documented in [docs/dms.md](docs/dms.md). The login
+All of this, including how to iterate on the look and restart the shell, is
+documented in [docs/dms.md](docs/dms.md). The login
 screen, greetd running the DMS greeter, is documented in
 [docs/greeter.md](docs/greeter.md).
 
@@ -211,7 +208,7 @@ See [docs/pictures.md](docs/pictures.md) and
 
 ## Shell, terminal, editor and defaults
 
-The repository manages DMS's plugins and pins selected plugin settings (see
+The repository pins DMS's look and plugin settings (see
 [docs/dms.md](docs/dms.md)), Fish helpers under `conf.d/` and `functions/`,
 the Ghostty and fallback Alacritty configurations, Zed settings, the Neovim
 (LazyVim) configuration, the default-application handlers in `mimeapps.list`,

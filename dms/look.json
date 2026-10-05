@@ -22,9 +22,9 @@
     {
       "id": "default",
       "leftWidgets": [
-        "dotfilesLauncher",
-        "dotfilesWorkspaces",
-        "dotfilesApps"
+        "launcherButton",
+        "workspaceSwitcher",
+        "runningApps"
       ],
       "centerWidgets": [
         "weather",
@@ -37,8 +37,6 @@
           "mediaSize": 2
         },
         "systemTray",
-        "dotfilesDashboard",
-        "dotfilesKeyboard",
         {
           "id": "systemUpdate",
           "hideWhenIdle": true
@@ -59,7 +57,7 @@
       "widgetOutlineEnabled": false,
       "shadowIntensity": 0,
       "gothCornersEnabled": false,
-      "enabled": true
+      "enabled": false
     }
   ],
   "acLockTimeout": 600,

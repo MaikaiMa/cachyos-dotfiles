@@ -25,32 +25,18 @@ is preserved only as the `noctalia-final` Git tag.
   `dms/plugin_settings.json` holds the pinned plugin settings, merged the
   same way into `~/.config/DankMaterialShell/plugin_settings.json`; see
   "Plugin settings" below.
-- **Five repository plugins** under
-  `chezmoi/dot_config/DankMaterialShell/plugins/`, enabled through
-  `dms/plugin_settings.json`:
-  - [`dotfilesLauncher`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/README.md)
-    draws the built-in apps-grid launcher icon on a filled primary-colour
-    pill instead of the default neutral background, in the place of the
-    built-in `launcherButton` widget. A click opens Vicinae, the launcher
-    (see [docs/launcher.md](launcher.md)); a long press toggles the Niri
-    overview, like right click.
-  - [`dotfilesWorkspaces`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/README.md)
-    replaces the built-in workspace switcher with compact pills that turn
-    red when a window on that workspace has a notification waiting. A long
-    press toggles the Niri overview.
-  - [`dotfilesApps`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/README.md)
-    shows the running and pinned applications as bar icons, with a focus
-    highlight, a red notification dot, and dismissal of that app's
-    notifications once it has held focus for a moment.
-  - [`dotfilesDashboard`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md)
-    rebuilds the former Noctalia dashboard as a DMS popout on `Mod+S`
-    (wallpaper, rotation lock, Wi-Fi, Bluetooth, caffeine, do-not-disturb
-    toggles, media, display and audio, power, and system stats), centred
-    under the bar.
-  - [`dotfilesKeyboard`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesKeyboard/README.md)
-    shows a keyboard button that toggles the squeekboard on-screen keyboard,
-    only while the Z13 keyboard cover is detached; see
-    [docs/tablet.md](tablet.md).
+- **Service layer and fallback bar.** Since 2026-10-05 the own Quickshell bar
+  ([docs/shell.md](shell.md)) is the daily bar; DMS keeps running underneath
+  it for theming (matugen), notifications, idle and lock, the updater and the
+  `dms ipc` surface. Its own bar stays available as a fallback with the
+  built-in widgets `launcherButton`, `workspaceSwitcher`, `runningApps`,
+  `music`, `systemTray` and so on, listed in "The mat-glass look" below;
+  `scripts/bar-switch.sh dms` brings it back.
+- **Retired plugins.** The five repository plugins `dotfilesLauncher`,
+  `dotfilesWorkspaces`, `dotfilesApps`, `dotfilesDashboard` and
+  `dotfilesKeyboard` were deleted on 2026-10-05, when the own bar took over
+  their function; see "Phases" in [docs/shell.md](shell.md).
+  `chezmoi/.chezmoiremove` removes the live copies on the next apply.
 - **No registry plugins.** `dms/plugins.lock.json` is empty; the launcher
   and clipboard history are Vicinae's, not DMS's (see
   [docs/launcher.md](launcher.md) and
@@ -96,7 +82,7 @@ see
 [ADR-0019](adr/ADR-0019-merge-dms-plugin-settings-as-desired-state.md).
 
 `dms/plugin_settings.json` pins only the keys it lists: per plugin id, the
-`enabled` flag of the repository plugins.
+settings to enforce. It is `{}` now that the repository plugins are retired.
 `scripts/dms-apply-look.sh` deep-merges it into the live file per plugin, so
 those keys take the repository value and every other key stays as it is. It
 creates the file when it is missing and prints only the pinned keys in its
@@ -226,9 +212,9 @@ systemctl --user restart dms.service
 | `updaterCheckOnStart` | Checks for pacman, AUR and Flatpak updates right after the shell starts; the interval check (30 minutes by default) continues afterwards. |
 | `updaterUseCustomCommand`, `updaterCustomCommand` | `true`, `system-update`: "Update All" in the update popout runs the managed `~/.local/bin/system-update` helper instead of DMS's own `paru`/`flatpak` sequence. DMS wraps it in `sh -c` inside the `terminalOverride` terminal and waits for Enter before closing, so the helper's report of `.pacnew` files and reboot-worthy packages stays visible. See [docs/maintenance.md](maintenance.md#updating-the-machine) and ADR-0025. |
 | `showWorkspaceApps`, `showOccupiedWorkspacesOnly` | The workspace switcher shows per-app icons grouped in each workspace pill, and hides empty workspaces — this is what gives the left group its "workspace pills with running app icons" look without a separate running-apps widget. |
-| `barConfigs[id=default].leftWidgets` | `dotfilesLauncher`, `dotfilesWorkspaces`, `dotfilesApps` — the repository launcher button, workspace pills, and app icons with focus highlight and notification dot. |
+| `barConfigs[id=default].leftWidgets` | `launcherButton`, `workspaceSwitcher`, `runningApps` — the built-in launcher button, workspace switcher and running-apps icons of the fallback bar. |
 | `barConfigs[id=default].centerWidgets` | `weather`, `clock`, `battery`. |
-| `barConfigs[id=default].rightWidgets` | `music` (with `mediaSize` 2, where `audioVisualizerEnabled` draws its bars), `systemTray`, `dotfilesDashboard`, `dotfilesKeyboard`, `systemUpdate` (with `hideWhenIdle`), `notificationButton`, `powerMenuButton`. The dashboard plugin's button shows the Wi-Fi, Bluetooth and audio state and opens the dashboard; DMS 1.6.2 has no separate toggle widgets. `dotfilesKeyboard` sits directly to its right and is visible only while the Z13 keyboard is detached. |
+| `barConfigs[id=default].rightWidgets` | `music` (with `mediaSize` 2, where `audioVisualizerEnabled` draws its bars), `systemTray`, `systemUpdate` (with `hideWhenIdle`), `notificationButton`, `powerMenuButton`. The clock opens the built-in dashboard; DMS 1.6.2 has no separate toggle widgets. |
 | `barConfigs[id=default].spacing`, `.widgetPadding`, `.barLengthPadding`, `.bottomGap`, `.innerPadding` | `6`, `10`, `12`, `0`, `4` — spacing between widgets, padding inside each capsule, and the margins from the screen edges, close to Noctalia's `widget_spacing = 6`, capsule `padding = 8-10`, and `margin_ends = 12`. `bottomGap` stays `0` because it widens the bar's exclusive zone, which `maximize-window-to-edges` (Mod+M) fills exactly; the `top -2` strut in `cfg/layout.kdl` keeps tiled windows at the same distance from the bar. |
 | `barConfigs[id=default].transparency`, `.widgetTransparency`, `.noBackground` | `0.6`, `0.75`, `false` — a translucent, blurred bar strip with a capsule per widget. In DMS `noBackground` removes the widget capsules, not the bar surface, so it stays off. |
 | `barConfigs[id=default].squareCorners`, `.gothCornersEnabled`, `.borderEnabled`, `.widgetOutlineEnabled`, `.shadowIntensity` | `false`, `false`, `false`, `false`, `0` — rounded corners (via the global `cornerRadius`), no borders or outlines, no shadow. |
@@ -519,26 +505,6 @@ dms-reset
 The Fish function restarts `dms.service` and prints its status. Equivalent
 to, but preferred over, `systemctl --user restart dms.service` directly.
 
-## Reloading a plugin after editing
-
-```fish
-dms ipc call plugins reload dotfilesApps
-```
-
-Replace `dotfilesApps` with the plugin id (`dotfilesLauncher`,
-`dotfilesWorkspaces`, `dotfilesApps`, `dotfilesDashboard`, or
-`dotfilesKeyboard`). DMS
-cache-busts only the manifest's `component` file on a reload. After editing
-one of a plugin's other QML files (for example `AppIconDelegate.qml` or
-`NotificationMatcher.qml`), the first reload still uses the cached helper and
-can fail with a `component error` — run the same reload a second time.
-`dotfilesDashboard`'s reload only re-reads its manifest component too; edits
-to its other QML files need a full restart instead:
-
-```fish
-dms-reset
-```
-
 ## Idle, lock, and suspend
 
 `dms/look.json` sets DMS's own idle timeouts (milliseconds), split by power
@@ -558,7 +524,7 @@ in [docs/greeter.md](greeter.md).
 ## Known limits
 
 - The bar container's own look (surface shape beyond `cornerRadius`,
-  built-in widget chrome) is DMS's; only plugins and the settings in
+  built-in widget chrome) is DMS's; only the settings in
   `dms/look.json` are repository-owned.
 - The lock screen is DMS's own built-in one, not a repository-owned
   Quickshell surface. That is a final decision, not a pending phase; see

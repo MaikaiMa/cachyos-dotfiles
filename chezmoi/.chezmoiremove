@@ -16,3 +16,10 @@
 
 # Moved to components/Clock.qml in the bar window architecture spike (docs/shell.md).
 .config/quickshell/bar/Clock.qml
+
+# DMS bar plugins, replaced by the own Quickshell bar (docs/shell.md phase 5).
+.config/DankMaterialShell/plugins/dotfilesApps
+.config/DankMaterialShell/plugins/dotfilesDashboard
+.config/DankMaterialShell/plugins/dotfilesKeyboard
+.config/DankMaterialShell/plugins/dotfilesLauncher
+.config/DankMaterialShell/plugins/dotfilesWorkspaces

@@ -16,9 +16,9 @@ records the approach and the rejected alternatives.
 | `auto-rotate.service` | `chezmoi/dot_config/systemd/user/` | Runs `auto-rotate run` with the niri session. |
 | `osk` | `chezmoi/dot_local/bin/executable_osk` | Shows, hides, or toggles squeekboard over D-Bus. |
 | squeekboard drop-in | `chezmoi/dot_config/systemd/user/mobi.phosh.OSK.service.d/niri.conf` | Starts the packaged squeekboard unit after niri and stops it with the session. |
-| [`dotfilesKeyboard`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesKeyboard/README.md) | DMS bar, right of the dashboard button | Keyboard button, visible only while detached. |
-| Rotation lock tile | [`dotfilesDashboard`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/README.md) | Second tile of the toggle row. |
-| Long press | [`dotfilesLauncher`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/README.md), [`dotfilesWorkspaces`](../chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/README.md) | Toggles the niri overview. |
+| Keyboard button | retired with the DMS bar plugins on 2026-10-05 | No replacement in the own bar yet; open the keyboard with the shortcut below. |
+| Rotation lock tile | retired with the DMS bar plugins on 2026-10-05 | No replacement in the own bar yet; use `scripts/auto-rotate` state as documented below. |
+| Long press | own bar, left island (workspace pills and app icons) | Toggles the niri overview. |
 
 Both units are enabled through chezmoi-managed links in
 `niri.service.wants/`, like `dms.service`. None of this touches niri's

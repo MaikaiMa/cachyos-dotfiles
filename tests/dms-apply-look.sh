@@ -8,10 +8,19 @@ repo_root=$(
 	cd -- "$(dirname -- "$0")/.."
 	pwd
 )
-script="$repo_root/scripts/dms-apply-look.sh"
+real_script="$repo_root/scripts/dms-apply-look.sh"
 repo_plugins="$repo_root/dms/plugin_settings.json"
 test_root=$(mktemp -d)
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
+
+# The repository pins no plugin settings any more, so the merge is exercised
+# against a copy of the repository layout with one pinned plugin.
+fixture_repo="$test_root/repo"
+mkdir -p "$fixture_repo/scripts" "$fixture_repo/dms"
+cp "$real_script" "$fixture_repo/scripts/dms-apply-look.sh"
+cp "$repo_root"/dms/look.json "$repo_root"/dms/session.json "$fixture_repo/dms/"
+printf '%s\n' '{"dotfilesDashboard": {"enabled": true}}' >"$fixture_repo/dms/plugin_settings.json"
+script="$fixture_repo/scripts/dms-apply-look.sh"
 
 fake_bin="$test_root/bin"
 calls="$test_root/calls"
@@ -104,7 +113,14 @@ cmp -s "$live_plugins" "$test_root/applied.json" || fail 'second run changed plu
 fresh_home="$test_root/fresh"
 mkdir -p "$fresh_home"
 run_apply "$fresh_home" >/dev/null
-[ "$(plugin_value "$fresh_home" '.')" = "$(jq -c . "$repo_plugins")" ] ||
+[ "$(plugin_value "$fresh_home" '.')" = "$(jq -c . "$fixture_repo/dms/plugin_settings.json")" ] ||
 	fail 'a missing plugin_settings.json was not created from the repository file.'
+
+script=$real_script
+real_home="$test_root/real"
+mkdir -p "$real_home"
+run_apply "$real_home" >/dev/null
+[ "$(plugin_value "$real_home" '.')" = "$(jq -c . "$repo_plugins")" ] ||
+	fail 'the repository plugin_settings.json was not accepted or applied.'
 
 printf '%s\n' 'dms-apply-look tests passed.'

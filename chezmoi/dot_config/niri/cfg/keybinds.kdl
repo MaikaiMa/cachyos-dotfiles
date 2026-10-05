@@ -24,7 +24,7 @@ binds {
 
     // DankMaterialShell:
     Mod+Return                          hotkey-overlay-title="Wallpaper Selector" { spawn-sh "dms ipc call dash toggle wallpaper"; }
-    Mod+S                               hotkey-overlay-title="Dashboard" { spawn-sh "dms ipc call widget toggle dotfilesDashboard"; }
+    Mod+S                               hotkey-overlay-title="Home" { spawn-sh "quickshell ipc -c bar call bar toggle home"; }
     Mod+Shift+S                         hotkey-overlay-title=null { spawn-sh "dms ipc call settings focusOrToggle"; }
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen" { spawn-sh "dms ipc call lock lock"; }
     Mod+ESCAPE                          hotkey-overlay-title="Session Menu" { spawn-sh "dms ipc call powermenu toggle"; }

@@ -82,11 +82,6 @@ for path in \
 	.config/environment.d/10-ssh-agent.conf \
 	.ssh/config \
 	.config/git/allowed_signers \
-	.config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
-	.config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
-	.config/DankMaterialShell/plugins/dotfilesKeyboard/plugin.json \
-	.config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
-	.config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
 	.config/systemd/user/auto-rotate.service \
 	.config/systemd/user/ollama.service \
 	.config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
