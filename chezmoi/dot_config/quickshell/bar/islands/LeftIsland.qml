@@ -122,7 +122,12 @@ Island {
                     cursorShape: Qt.PointingHandCursor
                     pressAndHoldInterval: Motion.longPressInterval
                     onPressAndHold: Niri.toggleOverview()
-                    onClicked: Niri.focusWorkspace(slot.modelData.id)
+                    // With workspace-auto-back-and-forth, focusing the focused
+                    // workspace jumps to the previous one.
+                    onClicked: {
+                        if (!slot.modelData.isFocused)
+                            Niri.focusWorkspace(slot.modelData.id);
+                    }
                 }
 
                 Accessible.role: Accessible.Button

@@ -53,7 +53,7 @@ is preserved only as the `noctalia-final` Git tag.
   change. A `layer-rule` in `chezmoi/dot_config/niri/cfg/rules.kdl` turns off
   x-ray background effects for layers matching `^dms:`, so DMS's own blurred
   surfaces are not see-through. `chezmoi/dot_config/niri/cfg/layout.kdl` sets
-  `gaps 10` and struts that align tiled windows with the bar.
+  `gaps 6` and struts that put window edges 8 px from the screen edge and 6 px under the own bar's islands (since 2026-10-05).
 - **The bar can be handed over.** `scripts/bar-switch.sh own` turns the DMS
   bar off and starts the repository-owned Quickshell bar, which reads the
   DMS palette; see [docs/shell.md](shell.md).

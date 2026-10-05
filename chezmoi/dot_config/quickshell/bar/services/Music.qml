@@ -47,10 +47,20 @@ Singleton {
     // per bucket, so a colour that covers more of the cover appears more often.
     readonly property var artColors: artUrl !== "" ? quantizer.colors : []
     // The most frequent bucket colour; Colors.primaryContainer without art.
-    readonly property color artColor: artColors.length > 0 ? dominant(artColors) : Colors.primaryContainer
+    readonly property color artColorRaw: artColors.length > 0 ? dominant(artColors) : Colors.primaryContainer
+    // Lifted to a minimum lightness, so a near-black cover still gives the orb,
+    // its rim and the wave a colour that reads.
+    readonly property color artColor: lifted(artColorRaw)
     // The rim light's other colours: a lighter and a warmer cut of artColor.
-    readonly property color artLight: Qt.lighter(artColor, 1.35)
-    readonly property color artWarm: warmer(artColor)
+    readonly property color artLight: lifted(Qt.lighter(artColor, 1.35))
+    readonly property color artWarm: lifted(warmer(artColor))
+    readonly property real minimumArtLightness: 0.35
+
+    function lifted(base: color): color {
+        if (base.hslLightness >= minimumArtLightness)
+            return base;
+        return Qt.hsla(Math.max(0, base.hslHue), base.hslSaturation, minimumArtLightness, base.a);
+    }
 
     function dominant(colors: var): color {
         const counts = {};

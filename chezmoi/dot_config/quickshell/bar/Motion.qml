@@ -40,12 +40,13 @@ Singleton {
     readonly property int playerRimTurnRest: 8000
     readonly property int playerRimTurnFull: 3000
     readonly property int rimRateSettle: 400
-    // On pause the rims ease to a stop and the bloom breathes; play eases them back.
+    // On pause the rims ease to a stop; play eases them back.
     readonly property int rimEaseDuration: 600
-    readonly property int bloomBreathPeriod: 4000
-    // Audio animation ticks: 60 per second while playing, 10 while paused.
+    // The resting orb's ring breathes once in this time.
+    readonly property int orbRingBreathPeriod: 5000
+    // Audio animation ticks: 60 per second while playing, 15 while paused.
     readonly property int audioFrameInterval: 16
-    readonly property int audioPausedInterval: 100
+    readonly property int audioPausedInterval: 66
     // Marquee: a hold at each end and this much time per pixel of overflow.
     readonly property int marqueeBase: 2000
     readonly property int marqueePerPixel: 28
@@ -61,4 +62,6 @@ Singleton {
     readonly property int orbHoverDelay: 80
     readonly property int nowPlayingPeekHold: 5000
     readonly property int longPressInterval: 500
+    // A workspace's notification colour clears this long after it gains focus.
+    readonly property int alertClearDelay: 3000
 }

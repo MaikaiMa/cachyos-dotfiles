@@ -11,6 +11,8 @@ Item {
     property string iconName: ""
     property bool active: false
     property bool wide: false
+    // False for a tile that only opens something.
+    property bool checkable: true
 
     signal activated
     // Right click, long press or the menu key; only some tiles have one.
@@ -39,7 +41,7 @@ Item {
     Accessible.role: Accessible.Button
     Accessible.name: title
     Accessible.description: stateText
-    Accessible.checkable: true
+    Accessible.checkable: checkable
     Accessible.checked: active
     Accessible.onPressAction: tile.activated()
 

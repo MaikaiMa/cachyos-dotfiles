@@ -40,10 +40,14 @@ Singleton {
     property real rimAngle: 0
     property real barRimAngle: 0
     property real playerRimAngle: 0
-    property real breathPhase: 0
-    property real playingBloom: Theme.bloomQuiet
-    property real animatedBloom: Theme.bloomBreathMin
-    readonly property real bloom: animating ? animatedBloom : Music.playing ? 0.2 : 0.1
+    property real animatedBloom: Theme.bloomQuiet
+    readonly property real bloom: animating ? animatedBloom : 0.2
+    // The resting orb's ring breathes while paused: ringSwell runs 0 to 1 and back
+    // once per period and carries its opacity and diameter. Reduce motion holds it
+    // at the middle.
+    property real ringPhase: 0
+    readonly property real ringSwell: animating ? (1 - Math.cos(2 * Math.PI * ringPhase)) / 2 : 0.5
+    readonly property real ringBreath: Theme.orbRingMin + (Theme.orbRingMax - Theme.orbRingMin) * ringSwell
 
     // The wave fades in while playback runs and out after it stops; every
     // screen's wave draws at this opacity.
@@ -102,10 +106,8 @@ Singleton {
         barRimAngle = (barRimAngle + 360 * barRimRate * dt / 1000) % 360;
         playerRimAngle = (playerRimAngle + 360 * playerRimRate * dt / 1000) % 360;
 
-        breathPhase = (breathPhase + dt / Motion.bloomBreathPeriod) % 1;
-        const breath = (Theme.bloomBreathMin + Theme.bloomBreathMax) / 2 + (Theme.bloomBreathMax - Theme.bloomBreathMin) / 2 * Math.sin(2 * Math.PI * breathPhase);
-        playingBloom = follow(playingBloom, Theme.bloomQuiet + (Theme.bloomLoud - Theme.bloomQuiet) * low, dt);
-        animatedBloom = spinEased * playingBloom + (1 - spinEased) * breath;
+        animatedBloom = follow(animatedBloom, Theme.bloomQuiet + (Theme.bloomLoud - Theme.bloomQuiet) * low, dt);
+        ringPhase = (ringPhase + dt / Motion.orbRingBreathPeriod) % 1;
         tick(dt);
     }
 

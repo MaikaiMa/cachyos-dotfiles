@@ -12,6 +12,8 @@ Item {
     property int currentIndex: 0
     property string label: ""
     property int fontSize: Theme.secondaryFontSize
+    // Off: clicks and keys do nothing; the control looks the same.
+    property bool interactive: true
 
     signal selected(int index)
 
@@ -28,6 +30,8 @@ Item {
     // Only a click or a key calls this: an owner changing currentIndex (a
     // service reporting back) never emits selected.
     function choose(index: int) {
+        if (!interactive)
+            return;
         const next = Math.max(0, Math.min(count - 1, index));
         if (next !== currentIndex)
             selected(next);
@@ -111,6 +115,7 @@ Item {
                 MouseArea {
                     objectName: "segmentHitArea"
                     anchors.fill: parent
+                    enabled: control.interactive
                     acceptedButtons: Qt.LeftButton
                     hoverEnabled: true
                     preventStealing: true

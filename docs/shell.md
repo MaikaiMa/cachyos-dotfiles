@@ -40,16 +40,21 @@ notification list with dismiss and "Clear all". A right click or a long
 press on the Wi-Fi or Bluetooth tile opens the DMS settings window. The island grows to the panel's own height,
 so it shrinks in one island animation when notifications leave.
 
-Step 4 made Home real, 560 px wide and 384 px tall: a narrow and a wide
+Step 4 made Home real, 560 px wide and 436 px tall: a narrow and a wide
 column on the 12 px tile grid. Time (hours over minutes, "zo 04 okt") and
 Weather (current conditions, "Voelt als", an Hourly / Daily segmented
 control that cross-fades five forecast cards) on top; Performance (CPU
 load, CPU temperature on a 30 to 95 °C scale, memory as thin vertical bars)
 and Power (percentage, state, a read-only charge capsule that turns red
 at 20 % or below, time remaining or to full, health, capacity, and the power
-profile as a segmented control) below. `System` samples only while Home is
-open: `Shell` binds `System.active` to the `home` state. Tab moves between
-the two segmented controls, Left and Right change the focused one. With
+profile as a segmented control) below. Under them an actions row of 40 px
+icon-only tiles spread over the full width: Settings (`tune`), Updates
+(`download`, the updates indicator's glyph), Theme (`palette`), Wallpaper
+(`wallpaper`), Power (`power_settings_new`), and Player (`music_note`)
+while a player exists; a tap morphs Home into that panel. `System` samples
+only while Home is open: `Shell` binds `System.active` to the `home` state.
+Tab moves between the two segmented controls and then the action tiles,
+Left and Right change the focused control, Enter or Space opens a tile. With
 Home the own bar covers the DMS dashboard as well as the control center;
 music, calendar and the user block are left out on purpose, they get their
 own panels.
@@ -64,12 +69,20 @@ Step 5 made the side islands and the Updates panel real.
   200 ms. A dot turns `error` when a window on that workspace is urgent or
   belongs to an app with a notification younger than ten minutes
   (`Notifications.hasRecentFor(appId)`, the name matching of the DMS
-  plugins' `NotificationMatcher`); the active pill turns `error` then. A
+  plugins' `NotificationMatcher`); the active pill turns `error` then.
+  The colour clears when the notification is dismissed from the list, at
+  once, or 3 s (`Motion.alertClearDelay`) after its workspace gains focus,
+  through the workspace or one of its windows; leaving within those 6 s
+  clears nothing, and a new notification for the focused workspace gets
+  its own 3 s (the DMS apps plugin's focus clearing, which waited 1.5 s). A
   `chevron_right` separator and 16 px icons (`Niri.iconFor`) follow for the
   windows of the active workspace: the active window at full opacity with
   a 4 px `primary` dot 2 px under it that slides to the next icon on a
   focus change (200 ms), the others at 0.5. Two icon rows take turns, so a
-  switch cross-fades them. Click focuses the workspace or window, a 500 ms long press toggles
+  switch cross-fades them. Click focuses the workspace or window; a click
+  on the focused workspace's pill does nothing, because Niri's
+  `workspace-auto-back-and-forth` (`input.kdl`) turns focusing the focused
+  workspace into a jump to the previous one. A 500 ms long press toggles
   the overview, the wheel steps through the workspaces with the
   accumulator of DMS's switcher. The island animates its width in the
   workspace slide timing.
@@ -155,7 +168,19 @@ pieces, and moved the shortcuts (built 2026-10-05).
   and re-renders by setting the current wallpaper again. The calls run one
   after another, each after the previous one has exited; the control slides
   to the choice at once and follows DMS again once it has settled (polls at
-  300 ms, 1 s and 2.5 s after the last call). DMS has no settable key for its time- or location-based automatic
+  300 ms, 1 s and 2.5 s after the last call). Light and Dark get one
+  screen-wide crossfade that the bar orchestrates: 300 ms after the click
+  (`Theme.themeCrossfadeLead`), once the control has slid and the bar has
+  recoloured, it runs `niri msg action do-screen-transition --delay-ms
+  2000` (`Theme.themeCrossfadeDelay`), so Niri shows the frozen old desktop
+  with the new bar while DMS and its templates render, then cross-fades
+  once to the result. `Theme.themeCrossfade: false` or reduce motion skips
+  it. Scheme changes get none: DMS starts rendering about 150 ms after
+  `settings set`, before a transition 300 ms later could freeze the old
+  state. While `themeBusy`, a 2 px `primary` line under the mode control
+  fills left to right over the 2.5 s the busy state is expected to last,
+  and the mode control and the scheme cards ignore clicks and keys (they
+  look the same); the strip still scrolls. DMS has no settable key for its time- or location-based automatic
   mode (`themeModeAutoEnabled` is session state, which `settings set` cannot
   reach). Each card has six dots drawn from the live palette with the hue
   and saturation shifts of its scheme, not a matugen run per card; Smart
@@ -174,6 +199,24 @@ pieces, and moved the shortcuts (built 2026-10-05).
   wallpaper (`dms ipc call wallpaper get`, `getFor` in DMS's per-monitor
   mode) carries a dot; Enter or a click applies through
   `dms ipc call wallpaper set` (`setFor` in per-monitor mode).
+- **Crossfade delay, measured.** From the bar's and DMS's journals on
+  2026-10-05 (`journalctl --user`, five Light/Dark switches through the
+  portal alone): from the bar's `gsettings` call to DMS's "Setting desired
+  theme" took 1.10, 1.71, 2.30, 4.84 and 5.14 s; from there to "Theme
+  generation completed" 0.68 to 0.88 s, and the last template hook (Niri
+  reloading its config, ghostty's reload comes earlier) another 0.1 to
+  0.5 s, 0.89 to 1.18 s in all. The fastest switch was done 2.28 s after
+  the `gsettings` call; minus the 300 ms lead that is 1.98 s, rounded up to
+  2000 ms. DMS's pick-up of the portal change varies by seconds (its own
+  timing, not the bar's), so a slow switch still reveals part of the
+  render; raise the delay if that shows often (3000 ms covers the median
+  of 3.29 s, at the cost of a longer frozen screen).
+- **Touch.** Every panel is reachable without a keyboard: a tap on the
+  centre pill opens Home, whose actions row opens Settings, Updates, Theme,
+  Wallpaper, Power and, while a player exists, Player; a 500 ms long press
+  on the pill opens Power directly (the release does not also open Home);
+  a tap on the right island opens Settings, on its updates indicator (while
+  updates wait) Updates; a tap on the orb opens Player. A tap outside the islands closes.
 - **Carousels.** Theme and Wallpaper share `components/Carousel.qml`: the
   wheel (either axis; a notch moves 120 px with a glide, touchpad pixels move
   it directly), a drag and a flick move only the strip; Left, Right, Home
@@ -191,8 +234,9 @@ pieces, and moved the shortcuts (built 2026-10-05).
   and brightness OSDs are off while the own bar runs (`dms/look.json`, set
   by `scripts/bar-switch.sh`); DMS showed them on every change from any
   source, so both would have appeared.
-- **Hide toggle.** `bar toggle hidden` slides all three islands 48 px up,
-  out of the screen (shrink curve; back with the grow curve), and sets the
+- **Hide toggle.** `bar toggle hidden` slides all three islands
+  `Theme.hideDistance` up (`islandTop + islandHeight + 15`, 50 px), until
+  their bottom edge is 15 px above the screen (shrink curve; back with the grow curve), and sets the
   exclusive zone to 0, so windows take the bar's strip. The OSD still shows:
   the centre island comes down for it and goes back up. Opening a panel
   shows the bar again.
@@ -205,7 +249,7 @@ pieces, and moved the shortcuts (built 2026-10-05).
 
 The `dms ipc` calls that remain are the ones DMS owns: `lock lock` (Lock
 button, `Mod+Alt+L`), `settings openWith` (Wi-Fi and Bluetooth tiles),
-`theme light|dark|getMode` and `settings get|set` for `matugenScheme` and
+`theme getMode` and `settings get|set` for `matugenScheme` and
 `matugenSmartMode` (Theme panel), `wallpaper get|set|getFor|setFor`
 (Wallpaper panel and the scheme re-render), `notifications
 getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
@@ -218,7 +262,11 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
   single `PanelWindow` anchored top, left and right and as tall as its
   screen, on the `Top` layer with namespace `dotfiles-bar`. Its exclusive
   zone is set explicitly to `Theme.barHeight` (36 px), so windows tile below
-  the bar and not below the panels; 0 while the bar is hidden. It is not anchored to the bottom edge:
+  the bar and not below the panels; 0 while the bar is hidden. The islands
+  start `Theme.islandTop` (5 px) from the top, and every vertical position
+  derives from it: the three islands, the orb (centred on the collapsed
+  island, y + 15), Detail and the panels (they grow down from the same top),
+  the input and blur regions and the hide distance. It is not anchored to the bottom edge:
   layer-shell ignores the exclusive zone of a surface anchored to all four
   edges, and Quickshell 0.3 cannot name the exclusive edge. When another
   surface reserves the top edge (the DMS bar while both run), the window
@@ -295,7 +343,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     CentreIsland.qml                    weather, clock and battery pill, Detail, orb, music bar, OSD and the seven panels
     RightIsland.qml                     tray stack, fan and menu, attention indicators
   panels/                               centre panel bodies
-    HomePanel.qml                       Time, Weather, Performance and Power tiles
+    HomePanel.qml                       Time, Weather, Performance and Power tiles, actions row
     SettingsPanel.qml                   toggle grid, three sliders, notification list
     UpdatesPanel.qml                    pending packages, Update all, Refresh, Report
     PlayerPanel.qml                     cover, track, seekable progress, controls, output chips
@@ -495,6 +543,11 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   click or Enter on another scheme re-renders the palette within a few
   seconds and the bar follows; the dot moves. Light or Dark switches the
   mode and turns smart mode off (DMS's behaviour); Auto turns it back on.
+  Light or Dark: the bar recolours, then the screen freezes on the old
+  desktop with the new bar and one crossfade reveals the finished desktop,
+  no half-rendered intermediate (when one shows, see "Crossfade delay").
+  While DMS works the control and the cards sit at half opacity and
+  ignore clicks; nothing animates, because the screen is frozen anyway.
   The wheel, a touchpad swipe and a drag scroll the strip without changing
   the selection.
 - Wallpaper (`Mod+Shift+Return`): the strip opens centred on the current
@@ -518,7 +571,9 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   move every 2 s while Home is open. The capsule matches the percentage,
   the profile control shows the active profile and a click (or Tab to it,
   then Left or Right) switches the profile. Escape still closes from a
-  focused segmented control.
+  focused segmented control. Each tile of the actions row morphs Home into
+  its panel; Player shows only while something plays. A long press on the
+  pill opens Power, a short tap still opens Home; try both by touch.
 
 Bring the service back with:
 
@@ -622,23 +677,28 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `toggleNightLight()`, `toggleDoNotDisturb()`, `toggleCaffeine()`,
   `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued and run
   one call at a time; see the Theme panel above), `themeBusy` (true while a
-  queued theme call runs or its follow-up polls are pending),
+  queued theme call runs or its follow-up polls are pending; Light and Dark
+  also start the Niri screen transition, see the Theme panel above),
   `openSettingsWindow()`, `openSettingsTab(tab)` (a tab id from
   `dms ipc call settings tabs`), `refresh()`, `refreshTheme()`.
 - `Notifications`: `items` (newest first: `id`, `appName`, `summary`,
   `body`, `timestamp` in ms, `appIcon`, `image`, `urgency`,
-  `desktopEntry`), `count`, `recentAppKeys` (name keys of the apps with a
-  notification from the last ten minutes); `dismiss(id)`, `clearAll()`,
-  `appKeys(name)`, `hasRecentFor(appId)`. A missing or
-  malformed history file is an empty list. Dismissals live in
+  `desktopEntry`), `count`, `alerts` (items from the last ten minutes not
+  yet seen), `recentAppKeys` (name keys of their apps), `seenIds`,
+  `focusedAlertIds` (alerts of the apps on `Niri.focusedWorkspace`);
+  `dismiss(id)`, `markSeen(ids)`, `clearAll()`, `appKeys(name)`,
+  `hasRecentFor(appId)`. While `focusedAlertIds` is not empty and stays
+  the same for `Motion.alertClearDelay`, they are marked seen. A missing or
+  malformed history file is an empty list. Dismissals and seen marks live in
   `$XDG_STATE_HOME/dotfiles-bar/notifications.json`; `clearAll()` also
   clears DMS's active notifications through `dms ipc`.
 - `Music`: `hasPlayer`, `title`, `artist`, `album`, `artUrl`, `playing`,
   `position`, `length` (seconds), `canSeek`, `artColors` (the quantiser's
-  buckets), `artColor` (the most frequent bucket colour,
+  buckets), `artColorRaw` (the most frequent bucket colour,
   `Colors.primaryContainer` without art; it follows the art of every new
-  track), `artLight` and `artWarm` (a lighter and a warmer cut of it for the
-  rim light and the wave); `play()`, `pause()`, `togglePlaying()`, `next()`,
+  track), `artColor` (`artColorRaw` lifted to at least 0.35 HSL lightness,
+  hue and saturation kept, so a near-black cover still reads), `artLight` and `artWarm` (a lighter and a warmer cut of it for the
+  rim light and the wave, lifted the same way); `lifted(color)`; `play()`, `pause()`, `togglePlaying()`, `next()`,
   `previous()`, `seek(seconds)` (absolute, when the player can seek).
   playerctld's mirror player is left out of `players`.
 - `Cava`: `running` (cava runs only while a player plays, never under
@@ -646,7 +706,9 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   (mean of the first four bands; all three smoothed with 80 ms attack and
   250 ms release), `rimAngle`, `barRimAngle` and `playerRimAngle` (degrees),
   `rimRate`, `barRimRate` and `playerRimRate` (turns per second), `spin` (0 paused to 1 playing, eased
-  over 600 ms), `bloom`, `waveOn`, `waveOpacity`, `animating`; signal `tick(dt)`. Writes
+  over 600 ms), `bloom`, `ringSwell` (0 to 1 and back on a 5 s
+  cosine, the resting orb's ring breath), `ringBreath` (its opacity, 0.2 to
+  0.8), `waveOn`, `waveOpacity`, `animating`; signal `tick(dt)`. Writes
   its config to `$XDG_RUNTIME_DIR/dotfiles-bar/cava.conf`.
 - `Tray`: `items`, `count`; `activate(item)`, `menuFor(item)` (a handle for
   `QsMenuOpener`).
@@ -693,8 +755,7 @@ and the bloom, then emits `tick`. Every orb binds to `Cava.rimAngle`, every
 music bar rim to `Cava.barRimAngle`, both to `Cava.level` and the orb to
 `Cava.bloom`, and every screen's wave repaints on `tick`, so all screens
 share one set of values. On pause the rims ease to a standstill over
-600 ms and keep their angle, and the bloom blends into a breath between
-0.1 and 0.22 on a 4 s sine; on play the turn rate eases back in over the
+600 ms and keep their angle; on play the turn rate eases back in over the
 same 600 ms.
 
 - **Orb.** A 16 px `Rectangle` in `Music.artColor`, a 2 px `RimLight` ring
@@ -705,6 +766,16 @@ same 600 ms.
   rotating the item, so their layers are not redrawn per frame. The turn
   takes 6 s at rest down to 1.5 s at full level and stops on pause; the rim
   brightens and the bloom runs 0.15 to 0.5 with the low band while playing.
+  Paused or stopped, the orb rests: core, rim and bloom scale together from
+  16 to 6 px around the same centre while rim and bloom fade out, over the
+  island shrink timing, and a 1 px ring of 12 px fades in and breathes with
+  `Cava.ringSwell`: opacity 0.2 to 0.8 and a scale to 14 px, once every 5 s
+  at about 15 frames per second. The earlier ring (16 px, opacity 0.25 to
+  0.55 over 6 s at 10 per second) did animate, but read as a static blob
+  on the live bar. The ring is `artColor` on the dark
+  palette and `primary` on the light one, where a thin ring in a dark
+  album colour would not read. Play reverses it over the
+  grow timing. The 32 px hit area and the orb's place never change.
   No `qsb` is installed, so there is no custom shader; MultiEffect's blur
   spreads a 16 px disc by barely 3 px, which is why the bloom is a masked
   disc and not a blur.
@@ -747,8 +818,8 @@ same 600 ms.
   switches it off everywhere; it draws on every screen for now, also the
   external monitors the design wants it off on by default.
 - **CPU gating.** cava runs only while a player plays. The clock ticks at
-  60 per second while playing or while the wave fades out, at 10 per second
-  while a paused player exists (only the bloom breathes), and
+  60 per second while playing or while the wave fades out, at about 15 per
+  second (66 ms) while a paused player exists (only the resting ring breathes), and
   not at all without a player or under reduce motion. The wave repaints
   only on a tick while its opacity is above zero. A `Timer` and not a
   `FrameAnimation`: the clock is capped at 60 per second whatever the

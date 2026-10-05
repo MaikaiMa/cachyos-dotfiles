@@ -92,8 +92,8 @@ binds {
     Mod+Shift+CTRL+Down                 hotkey-overlay-title=null { move-column-to-monitor-down; }
     Mod+Shift+V                         hotkey-overlay-title=null { switch-focus-between-floating-and-tiling; }
 
-    Mod+BracketLeft                     hotkey-overlay-title="Consume or Expel Window Left" { consume-or-expel-window-left; }
-    Mod+BracketRight                    hotkey-overlay-title="Consume or Expel Window Right" { consume-or-expel-window-right; }
+    Mod+BracketLeft                     hotkey-overlay-title=null { consume-or-expel-window-left; }
+    Mod+BracketRight                    hotkey-overlay-title=null { consume-or-expel-window-right; }
 
     Mod+Comma                           hotkey-overlay-title=null { consume-window-into-column; }
     Mod+Period                          hotkey-overlay-title=null { expel-window-from-column; }
@@ -129,10 +129,10 @@ binds {
     Mod+TAB                             hotkey-overlay-title="Previous Workspace" { focus-workspace-previous; }
 
     // Layout Controls:
-    Mod+CTRL+F                          hotkey-overlay-title="Expand Column to Available Width" { expand-column-to-available-width; }
-    Mod+CTRL+C                          hotkey-overlay-title="Center Column" { center-column; }
-    Mod+Minus                           hotkey-overlay-title="Column Width -10%" { set-column-width "-10%"; }
-    Mod+Equal                           hotkey-overlay-title="Column Width +10%" { set-column-width "+10%"; }
+    Mod+CTRL+F                          hotkey-overlay-title=null { expand-column-to-available-width; }
+    Mod+CTRL+C                          hotkey-overlay-title=null { center-column; }
+    Mod+Minus                           hotkey-overlay-title=null { set-column-width "-10%"; }
+    Mod+Equal                           hotkey-overlay-title=null { set-column-width "+10%"; }
     Mod+Shift+Minus                     hotkey-overlay-title=null { set-window-height "-10%"; }
     Mod+Shift+Equal                     hotkey-overlay-title=null { set-window-height "+10%"; }
 
@@ -149,7 +149,7 @@ binds {
     Mod+Shift+2                         repeat=false hotkey-overlay-title="Copy Screenshot of Screen (+Ctrl saves)" { spawn-sh "dms screenshot full --no-file"; }
     Mod+Shift+3                         repeat=false hotkey-overlay-title="Copy Screenshot of Window (+Ctrl saves)" { spawn-sh "dms screenshot window --no-file"; }
     Mod+Shift+4                         repeat=false hotkey-overlay-title="Copy Screenshot of Region (+Ctrl saves)" { spawn-sh "dms screenshot region --no-confirm --no-file"; }
-    Mod+Shift+5                         repeat=false hotkey-overlay-title="Copy Scrolling Screenshot (+Ctrl saves)" { spawn-sh "dms screenshot scroll --no-file"; }
+    Mod+Shift+5                         repeat=false hotkey-overlay-title=null { spawn-sh "dms screenshot scroll --no-file"; }
     Mod+Ctrl+Shift+2                    repeat=false hotkey-overlay-title=null { spawn-sh "dms screenshot full"; }
     Mod+Ctrl+Shift+3                    repeat=false hotkey-overlay-title=null { spawn-sh "dms screenshot window"; }
     Mod+Ctrl+Shift+4                    repeat=false hotkey-overlay-title=null { spawn-sh "dms screenshot region --no-confirm"; }
@@ -158,7 +158,7 @@ binds {
     // Emergency Escape Key:
     // Use this when a fullscreen app blocks your keybinds.
     // It disables any active keyboard shortcut inhibitor, restoring control.
-    Mod+CTRL+ESCAPE                     allow-inhibiting=false hotkey-overlay-title="Escape Keyboard Shortcuts Inhibit" { toggle-keyboard-shortcuts-inhibit; }
+    Mod+CTRL+ESCAPE                     allow-inhibiting=false hotkey-overlay-title=null { toggle-keyboard-shortcuts-inhibit; }
 
     // Exit / Power:
     CTRL+ALT+Delete                     hotkey-overlay-title=null { quit; } // Also quits Niri

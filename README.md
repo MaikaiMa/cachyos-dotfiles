@@ -257,7 +257,7 @@ current workspace.
 The Niri hotkey overlay (Mod+Shift+/) is curated by hand: every bind in
 `cfg/keybinds.kdl` carries either `hotkey-overlay-title="..."` or
 `hotkey-overlay-title=null`, so a new bind must choose one. The list is kept
-at about 40 keyboard-only entries: window, workspace, layout, bar, launcher,
+at 39 titled binds (target about 40), keyboard-only: window, workspace, layout, bar, launcher,
 dictation and screenshot binds, without the application launchers and media
 keys.
 `hide-not-bound` in `cfg/misc.kdl` drops Niri's hardcoded actions that have

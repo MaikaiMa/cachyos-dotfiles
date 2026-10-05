@@ -1,5 +1,7 @@
 layout {
-    gaps 10
+    // 6 px gutters; the struts put window edges on the bar's 8 px rhythm
+    // (islands sit 8 px from the screen edge) and 6 px under the islands.
+    gaps 6
     center-focused-column "never"
 
     background-color "transparent"
@@ -22,8 +24,9 @@ layout {
     }
 
     struts {
-        left 10
-        right 10
-        top -2
+        left 2
+        right 2
+        top -1
+        bottom 2
     }
 }

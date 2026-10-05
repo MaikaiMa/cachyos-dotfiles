@@ -224,11 +224,14 @@ Island {
         }
 
         // Only the pill toggles Home; the handler lives on it, not on the island,
-        // so no click inside an open panel can reach it.
+        // so no click inside an open panel can reach it. A long press opens Power
+        // instead: TapHandler emits tapped only for a release before the threshold.
         TapHandler {
             objectName: "pillTap"
             enabled: island.showsPill
+            longPressThreshold: Motion.longPressInterval / 1000
             onTapped: Shell.toggle("home", island.screenName)
+            onLongPressed: Shell.open("power", island.screenName)
         }
 
         TextMetrics {

@@ -43,9 +43,12 @@ islands' geometry.
   icon is at full opacity with a 4 px `primary` dot centred under it; the
   other icons sit at 50 % opacity, so the active app reads at a glance.
   The separator and the icons disappear when the workspace has no windows.
-- Click a pill: focus that workspace. Click an app icon: focus that window.
-  Long press on either: Niri overview, as today. Scroll over the island:
-  previous or next workspace.
+- Click a pill: focus that workspace; clicking the active one does
+  nothing. Click an app icon: focus that window. Long press on either:
+  Niri overview, as today. Scroll over the island: previous or next
+  workspace. A pill's notification colour clears 3 s after that
+  workspace gains focus (the retired DMS plugin did the same with a
+  shorter delay).
 - Switching workspaces animates the filled pill sliding to its new place
   and the icon row cross-fading.
 - Expanded state: none in this phase.
@@ -67,7 +70,8 @@ The centre island has exactly two interactions on the pill itself:
   in Detail, no second text line, the clock does not move. Approved
   2026-10-04; keep as is.
 - **Click or tap: Home panel.** The pill is replaced by the Home panel
-  described below.
+  described below. A long press (500 ms) on the pill opens the Power
+  panel, so it is reachable by touch from anywhere (added 2026-10-05).
 
 Panels replace the centre island completely: the pill, the clock and the
 music dot are not visible while a panel is open. Panels have no title. The
@@ -84,7 +88,7 @@ and the OSD shows over the collapsed pill.
 | Settings | `Mod+S` (decided 2026-10-05; `Mod+Shift+S` opens the DMS settings window), or click on the right island | Quick toggles, Sound and Display sliders, notifications, see below. |
 | Power | `Mod+Escape` | One row of five square buttons: Lock, Suspend, Log Out, Reboot, Power Off. The first is focused. Approved 2026-10-04. |
 | Updates | click on the updates indicator | Approved 2026-10-04. Count and "checked just now" line, fragile packages first in `error` with a one-line reason, then the remaining packages in a scrolling list (name, version jump, source tag). Actions: Update all (runs `system-update` in the terminal, with its fragile prompt), Refresh, Report (opens the last report of ADR-0025). No "skip fragile" action: that would be a partial upgrade. The list comes from `system-update --pending`, a read-only mode to add to the helper. |
-| Theme | `Mod+Ctrl+Return` | Light / Dark / Auto segmented control: the control moves at once (optimistic, confirmed by the service), Light and Dark switch DMS smart mode off and then set only the desktop portal colour scheme (`gsettings … color-scheme default|prefer-dark`); DMS follows the portal without its Niri screen transition, which is what made the switch janky (the `theme light|dark` IPC always triggers that transition and is not used). Auto switches smart mode on and re-renders. The bar switches its own palette instantly from the other mode in the same palette file, gliding every colour over 300 ms, and later adopts whatever DMS writes (rules revised 2026-10-05 evening). Then the matugen scheme list as a horizontal carousel of six-dot swatches (DMS setting `matugenScheme`, values such as `scheme-tonal-spot`, `scheme-fruit-salad`). Approved 2026-10-04. |
+| Theme | `Mod+Ctrl+Return` | Light / Dark / Auto segmented control: the control moves at once (optimistic, confirmed by the service), Light and Dark switch DMS smart mode off and then set only the desktop portal colour scheme (`gsettings … color-scheme default|prefer-dark`); DMS follows the portal without its Niri screen transition, which is what made the switch janky (the `theme light|dark` IPC always triggers that transition and is not used). Auto switches smart mode on and re-renders. The bar switches its own palette instantly from the other mode in the same palette file, gliding every colour over 300 ms, and later adopts whatever DMS writes. The bar orchestrates one screen-wide crossfade itself: 300 ms after the click, once the control has slid and the bar has recoloured, it calls Niri's screen transition with a delay long enough for DMS and every template to finish (2000 ms by default, the fastest observed switch from the DMS log; DMS reacts to the portal change in 1 to 5 s, so a slow switch may still show part of the recolour, and the token is tunable), so the desktop recolours unseen and one crossfade reveals the finished state. While DMS works the Theme panel shows a static disabled look (mode control and cards at half opacity, nothing animating, since the screen is frozen) and ignores input; the control never reconciles mid-switch (rules revised 2026-10-05 evening). Then the matugen scheme list as a horizontal carousel of six-dot swatches (DMS setting `matugenScheme`, values such as `scheme-tonal-spot`, `scheme-fruit-salad`). Approved 2026-10-04. |
 | Wallpaper | `Mod+Shift+Return` (moves from `Mod+Return`, which becomes Home) | Horizontal carousel of wallpaper thumbnails from the DMS wallpaper folder; scrolls horizontally with the wheel, touchpad and drag as well as the arrow keys; Enter applies. Approved 2026-10-04 on that condition. |
 | OSD | volume or brightness key | A slim slider pill over the collapsed pill for 1.5 s; it closes any open panel first and never takes keyboard focus. Approved 2026-10-04. |
 
@@ -95,6 +99,7 @@ elsewhere (no music, no calendar, no user block).
 | Tile | Content |
 | --- | --- |
 | Time | Large `HH:mm` stacked, date `zo 04 okt` under it, the whole group centred horizontally and vertically in the tile. |
+| Actions row (added 2026-10-05 for touch) | A slim bottom row of icon-only tiles, always shown, in this order: Theme, Wallpaper, Player (while a player exists), Updates, Settings, Power; a tap morphs Home into that panel. |
 | Weather | Current: icon, temperature, condition, feels-like, place (Open-Meteo, auto location). Under it an Hourly / Daily segmented control, Hourly selected by default, and a single row of compact cards: hour or day, icon, temperature or high/low. Only human-readable values; no humidity, pressure or visibility. Lower than the DMS weather tab. |
 | Performance | Three thin vertical bars with icons: CPU load, CPU temperature, memory. |
 | Power | Top row: battery icon, large percentage, state ("Discharging", "Fully charged"). Below it a full-width charge capsule in the Settings slider language, filled to the percentage, `primary`, `error` at 20 % or below, read-only. Then one row of small labelled values: time remaining or time to full, Health, Capacity. Bottom: the power profile as a three-segment control (Power Saver, Balanced, Performance). |
@@ -151,7 +156,11 @@ left of the pill, is absent when no MPRIS player exists, and never
 changes size.
 
 - *Solid core, living rim.* A solid 16 px sphere in the album art's
-  dominant colour (fallback `primary_container`). Around its rim runs a
+  dominant colour (fallback `primary_container`). Very dark art colours
+  are lifted before use: if the HSL lightness is below 0.35 it is raised
+  to 0.35 with the hue and saturation kept, so a black cover never yields
+  a black orb; in light mode the ring uses `primary` (rules added
+  2026-10-05 evening). Around its rim runs a
   travelling light: a conic gradient of two or three album colours plus
   `primary`, 2 px wide, rotating. The audio level drives the rotation
   speed (one turn in about 6 s at rest, down to about 1.5 s at full
@@ -162,10 +171,16 @@ changes size.
   between 0.15 and 0.5 with ~80 ms attack and ~250 ms release. It is the
   only thing that pulses.
 - *Nothing else moves while playing.* No drift, no bob, no scaling on
-  hover of the pill or anywhere else. On pause the rim stops turning and
-  the only motion is a slow breath of the bloom, opacity 0.1 to 0.22 over
-  a 4 s cycle, so the orb reads as resting but not dead (changed
-  2026-10-05 after the live test).
+  hover of the pill or anywhere else.
+- *Paused or stopped: a smaller, resting orb* (revised 2026-10-05 evening).
+  The core shrinks from 16 px to 6 px and loses its rim light and bloom;
+  around it a 1 px ring, 12 px in diameter, in the album colour, breathes
+  visibly: opacity 0.2 to 0.8 and diameter 12 to 14 px on a 5 s cycle
+  (sizes revised 2026-10-05 after the live test: 10 px and a faint ring
+  read as a static blob). Nothing else moves. The change between the two states uses the
+  island shrink and grow timings: core and rim fade and scale while the
+  ring fades the other way; on play the rim spins up from the eased start.
+  The 32 px hit area is unchanged. No player at all still hides the orb.
 - *Hover: the music bar, centred.* The pill grows symmetrically from its
   centre into the music bar, which is centred on the screen like the
   clock (hidden in this state). The orb glides into the bar as its
@@ -286,7 +301,7 @@ every screen; the music dot and OSD only on the screen with the pointer.
 
 | Token | Value |
 | --- | --- |
-| Bar height / exclusive zone | 36 px |
+| Bar height / exclusive zone | 36 px; islands start 5 px from the top (raised from 3 on 2026-10-05), Niri windows 6 px under them, 8 px from the screen sides and bottom, 6 px gutters |
 | Island height collapsed | 30 px |
 | Island height in Detail | 48 px |
 | Island radius collapsed | 15 px (full pill) |
@@ -320,7 +335,8 @@ Material keys of that file.
 | Indicator appears or disappears in the right island | 180 ms width + opacity | ease-out |
 | Tray fans out or folds | 200 ms spacing | cubic-bezier(0.2, 0.8, 0.2, 1) |
 | OSD in / out | 160 ms / 240 ms | ease-out / ease-in |
-| Orb rim light and bloom | continuous; rotation speed and rim brightness follow the level, bloom follows the low band, 60 fps; slow and dim on pause |
+| Orb rim light and bloom | continuous while playing; rotation speed and rim brightness follow the level, bloom follows the low band, 60 fps |
+| Orb resting state | core 16 → 6 px and rim/bloom out over the shrink timing, 1 px ring in, ring breath opacity 0.2 ↔ 0.8 and diameter 12 ↔ 14 px over 5 s at ~15 fps |
 | Pill grows into the centred music bar | 280 ms, same curve as island grow; content fade-in starts at 120 ms |
 | Top-edge wave in / out | 600 ms in, 2 s out, ease-out |
 | Audio-driven values | smoothed with ~80 ms attack and ~250 ms release |

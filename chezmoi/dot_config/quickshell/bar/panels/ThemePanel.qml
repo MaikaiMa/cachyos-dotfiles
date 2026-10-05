@@ -77,6 +77,10 @@ Item {
         width: Theme.themeModeWidth
         label: "Theme mode"
         fontSize: Theme.secondaryFontSize + 1
+        interactive: !Dms.themeBusy
+        // Static disabled look while DMS works: nothing may animate under the
+        // frozen frame of the screen crossfade.
+        opacity: Dms.themeBusy ? Theme.busyOpacity : 1
         model: ["Light", "Dark", "Auto"]
         // The choice shows at once and the accent slides; DMS reports the new
         // mode only after it has rendered, so the service value takes over
@@ -107,10 +111,13 @@ Item {
         function onThemeReported() {
             mode.chosen = -1;
         }
+
     }
 
     Carousel {
         id: schemes
+
+        opacity: Dms.themeBusy ? Theme.busyOpacity : 1
 
         objectName: "schemes"
         y: mode.y + mode.height + Theme.tileGap
@@ -118,7 +125,10 @@ Item {
         height: Theme.schemeCardHeight + 2 * Theme.carouselPadding
         label: "Colour schemes"
         model: Dms.schemes
-        onActivated: index => Dms.setScheme(Dms.schemes[index].value)
+        onActivated: index => {
+            if (!Dms.themeBusy)
+                Dms.setScheme(Dms.schemes[index].value);
+        }
 
         delegate: Item {
             id: card
@@ -212,6 +222,7 @@ Item {
                 id: pointer
 
                 anchors.fill: parent
+                enabled: !Dms.themeBusy
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {

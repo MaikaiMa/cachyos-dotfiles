@@ -96,8 +96,10 @@ writes `~/.config/ghostty/dank-background` in the same matugen run, with a
 line, and `config.ghostty`'s `config-file = ?dank-background` include applies it after
 the theme. After matugen has finished writing all templates, DMS sends
 `SIGUSR2` to every process named `ghostty`, which makes Ghostty reload its
-configuration, so open windows pick up the new colours without a matugen
-hook of our own.
+configuration. Because that signal comes only at the end of DMS's whole
+template run, the `ghostty_background` template also sends `SIGUSR2` in its
+own `post_hook` the moment the background file is written, so open windows
+recolour earlier; the later DMS signal is a harmless second reload.
 
 An edited `config.ghostty` is not reloaded automatically. Press
 `Ctrl+Shift+,` in a Ghostty window, or run:

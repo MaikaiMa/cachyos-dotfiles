@@ -4,6 +4,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import ".."
 
 // The actions DMS owns, through its public `dms ipc call` interface only.
 // Statuses are polled every 10 s and right after each change.
@@ -71,6 +72,8 @@ Singleton {
     // 300 ms, 1 s and 2.5 s after it); the Theme panel keeps its own choice
     // shown until then.
     property bool themeBusy: false
+    // How long themeBusy lasts after the last call has exited.
+    readonly property int settleDuration: settle.delays[settle.delays.length - 1]
     // Waiting theme actions, each a list of `dms ipc call` argument lists run in order.
     property var themeQueue: []
     // light, dark or auto while that choice is queued or settling.
@@ -106,12 +109,13 @@ Singleton {
     }
 
     // Light and Dark go through the portal, not `dms ipc call theme`: that IPC
-    // always switches with a Niri screen transition (a freeze, then a
-    // cross-fade to a half-rendered state). With smart mode off and
-    // syncModeWithPortal on, DMS follows the GNOME colour scheme after its
-    // 750 ms settle timer and switches without the transition. Smart mode
-    // goes off first (only when on): while on, DMS ignores the portal and
-    // re-resolves the mode from the wallpaper. `settings set` only stores it.
+    // always switches with a Niri screen transition that reveals a
+    // half-rendered state. With smart mode off and syncModeWithPortal on, DMS
+    // follows the GNOME colour scheme after its settle timer and switches
+    // without one. Smart mode goes off first (only when on): while on, DMS
+    // ignores the portal and re-resolves the mode from the wallpaper.
+    // `settings set` only stores it. The bar then runs its own transition,
+    // timed to cover DMS's render (see crossfade).
     function setLight() {
         setMode("light");
     }
@@ -133,6 +137,8 @@ Singleton {
         themeMode = mode;
         smartMode = false;
         queueTheme(steps);
+        if (Theme.themeCrossfade && !Motion.reduceMotion)
+            crossfade.restart();
     }
 
     // Runs the steps one at a time, each after the previous one exited, and
@@ -215,6 +221,29 @@ Singleton {
         repeat: true
         running: true
         onTriggered: root.refresh()
+    }
+
+    // Starts once the control has slid and the bar has recoloured, well before
+    // DMS picks up the portal change, so Niri freezes the old desktop with the
+    // new bar and cross-fades once DMS and its templates are done. Scheme
+    // changes have no such lead (DMS renders within 200 ms) and get none.
+    Timer {
+        id: crossfade
+
+        interval: Theme.themeCrossfadeLead
+        onTriggered: {
+            transition.command = ["niri", "msg", "action", "do-screen-transition", "--delay-ms", String(Theme.themeCrossfadeDelay)];
+            transition.running = true;
+        }
+    }
+
+    Process {
+        id: transition
+
+        onExited: code => { // qmllint disable signal-handler-parameters
+            if (code !== 0)
+                console.warn("Dms: " + transition.command.join(" ") + " exited with " + code);
+        }
     }
 
     Process {

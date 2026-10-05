@@ -9,7 +9,8 @@ Singleton {
 
     readonly property int islandHeight: 30
     readonly property int islandDetailHeight: 48
-    readonly property int islandTop: (barHeight - islandHeight) / 2
+    // Every vertical position derives from this: islands, orb, Detail, panels, hiding.
+    readonly property int islandTop: 5
     readonly property int islandRadius: 15
     readonly property int islandRadiusExpanded: 20
     // The DMS bar and popup transparency, over the blur behind the islands.
@@ -132,7 +133,9 @@ Singleton {
     readonly property int powerStatsHeight: 34
     readonly property int homeTopRowHeight: 2 * homeTilePadding + weatherNowHeight + 2 * homeSectionGap + segmentedHeight + weatherCardHeight
     readonly property int homeBottomRowHeight: 2 * homeTilePadding + powerHeadHeight + 3 * homeSectionGap + chargeCapsuleHeight + powerStatsHeight + segmentedHeight
-    readonly property int homeHeight: 2 * panelPadding + homeTopRowHeight + tileGap + homeBottomRowHeight
+    // Home's bottom row of icon-only tiles, one per panel, for touch.
+    readonly property int homeActionHeight: 40
+    readonly property int homeHeight: 2 * panelPadding + homeTopRowHeight + tileGap + homeBottomRowHeight + tileGap + homeActionHeight
 
     // Updates: count line, fragile rows, a scrolling list and three buttons.
     readonly property int updatesHeadHeight: 20
@@ -157,11 +160,17 @@ Singleton {
     readonly property int orbInset: 7
     readonly property real orbRimWidth: 2
     readonly property int orbBloom: 8
-    // Bloom opacity: 0.15 to 0.5 with the low band while playing, a breath on pause.
+    // Bloom opacity: 0.15 to 0.5 with the low band while playing.
     readonly property real bloomQuiet: 0.15
     readonly property real bloomLoud: 0.5
-    readonly property real bloomBreathMin: 0.1
-    readonly property real bloomBreathMax: 0.22
+    // Paused or stopped: a 6 px core inside a 1 px ring that breathes between
+    // these diameters and opacities.
+    readonly property int orbRestingSize: 6
+    readonly property int orbRingWidth: 1
+    readonly property int orbRingDiameter: 12
+    readonly property int orbRingBreathDiameter: 14
+    readonly property real orbRingMin: 0.2
+    readonly property real orbRingMax: 0.8
     readonly property int orbHitPadding: orbBloom
     // The prototype's 280 px bar, padding included: orb, gap, text, three controls.
     readonly property int musicBarWidth: 280
@@ -236,6 +245,14 @@ Singleton {
     readonly property int schemeDotsGap: 9
     readonly property int schemeLabelHeight: 14
     readonly property int schemeCardHeight: schemeCardPadding + schemeDotSize + schemeDotsGap + schemeLabelHeight + 10
+    // Light and Dark: the bar calls Niri's screen transition this long after the
+    // click, once the control has slid and the bar has recoloured, with a delay
+    // that covers DMS's render and its templates (measured, docs/shell.md).
+    readonly property bool themeCrossfade: true
+    readonly property int themeCrossfadeLead: 300
+    readonly property int themeCrossfadeDelay: 2000
+    // Static disabled look of the Theme panel while DMS works.
+    readonly property real busyOpacity: 0.5
     readonly property int themePanelHeight: 2 * panelPadding + segmentedHeight + tileGap + 2 * carouselPadding + schemeCardHeight
     readonly property int thumbWidth: 120
     readonly property int thumbHeight: 68
@@ -256,8 +273,10 @@ Singleton {
     readonly property int osdTrackHeight: 4
     readonly property int osdValueWidth: 34
 
-    // The hide toggle slides the islands this far up, out of the screen.
-    readonly property int hideDistance: 48
+    // The hide toggle slides the islands this far up, until their bottom edge is
+    // hideClearance above the screen.
+    readonly property int hideClearance: 15
+    readonly property int hideDistance: islandTop + islandHeight + hideClearance
 
     Component.onCompleted: {
         if (!iconFontAvailable)
