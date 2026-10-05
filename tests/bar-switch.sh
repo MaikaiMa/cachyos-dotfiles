@@ -19,7 +19,7 @@ apply_look_calls="$test_root/apply-look-calls"
 look="$test_root/look.json"
 mkdir -p "$fake_bin" "$state"
 # The repository file records whichever bar is in use; the test starts from the DMS bar.
-jq --indent 2 '.barConfigs[0].enabled = true' "$repo_root/dms/look.json" >"$look"
+jq --indent 2 '.barConfigs[0].enabled = true | .osdVolumeEnabled = true | .osdMicMuteEnabled = true | .osdBrightnessEnabled = true' "$repo_root/dms/look.json" >"$look"
 : >"$systemctl_calls"
 : >"$apply_look_calls"
 
@@ -75,6 +75,11 @@ bar_flag() {
 	jq -c '.barConfigs[0].enabled' "$look"
 }
 
+# The DMS volume, microphone and brightness OSDs follow the DMS bar.
+osd_flags() {
+	jq -c '[.osdVolumeEnabled, .osdMicMuteEnabled, .osdBrightnessEnabled]' "$look"
+}
+
 changing_calls() {
 	grep -E -- '--user (enable|disable|daemon-reload)' "$systemctl_calls" || true
 }
@@ -87,7 +92,7 @@ reset_calls() {
 cp "$look" "$test_root/before.json"
 dry_run=$(run_switch --dry-run own)
 case $dry_run in
-*'would set barConfigs[0].enabled to false'*'would enable and start quickshell-bar.service'*) ;;
+*'would set barConfigs[0].enabled and the DMS volume, microphone and brightness OSDs to false'*'would enable and start quickshell-bar.service'*) ;;
 *) fail "dry-run own did not preview the switch: $dry_run" ;;
 esac
 cmp -s "$look" "$test_root/before.json" || fail 'dry-run own changed look.json.'
@@ -98,6 +103,7 @@ cmp -s "$look" "$test_root/before.json" || fail 'dry-run own changed look.json.'
 reset_calls
 run_switch own >/dev/null
 [ "$(bar_flag)" = false ] || fail 'own did not set barConfigs[0].enabled to false.'
+[ "$(osd_flags)" = '[false,false,false]' ] || fail 'own did not turn the DMS volume, microphone and brightness OSDs off.'
 [ "$(cat "$apply_look_calls")" = 'dms-apply-look ' ] || fail 'own did not run dms-apply-look once without arguments.'
 grep -qx -- '--user enable --now quickshell-bar.service' "$systemctl_calls" || fail 'own did not enable the bar unit.'
 jq --indent 2 . "$look" | cmp -s - "$look" || fail 'own did not keep the two-space indentation of look.json.'
@@ -119,6 +125,7 @@ esac
 reset_calls
 run_switch dms >/dev/null
 [ "$(bar_flag)" = true ] || fail 'dms did not set barConfigs[0].enabled to true.'
+[ "$(osd_flags)" = '[true,true,true]' ] || fail 'dms did not turn the DMS volume, microphone and brightness OSDs back on.'
 grep -qx -- '--user disable --now quickshell-bar.service' "$systemctl_calls" || fail 'dms did not disable the bar unit.'
 
 status=$(run_switch status)

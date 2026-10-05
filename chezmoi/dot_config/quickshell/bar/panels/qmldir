@@ -1,5 +1,7 @@
-PlaceholderPanel 1.0 PlaceholderPanel.qml
 SettingsPanel 1.0 SettingsPanel.qml
 HomePanel 1.0 HomePanel.qml
 UpdatesPanel 1.0 UpdatesPanel.qml
 PlayerPanel 1.0 PlayerPanel.qml
+PowerPanel 1.0 PowerPanel.qml
+ThemePanel 1.0 ThemePanel.qml
+WallpaperPanel 1.0 WallpaperPanel.qml

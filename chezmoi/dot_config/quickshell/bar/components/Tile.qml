@@ -16,6 +16,18 @@ Item {
     // Right click, long press or the menu key; only some tiles have one.
     signal secondaryAction
 
+    // 1 wide, 0 small; it moves with the grid, so a tile that changes size
+    // between the docked and the detached grid slides its icon along.
+    property real wideBlend: wide ? 1 : 0
+
+    Behavior on wideBlend {
+        NumberAnimation {
+            duration: Motion.growDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Motion.growCurve
+        }
+    }
+
     readonly property bool hovered: pointer.containsMouse
     readonly property color contentColor: active ? Colors.primaryForeground : Colors.foreground
     readonly property color restColor: active ? Colors.primary : Colors.surfaceContainerHigh
@@ -66,8 +78,9 @@ Item {
         Rectangle {
             id: disc
 
-            visible: tile.wide
-            x: 12
+            visible: opacity > 0
+            opacity: tile.wideBlend
+            x: 12 + (1 - tile.wideBlend) * (surface.width / 2 - 12 - width / 2)
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.tileIconDisc
             height: width
@@ -76,7 +89,7 @@ Item {
         }
 
         Icon {
-            anchors.centerIn: tile.wide ? disc : parent
+            anchors.centerIn: disc
             name: tile.iconName
             size: Theme.toggleIconSize
             color: tile.contentColor
@@ -84,7 +97,8 @@ Item {
         }
 
         Column {
-            visible: tile.wide
+            visible: opacity > 0
+            opacity: tile.wideBlend
             anchors.left: disc.right
             anchors.leftMargin: 10
             anchors.right: parent.right

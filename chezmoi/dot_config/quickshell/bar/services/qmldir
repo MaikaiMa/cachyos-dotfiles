@@ -13,3 +13,6 @@ singleton Tray 1.0 Tray.qml
 singleton Weather 1.0 Weather.qml
 singleton System 1.0 System.qml
 singleton Updates 1.0 Updates.qml
+singleton Session 1.0 Session.qml
+singleton Tablet 1.0 Tablet.qml
+singleton Wallpapers 1.0 Wallpapers.qml

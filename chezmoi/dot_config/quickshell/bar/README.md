@@ -14,14 +14,16 @@ Theme.qml        singleton: bar, island and panel sizes, radii, fonts
 Motion.qml       singleton: durations and curves, reduce motion
 qmldir           registers the token singletons
 services/        singletons that own state or data; Shell.qml is the centre island state machine
+                 and the IPC target `bar` the Niri shortcuts call
 islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, battery,
                  Detail, music orb and bar), RightIsland (tray, attention indicators)
-panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel, PlayerPanel;
-                 PlaceholderPanel until the others land
+panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel, PlayerPanel,
+                 PowerPanel, ThemePanel, WallpaperPanel
 components/      Island surface and its animation, Hairline, Clock, Icon (Material Symbols),
                  WeatherIcon, BatteryIcon, SegmentedControl; Tile, CapsuleSlider and
                  NotificationRow for Settings; TimeTile, WeatherTile, PerformanceTile and
-                 PowerTile for Home; Orb, RimLight and TopWave for music
+                 PowerTile for Home; Orb, RimLight and TopWave for music; Carousel for
+                 Theme and Wallpaper; Osd
 ```
 
 Every directory with types has its own `qmldir` that lists all of them.

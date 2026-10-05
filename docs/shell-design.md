@@ -81,10 +81,10 @@ and the OSD shows over the collapsed pill.
 | --- | --- | --- |
 | Home | click on the pill, or `Mod+Return` | Tile grid, see below. |
 | Player | click on the music bar | Large cover, title, artist, progress, controls, output picker. Approved 2026-10-04, including the orb, the music bar and the transitions (prototype r4). |
-| Settings | `Mod+Shift+S` (today's settings shortcut), or click on the right island | Quick toggles, Sound and Display sliders, notifications, see below. |
+| Settings | `Mod+S` (decided 2026-10-05; `Mod+Shift+S` opens the DMS settings window), or click on the right island | Quick toggles, Sound and Display sliders, notifications, see below. |
 | Power | `Mod+Escape` | One row of five square buttons: Lock, Suspend, Log Out, Reboot, Power Off. The first is focused. Approved 2026-10-04. |
 | Updates | click on the updates indicator | Approved 2026-10-04. Count and "checked just now" line, fragile packages first in `error` with a one-line reason, then the remaining packages in a scrolling list (name, version jump, source tag). Actions: Update all (runs `system-update` in the terminal, with its fragile prompt), Refresh, Report (opens the last report of ADR-0025). No "skip fragile" action: that would be a partial upgrade. The list comes from `system-update --pending`, a read-only mode to add to the helper. |
-| Theme | `Mod+Ctrl+Return` | Light / Dark / Auto segmented control (`dms ipc call theme light|dark`), then the matugen scheme list as a horizontal carousel of six-dot swatches (DMS setting `matugenScheme`, values such as `scheme-tonal-spot`, `scheme-fruit-salad`). Approved 2026-10-04. |
+| Theme | `Mod+Ctrl+Return` | Light / Dark / Auto segmented control: the control moves at once (optimistic, confirmed by the service), Light and Dark switch DMS smart mode off and then set only the desktop portal colour scheme (`gsettings … color-scheme default|prefer-dark`); DMS follows the portal without its Niri screen transition, which is what made the switch janky (the `theme light|dark` IPC always triggers that transition and is not used). Auto switches smart mode on and re-renders. The bar switches its own palette instantly from the other mode in the same palette file, gliding every colour over 300 ms, and later adopts whatever DMS writes (rules revised 2026-10-05 evening). Then the matugen scheme list as a horizontal carousel of six-dot swatches (DMS setting `matugenScheme`, values such as `scheme-tonal-spot`, `scheme-fruit-salad`). Approved 2026-10-04. |
 | Wallpaper | `Mod+Shift+Return` (moves from `Mod+Return`, which becomes Home) | Horizontal carousel of wallpaper thumbnails from the DMS wallpaper folder; scrolls horizontally with the wheel, touchpad and drag as well as the arrow keys; Enter applies. Approved 2026-10-04 on that condition. |
 | OSD | volume or brightness key | A slim slider pill over the collapsed pill for 1.5 s; it closes any open panel first and never takes keyboard focus. Approved 2026-10-04. |
 
@@ -180,6 +180,21 @@ changes size.
   carries the rim light too, as a quiet continuation rather than a frame:
   1.5 px, no outer glow, one turn in 8 s at rest down to 3 s at full
   level (added 2026-10-05).
+
+*Now-playing peek* (added 2026-10-05). The music bar also opens by itself
+for 5 s (raised from 3 s on 2026-10-05) when what is playing changes, then shrinks back to the orb, so a
+song change gets its context without a hover. One trigger: the identity
+of the playing track changed, meaning MPRIS track id plus title plus
+artist together differ from the last one shown while playback is active
+(Firefox reports one track id for every track, so the id alone is not
+enough); playback starting after a stop or a pause
+longer than 30 s, or a new player starting, counts as the first change.
+Never on pause, stop, seek, volume, shuffle or repeat; never on metadata
+bursts for the same track (debounce 500 ms plus the identity check);
+never on late album art; never while a panel is open, the bar is hidden,
+reduce motion is on, or the music bar or Player is already open. A track
+change during a peek restarts the 5 s hold; the pointer resting on the
+bar turns the peek into a normal hover with the usual leave grace.
 
 *Top-edge wave.* An addition the user asked back in, but as a wave, not
 bars: a separate click-through layer along the top 48 px of the screen,
@@ -316,8 +331,9 @@ durations to 0.
 
 ## Open items
 
-- Theme state: confirm that setting `matugenScheme` through
-  `dms ipc call settings set` re-renders the palette without a restart.
+- Theme state, answered 2026-10-05: `dms ipc call settings set matugenScheme`
+  only saves the key; the bar re-renders by re-setting the current
+  wallpaper afterwards, the method docs/dms.md documents.
 - Whether the left island needs an expanded state (window titles) later.
 - Niri struts in `layout.kdl` are tuned to the DMS bar and may need a pixel
   change for the 36 px bar.

@@ -22,12 +22,15 @@ binds {
     Mod3+Shift+M                        repeat=false hotkey-overlay-title=null { spawn "flatpak" "run" "co.hyprlab.Hylki" "mailto:"; }
     Mod+Shift+Space                     repeat=false hotkey-overlay-title=null { spawn "1password" "--quick-access"; }
 
-    // DankMaterialShell:
-    Mod+Return                          hotkey-overlay-title="Wallpaper Selector" { spawn-sh "dms ipc call dash toggle wallpaper"; }
-    Mod+S                               hotkey-overlay-title="Home" { spawn-sh "quickshell ipc -c bar call bar toggle home"; }
+    // Own bar (docs/shell.md) and DankMaterialShell:
+    Mod+Return                          hotkey-overlay-title="Home" { spawn-sh "quickshell ipc -c bar call bar toggle home"; }
+    Mod+S                               hotkey-overlay-title="Settings" { spawn-sh "quickshell ipc -c bar call bar toggle settings"; }
+    Mod+Shift+Return                    hotkey-overlay-title="Wallpaper Selector" { spawn-sh "quickshell ipc -c bar call bar toggle wallpaper"; }
+    Mod+Ctrl+Return                     hotkey-overlay-title="Theme" { spawn-sh "quickshell ipc -c bar call bar toggle theme"; }
     Mod+Shift+S                         hotkey-overlay-title=null { spawn-sh "dms ipc call settings focusOrToggle"; }
+    Mod+Shift+B                         hotkey-overlay-title="Toggle Bar" { spawn-sh "quickshell ipc -c bar call bar toggle hidden"; }
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen" { spawn-sh "dms ipc call lock lock"; }
-    Mod+ESCAPE                          hotkey-overlay-title="Session Menu" { spawn-sh "dms ipc call powermenu toggle"; }
+    Mod+ESCAPE                          hotkey-overlay-title="Session Menu" { spawn-sh "quickshell ipc -c bar call bar toggle power"; }
 
     // Launcher, dictation and writing tools (ADR-0024, ADR-0026, docs/launcher.md, docs/writing.md):
     Mod+Space                           repeat=false hotkey-overlay-title="App Launcher" { spawn "vicinae" "toggle"; }
@@ -37,19 +40,19 @@ binds {
     Mod+G                               repeat=false hotkey-overlay-title="GIF Search" { spawn "vicinae" "vicinae://launch/@josephschmitt/store.raycast.gif-search/search?toggle=true"; }
     Mod+I                               repeat=false hotkey-overlay-title="Writing Tools" { spawn "vicinae" "vicinae://launch/@maikel/writing-tools/writing-tools?toggle=true"; }
 
-    // Media Controls:
-    XF86AudioRaiseVolume                allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call audio increment 5"; }
-    XF86AudioLowerVolume                allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call audio decrement 5"; }
-    XF86AudioMute                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call audio mute"; }
-    XF86AudioMicMute                    allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call audio micmute"; }
-    XF86AudioNext                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call mpris next"; }
-    XF86AudioPrev                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call mpris previous"; }
-    XF86AudioPlay                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call mpris playPause"; }
-    XF86AudioPause                      allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call mpris pause"; }
+    // Media Controls: the own bar shows its OSD; DMS takes over when the bar is not running (scripts/bar-switch.sh dms).
+    XF86AudioRaiseVolume                allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar volume up || dms ipc call audio increment 5"; }
+    XF86AudioLowerVolume                allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar volume down || dms ipc call audio decrement 5"; }
+    XF86AudioMute                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar volume mute || dms ipc call audio mute"; }
+    XF86AudioMicMute                    allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar volume micmute || dms ipc call audio micmute"; }
+    XF86AudioNext                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar media next || dms ipc call mpris next"; }
+    XF86AudioPrev                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar media prev || dms ipc call mpris previous"; }
+    XF86AudioPlay                       allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar media playpause || dms ipc call mpris playPause"; }
+    XF86AudioPause                      allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar media pause || dms ipc call mpris pause"; }
 
     // Brightness Controls:
-    XF86MonBrightnessUp                 allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call brightness increment 5 \"\""; }
-    XF86MonBrightnessDown               allow-when-locked=true hotkey-overlay-title=null { spawn-sh "dms ipc call brightness decrement 5 \"\""; }
+    XF86MonBrightnessUp                 allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar brightness up || dms ipc call brightness increment 5 \"\""; }
+    XF86MonBrightnessDown               allow-when-locked=true hotkey-overlay-title=null { spawn-sh "quickshell ipc -c bar call bar brightness down || dms ipc call brightness decrement 5 \"\""; }
 
     // Window Movement and Focus:
     Mod+W                               hotkey-overlay-title=null { close-window; }

@@ -2,29 +2,30 @@
 
 The bar is moving from DMS to a repository-owned Quickshell configuration
 ([ADR-0027](adr/ADR-0027-own-the-bar-and-panels-in-quickshell-with-dms-as-service-layer.md)).
-DMS stays the service layer: notifications, OSD, control center, lock screen,
-polkit, theming. This page is the index for the own bar; [dms.md](dms.md)
+DMS stays the service layer: notifications, lock screen, polkit, theming
+and wallpaper. This page is the index for the own bar; [dms.md](dms.md)
 keeps describing DMS.
 
-## Known limitation while DMS panels are still in use
+## DMS panels while the own bar runs
 
 Switching to the own bar disables the DMS bar window, and the DMS
-dashboard, control center and settings panel are anchored to that window:
-they do not open while the own bar is active, even though the shortcuts
-still fire. Whether notifications, OSD, lock and the standalone settings
-window are unaffected still has to be confirmed on the machine. DMS stays
-the daily bar until the own bar is good enough: `scripts/bar-switch.sh own`
-tries the bar, `scripts/bar-switch.sh dms` goes back to work. ADR-0027
-records this as an amendment.
+dashboard, control center, power menu and wallpaper browser are anchored to
+that window: they do not open while the own bar is active. Since step 7 no
+shortcut calls them any more; the own bar has a panel for each. The DMS
+settings window is a separate window and opens from the Wi-Fi and Bluetooth
+tiles (right click or long press). `scripts/bar-switch.sh dms` goes back to
+the DMS bar; ADR-0027 records this as an amendment.
 
 ## What is built
 
-Steps 0 to 6 of the build (see "Phases"). Every screen gets one tall,
+All steps of the build (0 to 7, see "Phases"): the own bar covers
+everything the DMS bar and its panels did. Every screen gets one tall,
 transparent layer-shell window with three islands: workspaces and apps on
 the left, the centre island, and the tray and attention indicators on the
 right. The centre island runs the real state machine and morphs: hover
 rests open Detail, a click opens the Home panel, the right island opens the
-Settings and Updates panels, Escape and a click outside close.
+Settings and Updates panels, shortcuts open every panel (see "Shortcuts"),
+Escape and a click outside close.
 
 Step 2 made the centre pill real: a weather icon from `Weather`, the clock
 and a battery icon from `Battery` (red when low), separated by hairlines.
@@ -125,13 +126,99 @@ more than one output). Behind the islands a top-edge wave of light follows
 cava's bands while music plays, on every screen; see "Music" below for how
 it is driven and kept cheap.
 
+Step 7 added the last panels, the OSD, the hide toggle and the tablet
+pieces, and moved the shortcuts (built 2026-10-05).
+
+- **Power panel**, 412 x 92 px: Lock, Suspend, Log out, Reboot and Power off
+  as 72 px square buttons (`lock`, `bedtime`, `logout`, `restart_alt`,
+  `power_settings_new`). Lock has the keyboard when the panel opens, Left and
+  Right move it, Enter or Space activate; the button with the keyboard is
+  drawn in `primary`, hover tints the others. The panel closes first and
+  `Session` runs the action once the island has shrunk (220 ms).
+- **Theme panel**, 560 px: Light / Dark / Auto, then the ten schemes DMS 1.6
+  accepts (`scheme-tonal-spot`, `-vibrant`, `-content`, `-expressive`,
+  `-fidelity`, `-fruit-salad`, `-monochrome`, `-neutral`, `-rainbow`, and
+  DMS's own `-smart`) as 148 px cards in a strip. Light and Dark do not call
+  `dms ipc call theme`: that IPC always switches with a Niri screen
+  transition (the screen freezes, then cross-fades to a half-rendered
+  state). With `matugenSmartMode` off and `syncModeWithPortal` on, DMS
+  follows the GNOME colour scheme after a 750 ms settle and switches without
+  a transition, so the bar sets smart mode to false (only when it is on;
+  while on, DMS re-resolves the mode from the wallpaper) and then sets
+  `gsettings ... color-scheme default|prefer-dark`. On the click the bar
+  itself already glides to the other mode's colours from the loaded
+  `dms-colors.json` (`Colors.preview`), and the next reload of that file
+  wins. A second click on the mode already pending is ignored, and every
+  queued call is logged with `console.info` ("Dms: theme call: ...") in the
+  bar's journal. Auto is DMS's `matugenSmartMode` (matugen picks light or dark from
+  the wallpaper), the mode `dms/look.json` records: it sets the key to true
+  and re-renders by setting the current wallpaper again. The calls run one
+  after another, each after the previous one has exited; the control slides
+  to the choice at once and follows DMS again once it has settled (polls at
+  300 ms, 1 s and 2.5 s after the last call). DMS has no settable key for its time- or location-based automatic
+  mode (`themeModeAutoEnabled` is session state, which `settings set` cannot
+  reach). Each card has six dots drawn from the live palette with the hue
+  and saturation shifts of its scheme, not a matugen run per card; Smart
+  shows the live palette itself. The strip opens on the applied scheme,
+  which carries a dot; Left and Right move the selection ring, Enter or a
+  click applies it.
+- **Wallpaper panel**, 560 px: up to 200 images of the DMS wallpaper folder,
+  sorted by name, as 120 x 68 px thumbnails with radius 10 and the file name
+  under them. DMS has no setting for that folder: its picker remembers the
+  last folder it browsed as `wallpaperLastPath` in
+  `~/.cache/DankMaterialShell/cache.json`, which is `~/Pictures/Wallpapers`
+  here (see [pictures.md](pictures.md)); the bar reads it and falls back to
+  that folder. The list is read when the panel opens, with the picker's own
+  filter (one level, symlinks followed). Thumbnails load asynchronously at
+  twice their size and only for the cards in and near view. The current
+  wallpaper (`dms ipc call wallpaper get`, `getFor` in DMS's per-monitor
+  mode) carries a dot; Enter or a click applies through
+  `dms ipc call wallpaper set` (`setFor` in per-monitor mode).
+- **Carousels.** Theme and Wallpaper share `components/Carousel.qml`: the
+  wheel (either axis; a notch moves 120 px with a glide, touchpad pixels move
+  it directly), a drag and a flick move only the strip; Left, Right, Home
+  and End move the selection and the strip glides to centre it. The
+  wallpaper strip adopts the thumbnail nearest the centre once a scroll
+  comes to rest, as in the prototype; the scheme strip does not.
+- **OSD.** The volume, microphone and brightness keys call the bar
+  (`bar volume up|down|mute|micmute`, `bar brightness up|down`, 5 % steps).
+  The bar changes the value through `Audio` or `Brightness` and shows a
+  200 px pill over the collapsed pill for 1.5 s: `volume_up`, `volume_off`,
+  `mic`, `mic_off` or `brightness_medium`, a 4 px fill track (40 % opacity
+  while muted) and the value, "62%". It fades in over 160 ms and out over
+  240 ms, closes any open panel first and never takes the keyboard. It
+  shows on the screen with the keyboard focus. DMS's own volume, microphone
+  and brightness OSDs are off while the own bar runs (`dms/look.json`, set
+  by `scripts/bar-switch.sh`); DMS showed them on every change from any
+  source, so both would have appeared.
+- **Hide toggle.** `bar toggle hidden` slides all three islands 48 px up,
+  out of the screen (shrink curve; back with the grow curve), and sets the
+  exclusive zone to 0, so windows take the bar's strip. The OSD still shows:
+  the centre island comes down for it and goes back up. Opening a panel
+  shows the bar again.
+- **Tablet.** While the keyboard cover is detached, the right island shows a
+  keyboard button (between Wi-Fi and updates) that toggles squeekboard; it
+  shows `keyboard_hide` in `primary` while the keyboard is on screen. In
+  Settings, Bluetooth shrinks to one cell and the rotation lock tile takes
+  the other; the tiles move with the grow curve and Bluetooth's icon slides
+  to the centre of its smaller tile. See [tablet.md](tablet.md).
+
+The `dms ipc` calls that remain are the ones DMS owns: `lock lock` (Lock
+button, `Mod+Alt+L`), `settings openWith` (Wi-Fi and Bluetooth tiles),
+`theme light|dark|getMode` and `settings get|set` for `matugenScheme` and
+`matugenSmartMode` (Theme panel), `wallpaper get|set|getFor|setFor`
+(Wallpaper panel and the scheme re-render), `notifications
+getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
+`night status`; plus the fallbacks of the media keys (see "Shortcuts") and
+`dms screenshot` for the screenshot binds.
+
 ### Window architecture
 
 - **One window per screen, as tall as the screen.** `shell.qml` creates a
   single `PanelWindow` anchored top, left and right and as tall as its
   screen, on the `Top` layer with namespace `dotfiles-bar`. Its exclusive
   zone is set explicitly to `Theme.barHeight` (36 px), so windows tile below
-  the bar and not below the panels. It is not anchored to the bottom edge:
+  the bar and not below the panels; 0 while the bar is hidden. It is not anchored to the bottom edge:
   layer-shell ignores the exclusive zone of a surface anchored to all four
   edges, and Quickshell 0.3 cannot name the exclusive edge. When another
   surface reserves the top edge (the DMS bar while both run), the window
@@ -149,14 +236,17 @@ it is driven and kept cheap.
   are flat lists of direct children and share no `Region` object.
 - **Keyboard focus.** `None` while no panel is open, `Exclusive` on the
   screen with an open panel. `OnDemand` is not enough: panels also open from
-  shortcuts (`quickshell ipc`, later Niri binds) without a click, and Niri
+  shortcuts (`quickshell ipc` from the Niri binds) without a click, and Niri
   only gives an on-demand layer the keyboard after a click on it. Quickshell
   also has no signal for losing on-demand focus, so a panel could not close
   when focus moved away. Exclusive means no other window takes keys while a
   panel is open, which is what Escape-to-close needs. Every state change
   hands the focus back to the window's root item, so a panel opens with
   nothing focused and Escape reaches the root from any control; Tab then
-  walks the panel's controls.
+  walks the panel's controls. Three panels then take the keys themselves:
+  Power gives them to Lock, Theme and Wallpaper to their strip, so the
+  arrow keys work at once. Keys they do not use, Escape among them, still
+  reach the root.
 - **Click outside.** At the bottom of the window's root item sits a
   `MouseArea` over the whole window, enabled while a panel is open; a press
   on it closes the panel. The islands are above it and keep their own input,
@@ -168,12 +258,16 @@ it is driven and kept cheap.
   above it, such as the DMS bar, does not close the panel.
 - **State machine.** `services/Shell.qml` holds `centreState` (`collapsed`,
   `detail`, `home`, `settings`, `player`, `power`, `theme`, `wallpaper`,
-  `updates`, `musicbar`), the screen it applies to, and `osdVisible`, with
-  `open(state, screen)`, `close()`, `toggle(state, screen)` and
-  `showOsd(screen)`. One state at a time, so opening another panel morphs
-  the island into it; the OSD closes any panel first. The same functions are
-  reachable over IPC (target `bar`); without a screen they act on the last
-  used screen, or the first one.
+  `updates`, `musicbar`), the screen it applies to, `osdVisible`, `osdKind`
+  (`volume`, `mic`, `brightness`) and `hidden`, with `open(state, screen)`,
+  `close()`, `toggle(state, screen)`, `showOsd(screen, kind)` and
+  `setHidden(value)`. One state at a time, so opening another panel morphs
+  the island into it; the OSD closes any panel first, and opening a panel
+  shows a hidden bar. IPC target `bar`: `open`, `toggle` and `close` (the
+  state `hidden` toggles the hide), `osd`, `volume up|down|mute|micmute`,
+  `brightness up|down`, `media next|prev|playpause|play|pause` and `state`.
+  IPC calls act on the screen Niri reports as focused (`Niri.focusedOutput`),
+  else the last used screen, else the first one.
 - **Morphing.** `components/Island.qml` animates width, height, radius and
   the shadow with the Motion tokens (280 ms grow or morph, 220 ms shrink);
   panel bodies cross-fade in 140 ms. The centre island is centred on the
@@ -193,16 +287,21 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
   services/                             singletons that own state or data
     Shell.qml                           centre island state machine and IPC target `bar`
     Niri.qml ... Updates.qml            data services, see "Services"
+    Session.qml                         Power panel actions: lock, suspend, log out, reboot, power off
+    Tablet.qml                          keyboard cover detached, on-screen keyboard, rotation lock
+    Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
   islands/                              the three islands
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
-    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, music bar, OSD and panel states
+    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, music bar, OSD and the seven panels
     RightIsland.qml                     tray stack, fan and menu, attention indicators
   panels/                               centre panel bodies
     HomePanel.qml                       Time, Weather, Performance and Power tiles
     SettingsPanel.qml                   toggle grid, three sliders, notification list
     UpdatesPanel.qml                    pending packages, Update all, Refresh, Report
     PlayerPanel.qml                     cover, track, seekable progress, controls, output chips
-    PlaceholderPanel.qml                stands in for a panel until its step lands
+    PowerPanel.qml                      Lock, Suspend, Log out, Reboot, Power off
+    ThemePanel.qml                      Light / Dark / Auto and the scheme strip
+    WallpaperPanel.qml                  thumbnail strip of the DMS wallpaper folder
   components/                           shared pieces
     Island.qml                          island surface: colour, radius, shadow, size animation
     IslandAnimation.qml                 grow or shrink animation from the Motion tokens
@@ -222,6 +321,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Orb.qml                             music orb: album-colour sphere, rim light, bloom
     RimLight.qml                        conic-gradient ring inside a rounded rectangle (orb, music bar)
     TopWave.qml                         top-edge wave canvas behind the islands
+    Carousel.qml                        sideways strip for Theme and Wallpaper: wheel, drag, arrows
+    Osd.qml                             OSD body: icon, fill track, value
 chezmoi/dot_config/systemd/user/quickshell-bar.service
 scripts/bar-switch.sh                   switches between the DMS and the own bar
 tests/bar-switch.sh                     switch script test with stubs
@@ -245,9 +346,12 @@ DMS runs matugen on every wallpaper change and writes
 `~/.cache/DankMaterialShell/dms-colors.json` with a `mode` (`dark` or
 `light`) and a Material colour set per mode. `Colors.qml` reads that file
 with a `FileView`, watches it for changes, and exposes the colours of the
-active mode (`primary`, `primaryForeground`, `primaryContainer`, `surface`,
+active mode (`primary`, `primaryForeground`, `primaryContainer`, `secondary`,
+`tertiary`, `surface`,
 `surfaceContainer`, `surfaceContainerHigh`, `foreground`, `foregroundVariant`,
-`outline`, `error`) and `dark`. Every colour falls back to a Material dark
+`outline`, `error`) and `dark`. The colours are assigned, not bound, so a new
+palette glides in over `Motion.paletteDuration` (300 ms, 0 under reduce
+motion) instead of cutting. Every colour falls back to a Material dark
 default when the file or the key is missing, and a missing file is retried
 every five seconds, so the bar renders on a fresh machine and picks up the
 palette once DMS has written it.
@@ -264,9 +368,11 @@ without the retired plugins.
 
 `dms/look.json` records which bar is active through `barConfigs[0].enabled`:
 `false` hands the bar to Quickshell, `true` or absent keeps the DMS bar.
-`scripts/bar-switch.sh` changes that flag, applies it with
-`scripts/dms-apply-look.sh` (which restarts DMS), and enables or disables
-`quickshell-bar.service`.
+`scripts/bar-switch.sh` changes that flag together with DMS's volume,
+microphone and brightness OSD switches (`osdVolumeEnabled`,
+`osdMicMuteEnabled`, `osdBrightnessEnabled`: off for the own bar, which
+draws its own OSD), applies them with `scripts/dms-apply-look.sh` (which
+restarts DMS), and enables or disables `quickshell-bar.service`.
 
 Use the own bar:
 
@@ -292,6 +398,32 @@ in line with what `dms/look.json` already records; `scripts/bootstrap.sh`
 runs it that way after applying the DMS look, so a fresh machine comes up
 with the recorded bar. The switch edits the tracked `dms/look.json`; commit
 it when the choice should stick.
+
+## Shortcuts
+
+The Niri binds in
+[`cfg/keybinds.kdl`](../chezmoi/dot_config/niri/cfg/keybinds.kdl) call the
+bar with `quickshell ipc -c bar call bar ...`:
+
+| Keys | Call | Overlay title |
+| --- | --- | --- |
+| `Mod+Return` | `toggle home` | Home |
+| `Mod+S` | `toggle settings` | Settings |
+| `Mod+Shift+S` | `dms ipc call settings focusOrToggle` (the DMS settings window) | hidden |
+| `Mod+Shift+Return` | `toggle wallpaper` | Wallpaper Selector |
+| `Mod+Ctrl+Return` | `toggle theme` | Theme |
+| `Mod+Escape` | `toggle power` | Session Menu |
+| `Mod+Shift+B` | `toggle hidden` | Toggle Bar |
+| `XF86AudioRaiseVolume`, `XF86AudioLowerVolume`, `XF86AudioMute`, `XF86AudioMicMute` | `volume up|down|mute|micmute` | hidden |
+| `XF86MonBrightnessUp`, `XF86MonBrightnessDown` | `brightness up|down` | hidden |
+| `XF86AudioNext`, `XF86AudioPrev`, `XF86AudioPlay`, `XF86AudioPause` | `media next|prev|playpause|pause` | hidden |
+
+The media, volume and brightness keys keep working on the DMS fallback bar:
+`quickshell ipc` exits with an error when the bar does not run (or does not
+know the function yet), and the bind then runs the `dms ipc` call it used
+before. They stay allowed while the screen is locked. `Mod+Alt+L` still
+locks through DMS. The DMS settings window opens with `Mod+Shift+S` and from
+the Wi-Fi and Bluetooth tiles in Settings.
 
 ## Running it by hand
 
@@ -354,6 +486,32 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   the panel; on Bluetooth it opens the Network tab, because DMS 1.6 has no
   Bluetooth settings tab. Dismissing a notification
   collapses its row and the island shrinks; "Clear all" removes the section.
+- Power (`Mod+Escape`): Lock is in the accent when the panel opens, Left and
+  Right move the accent, hover tints the other buttons. Each action runs
+  only after the panel has closed; test Lock first, the others end the
+  session.
+- Theme (`Mod+Ctrl+Return`): the control shows Auto while DMS's smart mode
+  is on; the strip opens centred on the applied scheme with its dot. A
+  click or Enter on another scheme re-renders the palette within a few
+  seconds and the bar follows; the dot moves. Light or Dark switches the
+  mode and turns smart mode off (DMS's behaviour); Auto turns it back on.
+  The wheel, a touchpad swipe and a drag scroll the strip without changing
+  the selection.
+- Wallpaper (`Mod+Shift+Return`): the strip opens centred on the current
+  wallpaper, the thumbnails are the pictures with rounded corners, a click
+  or Enter applies one, and the dot follows. After a scroll comes to rest,
+  the thumbnail nearest the centre is selected.
+- OSD: the volume, microphone and brightness keys show the slim pill over
+  the clock for 1.5 s, on the screen with the keyboard focus, and close an
+  open panel; DMS's own OSD no longer appears for these keys once
+  `scripts/dms-apply-look.sh` has applied `dms/look.json`. The media keys
+  control the player the orb shows.
+- `Mod+Shift+B` slides the islands away and windows grow into the strip;
+  pressing it again brings them back. A volume key while hidden shows the
+  OSD and the centre island goes away again.
+- With the cover detached: the keyboard button appears in the right island
+  and toggles squeekboard; Settings shows the rotation lock tile and
+  Bluetooth as an icon; re-attaching animates back.
 - Home: the time and the date sit centred in their tile, the weather icon
   and the forecast icons are glyphs, Hourly is selected when the bar starts
   and Daily cross-fades the cards to weekday, high and low. The three bars
@@ -409,7 +567,10 @@ owns.
 | Volume, microphone, mute | `Quickshell.Services.Pipewire` | |
 | Brightness | `brightnessctl` | No ambient light sensor on the Z13, so the icon cycles 25, 50, 75, 100. |
 | Wi-Fi, Bluetooth | `Quickshell.Networking`, `Quickshell.Bluetooth` | Native modules in Quickshell 0.3. |
-| Night light, do not disturb, caffeine, theme mode, scheme | `dms ipc call night|notifications|inhibit|theme|settings` | Whether `settings set matugenScheme` re-renders colours is still to be tested. |
+| Night light, do not disturb, caffeine, theme mode, scheme | `dms ipc call night|notifications|inhibit|theme|settings` | `settings set matugenScheme` only saves the key: DMS 1.6.2's IPC assigns the setting directly and skips the `regenSystemThemes` hook its own settings UI runs (read in the shipped QML, not tried). The bar re-renders by setting the current wallpaper again, as [dms.md](dms.md) describes; a light/dark switch would also render but turns smart mode off. |
+| Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper` | DMS has no folder setting; its picker remembers the last folder. |
+| Keyboard cover, on-screen keyboard, rotation lock | `~/.local/bin/tablet-mode watch`, `osk watch` (only while detached), `$XDG_STATE_HOME/dotfiles/rotation-lock` | The helpers from [tablet.md](tablet.md); the bar calls `osk toggle` and `auto-rotate lock toggle`. |
+| Session actions | `systemctl suspend|reboot|poweroff`, `niri msg action quit --skip-confirmation`, `dms ipc call lock lock` | |
 | Notifications list | DMS history file `~/.cache/DankMaterialShell/notification_history.json`, watched | DMS owns the notification daemon and Quickshell cannot run a second one. DMS's IPC cannot remove history entries (`dismiss` closes the newest popup, `clearAll` clears active notifications), so the bar remembers what it dismissed in its own state file. Taking the daemon over needs an ADR and belongs with the lock-screen phase. |
 | Music, album colour | `Quickshell.Services.Mpris` plus Quickshell's `ColorQuantizer` | |
 | Audio levels for orb and wave | `cava` raw ascii output on stdout, 24 bars, 30 fps, run only while something plays | |
@@ -447,18 +608,23 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `set(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
   backlight class every 5 s and after each write. While a write runs, only
   the newest `set` waits and follows it, so a slider drag never loses its
-  last value.
+  last value. `set` moves `percentage` at once, so key repeats step from
+  the new value and the OSD shows it.
 - `Network`: `wifiEnabled`, `connected` (any device), `wifiConnected`,
   `ssid`, `strength`, `weak` (under 40); `toggleWifi()`.
 - `Bluetooth`: `btEnabled`, `connectedDevices`, `available`;
   `toggleBluetooth()`.
 - `Dms`: `nightLight`, `doNotDisturb`, `caffeine`, `themeMode`, polled every
-  10 s and after each call, and `terminal` (DMS's `terminalOverride` from
-  its `session.json`, watched); `toggleNightLight()`, `toggleDoNotDisturb()`,
-  `toggleCaffeine()`, `setLight()`, `setDark()`, `openSettingsWindow()`,
-  `openSettingsTab(tab)` (a tab id from `dms ipc call settings tabs`),
-  `setScheme(name)` (whether DMS re-renders the colours is to be verified),
-  `refresh()`.
+  10 s and after each call; `smartMode` (`matugenSmartMode`, shown as Auto)
+  and `matugenScheme`, read at start, when the Theme panel opens and after
+  each call; `schemes` (value and label of every scheme DMS accepts);
+  `terminal` (DMS's `terminalOverride` from its `session.json`, watched);
+  `toggleNightLight()`, `toggleDoNotDisturb()`, `toggleCaffeine()`,
+  `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued and run
+  one call at a time; see the Theme panel above), `themeBusy` (true while a
+  queued theme call runs or its follow-up polls are pending),
+  `openSettingsWindow()`, `openSettingsTab(tab)` (a tab id from
+  `dms ipc call settings tabs`), `refresh()`, `refreshTheme()`.
 - `Notifications`: `items` (newest first: `id`, `appName`, `summary`,
   `body`, `timestamp` in ms, `appIcon`, `image`, `urgency`,
   `desktopEntry`), `count`, `recentAppKeys` (name keys of the apps with a
@@ -499,6 +665,18 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
 - `System`: `active` (bound by `Shell` to the `home` state), `cpu`, `temp` (°C, NaN
   without k10temp), `memory`, `memoryUsedGiB`, `memoryTotalGiB`. Samples
   every 2 s only while `active` is true.
+- `Session`: `perform(action)` for `lock`, `suspend`, `logout`, `reboot`,
+  `poweroff`: closes the panel, then runs the command once the island has
+  shrunk.
+- `Tablet`: `detached` (from `tablet-mode watch`), `keyboardVisible` (from
+  `osk watch`, which runs only while detached), `rotationLocked` (the state
+  file, watched and read again when Settings opens); `toggleKeyboard()`
+  (`osk toggle`), `toggleRotationLock()` (`auto-rotate lock toggle`),
+  `refresh()`. Re-attaching the cover runs `osk hide`, as the retired DMS
+  plugin did. A helper that exits is started again after 5 s.
+- `Wallpapers`: `folder`, `files` (absolute paths, at most 200, sorted by
+  name), `current`, `loading`; `refresh(screen)` (called when the Wallpaper
+  panel opens), `apply(path, screen)`, `fileName(path)`.
 - `Updates`: `items` (fragile first: `source`, `name`, `oldVersion`,
   `newVersion`, `fragile`), `count`, `fragileCount`, `checking`, `ready`,
   `lastChecked`, `upgrading`, `reportPath`, `reportAvailable`; `refresh()`,
@@ -542,6 +720,15 @@ same 600 ms.
   soft outer glow of three 2 px rings 2, 4 and 6 px outside the edge at
   0.3, 0.16 and 0.06 alpha. The glow rings live in the window under the
   island, which clips its own children.
+- **Now-playing peek.** `Music` emits `nowPlayingChanged` 500 ms after
+  the playing track's identity (track id, title and artist, because
+  Firefox reports one constant track id) settles on a new value, after a
+  resume from a stop or a pause over 30 s, or when another player starts;
+  `Shell.peek()` then opens `musicbar` on the focused screen for 5 s if
+  the island is collapsed, and the pointer reaching the orb or the bar
+  hands it over to the normal hover. `Theme.nowPlayingPeek: false` turns
+  it off; reduce motion, a hidden bar, the OSD and any open state also
+  skip it.
 - **Player.** The island takes `PlayerPanel`'s height. A 1.5 px `RimLight`
   with the bar's gradient and no glow runs along the island's edge as a
   quiet continuation, on its own angle (`Cava.playerRimAngle`): one turn in
@@ -591,7 +778,7 @@ the approach come first, the things that are only work come last.
 | 4 | Home panel (built 2026-10-04; the optional Network and Next event row is not). | With 4 the DMS dashboard is covered; the own bar becomes the daily bar and DMS drops to fallback. |
 | 5 | Left island (Niri), right island (tray, indicators), Updates panel plus `system-update --pending` (built 2026-10-04). It takes over the function of the DMS plugins `dotfilesWorkspaces`, `dotfilesApps`, `dotfilesLauncher`, `dotfilesKeyboard` and `dotfilesDashboard`; the plugins were deleted on 2026-10-05, when the user switched to the own bar, and `chezmoi/.chezmoiremove` clears the live copies. | Replaces the remaining DMS bar plugins. |
 | 6 | Music: orb, music bar, Player, top-edge wave (Mpris, cava) (built 2026-10-05). | Highest render cost, least risk to daily use. |
-| 7 | Theme, Wallpaper, Power, OSD; hide toggle; shortcuts moved. | Mostly plumbing to `dms ipc`. |
+| 7 | Theme, Wallpaper, Power, OSD; hide toggle; shortcuts moved; keyboard button and rotation lock tile while detached (built 2026-10-05). | Mostly plumbing to `dms ipc`. |
 
 Code layout from step 0 on, under `chezmoi/dot_config/quickshell/bar/`:
 `services/` for singletons that own data (Niri, Audio, Battery, Weather,

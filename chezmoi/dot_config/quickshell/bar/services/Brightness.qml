@@ -23,9 +23,11 @@ Singleton {
     // waits, and it is written as soon as the running write ends.
     property int pendingValue: -1
 
-    // Never 0: a black screen is not a brightness.
+    // Never 0: a black screen is not a brightness. The percentage follows at once,
+    // so key repeats step from the new value and the OSD shows it.
     function set(value: int) {
         pendingValue = Math.max(1, Math.min(100, Math.round(value)));
+        percentage = pendingValue;
         if (!writer.running)
             writePending();
     }

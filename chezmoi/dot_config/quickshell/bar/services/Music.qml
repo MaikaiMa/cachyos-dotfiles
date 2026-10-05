@@ -25,6 +25,24 @@ Singleton {
     readonly property real length: player && player.lengthSupported ? player.length : 0
     readonly property bool canSeek: player !== null && player.canSeek && player.positionSupported && length > 0
 
+    // What is playing, for the now-playing peek. Firefox reports one constant
+    // track id for every track, so the title and artist always take part too.
+    readonly property string trackId: player ? String(player.metadata["mpris:trackid"] ?? "") : ""
+    readonly property string trackIdentity: title !== "" || artist !== "" ? [trackId.endsWith("/NoTrack") ? "" : trackId, title, artist].join("\u0000") : ""
+    readonly property string playerName: player ? player.dbusName : ""
+    readonly property bool stopped: player ? player.playbackState === MprisPlaybackState.Stopped : true
+
+    // The track shown last while playing; nowPlayingChanged fires when another one plays.
+    property string shownIdentity: ""
+    property string shownPlayer: ""
+    // Date.now() when playback last paused; a resume after pauseForgetInterval peeks again.
+    property real pausedAt: 0
+    readonly property int pauseForgetInterval: 30000
+    // The bar starting up with music already playing is not a change.
+    property bool settled: false
+
+    signal nowPlayingChanged()
+
     // Quantised art colours (file:// and http(s):// both load through Qt), one
     // per bucket, so a colour that covers more of the cover appears more often.
     readonly property var artColors: artUrl !== "" ? quantizer.colors : []
@@ -84,6 +102,58 @@ Singleton {
     function previous() {
         if (player && player.canGoPrevious)
             player.previous();
+    }
+
+    onPlayingChanged: {
+        if (playing) {
+            if (pausedAt > 0 && Date.now() - pausedAt > pauseForgetInterval)
+                shownIdentity = "";
+            nowPlayingDebounce.restart();
+        } else {
+            nowPlayingDebounce.stop();
+            pausedAt = Date.now();
+        }
+    }
+    // isPlaying and playbackState change together; either may notify first.
+    onStoppedChanged: {
+        if (stopped)
+            shownIdentity = "";
+    }
+    onTrackIdentityChanged: {
+        if (playing)
+            nowPlayingDebounce.restart();
+    }
+    onPlayerNameChanged: {
+        if (playing)
+            nowPlayingDebounce.restart();
+    }
+
+    // Metadata arrives in bursts (title, then artist); act once it holds still.
+    Timer {
+        id: nowPlayingDebounce
+
+        interval: 500
+        onTriggered: {
+            if (!root.playing || root.trackIdentity === "" || !root.settled)
+                return;
+            if (root.trackIdentity === root.shownIdentity && root.playerName === root.shownPlayer)
+                return;
+            root.shownIdentity = root.trackIdentity;
+            root.shownPlayer = root.playerName;
+            root.nowPlayingChanged();
+        }
+    }
+
+    Timer {
+        interval: 1500
+        running: true
+        onTriggered: {
+            if (root.playing) {
+                root.shownIdentity = root.trackIdentity;
+                root.shownPlayer = root.playerName;
+            }
+            root.settled = true;
+        }
     }
 
     ColorQuantizer {

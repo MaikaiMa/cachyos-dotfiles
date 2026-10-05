@@ -38,9 +38,12 @@ Item {
     }
 
     // The notifications indicator opens Settings for the list: newest first, on top.
+    // The rotation lock can change from a terminal, so it is read again too.
     onShownChanged: {
-        if (shown)
+        if (shown) {
             list.positionViewAtBeginning();
+            Tablet.refresh();
+        }
     }
 
     function spanWidth(cells: int): real {
@@ -126,16 +129,19 @@ Item {
         }
     }
 
-    // Two rows, no holes: Wi-Fi | Bluetooth, then Power profile | DND | Caffeine.
-    // Declared in reading order, which is also the Tab order.
+    // Two rows, no holes. Docked: Wi-Fi | DND | Caffeine, then Bluetooth | Power
+    // profile. Detached, Bluetooth shrinks to one cell and the rotation lock takes
+    // the other. Declared in reading order, which is also the Tab order.
     Item {
         id: grid
+
+        readonly property real secondRow: Theme.settingsTileHeight + Theme.tileGap
 
         y: Theme.panelPadding
         width: panel.width
         height: Theme.settingsGridHeight
 
-        Tile {
+        GridTile {
             objectName: "wifiTile"
             x: panel.cellX(0)
             y: 0
@@ -161,12 +167,34 @@ Item {
             onSecondaryAction: panel.openDmsSettings("network_wifi")
         }
 
-        Tile {
-            objectName: "bluetoothTile"
+        GridTile {
+            objectName: "dndTile"
             x: panel.cellX(2)
             y: 0
-            width: panel.spanWidth(2)
-            wide: true
+            width: panel.spanWidth(1)
+            title: "Do not disturb"
+            active: Dms.doNotDisturb
+            iconName: "do_not_disturb_on"
+            onActivated: Dms.toggleDoNotDisturb()
+        }
+
+        GridTile {
+            objectName: "caffeineTile"
+            x: panel.cellX(3)
+            y: 0
+            width: panel.spanWidth(1)
+            title: "Caffeine"
+            active: Dms.caffeine
+            iconName: "coffee"
+            onActivated: Dms.toggleCaffeine()
+        }
+
+        GridTile {
+            objectName: "bluetoothTile"
+            x: panel.cellX(0)
+            y: grid.secondRow
+            width: panel.spanWidth(Tablet.detached ? 1 : 2)
+            wide: !Tablet.detached
             title: "Bluetooth"
             active: Bluetooth.btEnabled
             iconName: !Bluetooth.btEnabled ? "bluetooth_disabled" : Bluetooth.connectedDevices > 0 ? "bluetooth_connected" : "bluetooth"
@@ -183,10 +211,33 @@ Item {
             onSecondaryAction: panel.openDmsSettings("network")
         }
 
-        Tile {
+        // Grows out of the cell Bluetooth frees; Tab skips it while docked.
+        GridTile {
+            objectName: "rotationTile"
+            x: panel.cellX(1)
+            y: grid.secondRow
+            width: panel.spanWidth(1)
+            title: "Rotation lock"
+            active: Tablet.rotationLocked
+            iconName: Tablet.rotationLocked ? "screen_lock_rotation" : "screen_rotation"
+            enabled: Tablet.detached
+            opacity: Tablet.detached ? 1 : 0
+            scale: Tablet.detached ? 1 : 0.85
+            visible: opacity > 0
+            onActivated: Tablet.toggleRotationLock()
+
+            Behavior on opacity {
+                GridAnimation {}
+            }
+            Behavior on scale {
+                GridAnimation {}
+            }
+        }
+
+        GridTile {
             objectName: "profileTile"
-            x: panel.cellX(0)
-            y: Theme.settingsTileHeight + Theme.tileGap
+            x: panel.cellX(2)
+            y: grid.secondRow
             width: panel.spanWidth(2)
             wide: true
             title: "Power profile"
@@ -195,27 +246,21 @@ Item {
             stateText: Battery.profile === "power-saver" ? "Power saver" : Battery.profile === "performance" ? "Performance" : "Balanced"
             onActivated: Battery.setProfile(panel.nextProfile())
         }
+    }
 
-        Tile {
-            objectName: "dndTile"
-            x: panel.cellX(2)
-            y: Theme.settingsTileHeight + Theme.tileGap
-            width: panel.spanWidth(1)
-            title: "Do not disturb"
-            active: Dms.doNotDisturb
-            iconName: "do_not_disturb_on"
-            onActivated: Dms.toggleDoNotDisturb()
+    // The tiles move with the island's grow curve when the grid changes layout.
+    component GridAnimation: NumberAnimation {
+        duration: Motion.growDuration
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Motion.growCurve
+    }
+
+    component GridTile: Tile {
+        Behavior on x {
+            GridAnimation {}
         }
-
-        Tile {
-            objectName: "caffeineTile"
-            x: panel.cellX(3)
-            y: Theme.settingsTileHeight + Theme.tileGap
-            width: panel.spanWidth(1)
-            title: "Caffeine"
-            active: Dms.caffeine
-            iconName: "coffee"
-            onActivated: Dms.toggleCaffeine()
+        Behavior on width {
+            GridAnimation {}
         }
     }
 

@@ -132,7 +132,17 @@ Island {
     }
 
     targetWidth: panelOpen ? Theme.panelWidths[centreState] : centreState === "musicbar" ? Theme.musicBarWidth : osd ? Theme.osdWidth : detail ? detailWidth : pillWidth
-    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : centreState === "home" ? homePanel.implicitHeight : centreState === "updates" ? updatesPanel.implicitHeight : centreState === "player" ? playerPanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
+    readonly property var panelHeights: ({
+            home: homePanel.implicitHeight,
+            settings: settingsPanel.implicitHeight,
+            updates: updatesPanel.implicitHeight,
+            player: playerPanel.implicitHeight,
+            power: powerPanel.implicitHeight,
+            theme: themePanel.implicitHeight,
+            wallpaper: wallpaperPanel.implicitHeight
+        })
+
+    targetHeight: panelOpen ? panelHeights[centreState] : detail ? Theme.islandDetailHeight : Theme.islandHeight
     targetOpacity: panelOpen ? Theme.panelOpacity : Theme.islandOpacity
     targetBlend: detail ? 1 : 0
     expanded: panelOpen || detail
@@ -243,29 +253,11 @@ Island {
         }
     }
 
-    // Stand-in for the OSD slider pill shown over the collapsed pill.
-    Rectangle {
-        anchors.centerIn: parent
-        width: parent.width - 2 * Theme.paddingHorizontal
-        height: Theme.paddingVertical
-        radius: height / 2
-        color: Colors.surfaceContainerHigh
-        opacity: island.osd ? 1 : 0
-        visible: opacity > 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: island.osd ? Motion.osdInDuration : Motion.osdOutDuration
-                easing.type: island.osd ? Easing.OutCubic : Easing.InCubic
-            }
-        }
-
-        Rectangle {
-            width: parent.width * 0.6
-            height: parent.height
-            radius: parent.radius
-            color: Colors.primary
-        }
+    // Over the collapsed pill while a volume or brightness key was pressed.
+    Osd {
+        objectName: "osd"
+        x: (island.width - width) / 2
+        shown: island.osd
     }
 
     // The orb's travelling light runs around the bar's edge while it is open.
@@ -533,16 +525,32 @@ Island {
         shown: island.centreState === "player"
     }
 
-    Repeater {
-        model: Shell.panelStates.filter(state => !["home", "settings", "updates", "player"].includes(state))
+    PowerPanel {
+        id: powerPanel
 
-        PlaceholderPanel {
-            required property string modelData
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "power"
+    }
 
-            anchors.fill: parent
-            name: modelData
-            shown: island.centreState === modelData
-        }
+    ThemePanel {
+        id: themePanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "theme"
+    }
+
+    WallpaperPanel {
+        id: wallpaperPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        screenName: island.screenName
+        shown: island.centreState === "wallpaper"
     }
 
     component MusicFade: SequentialAnimation {
@@ -726,12 +734,24 @@ Island {
     function musicHoverChanged() {
         if (orbHover.hovered || islandHover.hovered) {
             musicLeaveTimer.stop();
+            if (musicBar && Shell.peeking)
+                Shell.endPeek();
             if (orbHover.hovered && !musicBar)
                 orbRestTimer.restart();
         } else {
             orbRestTimer.stop();
             if (musicBar)
                 musicLeaveTimer.restart();
+        }
+    }
+
+    // A peek that opens under a resting pointer is a hover from the start.
+    Connections {
+        target: Shell
+
+        function onPeekingChanged() {
+            if (Shell.peeking && island.musicBar && (orbHover.hovered || islandHover.hovered))
+                Shell.endPeek();
         }
     }
 

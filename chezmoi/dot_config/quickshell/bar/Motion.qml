@@ -23,6 +23,8 @@ Singleton {
     readonly property int refreshSpinDuration: reduceMotion ? 0 : 600
     readonly property int osdInDuration: reduceMotion ? 0 : 160
     readonly property int osdOutDuration: reduceMotion ? 0 : 240
+    // The bar's colours glide to a new palette (theme, scheme or wallpaper change).
+    readonly property int paletteDuration: reduceMotion ? 0 : 300
     readonly property int musicContentDelay: reduceMotion ? 0 : 120
     readonly property int waveInDuration: reduceMotion ? 0 : 600
     readonly property int waveOutDuration: reduceMotion ? 0 : 2000
@@ -57,5 +59,6 @@ Singleton {
     readonly property int hoverRestDelay: 250
     readonly property int hoverLeaveGrace: 120
     readonly property int orbHoverDelay: 80
+    readonly property int nowPlayingPeekHold: 5000
     readonly property int longPressInterval: 500
 }

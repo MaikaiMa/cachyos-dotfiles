@@ -42,11 +42,12 @@ Island {
     // Left to right, the reverse of the design's reading order from the right edge.
     // Do not disturb has no indicator of its own: the bell crosses out and stays.
     readonly property bool notificationsShown: Notifications.count > 0 || Dms.doNotDisturb
-    readonly property var shownFlags: [Dms.caffeine, Audio.muted, wifiShown, Updates.count > 0, notificationsShown]
+    // The keyboard button only while the cover is detached (docs/tablet.md).
+    readonly property var shownFlags: [Dms.caffeine, Audio.muted, wifiShown, Tablet.detached, Updates.count > 0, notificationsShown]
     readonly property bool anyIndicator: shownFlags.includes(true)
     readonly property bool separatorShown: trayCount > 0 && anyIndicator
     readonly property int separatorWidth: 2 * Theme.gap + Theme.hairlineWidth
-    readonly property real indicatorsWidth: caffeineIndicator.targetWidth + mutedIndicator.targetWidth + wifiIndicator.targetWidth + updatesIndicator.targetWidth + notificationsIndicator.targetWidth
+    readonly property real indicatorsWidth: caffeineIndicator.targetWidth + mutedIndicator.targetWidth + wifiIndicator.targetWidth + keyboardIndicator.targetWidth + updatesIndicator.targetWidth + notificationsIndicator.targetWidth
     readonly property real contentWidth: trayWidth + (separatorShown ? separatorWidth : 0) + indicatorsWidth
     readonly property real collapsedWidth: contentWidth > 0 ? contentWidth + 2 * Theme.rightEndInset : 0
 
@@ -343,11 +344,23 @@ Island {
         }
 
         Indicator {
+            id: keyboardIndicator
+
+            objectName: "keyboard"
+            shown: island.shownFlags[3]
+            gap: island.gapBefore(3)
+            iconName: Tablet.keyboardVisible ? "keyboard_hide" : "keyboard"
+            tint: Tablet.keyboardVisible ? Colors.primary : Colors.foreground
+            label: Tablet.keyboardVisible ? "Hide the on-screen keyboard" : "Show the on-screen keyboard"
+            onActivated: Tablet.toggleKeyboard()
+        }
+
+        Indicator {
             id: updatesIndicator
 
             objectName: "updates"
-            shown: island.shownFlags[3]
-            gap: island.gapBefore(3)
+            shown: island.shownFlags[4]
+            gap: island.gapBefore(4)
             iconName: "download"
             count: Updates.count
             tint: Updates.fragileCount > 0 ? Colors.error : Colors.foreground
@@ -359,8 +372,8 @@ Island {
             id: notificationsIndicator
 
             objectName: "notifications"
-            shown: island.shownFlags[4]
-            gap: island.gapBefore(4)
+            shown: island.shownFlags[5]
+            gap: island.gapBefore(5)
             iconName: Dms.doNotDisturb ? "notifications_off" : "notifications"
             count: Notifications.count
             label: Notifications.count + " notifications" + (Dms.doNotDisturb ? ", do not disturb on" : "") + ", open Settings"

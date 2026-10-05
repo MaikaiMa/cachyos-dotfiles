@@ -69,14 +69,17 @@ record_bar() {
 		enabled=true
 	fi
 	if [ "$dry_run" -eq 1 ]; then
-		printf 'bar-switch: dry run, would set barConfigs[0].enabled to %s in %s\n' "$enabled" "$look_json"
+		printf 'bar-switch: dry run, would set barConfigs[0].enabled and the DMS volume, microphone and brightness OSDs to %s in %s\n' "$enabled" "$look_json"
 		return 0
 	fi
 	tmp_look=$(mktemp)
 	trap 'rm -f "$tmp_look"' EXIT HUP INT TERM
-	jq --indent 2 --argjson enabled "$enabled" '.barConfigs[0].enabled = $enabled' "$look_json" >"$tmp_look"
+	# The own bar draws its own OSD for these keys; DMS would show a second one.
+	jq --indent 2 --argjson enabled "$enabled" \
+		'.barConfigs[0].enabled = $enabled | .osdVolumeEnabled = $enabled | .osdMicMuteEnabled = $enabled | .osdBrightnessEnabled = $enabled' \
+		"$look_json" >"$tmp_look"
 	cat "$tmp_look" >"$look_json"
-	printf 'bar-switch: set barConfigs[0].enabled to %s in %s\n' "$enabled" "$look_json"
+	printf 'bar-switch: set barConfigs[0].enabled and the DMS volume, microphone and brightness OSDs to %s in %s\n' "$enabled" "$look_json"
 }
 
 apply_look() {

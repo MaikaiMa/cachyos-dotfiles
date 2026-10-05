@@ -78,19 +78,26 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Weather.qml \
 	chezmoi/dot_config/quickshell/bar/services/System.qml \
 	chezmoi/dot_config/quickshell/bar/services/Updates.qml \
+	chezmoi/dot_config/quickshell/bar/services/Session.qml \
+	chezmoi/dot_config/quickshell/bar/services/Tablet.qml \
+	chezmoi/dot_config/quickshell/bar/services/Wallpapers.qml \
 	chezmoi/dot_config/quickshell/bar/services/qmldir \
 	chezmoi/dot_config/quickshell/bar/islands/LeftIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/CentreIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/RightIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/qmldir \
-	chezmoi/dot_config/quickshell/bar/panels/PlaceholderPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/SettingsPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/HomePanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/UpdatesPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/PlayerPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/PowerPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/ThemePanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/WallpaperPanel.qml \
 	chezmoi/dot_config/quickshell/bar/components/Orb.qml \
 	chezmoi/dot_config/quickshell/bar/components/RimLight.qml \
 	chezmoi/dot_config/quickshell/bar/components/TopWave.qml \
+	chezmoi/dot_config/quickshell/bar/components/Carousel.qml \
+	chezmoi/dot_config/quickshell/bar/components/Osd.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
 	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \

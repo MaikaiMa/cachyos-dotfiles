@@ -25,6 +25,8 @@ Item {
     Accessible.name: label
     Accessible.description: model[currentIndex] ?? ""
 
+    // Only a click or a key calls this: an owner changing currentIndex (a
+    // service reporting back) never emits selected.
     function choose(index: int) {
         const next = Math.max(0, Math.min(count - 1, index));
         if (next !== currentIndex)

@@ -16,8 +16,8 @@ records the approach and the rejected alternatives.
 | `auto-rotate.service` | `chezmoi/dot_config/systemd/user/` | Runs `auto-rotate run` with the niri session. |
 | `osk` | `chezmoi/dot_local/bin/executable_osk` | Shows, hides, or toggles squeekboard over D-Bus. |
 | squeekboard drop-in | `chezmoi/dot_config/systemd/user/mobi.phosh.OSK.service.d/niri.conf` | Starts the packaged squeekboard unit after niri and stops it with the session. |
-| Keyboard button | retired with the DMS bar plugins on 2026-10-05 | No replacement in the own bar yet; open the keyboard with the shortcut below. |
-| Rotation lock tile | retired with the DMS bar plugins on 2026-10-05 | No replacement in the own bar yet; use `scripts/auto-rotate` state as documented below. |
+| Keyboard button | own bar, right island (`services/Tablet.qml`) | Shown only while the cover is detached; a tap toggles squeekboard. |
+| Rotation lock tile | own bar, Settings panel (`Mod+S`) | Shown only while the cover is detached, next to Bluetooth as an icon; a tap toggles the lock. |
 | Long press | own bar, left island (workspace pills and app icons) | Toggles the niri overview. |
 
 Both units are enabled through chezmoi-managed links in
@@ -36,8 +36,7 @@ sudo pacman -S --needed squeekboard iio-sensor-proxy
 ./scripts/check-packages.sh --mark-explicit
 ```
 
-Deploy the dotfiles and the bar layout, which adds the keyboard widget and
-restarts DMS:
+Deploy the dotfiles, which include the own bar with the keyboard button:
 
 ```fish
 ./scripts/bootstrap.sh
@@ -92,8 +91,8 @@ is not used. See ADR-0020.
 | detached | off | follows the sensor |
 | detached | on | stays as it is |
 
-The lock is the rotation-lock tile in the dashboard (`Mod+S`), or from a
-terminal:
+The lock is the rotation lock tile in the Settings panel (`Mod+S`,
+shown while the cover is detached), or from a terminal:
 
 ```fish
 auto-rotate lock toggle
@@ -144,7 +143,9 @@ starts the unit when it is not running. `osk watch` follows the `Visible`
 property with `gdbus monitor` (squeekboard emits `PropertiesChanged` for it,
 checked on the device) and reports `hidden` when squeekboard stops; the bar
 button uses it to show `keyboard_hide` in the primary colour while the
-keyboard is on screen.
+keyboard is on screen. The bar runs `tablet-mode watch` all the time and
+`osk watch` only while the cover is detached; both are started again 5 s
+after they exit.
 
 squeekboard also shows itself when a text field gains focus, but only when
 GNOME's screen-keyboard setting is on. That setting is not managed: turning it
@@ -159,9 +160,9 @@ Which applications trigger that depends on their support for the
 
 ## Overview by long press
 
-A long press on the launcher pill or on the workspace strip toggles the niri
-overview; right click keeps doing the same, and a normal tap keeps its own
-action. See the plugin READMEs for the details.
+A 500 ms long press on a workspace dot or an app icon in the own bar's left
+island toggles the niri overview; a normal tap keeps its own action. See
+"Left island" in [shell.md](shell.md).
 
 ## Power key and suspend
 

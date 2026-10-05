@@ -23,3 +23,6 @@
 .config/DankMaterialShell/plugins/dotfilesKeyboard
 .config/DankMaterialShell/plugins/dotfilesLauncher
 .config/DankMaterialShell/plugins/dotfilesWorkspaces
+
+# Stood in for the panels until step 7 of the own bar replaced the last ones (docs/shell.md).
+.config/quickshell/bar/panels/PlaceholderPanel.qml

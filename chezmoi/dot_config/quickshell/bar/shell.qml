@@ -25,6 +25,7 @@ ShellRoot {
             required property ShellScreen modelData
 
             readonly property bool panelOpenHere: Shell.panelOpen && Shell.screenName === modelData.name
+            readonly property bool osdHere: Shell.osdVisible && Shell.screenName === modelData.name
 
             // One window per screen, as tall as the screen: islands grow inside it instead
             // of opening popups. Not anchored to the bottom edge: with all four edges
@@ -43,7 +44,8 @@ ShellRoot {
                 }
                 implicitHeight: screenScope.modelData.height
                 exclusionMode: ExclusionMode.Normal
-                exclusiveZone: Theme.barHeight
+                // Hidden, windows reflow into the bar's strip.
+                exclusiveZone: Shell.hidden ? 0 : Theme.barHeight
                 aboveWindows: true
                 color: "transparent"
                 WlrLayershell.layer: WlrLayer.Top
@@ -106,6 +108,28 @@ ShellRoot {
                 Item {
                     id: keyRoot
 
+                    // How far the islands sit above their place: the hide toggle
+                    // slides them out of the screen. The centre island comes back
+                    // for the OSD while the bar is hidden.
+                    property real hideShift: Shell.hidden ? Theme.hideDistance : 0
+                    property real centreShift: Shell.hidden && !screenScope.osdHere ? Theme.hideDistance : 0
+
+                    // Sliding away uses the shrink curve, coming back the grow curve.
+                    Behavior on hideShift {
+                        id: hideBehavior
+
+                        IslandAnimation {
+                            shrinking: hideBehavior.targetValue > 0
+                        }
+                    }
+                    Behavior on centreShift {
+                        id: centreBehavior
+
+                        IslandAnimation {
+                            shrinking: centreBehavior.targetValue > 0
+                        }
+                    }
+
                     anchors.fill: parent
                     focus: true
                     Keys.onEscapePressed: {
@@ -121,6 +145,11 @@ ShellRoot {
 
                         function onCentreStateChanged() {
                             keyRoot.forceActiveFocus();
+                        }
+
+                        function onHiddenChanged() {
+                            if (Shell.hidden)
+                                right.closeMenu();
                         }
                     }
 
@@ -146,7 +175,7 @@ ShellRoot {
 
                         screenName: screenScope.modelData.name
                         x: Theme.gap
-                        y: Theme.islandTop
+                        y: Theme.islandTop - keyRoot.hideShift
                     }
 
                     RightIsland {
@@ -154,7 +183,7 @@ ShellRoot {
 
                         screenName: screenScope.modelData.name
                         x: parent.width - width - Theme.gap
-                        y: Theme.islandTop
+                        y: Theme.islandTop - keyRoot.hideShift
                     }
 
                     // Above the right island: an open panel is never covered by it.
@@ -163,7 +192,7 @@ ShellRoot {
 
                         screenName: screenScope.modelData.name
                         x: (parent.width - width) / 2
-                        y: Theme.islandTop
+                        y: Theme.islandTop - keyRoot.centreShift
                         z: 1
                     }
                 }

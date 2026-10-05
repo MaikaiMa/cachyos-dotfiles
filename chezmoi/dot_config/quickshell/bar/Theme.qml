@@ -73,7 +73,7 @@ Singleton {
             home: 560,
             settings: 420,
             player: 360,
-            power: 5 * powerButtonSize + 4 * gap + 2 * paddingHorizontal,
+            power: 5 * powerButtonSize + 4 * gap + 2 * powerPanelPadding,
             theme: 560,
             wallpaper: 560,
             updates: 420
@@ -165,6 +165,8 @@ Singleton {
     readonly property int orbHitPadding: orbBloom
     // The prototype's 280 px bar, padding included: orb, gap, text, three controls.
     readonly property int musicBarWidth: 280
+    // The music bar opens by itself for a moment when the playing track changes.
+    readonly property bool nowPlayingPeek: true
     readonly property real musicBarRimWidth: 2.5
     // How far the bar rim's lighter and warmer stops are pushed toward white.
     readonly property real musicBarRimLift: 0.25
@@ -216,9 +218,46 @@ Singleton {
     // close to the full peak opacity.
     readonly property var waveStrokes: [[58, 0.2], [41, 0.32], [29, 0.5], [24, 0.8]]
 
-    // Placeholder bodies until the real panels set their own height.
-    readonly property int placeholderPanelHeight: 240
+    // Power: one row of square buttons, the panel's padding all round.
+    readonly property int powerPanelPadding: 10
+    readonly property int powerButtonIconSize: 22
+    readonly property int powerButtonLabelGap: 7
+    readonly property int powerPanelHeight: powerButtonSize + 2 * powerPanelPadding
+
+    // Theme and Wallpaper: a strip of cards that scrolls sideways.
+    readonly property int carouselGap: 8
+    readonly property int carouselPadding: 3
+    readonly property int themeModeWidth: 264
+    readonly property int schemeCardWidth: 148
+    readonly property int schemeCardPadding: 12
+    readonly property int schemeCardRadius: 14
+    readonly property int schemeDotSize: 16
+    readonly property int schemeDotGap: 4
+    readonly property int schemeDotsGap: 9
+    readonly property int schemeLabelHeight: 14
+    readonly property int schemeCardHeight: schemeCardPadding + schemeDotSize + schemeDotsGap + schemeLabelHeight + 10
+    readonly property int themePanelHeight: 2 * panelPadding + segmentedHeight + tileGap + 2 * carouselPadding + schemeCardHeight
+    readonly property int thumbWidth: 120
+    readonly property int thumbHeight: 68
+    readonly property int thumbRadius: 10
+    readonly property int thumbLabelGap: 7
+    readonly property int thumbLabelHeight: 14
+    // Room for the selection ring outside the thumbnail.
+    readonly property int thumbRing: 4
+    readonly property int thumbMarker: 8
+    readonly property int wallpaperPanelHeight: 2 * panelPadding + 2 * thumbRing + thumbHeight + thumbLabelGap + thumbLabelHeight
+    // One wheel notch moves the strip this far.
+    readonly property int carouselWheelStep: 120
+
+    // OSD: icon, a thin fill track and the value, in the collapsed island's height.
     readonly property int osdWidth: 200
+    readonly property int osdPadding: 12
+    readonly property int osdGap: 10
+    readonly property int osdTrackHeight: 4
+    readonly property int osdValueWidth: 34
+
+    // The hide toggle slides the islands this far up, out of the screen.
+    readonly property int hideDistance: 48
 
     Component.onCompleted: {
         if (!iconFontAvailable)

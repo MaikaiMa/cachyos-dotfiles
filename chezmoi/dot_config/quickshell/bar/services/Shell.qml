@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import ".."
 
 // The one state machine of the centre island, shared by every screen.
 Singleton {
@@ -17,6 +18,12 @@ Singleton {
     // The screen whose centre island shows centreState and the OSD; the others stay collapsed.
     property string screenName: ""
     property bool osdVisible: false
+    // volume, mic or brightness: what the OSD shows.
+    property string osdKind: "volume"
+    // The whole bar slid away and its exclusive zone at 0; only the OSD still shows.
+    property bool hidden: false
+    // The music bar is open by a now-playing peek, not by hover; its timer closes it.
+    property bool peeking: false
     readonly property bool panelOpen: panelStates.includes(centreState)
 
     function stateOn(name: string): string {
@@ -42,14 +49,39 @@ Singleton {
         }
         if (musicStates.includes(state) && !Music.hasPlayer)
             return;
-        if (panelStates.includes(state))
+        if (panelStates.includes(state)) {
             osdVisible = false;
+            hidden = false;
+        }
+        peeking = false;
         screenName = resolveScreen(screen);
         centreState = state;
     }
 
     function close() {
+        peeking = false;
         centreState = "collapsed";
+    }
+
+    // Shows the music bar for a moment on the focused screen after a track change.
+    function peek() {
+        if (peeking && centreState === "musicbar") {
+            peekTimer.restart();
+            return;
+        }
+        if (!Theme.nowPlayingPeek || Motion.reduceMotion || hidden || osdVisible || centreState !== "collapsed")
+            return;
+        open("musicbar", ipcScreen());
+        if (centreState !== "musicbar")
+            return;
+        peeking = true;
+        peekTimer.restart();
+    }
+
+    // The pointer reached the orb or the bar: the hover's leave grace closes it now.
+    function endPeek() {
+        peeking = false;
+        peekTimer.stop();
     }
 
     function toggle(state: string, screen: string) {
@@ -60,11 +92,34 @@ Singleton {
     }
 
     // The OSD has priority: it closes any panel and shows over the collapsed pill.
-    function showOsd(screen: string) {
+    function showOsd(screen: string, kind: string) {
         close();
         screenName = resolveScreen(screen);
+        osdKind = kind;
         osdVisible = true;
         osdTimer.restart();
+    }
+
+    function setHidden(value: bool) {
+        if (value)
+            close();
+        hidden = value;
+    }
+
+    // Shortcuts act on the screen with keyboard focus, not on the last one used.
+    function ipcScreen(): string {
+        return Niri.focusedOutput;
+    }
+
+    function stepVolume(step: int) {
+        Audio.setVolume((Math.round(Audio.volume * 100) + step) / 100);
+        showOsd(ipcScreen(), "volume");
+    }
+
+    function stepBrightness(step: int) {
+        if (Brightness.available)
+            Brightness.set(Brightness.percentage + step);
+        showOsd(ipcScreen(), "brightness");
     }
 
     // One owner for the sampling switch: every screen has a Home panel, but only
@@ -82,6 +137,21 @@ Singleton {
             if (!Music.hasPlayer && root.musicStates.includes(root.centreState))
                 root.close();
         }
+
+        function onNowPlayingChanged() {
+            root.peek();
+        }
+    }
+
+    Timer {
+        id: peekTimer
+
+        interval: Motion.nowPlayingPeekHold
+        onTriggered: {
+            if (root.peeking && root.centreState === "musicbar")
+                root.close();
+            root.peeking = false;
+        }
     }
 
     Timer {
@@ -91,17 +161,23 @@ Singleton {
         onTriggered: root.osdVisible = false
     }
 
-    // Lets panels open without a pointer, as the Niri shortcuts will:
-    // quickshell ipc -c bar call bar toggle home
+    // The Niri shortcuts: quickshell ipc -c bar call bar toggle home
     IpcHandler {
         target: "bar"
 
         function open(state: string): void {
-            root.open(state, "");
+            if (state === "hidden")
+                root.setHidden(true);
+            else
+                root.open(state, root.ipcScreen());
         }
 
+        // "hidden" hides or shows the whole bar.
         function toggle(state: string): void {
-            root.toggle(state, "");
+            if (state === "hidden")
+                root.setHidden(!root.hidden);
+            else
+                root.toggle(state, root.ipcScreen());
         }
 
         function close(): void {
@@ -109,7 +185,46 @@ Singleton {
         }
 
         function osd(): void {
-            root.showOsd("");
+            root.showOsd(root.ipcScreen(), "volume");
+        }
+
+        // up, down (5 % steps), mute, micmute.
+        function volume(action: string): void {
+            if (action === "up" || action === "down") {
+                root.stepVolume(action === "up" ? Theme.sliderStep : -Theme.sliderStep);
+            } else if (action === "mute") {
+                Audio.toggleMute();
+                root.showOsd(root.ipcScreen(), "volume");
+            } else if (action === "micmute") {
+                Audio.toggleMicMute();
+                root.showOsd(root.ipcScreen(), "mic");
+            } else {
+                console.warn("Shell: unknown volume action " + action);
+            }
+        }
+
+        // up or down, 5 % steps.
+        function brightness(action: string): void {
+            if (action === "up" || action === "down")
+                root.stepBrightness(action === "up" ? Theme.sliderStep : -Theme.sliderStep);
+            else
+                console.warn("Shell: unknown brightness action " + action);
+        }
+
+        // next, prev, playpause, play, pause.
+        function media(action: string): void {
+            if (action === "next")
+                Music.next();
+            else if (action === "prev")
+                Music.previous();
+            else if (action === "playpause")
+                Music.togglePlaying();
+            else if (action === "play")
+                Music.play();
+            else if (action === "pause")
+                Music.pause();
+            else
+                console.warn("Shell: unknown media action " + action);
         }
 
         function state(): string {

@@ -70,5 +70,8 @@
   "updaterCustomCommand": "system-update",
   "trayMaxVisibleItems": 1,
   "trayAutoOverflow": true,
-  "niriLayoutBorderSize": 1
+  "niriLayoutBorderSize": 1,
+  "osdVolumeEnabled": false,
+  "osdMicMuteEnabled": false,
+  "osdBrightnessEnabled": false
 }
