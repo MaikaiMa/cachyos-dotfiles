@@ -10,6 +10,8 @@ Singleton {
 
     readonly property var panelStates: ["home", "settings", "player", "power", "theme", "wallpaper", "updates"]
     readonly property var pillStates: ["collapsed", "detail", "musicbar"]
+    // Only open while an MPRIS player exists; they close when the last one goes.
+    readonly property var musicStates: ["musicbar", "player"]
 
     property string centreState: "collapsed"
     // The screen whose centre island shows centreState and the OSD; the others stay collapsed.
@@ -38,6 +40,8 @@ Singleton {
             close();
             return;
         }
+        if (musicStates.includes(state) && !Music.hasPlayer)
+            return;
         if (panelStates.includes(state))
             osdVisible = false;
         screenName = resolveScreen(screen);
@@ -69,6 +73,15 @@ Singleton {
         target: System
         property: "active"
         value: root.centreState === "home"
+    }
+
+    Connections {
+        target: Music
+
+        function onHasPlayerChanged() {
+            if (!Music.hasPlayer && root.musicStates.includes(root.centreState))
+                root.close();
+        }
     }
 
     Timer {

@@ -248,7 +248,9 @@ Island {
                     required property var modelData
 
                     objectName: "appIcon"
-                    anchors.verticalCenter: parent.verticalCenter
+                    // Not anchored to the parent: the Repeater detaches a delegate
+                    // before destroying it, and the anchor then reads a null parent.
+                    y: (Theme.islandHeight - height) / 2
                     implicitSize: Theme.iconSize
                     source: Niri.iconFor(modelData.appId)
                     opacity: modelData.id === layer.activeWindowId ? 1 : 0.5

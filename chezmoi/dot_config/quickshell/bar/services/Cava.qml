@@ -3,9 +3,11 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import ".."
 
-// Audio levels for the orb and the top-edge wave: cava's raw ascii output,
-// running only while it is enabled and something plays.
+// Audio levels and the one animation clock for the orb, the music bar's rim
+// and the top-edge wave. cava runs only while a player plays; the clock runs
+// while a player exists or the wave is still fading out, never under reduce motion.
 Singleton {
     id: root
 
@@ -14,18 +16,63 @@ Singleton {
     readonly property string configPath: configDir + "/cava.conf"
     readonly property string config: ["[general]", "bars = " + bandCount, "framerate = 30", "autosens = 1", "sleep_timer = 1", "", "[input]", "method = pipewire", "source = auto", "", "[output]", "method = raw", "raw_target = /dev/stdout", "data_format = ascii", "ascii_max_range = 100", "bar_delimiter = 59", "frame_delimiter = 10", "channels = mono", "mono_option = average", ""].join("\n")
 
-    // Set by the widgets that draw levels (orb, wave).
-    property bool enabled: false
     property bool configReady: false
-    readonly property bool running: configReady && enabled && Music.playing
+    readonly property bool running: configReady && Music.hasPlayer && Music.playing && !Motion.reduceMotion
 
-    // 0..1 each.
+    // Raw frames from cava, 0..1 each.
     property var bands: zeros()
-    readonly property real level: bands.reduce((sum, band) => sum + band, 0) / bandCount
-    readonly property real low: (bands[0] + bands[1] + bands[2] + bands[3]) / 4
+    // Smoothed on every tick with the audio attack and release, 0..1.
+    property var smoothBands: zeros()
+    property real level: 0
+    // Mean of the four lowest bands.
+    property real low: 0
+
+    // Shared by every orb and music bar: angles in degrees, rates in turns per
+    // second. spin eases between 0 (paused, the rims stand still) and 1 (playing).
+    property real spin: 0
+    readonly property real spinEased: spin * spin * (3 - 2 * spin)
+    property real orbLevelRate: 1000 / Motion.rimTurnRest
+    property real barLevelRate: 1000 / Motion.barRimTurnRest
+    property real playerLevelRate: 1000 / Motion.playerRimTurnRest
+    readonly property real rimRate: orbLevelRate * spinEased
+    readonly property real barRimRate: barLevelRate * spinEased
+    readonly property real playerRimRate: playerLevelRate * spinEased
+    property real rimAngle: 0
+    property real barRimAngle: 0
+    property real playerRimAngle: 0
+    property real breathPhase: 0
+    property real playingBloom: Theme.bloomQuiet
+    property real animatedBloom: Theme.bloomBreathMin
+    readonly property real bloom: animating ? animatedBloom : Music.playing ? 0.2 : 0.1
+
+    // The wave fades in while playback runs and out after it stops; every
+    // screen's wave draws at this opacity.
+    readonly property bool waveOn: Theme.topWaveEnabled && Music.hasPlayer && Music.playing && !Motion.reduceMotion
+    property real waveOpacity: waveOn ? Theme.wavePeakOpacity : 0
+
+    Behavior on waveOpacity {
+        NumberAnimation {
+            duration: root.waveOn ? Motion.waveInDuration : Motion.waveOutDuration
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    readonly property bool animating: !Motion.reduceMotion && (Music.hasPlayer || waveOpacity > 0)
+    readonly property bool fast: Music.playing || waveOpacity > 0
+
+    // After each step; the wave repaints on it.
+    signal tick(real dt)
 
     function zeros(): var {
         return new Array(bandCount).fill(0);
+    }
+
+    function approach(current: real, target: real, dt: real, tau: real): real {
+        return tau <= 0 ? target : current + (target - current) * (1 - Math.exp(-dt / tau));
+    }
+
+    function follow(current: real, target: real, dt: real): real {
+        return approach(current, target, dt, target > current ? Motion.audioAttack : Motion.audioRelease);
     }
 
     // One frame: "12;0;57;...;" with values 0..100.
@@ -35,9 +82,61 @@ Singleton {
             bands = values;
     }
 
+    // Turns per second for a turn time at rest and one at full level.
+    function levelRate(restMs: real, fullMs: real): real {
+        return 1000 / restMs + (1000 / fullMs - 1000 / restMs) * level;
+    }
+
+    // dt in milliseconds.
+    function step(dt: real) {
+        const raw = bands;
+        smoothBands = smoothBands.map((value, index) => follow(value, raw[index], dt));
+        level = follow(level, raw.reduce((sum, band) => sum + band, 0) / bandCount, dt);
+        low = follow(low, (raw[0] + raw[1] + raw[2] + raw[3]) / 4, dt);
+
+        spin = Math.max(0, Math.min(1, spin + (Music.playing ? dt : -dt) / Motion.rimEaseDuration));
+        orbLevelRate = approach(orbLevelRate, levelRate(Motion.rimTurnRest, Motion.rimTurnFull), dt, Motion.rimRateSettle);
+        barLevelRate = approach(barLevelRate, levelRate(Motion.barRimTurnRest, Motion.barRimTurnFull), dt, Motion.rimRateSettle);
+        rimAngle = (rimAngle + 360 * rimRate * dt / 1000) % 360;
+        playerLevelRate = approach(playerLevelRate, levelRate(Motion.playerRimTurnRest, Motion.playerRimTurnFull), dt, Motion.rimRateSettle);
+        barRimAngle = (barRimAngle + 360 * barRimRate * dt / 1000) % 360;
+        playerRimAngle = (playerRimAngle + 360 * playerRimRate * dt / 1000) % 360;
+
+        breathPhase = (breathPhase + dt / Motion.bloomBreathPeriod) % 1;
+        const breath = (Theme.bloomBreathMin + Theme.bloomBreathMax) / 2 + (Theme.bloomBreathMax - Theme.bloomBreathMin) / 2 * Math.sin(2 * Math.PI * breathPhase);
+        playingBloom = follow(playingBloom, Theme.bloomQuiet + (Theme.bloomLoud - Theme.bloomQuiet) * low, dt);
+        animatedBloom = spinEased * playingBloom + (1 - spinEased) * breath;
+        tick(dt);
+    }
+
     onRunningChanged: {
         if (!running)
             bands = zeros();
+    }
+
+    // Reduce motion stops the clock: a still rim, a steady bloom, no levels.
+    onAnimatingChanged: {
+        if (animating)
+            return;
+        smoothBands = zeros();
+        level = 0;
+        low = 0;
+    }
+
+    Timer {
+        property real last: 0
+
+        interval: root.fast ? Motion.audioFrameInterval : Motion.audioPausedInterval
+        repeat: true
+        running: root.animating
+        onRunningChanged: last = Date.now()
+        onTriggered: {
+            const now = Date.now();
+            // A stalled loop must not throw the rim forward.
+            const dt = Math.min(250, Math.max(0, now - last));
+            last = now;
+            root.step(dt);
+        }
     }
 
     Process {

@@ -18,6 +18,18 @@ Singleton {
     readonly property real micVolume: source && source.audio ? source.audio.volume : 0
     readonly property bool micMuted: source && source.audio ? source.audio.muted : false
 
+    // Hardware and virtual outputs, not application streams.
+    readonly property var sinks: (Pipewire.nodes.values ?? []).filter(node => node.isSink && !node.isStream && node.audio !== null)
+
+    function sinkLabel(node: PwNode): string {
+        return node.nickname || node.description || node.name;
+    }
+
+    function setDefaultSink(node: PwNode) {
+        if (node)
+            Pipewire.preferredDefaultAudioSink = node;
+    }
+
     function clamp(value: real): real {
         return Math.max(0, Math.min(1, value));
     }

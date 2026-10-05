@@ -11,12 +11,7 @@ repo_root=$(
 cd "$repo_root"
 untracked_required=false
 
-qmllint_command=qmllint
-if ! command -v "$qmllint_command" >/dev/null 2>&1; then
-	qmllint_command=/usr/lib/qt6/bin/qmllint
-fi
-
-for tool in chezmoi fish ghostty git grep jq niri nvim "$qmllint_command" shellcheck shfmt; do
+for tool in chezmoi fish ghostty git grep jq niri nvim shellcheck shfmt; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf 'Missing required validation tool: %s\n' "$tool" >&2
 		exit 1
@@ -92,6 +87,10 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/panels/SettingsPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/HomePanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/UpdatesPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/PlayerPanel.qml \
+	chezmoi/dot_config/quickshell/bar/components/Orb.qml \
+	chezmoi/dot_config/quickshell/bar/components/RimLight.qml \
+	chezmoi/dot_config/quickshell/bar/components/TopWave.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
 	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \
@@ -260,21 +259,6 @@ require_files \
 	extensions/vicinae-writing/src/ollama.ts \
 	extensions/vicinae-writing/src/claude.ts
 
-require_files \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/plugin.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/DotfilesApps.qml \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/plugin.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/DotfilesDashboard.qml \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesKeyboard/plugin.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesKeyboard/DotfilesKeyboard.qml \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/plugin.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesLauncher/DotfilesLauncher.qml \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/plugin.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/DotfilesWorkspaces.qml \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesApps/translations/nl.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesDashboard/translations/nl.json \
-	chezmoi/dot_config/DankMaterialShell/plugins/dotfilesWorkspaces/translations/nl.json
-
 for adr in docs/adr/ADR-*.md; do
 	adr_name=${adr##*/}
 	if ! grep -Fq "($adr_name)" docs/adr/README.md; then
@@ -287,19 +271,6 @@ if grep -R -n -F '/home/maikel' README.md docs; then
 	printf '%s\n' 'Shareable documentation contains a hard-coded home path.' >&2
 	exit 1
 fi
-
-lint_plugin_qml() {
-	plugins_dir=chezmoi/dot_config/DankMaterialShell/plugins
-	qml_status=0
-	qml_report=$("$qmllint_command" -I "$plugins_dir" "$plugins_dir"/*/*.qml 2>&1) || qml_status=$?
-	# DMS ships its qs.* modules outside this tree, so unresolved imports are
-	# expected warnings here; only errors and a failing exit status count.
-	if [ "$qml_status" -ne 0 ] || printf '%s\n' "$qml_report" | grep -q ': Error'; then
-		printf '%s\n' "$qml_report" >&2
-		printf '%s\n' 'qmllint reported errors in the DMS plugins.' >&2
-		exit 1
-	fi
-}
 
 validate_ghostty_config() {
 	ghostty_config_home=$(mktemp -d)
@@ -366,9 +337,8 @@ done
 niri validate --config chezmoi/dot_config/niri/config.kdl
 validate_ghostty_config
 validate_nvim_lua
-lint_plugin_qml
 
-for catalogue in chezmoi/dot_config/DankMaterialShell/plugins/*/translations/*.json dms/*.json \
+for catalogue in dms/*.json \
 	chezmoi/dot_config/nvim/lazy-lock.json chezmoi/dot_config/vicinae/dotfiles.json \
 	extensions/*/package.json extensions/*/package-lock.json extensions/*/tsconfig.json; do
 	jq empty "$catalogue"

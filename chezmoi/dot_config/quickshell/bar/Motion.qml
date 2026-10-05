@@ -26,6 +26,27 @@ Singleton {
     readonly property int musicContentDelay: reduceMotion ? 0 : 120
     readonly property int waveInDuration: reduceMotion ? 0 : 600
     readonly property int waveOutDuration: reduceMotion ? 0 : 2000
+    // Audio-driven values: attack when rising, release when falling (time constants).
+    readonly property int audioAttack: 80
+    readonly property int audioRelease: 250
+    // The rim light's turn time follows the level; its rate settles in this time.
+    // The music bar's rim turns faster than the orb's.
+    readonly property int rimTurnRest: 6000
+    readonly property int rimTurnFull: 1500
+    readonly property int barRimTurnRest: 4000
+    readonly property int barRimTurnFull: 1200
+    readonly property int playerRimTurnRest: 8000
+    readonly property int playerRimTurnFull: 3000
+    readonly property int rimRateSettle: 400
+    // On pause the rims ease to a stop and the bloom breathes; play eases them back.
+    readonly property int rimEaseDuration: 600
+    readonly property int bloomBreathPeriod: 4000
+    // Audio animation ticks: 60 per second while playing, 10 while paused.
+    readonly property int audioFrameInterval: 16
+    readonly property int audioPausedInterval: 100
+    // Marquee: a hold at each end and this much time per pixel of overflow.
+    readonly property int marqueeBase: 2000
+    readonly property int marqueePerPixel: 28
 
     // Easing.BezierSpline wants the end point (1, 1) after the CSS control points.
     readonly property var growCurve: growEasing.concat([1, 1])
@@ -35,5 +56,6 @@ Singleton {
     // Interaction timing, not animation: reduce motion leaves it alone.
     readonly property int hoverRestDelay: 250
     readonly property int hoverLeaveGrace: 120
+    readonly property int orbHoverDelay: 80
     readonly property int longPressInterval: 500
 }

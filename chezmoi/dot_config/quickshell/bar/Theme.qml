@@ -149,9 +149,75 @@ Singleton {
     readonly property int updatesActionsGap: 12
     readonly property int updatesButtonHeight: 36
 
+    // Music: the orb sits orbGap left of the pill and glides to orbInset inside
+    // the music bar. The bloom reaches orbBloom beyond the rim, and the hit area
+    // is the whole bloom.
+    readonly property int orbSize: 16
+    readonly property int orbGap: 6
+    readonly property int orbInset: 7
+    readonly property real orbRimWidth: 2
+    readonly property int orbBloom: 8
+    // Bloom opacity: 0.15 to 0.5 with the low band while playing, a breath on pause.
+    readonly property real bloomQuiet: 0.15
+    readonly property real bloomLoud: 0.5
+    readonly property real bloomBreathMin: 0.1
+    readonly property real bloomBreathMax: 0.22
+    readonly property int orbHitPadding: orbBloom
+    // The prototype's 280 px bar, padding included: orb, gap, text, three controls.
+    readonly property int musicBarWidth: 280
+    readonly property real musicBarRimWidth: 2.5
+    // How far the bar rim's lighter and warmer stops are pushed toward white.
+    readonly property real musicBarRimLift: 0.25
+    // The bar rim's outer glow: 2 px rings this far outside the edge, at this alpha.
+    readonly property var musicBarGlowRings: [[2, 0.3], [4, 0.16], [6, 0.06]]
+    readonly property int musicBarGlowRingWidth: 2
+    // The Player's quiet rim, without glow.
+    readonly property real playerRimWidth: 1.5
+    readonly property int musicBarPaddingRight: 6
+    readonly property int musicControlSize: 22
+    readonly property int musicTitleFontSize: 12
+    readonly property int musicArtistGap: 6
+    // Space after the run before the marquee turns back.
+    readonly property int marqueeTail: 12
+    readonly property int marqueeFade: 10
+
+    // Player: cover beside the text, a thin seekable track, controls, outputs.
+    readonly property int playerCoverSize: 88
+    readonly property int playerCoverRadius: 14
+    readonly property int playerCoverGap: 14
+    readonly property int playerTitleFontSize: 15
+    readonly property int playerTextGap: 2
+    readonly property int playerProgressGap: 14
+    readonly property int playerTrackHeight: 4
+    readonly property int playerTrackHitHeight: 16
+    readonly property int playerTimesGap: 5
+    readonly property int playerTimesHeight: 13
+    readonly property int playerControlsGap: 4
+    readonly property int playerControlSpacing: 22
+    readonly property int playerControlSize: 32
+    readonly property int playerPlaySize: 40
+    readonly property int playerControlIconSize: 20
+    readonly property int playerPlayIconSize: 18
+    readonly property int outputsGap: 12
+    readonly property int outputChipHeight: 24
+    readonly property int outputChipGap: 6
+    readonly property int outputChipPadding: 10
+    readonly property int outputChipMaxWidth: 150
+    // Seconds per arrow key on the progress track.
+    readonly property int playerSeekStep: 5
+
+    // Top-edge wave: a band of light along the top of every screen while music plays.
+    readonly property bool topWaveEnabled: true
+    readonly property int waveHeight: 48
+    readonly property int waveAmplitude: 20
+    readonly property real wavePeakOpacity: 0.5
+    // Width and alpha of the layered strokes, widest first; they stand in for a blur.
+    // Together they reach about 0.95 alpha on the curve, so the top row shows
+    // close to the full peak opacity.
+    readonly property var waveStrokes: [[58, 0.2], [41, 0.32], [29, 0.5], [24, 0.8]]
+
     // Placeholder bodies until the real panels set their own height.
     readonly property int placeholderPanelHeight: 240
-    readonly property int musicBarWidth: 360
     readonly property int osdWidth: 200
 
     Component.onCompleted: {

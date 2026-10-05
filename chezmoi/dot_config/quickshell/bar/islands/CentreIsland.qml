@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import ".."
 import "../components"
 import "../panels"
@@ -18,6 +19,9 @@ Island {
     readonly property bool detail: centreState === "detail"
     readonly property bool osd: Shell.osdVisible && Shell.screenName === screenName
     readonly property bool showsPill: (centreState === "collapsed" || detail) && !osd
+    readonly property bool musicBar: centreState === "musicbar"
+    // The orb lives in the window, outside this clipped island; the window adds it to the input mask.
+    readonly property alias orb: orbItem
 
     // Collapsed: icon | clock | icon at the icon size. Even widths keep the
     // island symmetric around the whole-pixel clock.
@@ -117,8 +121,18 @@ Island {
         return day.charAt(0).toUpperCase() + day.slice(1) + " " + Qt.formatDate(date, "dd-MM");
     }
 
+    // From the island's left edge to the orb's hit area: left of the pill, or the
+    // bar's first element. It moves with the island's own curve and duration.
+    property real orbOffset: musicBar ? Theme.orbInset - Theme.orbHitPadding : -Theme.orbGap - Theme.orbSize - Theme.orbHitPadding
+
+    Behavior on orbOffset {
+        IslandAnimation {
+            shrinking: !island.musicBar
+        }
+    }
+
     targetWidth: panelOpen ? Theme.panelWidths[centreState] : centreState === "musicbar" ? Theme.musicBarWidth : osd ? Theme.osdWidth : detail ? detailWidth : pillWidth
-    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : centreState === "home" ? homePanel.implicitHeight : centreState === "updates" ? updatesPanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
+    targetHeight: centreState === "settings" ? settingsPanel.implicitHeight : centreState === "home" ? homePanel.implicitHeight : centreState === "updates" ? updatesPanel.implicitHeight : centreState === "player" ? playerPanel.implicitHeight : panelOpen ? Theme.placeholderPanelHeight : detail ? Theme.islandDetailHeight : Theme.islandHeight
     targetOpacity: panelOpen ? Theme.panelOpacity : Theme.islandOpacity
     targetBlend: detail ? 1 : 0
     expanded: panelOpen || detail
@@ -254,6 +268,226 @@ Island {
         }
     }
 
+    // The orb's travelling light runs around the bar's edge while it is open.
+    Item {
+        anchors.fill: parent
+        opacity: island.musicBar ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            MusicFade {}
+        }
+
+        RimLight {
+            objectName: "musicBarRim"
+            anchors.fill: parent
+            radius: island.radius
+            thickness: Theme.musicBarRimWidth
+            angle: -Cava.barRimAngle
+            lift: Theme.musicBarRimLift
+            brightness: 0.85 + 0.5 * Cava.level
+            opacity: 0.6 + 0.4 * Cava.level
+        }
+    }
+
+    // Title and artist as one run, then previous, play or pause, next. The orb
+    // sits in the left padding. A click anywhere but a control opens the Player.
+    Item {
+        id: musicBarBody
+
+        objectName: "musicBar"
+        x: (island.width - width) / 2
+        width: Theme.musicBarWidth
+        height: Theme.islandHeight
+        opacity: island.musicBar ? 1 : 0
+        visible: opacity > 0
+        enabled: island.musicBar
+
+        Behavior on opacity {
+            MusicFade {}
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: Shell.open("player", island.screenName)
+        }
+
+        Item {
+            id: marqueeBox
+
+            objectName: "marquee"
+            readonly property real overflow: Math.max(0, run.width - width)
+            readonly property bool scrolling: overflow > 0 && island.musicBar && !Motion.reduceMotion
+
+            x: Theme.orbInset + Theme.orbSize + Theme.gap
+            width: musicControls.x - Theme.gap - x
+            height: parent.height
+            clip: true
+
+            // Soft edges while the run scrolls, as in the prototype.
+            layer.enabled: scrolling
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: marqueeMask
+                // A soft ramp over the mask's alpha; the default thresholds cut it hard.
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1
+            }
+
+            Row {
+                id: run
+
+                objectName: "musicRun"
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.musicArtistGap
+
+                Text {
+                    id: musicTitle
+
+                    text: Music.title
+                    color: Colors.foreground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.musicTitleFontSize
+                    font.weight: Font.DemiBold
+                }
+
+                Text {
+                    anchors.baseline: musicTitle.baseline
+                    text: Music.artist
+                    visible: text !== ""
+                    color: Colors.foregroundVariant
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.secondaryFontSize
+                    font.weight: Theme.fontWeight
+                }
+            }
+
+            // Holds at each end, glides across, and comes back.
+            SequentialAnimation {
+                id: marquee
+
+                readonly property real shift: marqueeBox.overflow + Theme.marqueeTail
+                readonly property int travel: Math.round((Motion.marqueeBase + marqueeBox.overflow * Motion.marqueePerPixel) * 0.7)
+                readonly property int hold: Math.round((Motion.marqueeBase + marqueeBox.overflow * Motion.marqueePerPixel) * 0.15)
+
+                running: marqueeBox.scrolling
+                loops: Animation.Infinite
+                onRunningChanged: {
+                    if (!running)
+                        run.x = 0;
+                }
+
+                PauseAnimation {
+                    duration: marquee.hold
+                }
+                NumberAnimation {
+                    target: run
+                    property: "x"
+                    from: 0
+                    to: -marquee.shift
+                    duration: marquee.travel
+                }
+                PauseAnimation {
+                    duration: 2 * marquee.hold
+                }
+                NumberAnimation {
+                    target: run
+                    property: "x"
+                    from: -marquee.shift
+                    to: 0
+                    duration: marquee.travel
+                }
+                PauseAnimation {
+                    duration: marquee.hold
+                }
+            }
+        }
+
+        Rectangle {
+            id: marqueeMask
+
+            width: marqueeBox.width
+            height: marqueeBox.height
+            visible: false
+            layer.enabled: true
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+
+                GradientStop {
+                    position: 0
+                    color: "transparent"
+                }
+                GradientStop {
+                    position: Theme.marqueeFade / Math.max(1, marqueeMask.width)
+                    color: "black"
+                }
+                GradientStop {
+                    position: 1 - Theme.marqueeFade / Math.max(1, marqueeMask.width)
+                    color: "black"
+                }
+                GradientStop {
+                    position: 1
+                    color: "transparent"
+                }
+            }
+        }
+
+        Row {
+            id: musicControls
+
+            x: parent.width - width - Theme.musicBarPaddingRight
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.gap
+
+            MusicButton {
+                objectName: "musicPrevious"
+                iconName: "skip_previous"
+                label: "Previous"
+                onActivated: Music.previous()
+            }
+
+            MusicButton {
+                objectName: "musicToggle"
+                iconName: Music.playing ? "pause" : "play_arrow"
+                label: Music.playing ? "Pause" : "Play"
+                onActivated: Music.togglePlaying()
+            }
+
+            MusicButton {
+                objectName: "musicNext"
+                iconName: "skip_next"
+                label: "Next"
+                onActivated: Music.next()
+            }
+        }
+    }
+
+    // The Player carries the rim light as a quiet continuation: thinner, slower,
+    // no glow, fading with the panel body.
+    Item {
+        anchors.fill: parent
+        opacity: island.centreState === "player" ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Motion.crossfadeDuration
+                easing.type: Motion.crossfadeEasing
+            }
+        }
+
+        RimLight {
+            objectName: "playerRim"
+            anchors.fill: parent
+            radius: island.radius
+            thickness: Theme.playerRimWidth
+            angle: -Cava.playerRimAngle
+            lift: Theme.musicBarRimLift
+            brightness: 0.85 + 0.5 * Cava.level
+            opacity: 0.6 + 0.4 * Cava.level
+        }
+    }
+
     // Under the panel bodies: a click on empty panel space stops here and does nothing.
     MouseArea {
         objectName: "panelGuard"
@@ -290,8 +524,17 @@ Island {
         shown: island.centreState === "updates"
     }
 
+    PlayerPanel {
+        id: playerPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "player"
+    }
+
     Repeater {
-        model: Shell.panelStates.filter(state => !["home", "settings", "updates"].includes(state)).concat(["musicbar"])
+        model: Shell.panelStates.filter(state => !["home", "settings", "updates", "player"].includes(state))
 
         PlaceholderPanel {
             required property string modelData
@@ -299,6 +542,48 @@ Island {
             anchors.fill: parent
             name: modelData
             shown: island.centreState === modelData
+        }
+    }
+
+    component MusicFade: SequentialAnimation {
+        PauseAnimation {
+            duration: island.musicBar ? Motion.musicContentDelay : 0
+        }
+        NumberAnimation {
+            duration: Motion.crossfadeDuration
+            easing.type: Motion.crossfadeEasing
+        }
+    }
+
+    component MusicButton: Item {
+        id: button
+
+        property string iconName: ""
+        property string label: ""
+
+        signal activated
+
+        width: Theme.musicControlSize
+        height: Theme.musicControlSize
+
+        Accessible.role: Accessible.Button
+        Accessible.name: label
+        Accessible.onPressAction: button.activated()
+
+        Icon {
+            anchors.centerIn: parent
+            name: button.iconName
+            fill: 1
+            color: buttonPointer.containsMouse ? Colors.primary : Colors.foreground
+        }
+
+        MouseArea {
+            id: buttonPointer
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: button.activated()
         }
     }
 
@@ -361,4 +646,112 @@ Island {
         }
     }
 
+    // The bar rim's soft outer glow: rings outside the island's edge, so they
+    // live in the window under the island, fainter the farther out.
+    Item {
+        parent: island.parent
+        x: island.x
+        y: island.y
+        z: island.z - 0.5
+        width: island.width
+        height: island.height
+        opacity: island.musicBar ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            MusicFade {}
+        }
+
+        Repeater {
+            model: Theme.musicBarGlowRings
+
+            RimLight {
+                required property var modelData
+
+                objectName: "musicBarGlow"
+                x: -modelData[0]
+                y: -modelData[0]
+                width: island.width + 2 * modelData[0]
+                height: island.height + 2 * modelData[0]
+                radius: island.radius + modelData[0]
+                thickness: Theme.musicBarGlowRingWidth
+                angle: -Cava.barRimAngle
+                lift: Theme.musicBarRimLift
+                brightness: 0.85 + 0.5 * Cava.level
+                opacity: modelData[1] * (0.6 + 0.4 * Cava.level)
+            }
+        }
+    }
+
+    // Over the window, not in the island: the island clips its children.
+    Orb {
+        id: orbItem
+
+        objectName: "orb"
+        parent: island.parent
+        x: island.x + island.orbOffset
+        y: island.y + (Theme.islandHeight - height) / 2
+        z: island.z + 1
+        opacity: Music.hasPlayer && !island.panelOpen ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Motion.crossfadeDuration
+                easing.type: Motion.crossfadeEasing
+            }
+        }
+
+        HoverHandler {
+            id: orbHover
+
+            onHoveredChanged: island.musicHoverChanged()
+        }
+
+        TapHandler {
+            onTapped: {
+                orbRestTimer.stop();
+                Shell.open("player", island.screenName);
+            }
+        }
+    }
+
+    // The music bar stays open while the pointer is on the orb or the island.
+    HoverHandler {
+        id: islandHover
+
+        onHoveredChanged: island.musicHoverChanged()
+    }
+
+    function musicHoverChanged() {
+        if (orbHover.hovered || islandHover.hovered) {
+            musicLeaveTimer.stop();
+            if (orbHover.hovered && !musicBar)
+                orbRestTimer.restart();
+        } else {
+            orbRestTimer.stop();
+            if (musicBar)
+                musicLeaveTimer.restart();
+        }
+    }
+
+    Timer {
+        id: orbRestTimer
+
+        interval: Motion.orbHoverDelay
+        onTriggered: {
+            if ((island.centreState === "collapsed" || island.detail) && !island.osd && orbHover.hovered)
+                Shell.open("musicbar", island.screenName);
+        }
+    }
+
+    Timer {
+        id: musicLeaveTimer
+
+        interval: Motion.hoverLeaveGrace
+        onTriggered: {
+            if (island.musicBar && !orbHover.hovered && !islandHover.hovered)
+                Shell.close();
+        }
+    }
 }

@@ -15,13 +15,13 @@ Motion.qml       singleton: durations and curves, reduce motion
 qmldir           registers the token singletons
 services/        singletons that own state or data; Shell.qml is the centre island state machine
 islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, battery,
-                 Detail), RightIsland (tray, attention indicators)
-panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel;
+                 Detail, music orb and bar), RightIsland (tray, attention indicators)
+panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel, PlayerPanel;
                  PlaceholderPanel until the others land
 components/      Island surface and its animation, Hairline, Clock, Icon (Material Symbols),
                  WeatherIcon, BatteryIcon, SegmentedControl; Tile, CapsuleSlider and
                  NotificationRow for Settings; TimeTile, WeatherTile, PerformanceTile and
-                 PowerTile for Home
+                 PowerTile for Home; Orb, RimLight and TopWave for music
 ```
 
 Every directory with types has its own `qmldir` that lists all of them.

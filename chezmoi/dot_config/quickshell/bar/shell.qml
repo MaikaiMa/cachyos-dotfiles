@@ -1,10 +1,21 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import "components"
 import "islands"
 import "services"
 
 ShellRoot {
+    component IslandRegion: Region {
+        required property Rectangle island
+
+        x: island.x
+        y: island.y
+        width: island.width
+        height: island.height
+        radius: island.radius
+    }
+
     Variants {
         model: Quickshell.screens
 
@@ -42,10 +53,11 @@ ShellRoot {
                 // A tray menu is handled like a panel on its own screen: Escape and
                 // a press outside close it.
                 WlrLayershell.keyboardFocus: screenScope.panelOpenHere || right.menuOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-                mask: Shell.panelOpen || right.menuOpen ? fullRegion : islandRegion
+                mask: Shell.panelOpen || right.menuOpen ? fullRegion : inputRegion
                 // The blur type lives in Quickshell core, which the BackgroundEffect
                 // type info does not declare, so qmllint cannot resolve it.
-                BackgroundEffect.blurRegion: islandRegion // qmllint disable missing-type
+                // The orb takes input but gets no blur: it floats on the wallpaper.
+                BackgroundEffect.blurRegion: blurRegion // qmllint disable missing-type
 
                 Region {
                     id: fullRegion
@@ -54,29 +66,40 @@ ShellRoot {
                     height: bar.height
                 }
 
+                // Flat on purpose: each island and the orb is a direct child, and the
+                // input and blur regions share no Region object.
                 Region {
-                    id: islandRegion
+                    id: inputRegion
 
-                    Region {
-                        x: left.x
-                        y: left.y
-                        width: left.width
-                        height: left.height
-                        radius: left.radius
+                    IslandRegion {
+                        island: left
+                    }
+                    IslandRegion {
+                        island: centre
+                    }
+                    IslandRegion {
+                        island: right
                     }
                     Region {
-                        x: centre.x
-                        y: centre.y
-                        width: centre.width
-                        height: centre.height
-                        radius: centre.radius
+                        shape: RegionShape.Ellipse
+                        x: centre.orb.x
+                        y: centre.orb.y
+                        width: centre.orb.visible ? centre.orb.width : 0
+                        height: centre.orb.visible ? centre.orb.height : 0
                     }
-                    Region {
-                        x: right.x
-                        y: right.y
-                        width: right.width
-                        height: right.height
-                        radius: right.radius
+                }
+
+                Region {
+                    id: blurRegion
+
+                    IslandRegion {
+                        island: left
+                    }
+                    IslandRegion {
+                        island: centre
+                    }
+                    IslandRegion {
+                        island: right
                     }
                 }
 
@@ -99,6 +122,11 @@ ShellRoot {
                         function onCentreStateChanged() {
                             keyRoot.forceActiveFocus();
                         }
+                    }
+
+                    // Behind the islands and outside the mask and the blur region.
+                    TopWave {
+                        width: parent.width
                     }
 
                     // Below the islands, so they keep their input; the centre island's

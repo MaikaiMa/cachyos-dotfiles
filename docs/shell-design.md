@@ -110,12 +110,16 @@ without the other: Network (SSID, signal, link speed) and Next event
 state, small tiles span one cell and are icon only. Two rows, no holes:
 
 ```text
-| Wi-Fi (wide)         | Bluetooth (wide)     |
-| Power profile (wide) | Do not disturb | Caffeine |
+docked:                                   detached:
+| Wi-Fi (wide)     | DND     | Caffeine | | Wi-Fi (wide)     | DND     | Caffeine |
+| Bluetooth (wide) | Power profile (wide)| | Bluetooth | Rotation lock | Power profile (wide)|
 ```
 
-Tablet mode is not in the grid (it follows the hinge; a shortcut covers
-the manual case). Night light, colour picker, screenshot, display profile
+The wide tile alternates sides so the grid reads playful rather than
+lopsided (decided 2026-10-05). While the tablet is detached, Bluetooth
+shrinks to an icon-only tile and frees the cell for the rotation lock;
+power profile always keeps its state line. Tablet mode itself is not in
+the grid (it follows the hinge; a shortcut covers the manual case). Night light, colour picker, screenshot, display profile
 and the settings window stay shortcut-only.
 
 Under the grid three sliders, Volume, Microphone, Brightness, each a
@@ -157,19 +161,25 @@ changes size.
   radius at most 8 px beyond the rim, opacity following the low band
   between 0.15 and 0.5 with ~80 ms attack and ~250 ms release. It is the
   only thing that pulses.
-- *Nothing else moves.* No breath, no drift, no bob, no scaling on hover
-  of the pill or anywhere else. On pause the rim slows to one turn in
-  about 12 s and the bloom settles at 0.1; the orb never looks dead while
-  a player exists.
+- *Nothing else moves while playing.* No drift, no bob, no scaling on
+  hover of the pill or anywhere else. On pause the rim stops turning and
+  the only motion is a slow breath of the bloom, opacity 0.1 to 0.22 over
+  a 4 s cycle, so the orb reads as resting but not dead (changed
+  2026-10-05 after the live test).
 - *Hover: the music bar, centred.* The pill grows symmetrically from its
   centre into the music bar, which is centred on the screen like the
   clock (hidden in this state). The orb glides into the bar as its
   leftmost element; title and artist (marquee when long) and
   previous/play/next fade in from 120 ms. While the bar is open the same
   travelling rim light runs around the bar's edge, so the orb hands its
-  life to the bar. No cover image in the bar. Leaving reverses it.
+  life to the bar; on the bar it is livelier than on the orb: 2.5 px wide,
+  a brighter gradient with a soft outer glow of about 6 px, and one turn in
+  4 s at rest down to 1.2 s at full level (tuned 2026-10-05). No cover image in the bar. Leaving reverses it.
 - *Click on the orb or the bar:* the Player panel, grown from the pill
-  like every other panel; the real cover appears there.
+  like every other panel; the real cover appears there. The Player
+  carries the rim light too, as a quiet continuation rather than a frame:
+  1.5 px, no outer glow, one turn in 8 s at rest down to 3 s at full
+  level (added 2026-10-05).
 
 *Top-edge wave.* An addition the user asked back in, but as a wave, not
 bars: a separate click-through layer along the top 48 px of the screen,
@@ -177,7 +187,8 @@ behind the islands. One continuous curve is drawn through the smoothed
 band levels (Catmull-Rom or similar through 24 points across the screen
 width, amplitude up to 20 px), stroked wide and blurred (blur radius at
 least 16 px) in the orb's colours and faded to transparent toward its
-bottom edge, peak opacity 0.3. It must read as a breathing band of light
+bottom edge, peak opacity 0.5 (raised from 0.3 on 2026-10-05, the lower
+value was too subtle over the real wallpaper). It must read as a breathing band of light
 whose shape moves with the music; no individual band may be
 distinguishable. Fades in over 600 ms when playback starts and out over
 2 s on pause; off under reduce motion; off by default on external

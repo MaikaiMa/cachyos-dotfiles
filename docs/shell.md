@@ -19,7 +19,7 @@ records this as an amendment.
 
 ## What is built
 
-Steps 0 to 5 of the build (see "Phases"). Every screen gets one tall,
+Steps 0 to 6 of the build (see "Phases"). Every screen gets one tall,
 transparent layer-shell window with three islands: workspaces and apps on
 the left, the centre island, and the tray and attention indicators on the
 right. The centre island runs the real state machine and morphs: hover
@@ -114,6 +114,17 @@ Step 5 made the side islands and the Updates panel real.
   so the summary stays readable, and the list is checked again once the
   terminal closes.
 
+Step 6 added music: a 16 px orb in the album colour with a turning rim
+light and a bloom on the beat sits 6 px left of the pill while an MPRIS
+player exists; resting on it grows the island into the 280 px music bar
+(the orb glides in as its first element, title and artist with a marquee,
+previous / play / next, the rim light around the bar's edge), and a click
+on the orb or the bar opens the 360 px Player panel (cover, title, artist,
+album, a seekable progress track, controls, and output chips when there is
+more than one output). Behind the islands a top-edge wave of light follows
+cava's bands while music plays, on every screen; see "Music" below for how
+it is driven and kept cheap.
+
 ### Window architecture
 
 - **One window per screen, as tall as the screen.** `shell.qml` creates a
@@ -129,10 +140,13 @@ Step 5 made the side islands and the Updates panel real.
   island, bound to the island's live `x`, `y`, `width`, `height` and
   `radius`. Each animation frame updates it, so the mask follows the island
   while it grows or shrinks; everything else in the window is click-through.
-  While a panel is open on any screen, the mask of every bar window switches
-  to a region covering the whole window. The island region stays the blur
-  region (`BackgroundEffect.blurRegion`) in both states, so Niri blurs only
-  behind the islands.
+  A fourth, elliptic region follows the music orb's 32 px hit area (the
+  size of its bloom), which sits outside the centre island. While a panel
+  is open on any screen, the mask of every bar window switches to a region
+  covering the whole window. A separate region of the three islands is the
+  blur region (`BackgroundEffect.blurRegion`) in both states, so Niri blurs
+  only behind the islands and the orb floats on the wallpaper. Both regions
+  are flat lists of direct children and share no `Region` object.
 - **Keyboard focus.** `None` while no panel is open, `Exclusive` on the
   screen with an open panel. `OnDemand` is not enough: panels also open from
   shortcuts (`quickshell ipc`, later Niri binds) without a click, and Niri
@@ -181,12 +195,13 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Niri.qml ... Updates.qml            data services, see "Services"
   islands/                              the three islands
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
-    CentreIsland.qml                    weather, clock and battery pill, Detail, OSD and panel states
+    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, music bar, OSD and panel states
     RightIsland.qml                     tray stack, fan and menu, attention indicators
   panels/                               centre panel bodies
     HomePanel.qml                       Time, Weather, Performance and Power tiles
     SettingsPanel.qml                   toggle grid, three sliders, notification list
     UpdatesPanel.qml                    pending packages, Update all, Refresh, Report
+    PlayerPanel.qml                     cover, track, seekable progress, controls, output chips
     PlaceholderPanel.qml                stands in for a panel until its step lands
   components/                           shared pieces
     Island.qml                          island surface: colour, radius, shadow, size animation
@@ -204,6 +219,9 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Tile.qml                            Settings grid toggle, wide with state or small icon-only
     CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer
     NotificationRow.qml                 one notification with dismiss, collapses when it leaves
+    Orb.qml                             music orb: album-colour sphere, rim light, bloom
+    RimLight.qml                        conic-gradient ring inside a rounded rectangle (orb, music bar)
+    TopWave.qml                         top-edge wave canvas behind the islands
 chezmoi/dot_config/systemd/user/quickshell-bar.service
 scripts/bar-switch.sh                   switches between the DMS and the own bar
 tests/bar-switch.sh                     switch script test with stubs
@@ -238,6 +256,11 @@ The font is Inter Variable from the `inter-font` package, the same family
 DMS uses.
 
 ## Switching bars
+
+Since 2026-10-05 the own bar is the daily bar and DMS is the fallback; the
+DMS bar's widget layout uses only built-in widgets (`launcherButton`,
+`workspaceSwitcher`, `runningApps`), so `scripts/bar-switch.sh dms` works
+without the retired plugins.
 
 `dms/look.json` records which bar is active through `barConfigs[0].enabled`:
 `false` hands the bar to Quickshell, `true` or absent keeps the DMS bar.
@@ -416,8 +439,10 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `healthPercentage`, `energyCapacity` (Wh), `isLow` (20 or below), `available`;
   `profile`, `profiles` (`power-saver`, `balanced`, `performance`),
   `setProfile(name)`.
-- `Audio`: `volume`, `muted`, `micVolume`, `micMuted`, `ready`;
-  `setVolume(v)`, `toggleMute()`, `setMicVolume(v)`, `toggleMicMute()`.
+- `Audio`: `volume`, `muted`, `micVolume`, `micMuted`, `ready`, `sink`
+  (the default output), `sinks` (hardware and virtual outputs, no streams);
+  `setVolume(v)`, `toggleMute()`, `setMicVolume(v)`, `toggleMicMute()`,
+  `sinkLabel(node)`, `setDefaultSink(node)` (PipeWire's configured default).
 - `Brightness`: `percentage` (-1 until read), `device`, `available`;
   `set(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
   backlight class every 5 s and after each write. While a write runs, only
@@ -442,13 +467,21 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   malformed history file is an empty list. Dismissals live in
   `$XDG_STATE_HOME/dotfiles-bar/notifications.json`; `clearAll()` also
   clears DMS's active notifications through `dms ipc`.
-- `Music`: `hasPlayer`, `title`, `artist`, `artUrl`, `playing`, `position`,
-  `length` (seconds), `artColors`, `artColor` (first quantised colour,
-  `Colors.primaryContainer` without art); `play()`, `pause()`,
-  `togglePlaying()`, `next()`, `previous()`.
-- `Cava`: `enabled` (set by the orb and the wave), `running` (enabled and
-  something plays), `bands` (24 levels), `level`, `low` (mean of the first
-  four bands). Writes its config to `$XDG_RUNTIME_DIR/dotfiles-bar/cava.conf`.
+- `Music`: `hasPlayer`, `title`, `artist`, `album`, `artUrl`, `playing`,
+  `position`, `length` (seconds), `canSeek`, `artColors` (the quantiser's
+  buckets), `artColor` (the most frequent bucket colour,
+  `Colors.primaryContainer` without art; it follows the art of every new
+  track), `artLight` and `artWarm` (a lighter and a warmer cut of it for the
+  rim light and the wave); `play()`, `pause()`, `togglePlaying()`, `next()`,
+  `previous()`, `seek(seconds)` (absolute, when the player can seek).
+  playerctld's mirror player is left out of `players`.
+- `Cava`: `running` (cava runs only while a player plays, never under
+  reduce motion), `bands` (24 raw levels), `smoothBands`, `level`, `low`
+  (mean of the first four bands; all three smoothed with 80 ms attack and
+  250 ms release), `rimAngle`, `barRimAngle` and `playerRimAngle` (degrees),
+  `rimRate`, `barRimRate` and `playerRimRate` (turns per second), `spin` (0 paused to 1 playing, eased
+  over 600 ms), `bloom`, `waveOn`, `waveOpacity`, `animating`; signal `tick(dt)`. Writes
+  its config to `$XDG_RUNTIME_DIR/dotfiles-bar/cava.conf`.
 - `Tray`: `items`, `count`; `activate(item)`, `menuFor(item)` (a handle for
   `QsMenuOpener`).
 - `Weather`: `ready`, `temperature`, `apparent`, `code`, `conditionText`,
@@ -473,6 +506,67 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `openReport()`. Runs `~/.local/bin/system-update --pending` every 30
   minutes, on `refresh()` and after the update terminal closes.
 
+### Music
+
+One clock drives everything that moves with the music: a `Timer` in `Cava`
+steps the smoothing, the three rim angles and turn rates (orb, music bar,
+Player),
+and the bloom, then emits `tick`. Every orb binds to `Cava.rimAngle`, every
+music bar rim to `Cava.barRimAngle`, both to `Cava.level` and the orb to
+`Cava.bloom`, and every screen's wave repaints on `tick`, so all screens
+share one set of values. On pause the rims ease to a standstill over
+600 ms and keep their angle, and the bloom blends into a breath between
+0.1 and 0.22 on a 4 s sine; on play the turn rate eases back in over the
+same 600 ms.
+
+- **Orb.** A 16 px `Rectangle` in `Music.artColor`, a 2 px `RimLight` ring
+  over it (a `Shape` with a `ConicalGradient` fill and an odd-even hole, in
+  `artLight`, `primary`, `artWarm` and `artColor`), and a bloom behind it:
+  the same gradient on a disc 8 px wider than the rim, faded out by a
+  radial mask through `MultiEffect`. The ring and the bloom turn by
+  rotating the item, so their layers are not redrawn per frame. The turn
+  takes 6 s at rest down to 1.5 s at full level and stops on pause; the rim
+  brightens and the bloom runs 0.15 to 0.5 with the low band while playing.
+  No `qsb` is installed, so there is no custom shader; MultiEffect's blur
+  spreads a 16 px disc by barely 3 px, which is why the bloom is a masked
+  disc and not a blur.
+- **Music bar.** The orb lives in the bar window, not in the clipped
+  island, and moves with the island's own curve between 6 px left of the
+  pill and 7 px inside the bar. Resting on it for 80 ms opens `musicbar`;
+  leaving both the orb and the island for 120 ms closes it. The bar is
+  280 px as in the prototype: the run of title (12 px semibold) and artist
+  (11 px) scrolls as a marquee with soft edges while it is wider than its
+  space and the bar is open. A 2.5 px `RimLight` follows the island's
+  radius, livelier than the orb's: one turn in 4 s at rest down to 1.2 s at
+  full level, its lighter and warmer stops pushed 25 % toward white, and a
+  soft outer glow of three 2 px rings 2, 4 and 6 px outside the edge at
+  0.3, 0.16 and 0.06 alpha. The glow rings live in the window under the
+  island, which clips its own children.
+- **Player.** The island takes `PlayerPanel`'s height. A 1.5 px `RimLight`
+  with the bar's gradient and no glow runs along the island's edge as a
+  quiet continuation, on its own angle (`Cava.playerRimAngle`): one turn in
+  8 s at rest down to 3 s at full level, fading with the panel body. The track seeks on
+  press and drag (and Left and Right in 5 s steps) when the player can
+  seek; the output chips show only with more than one output.
+- **Top-edge wave.** `TopWave` is a `Canvas` under the islands, outside the
+  input mask and the blur region: a Catmull-Rom curve through the 24
+  smoothed bands, four strokes from 58 px at 0.2 to 24 px at 0.8 alpha in
+  a horizontal gradient of the orb colours, then faded toward the bottom
+  with a `destination-in` gradient inside the canvas, because the window
+  behind it is transparent. Together the strokes reach about 0.95 alpha on
+  the curve, so the top row shows about 0.47 at the peak opacity.
+  `Cava.waveOpacity` rises to 0.5 in 600 ms when
+  playback starts and falls in 2 s after it stops. `Theme.topWaveEnabled`
+  switches it off everywhere; it draws on every screen for now, also the
+  external monitors the design wants it off on by default.
+- **CPU gating.** cava runs only while a player plays. The clock ticks at
+  60 per second while playing or while the wave fades out, at 10 per second
+  while a paused player exists (only the bloom breathes), and
+  not at all without a player or under reduce motion. The wave repaints
+  only on a tick while its opacity is above zero. A `Timer` and not a
+  `FrameAnimation`: the clock is capped at 60 per second whatever the
+  display's refresh rate.
+
 The services are linted with the rest of the bar:
 
 ```fish
@@ -495,8 +589,8 @@ the approach come first, the things that are only work come last.
 | 2 | Centre pill with Detail: clock, weather icon, battery (UPower). | First visible value, exercises the state machine. |
 | 3 | Settings panel: toggles, three capsule sliders (Pipewire, brightness), notifications list. | With 2 and 3 the own bar covers the DMS control center. |
 | 4 | Home panel (built 2026-10-04; the optional Network and Next event row is not). | With 4 the DMS dashboard is covered; the own bar becomes the daily bar and DMS drops to fallback. |
-| 5 | Left island (Niri), right island (tray, indicators), Updates panel plus `system-update --pending` (built 2026-10-04). It takes over the function of the DMS plugins `dotfilesWorkspaces`, `dotfilesApps`, `dotfilesLauncher`, `dotfilesKeyboard` and `dotfilesDashboard`; they stay in the repository while DMS is the fallback bar and are deleted when the user switches bars for good. | Replaces the remaining DMS bar plugins. |
-| 6 | Music: orb, music bar, Player, top-edge wave (Mpris, cava). | Highest render cost, least risk to daily use. |
+| 5 | Left island (Niri), right island (tray, indicators), Updates panel plus `system-update --pending` (built 2026-10-04). It takes over the function of the DMS plugins `dotfilesWorkspaces`, `dotfilesApps`, `dotfilesLauncher`, `dotfilesKeyboard` and `dotfilesDashboard`; the plugins were deleted on 2026-10-05, when the user switched to the own bar, and `chezmoi/.chezmoiremove` clears the live copies. | Replaces the remaining DMS bar plugins. |
+| 6 | Music: orb, music bar, Player, top-edge wave (Mpris, cava) (built 2026-10-05). | Highest render cost, least risk to daily use. |
 | 7 | Theme, Wallpaper, Power, OSD; hide toggle; shortcuts moved. | Mostly plumbing to `dms ipc`. |
 
 Code layout from step 0 on, under `chezmoi/dot_config/quickshell/bar/`:

@@ -33,7 +33,7 @@ acl
 
 # Managed desktop configuration and helpers.
 matugen # DMS wallpaper theming and the Z13 rear-window template
-cava # audio visualizer in the DMS bar
+cava # audio levels for the DMS bar and the own bar's orb and top-edge wave
 kimageformats # extra wallpaper image formats for DMS
 power-profiles-daemon # dashboard power profiles
 protonmail-bridge-core # enabled user service

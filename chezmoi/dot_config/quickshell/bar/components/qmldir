@@ -13,3 +13,6 @@ TimeTile 1.0 TimeTile.qml
 WeatherTile 1.0 WeatherTile.qml
 PerformanceTile 1.0 PerformanceTile.qml
 PowerTile 1.0 PowerTile.qml
+RimLight 1.0 RimLight.qml
+Orb 1.0 Orb.qml
+TopWave 1.0 TopWave.qml
