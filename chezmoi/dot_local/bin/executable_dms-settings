@@ -1,0 +1,83 @@
+#!/bin/sh
+# Open the DMS settings window. DMS 1.6.2 loads that window through an async
+# LazyLoader that only advances when a DMS window renders a frame. With the DMS
+# bar disabled an idle DMS renders nothing, so `dms ipc call settings open`
+# succeeds but the window never maps. One short toast makes DMS render a frame;
+# the window stays loaded for the rest of that DMS session.
+set -eu
+
+dms_command=${DMS_COMMAND:-dms}
+niri_command=${NIRI_COMMAND:-niri}
+sleep_command=${SLEEP_COMMAND:-sleep}
+
+usage() {
+	printf 'Usage: %s [--toggle] [TAB]\n' "${0##*/}"
+	printf '%s\n' 'Open the DMS settings window, on TAB (an id from: dms ipc call settings tabs) when given.'
+	printf '%s\n' '--toggle without TAB closes the window when it is already open, and nudges DMS when it does not appear.'
+}
+
+toggle=false
+tab=
+for argument in "$@"; do
+	case $argument in
+	--toggle) toggle=true ;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-*)
+		usage >&2
+		exit 2
+		;;
+	*)
+		if [ -n "$tab" ]; then
+			usage >&2
+			exit 2
+		fi
+		tab=$argument
+		;;
+	esac
+done
+
+for tool in jq "$niri_command" "$dms_command"; do
+	if ! command -v "$tool" >/dev/null 2>&1; then
+		printf 'Required command is missing: %s\n' "$tool" >&2
+		exit 1
+	fi
+done
+
+settings_window_exists() {
+	"$niri_command" msg -j windows 2>/dev/null |
+		jq -e 'any(.[]; .app_id == "com.danklinux.dms" and .title == "Settings")' >/dev/null 2>&1
+}
+
+was_open=false
+if settings_window_exists; then
+	was_open=true
+fi
+
+if [ -n "$tab" ]; then
+	"$dms_command" ipc call settings openWith "$tab"
+elif [ "$toggle" = true ]; then
+	"$dms_command" ipc call settings focusOrToggle
+else
+	"$dms_command" ipc call settings open
+fi
+
+# A window that was open before the call may be hidden by it (--toggle), or is
+# already mapped: either way there is nothing to nudge.
+if [ "$was_open" = true ]; then
+	exit 0
+fi
+
+attempt=0
+while [ "$attempt" -lt 8 ]; do
+	if settings_window_exists; then
+		exit 0
+	fi
+	"$sleep_command" 0.05
+	attempt=$((attempt + 1))
+done
+
+"$dms_command" ipc call toast info " "
+"$dms_command" ipc call toast hide

@@ -77,7 +77,9 @@ Singleton {
             power: 5 * powerButtonSize + 4 * gap + 2 * powerPanelPadding,
             theme: 560,
             wallpaper: 560,
-            updates: 420
+            updates: 420,
+            wifi: 420,
+            bluetooth: 420
         })
     readonly property int panelPadding: 12
     readonly property int tileGap: 12
@@ -104,6 +106,9 @@ Singleton {
     readonly property int notificationRowGap: 6
     readonly property int notificationRowRadius: 14
     readonly property int notificationListMaxHeight: 240
+    // The Wi-Fi and Bluetooth tiles: a chevron zone on the right opens their panel.
+    readonly property int tileChevronZone: 40
+    readonly property real tileChevronHairlineOpacity: 0.15
     readonly property int settingsGridHeight: settingsTileRows * settingsTileHeight + (settingsTileRows - 1) * tileGap
     readonly property int settingsSlidersHeight: sliderCount * sliderHeight + (sliderCount - 1) * sliderGap
 
@@ -136,6 +141,24 @@ Singleton {
     // Home's bottom row of icon-only tiles, one per panel, for touch.
     readonly property int homeActionHeight: 40
     readonly property int homeHeight: 2 * panelPadding + homeTopRowHeight + tileGap + homeBottomRowHeight + tileGap + homeActionHeight
+
+    // Wi-Fi and Bluetooth: a control row over a list of rows that expand in place.
+    readonly property int controlRowHeight: 32
+    readonly property int controlButtonSize: 32
+    readonly property int switchWidth: 36
+    readonly property int switchHeight: 20
+    readonly property int switchKnob: 14
+    readonly property int controlLabelGap: 12
+    readonly property int listRowHeight: 44
+    readonly property int listRowGap: 4
+    readonly property int listRowRadius: 12
+    readonly property int listRowPadding: 12
+    // An expanded row adds a line of controls; an error adds a line of text.
+    readonly property int listRowExpansion: 42
+    readonly property int listRowFieldHeight: 32
+    readonly property int listRowErrorHeight: 16
+    // While the panel is open; Bluetooth discovery stops after this at the latest.
+    readonly property int bluetoothDiscoveryTime: 30000
 
     // Updates: count line, fragile rows, a scrolling list and three buttons.
     readonly property int updatesHeadHeight: 20

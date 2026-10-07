@@ -77,7 +77,11 @@ Panels replace the centre island completely: the pill, the clock and the
 music dot are not visible while a panel is open. Panels have no title. The
 panel is centred on the same x as the pill and grows from the pill's
 shape; closing shrinks back into the pill. Exactly one panel is open at a
-time; opening another morphs the current one into it. The OSD takes
+time; opening another morphs the current one into it. An open panel also
+closes when Niri moves focus to another window or workspace while it is
+open (a shortcut, a newly opened window, the focused window closing); a
+change to "no window focused" caused by the panel's own keyboard grab is
+ignored (decided 2026-10-07). The OSD takes
 priority: when a volume or brightness key arrives, any open panel closes
 and the OSD shows over the collapsed pill.
 
@@ -85,6 +89,7 @@ and the OSD shows over the collapsed pill.
 | --- | --- | --- |
 | Home | click on the pill, or `Mod+Return` | Tile grid, see below. |
 | Player | click on the music bar | Large cover, title, artist, progress, controls, output picker. Approved 2026-10-04, including the orb, the music bar and the transitions (prototype r4). |
+| Wi-Fi, Bluetooth | chevron, long press or right click on their Settings tile | See "Wi-Fi and Bluetooth panels" below the Settings panel. Added 2026-10-07. |
 | Settings | `Mod+S` (decided 2026-10-05; `Mod+Shift+S` opens the DMS settings window), or click on the right island | Quick toggles, Sound and Display sliders, notifications, see below. |
 | Power | `Mod+Escape` | One row of five square buttons: Lock, Suspend, Log Out, Reboot, Power Off. The first is focused. Approved 2026-10-04. |
 | Updates | click on the updates indicator | Approved 2026-10-04. Count and "checked just now" line, fragile packages first in `error` with a one-line reason, then the remaining packages in a scrolling list (name, version jump, source tag). Actions: Update all (runs `system-update` in the terminal, with its fragile prompt), Refresh, Report (opens the last report of ADR-0025). No "skip fragile" action: that would be a partial upgrade. The list comes from `system-update --pending`, a read-only mode to add to the helper. |
@@ -139,9 +144,44 @@ where the fill passes. Press and drag anywhere sets the value; a click on
 the icon zone without movement toggles: Volume mute, Microphone mute,
 Brightness a cycle through 25, 50, 75, 100, never 0 (the Z13 has no
 ambient light sensor). Scrolling over any capsule changes its value by 5
-per wheel step, as the DMS sliders do. Right click or long press on the
-Wi-Fi and Bluetooth tiles opens the DMS settings window on the matching
-tab; the other tiles have no secondary action. Muted dims the fill to 40 %, not the row.
+per wheel step, as the DMS sliders do. Muted dims the fill to 40 %, not the row.
+
+The Wi-Fi and Bluetooth tiles carry a full-height chevron zone on their
+right (about 40 px, a hairline separating it from the rest of the tile,
+`chevron_right`). A click on the main area toggles; the chevron, a long
+press and a right click open that tile's own panel. The other tiles have
+no secondary action (decided 2026-10-07; replaces opening the DMS
+settings window).
+
+**Wi-Fi and Bluetooth panels** (centre states `wifi` and `bluetooth`,
+420 px, morphing from Settings). No title; a control row on top: a back
+chevron to Settings on the left, the on/off switch with a short state
+("On · Home 5G", "On · 2 connected") in the middle, and a button on the
+right: `open_in_new` to the DMS settings window (the Wi-Fi tab, or for
+Bluetooth the Network tab, since DMS 1.6.2's settings have no Bluetooth page
+and its control center cannot open while the own bar runs). Bluetooth adds
+`terminal` 8 px left of it, which opens `bluetoothctl` in a terminal.
+Escape closes like every panel; the back chevron returns to
+Settings. The list below scrolls inside the Settings list maximum.
+
+- *Wi-Fi.* The connected network first, tinted `primary`, then known
+  networks, then the rest; 44 px rows with a signal glyph, the SSID and a
+  lock glyph when secured. A click connects. An unknown secured network
+  expands inline into a password field and a Connect button (the panel
+  already holds keyboard focus). Clicking the connected network expands
+  it into Disconnect and Forget; a right click on a saved one into Connect
+  and Forget. Scanning runs only while the panel is open: Quickshell lists
+  unknown networks only while its scanner is on, and the scanner rescans at
+  most every 10 s; it stops when the panel closes.
+  A static "Scanning…" note sits in the control row's state text for the
+  first 4 s after opening (the module does not report when a scan ends).
+- *Bluetooth.* Connected devices first with their battery level when
+  reported, then paired devices, then devices discovered while the panel
+  is open (discovery runs only then). A click connects a paired device; on
+  a connected one it expands into Disconnect and Forget; a discovered
+  device offers Pair. A failed pair says "Pairing failed"; devices that
+  need a PIN or passkey are paired in `bluetoothctl` through the terminal
+  button; a passkey dialog is not part of this step.
 
 Notifications only when there are any: the section is absent on an empty
 list and the panel ends at the brightness slider. With items: "Clear all"

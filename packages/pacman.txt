@@ -37,7 +37,7 @@ cava # audio levels for the DMS bar and the own bar's orb and top-edge wave
 kimageformats # extra wallpaper image formats for DMS
 power-profiles-daemon # dashboard power profiles
 protonmail-bridge-core # enabled user service
-jq # focus-or-spawn, scripts/dms-apply-look.sh, scripts/dms-restore-plugins.sh and scripts/bar-switch.sh
+jq # focus-or-spawn, dms-settings, scripts/dms-apply-look.sh, scripts/dms-restore-plugins.sh and scripts/bar-switch.sh
 util-linux # flock in focus-or-spawn
 tinysparql # wallpaper-favorites reads Nautilus stars
 xorg-xprop # xwayland-scaled sets Xft.dpi for X11 apps such as Blip

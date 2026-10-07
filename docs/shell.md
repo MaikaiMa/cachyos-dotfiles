@@ -12,8 +12,8 @@ Switching to the own bar disables the DMS bar window, and the DMS
 dashboard, control center, power menu and wallpaper browser are anchored to
 that window: they do not open while the own bar is active. Since step 7 no
 shortcut calls them any more; the own bar has a panel for each. The DMS
-settings window is a separate window and opens from the Wi-Fi and Bluetooth
-tiles (right click or long press). `scripts/bar-switch.sh dms` goes back to
+settings window is a separate window and opens from the `open_in_new`
+button of the Wi-Fi and Bluetooth panels. `scripts/bar-switch.sh dms` goes back to
 the DMS bar; ADR-0027 records this as an amendment.
 
 ## What is built
@@ -36,8 +36,8 @@ while the clock stays on the centre line.
 Step 3 made Settings real: a toggle grid (Wi-Fi, Bluetooth, power profile,
 do not disturb, caffeine), capsule sliders for volume, microphone and
 brightness that drag, click, scroll and take arrow keys, and the
-notification list with dismiss and "Clear all". A right click or a long
-press on the Wi-Fi or Bluetooth tile opens the DMS settings window. The island grows to the panel's own height,
+notification list with dismiss and "Clear all". The Wi-Fi and Bluetooth
+tiles open their own panels (see below). The island grows to the panel's own height,
 so it shrinks in one island animation when notifications leave.
 
 Step 4 made Home real, 560 px wide and 436 px tall: a narrow and a wide
@@ -247,8 +247,79 @@ pieces, and moved the shortcuts (built 2026-10-05).
   the other; the tiles move with the grow curve and Bluetooth's icon slides
   to the centre of its smaller tile. See [tablet.md](tablet.md).
 
+On 2026-10-07 the Wi-Fi and Bluetooth tiles got panels of their own: a
+chevron zone on the tile, a long press or a right click morphs Settings into a
+420 px list of networks or devices with a back button, an on/off switch and a
+button to the DMS settings window (Bluetooth adds `bluetoothctl` in a
+terminal). Rows connect on a click and expand in place
+for a password, Disconnect and Forget, or Pair; see "Wi-Fi and Bluetooth
+panels" below.
+
+- **Wi-Fi and Bluetooth panels.** The wide Wi-Fi and Bluetooth tiles end in a
+  40 px chevron zone behind a full-height hairline; a click there, a long press, a right
+  click, or Right or the menu key on a focused tile opens the panel, a click on
+  the rest still toggles. The icon-only Bluetooth tile of the detached grid has
+  no zone but keeps the long press and the right click. Both panels start with
+  `PanelControlRow`: `arrow_back` (back to Settings, also Backspace or
+  Alt+Left), a 36 x 20 px switch with the state next to it, and on the
+  right `open_in_new`, which opens the DMS settings window on `network_wifi`
+  or, for Bluetooth, `network` (DMS 1.6.2's settings have no Bluetooth page
+  and its control center cannot open while the own bar runs). Bluetooth has
+  a second button 8 px left of it, `terminal`, which opens `bluetoothctl` in
+  the terminal Update all uses (DMS's `terminalOverride`, else
+  `xdg-terminal-exec`, else Ghostty). Both close the panel; Tab goes back,
+  switch, terminal, settings. Under it a `RowList` of 44 px
+  `NetworkRow`s that scrolls inside 240 px; a row expands by 42 px (and an
+  error by 16 px) with the grow or shrink curve, and the island follows
+  because the panel's height is computed from the settled rows. One row is
+  expanded at a time, and while one is the list keeps its order (rows hold
+  their places, new ones join at the end), so a password field never moves
+  or is rebuilt mid-typing. A row's error stays until the next attempt on it,
+  also across closing the panel. Scanner, discovery, errors and attempts
+  live in the `Network` and `Bluetooth` services and follow
+  `Shell.centreState`, not a panel, so moving the panel to another screen or
+  losing a screen cannot leave them running; `Shell` closes the centre state
+  when its screen goes away. Tab walks the control row and the rows, Enter
+  activates, Escape closes.
+  - *Wi-Fi*: one row per SSID, the connected network first (tinted `primary`
+    at 16 %, "Connected"), then saved ones, then the rest by signal bars and
+    name; hidden networks are left out. The glyph is `signal_wifi_0_bar`,
+    `network_wifi_1_bar` to `_3_bar` or `signal_wifi_4_bar`, with `lock` on
+    the right when secured. A click connects to a saved or open network; an
+    unknown WPA or WEP network expands into a password field (it takes the
+    keyboard, Enter connects) and Connect; enterprise networks say "Needs a
+    login: open settings". The connected row expands into Disconnect and
+    Forget, a right click (or the menu key) on a saved one into Connect and
+    Forget. A refused password shows "Wrong password" and opens the field
+    again; a client failure (`WifiClientFailed`, `WifiClientDisconnected`)
+    within 20 s of connecting to a saved network shows "Could not connect:
+    wrong password?" with Forget inline, since NetworkManager often reports a
+    stale saved password that way. The state reads "Off", "On · <SSID>", "On · not connected", or
+    "Scanning…" for the first 4 s after the scanner starts. Quickshell lists
+    networks that are neither connected nor saved only while its scanner is
+    on, so the scanner runs while the panel is open and Wi-Fi is on (switching
+    Wi-Fi on from the panel starts it) and stops otherwise; it scans at once
+    and then rescans at most every 10 s.
+  - *Bluetooth*: connected devices first (tinted, battery such as "82% ·
+    Connected"), then paired, then discovered devices with a name; the icon
+    follows BlueZ's device icon (`headphones`, `mouse`, `keyboard`,
+    `smartphone`, `sports_esports`, else `bluetooth`). Discovery runs while
+    the panel is open and the adapter is powered (BlueZ reports it ready, not
+    just switched on): it starts when either becomes true, so switching the
+    adapter on from the panel starts it, and stops on close, on power-off or
+    after 30 s; the state reads "Scanning…" for its first 4 s. A click
+    connects a paired device; on a connected one it expands into Disconnect
+    and Forget, on a discovered one into Pair (then trust and connect). A
+    right click on a paired device offers Connect and Forget. The bar has no
+    pairing agent and the module does not say why a pair failed: a pair that
+    ends without a bond shows "Pairing failed" (pair devices that want a PIN
+    or passkey in `bluetoothctl`), a connect that settles disconnected "Could
+    not connect"; both give up after 20 s (`Motion.pendingTimeout`). The
+    state otherwise reads "Off", "On · N connected" or "On".
+
 The `dms ipc` calls that remain are the ones DMS owns: `lock lock` (Lock
-button, `Mod+Alt+L`), `settings openWith` (Wi-Fi and Bluetooth tiles),
+button, `Mod+Alt+L`), `settings openWith` (the settings button of the
+Wi-Fi and Bluetooth panels, through `dms-settings`),
 `theme getMode` and `settings get|set` for `matugenScheme` and
 `matugenSmartMode` (Theme panel), `wallpaper get|set|getFor|setFor`
 (Wallpaper panel and the scheme re-render), `notifications
@@ -306,13 +377,19 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
   above it, such as the DMS bar, does not close the panel.
 - **State machine.** `services/Shell.qml` holds `centreState` (`collapsed`,
   `detail`, `home`, `settings`, `player`, `power`, `theme`, `wallpaper`,
-  `updates`, `musicbar`), the screen it applies to, `osdVisible`, `osdKind`
+  `updates`, `wifi`, `bluetooth`, `musicbar`), the screen it applies to, `osdVisible`, `osdKind`
   (`volume`, `mic`, `brightness`) and `hidden`, with `open(state, screen)`,
-  `close()`, `toggle(state, screen)`, `showOsd(screen, kind)` and
-  `setHidden(value)`. One state at a time, so opening another panel morphs
+  `close()`, `toggle(state, screen)`, `back()` (from `wifi` or `bluetooth`
+  to `settings`), `showOsd(screen, kind)` and `setHidden(value)`. One state at a time, so opening another panel morphs
   the island into it; the OSD closes any panel first, and opening a panel
-  shows a hidden bar. IPC target `bar`: `open`, `toggle` and `close` (the
-  state `hidden` toggles the hide), `osd`, `volume up|down|mute|micmute`,
+  shows a hidden bar. On every open and morph into a panel, `Shell` records
+  `Niri.focusedWindowId` and the focused workspace's id
+  (`panelFocusWindow`, `panelFocusWorkspace`); the panel closes when Niri
+  then reports a focused window (id 0 or higher) or a focused workspace other
+  than the recorded one. A change to no window (-1) is ignored, because Niri
+  may report that for the panel's own Exclusive keyboard grab; the pill
+  states, Detail, the music bar and the OSD do not react. IPC target `bar`: `open`, `toggle` and `close` (the
+  state `hidden` toggles the hide; `toggle wifi|bluetooth` opens those panels), `osd`, `volume up|down|mute|micmute`,
   `brightness up|down`, `media next|prev|playpause|play|pause` and `state`.
   IPC calls act on the screen Niri reports as focused (`Niri.focusedOutput`),
   else the last used screen, else the first one.
@@ -340,7 +417,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
   islands/                              the three islands
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
-    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, music bar, OSD and the seven panels
+    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, music bar, OSD and the nine panels
     RightIsland.qml                     tray stack, fan and menu, attention indicators
   panels/                               centre panel bodies
     HomePanel.qml                       Time, Weather, Performance and Power tiles, actions row
@@ -350,6 +427,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     PowerPanel.qml                      Lock, Suspend, Log out, Reboot, Power off
     ThemePanel.qml                      Light / Dark / Auto and the scheme strip
     WallpaperPanel.qml                  thumbnail strip of the DMS wallpaper folder
+    WifiPanel.qml                       Wi-Fi switch and networks: connect, password, disconnect, forget
+    BluetoothPanel.qml                  Bluetooth switch and devices: connect, pair, disconnect, forget
   components/                           shared pieces
     Island.qml                          island surface: colour, radius, shadow, size animation
     IslandAnimation.qml                 grow or shrink animation from the Motion tokens
@@ -363,9 +442,12 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     WeatherTile.qml                     Home: current weather, Hourly / Daily, five cards
     PerformanceTile.qml                 Home: CPU, temperature and memory bars
     PowerTile.qml                       Home: charge, capsule, time, health, capacity, profile
-    Tile.qml                            Settings grid toggle, wide with state or small icon-only
+    Tile.qml                            Settings grid toggle, wide with state or small icon-only, chevron zone for a panel
     CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer
     NotificationRow.qml                 one notification with dismiss, collapses when it leaves
+    PanelControlRow.qml                 Wi-Fi and Bluetooth: back, switch with state, DMS settings button
+    RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height
+    NetworkRow.qml                      Wi-Fi and Bluetooth row: icon, name, detail, expands in place
     Orb.qml                             music orb: album-colour sphere, rim light, bloom
     RimLight.qml                        conic-gradient ring inside a rounded rectangle (orb, music bar)
     TopWave.qml                         top-edge wave canvas behind the islands
@@ -457,7 +539,7 @@ bar with `quickshell ipc -c bar call bar ...`:
 | --- | --- | --- |
 | `Mod+Return` | `toggle home` | Home |
 | `Mod+S` | `toggle settings` | Settings |
-| `Mod+Shift+S` | `dms ipc call settings focusOrToggle` (the DMS settings window) | hidden |
+| `Mod+Shift+S` | `dms-settings --toggle` (the DMS settings window, through the helper that unsticks DMS's lazy loader; see [docs/dms.md](dms.md#known-limits)) | hidden |
 | `Mod+Shift+Return` | `toggle wallpaper` | Wallpaper Selector |
 | `Mod+Ctrl+Return` | `toggle theme` | Theme |
 | `Mod+Escape` | `toggle power` | Session Menu |
@@ -471,7 +553,7 @@ The media, volume and brightness keys keep working on the DMS fallback bar:
 know the function yet), and the bind then runs the `dms ipc` call it used
 before. They stay allowed while the screen is locked. `Mod+Alt+L` still
 locks through DMS. The DMS settings window opens with `Mod+Shift+S` and from
-the Wi-Fi and Bluetooth tiles in Settings.
+the settings button of the Wi-Fi and Bluetooth panels.
 
 ## Running it by hand
 
@@ -492,7 +574,14 @@ quickshell -p ~/.config/quickshell/bar -n
 ```
 
 Quickshell reloads the QML when a file changes, so edits show up without a
-restart.
+restart. A change that adds new QML files is the exception: the reload can
+keep the old type list and fail with "X is not a type" (seen 2026-10-07
+when the Wi-Fi panel arrived), while the previous config keeps running.
+Restart the unit after such an apply:
+
+```fish
+systemctl --user restart quickshell-bar.service
+```
 
 To test the window architecture spike, check on each screen:
 
@@ -529,11 +618,29 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   brightness. A wheel notch over a slider moves it 5, a touchpad scroll
   moves it 5 per notch's worth of travel, with the same glide as a key.
   Tab walks the tiles and sliders, arrow keys (5 per press), Home and End
-  move a focused slider, and Escape still closes. Right click or a 500 ms
-  long press on Wi-Fi opens the DMS settings on the Wi-Fi tab and closes
-  the panel; on Bluetooth it opens the Network tab, because DMS 1.6 has no
-  Bluetooth settings tab. Dismissing a notification
+  move a focused slider, and Escape still closes. Dismissing a notification
   collapses its row and the island shrinks; "Clear all" removes the section.
+- Wi-Fi and Bluetooth tiles: hovering the chevron zone tints only the zone,
+  hovering the rest only the rest; a click on the zone, a right click or a
+  500 ms long press morphs Settings into the panel, a click on the rest
+  toggles. Detached, the small Bluetooth tile opens its panel by long press
+  or right click.
+- Wi-Fi panel: the list fills in within a few seconds and "Scanning…" goes
+  back to the state; the back arrow, Backspace and Alt+Left return to
+  Settings; `open_in_new` opens the DMS settings on the Wi-Fi tab. Connect
+  to a saved network, then to an unknown secured one: the field takes the
+  keyboard, a wrong password shows "Wrong password" and opens the field
+  again, the right one connects. Disconnect and Forget on the connected row;
+  a right click on a saved network offers Connect and Forget. Move the
+  panel to the other screen (open it there) and close it: the list stops
+  refreshing.
+- Bluetooth panel: nearby devices appear while it is open; `bluetoothctl
+  show` reports `Discovering: no` after closing it. Connect and disconnect a
+  paired device, pair a device that needs no PIN (it connects afterwards),
+  and try one that needs a PIN: the row says "Pairing failed". The
+  `terminal` button opens `bluetoothctl` in a terminal, `open_in_new` the DMS
+  settings on the Network tab; both close the panel.
+  Switching the adapter on from the panel starts discovery ("Scanning…").
 - Power (`Mod+Escape`): Lock is in the accent when the panel opens, Left and
   Right move the accent, hover tints the other buttons. Each action runs
   only after the panel has closed; test Lock first, the others end the
@@ -621,7 +728,7 @@ owns.
 | Battery, health, capacity, time to empty, power profile | `Quickshell.Services.UPower` | Health and capacity are exposed directly. |
 | Volume, microphone, mute | `Quickshell.Services.Pipewire` | |
 | Brightness | `brightnessctl` | No ambient light sensor on the Z13, so the icon cycles 25, 50, 75, 100. |
-| Wi-Fi, Bluetooth | `Quickshell.Networking`, `Quickshell.Bluetooth` | Native modules in Quickshell 0.3. |
+| Wi-Fi, Bluetooth | `Quickshell.Networking`, `Quickshell.Bluetooth` | Native modules in Quickshell 0.3. Networks that are neither connected nor saved are listed only while the module's scanner is on (rescans at most every 10 s), so the Wi-Fi panel runs it only while open. |
 | Night light, do not disturb, caffeine, theme mode, scheme | `dms ipc call night|notifications|inhibit|theme|settings` | `settings set matugenScheme` only saves the key: DMS 1.6.2's IPC assigns the setting directly and skips the `regenSystemThemes` hook its own settings UI runs (read in the shipped QML, not tried). The bar re-renders by setting the current wallpaper again, as [dms.md](dms.md) describes; a light/dark switch would also render but turns smart mode off. |
 | Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper` | DMS has no folder setting; its picker remembers the last folder. |
 | Keyboard cover, on-screen keyboard, rotation lock | `~/.local/bin/tablet-mode watch`, `osk watch` (only while detached), `$XDG_STATE_HOME/dotfiles/rotation-lock` | The helpers from [tablet.md](tablet.md); the bar calls `osk toggle` and `auto-rotate lock toggle`. |
@@ -666,9 +773,30 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   last value. `set` moves `percentage` at once, so key repeats step from
   the new value and the OSD shows it.
 - `Network`: `wifiEnabled`, `connected` (any device), `wifiConnected`,
-  `ssid`, `strength`, `weak` (under 40); `toggleWifi()`.
-- `Bluetooth`: `btEnabled`, `connectedDevices`, `available`;
-  `toggleBluetooth()`.
+  `ssid`, `strength`, `weak` (under 40), `networks` (Quickshell
+  `WifiNetwork`s, one per SSID, ordered for the panel), `scannerWanted`
+  (`Shell.centreState` is `wifi`, Wi-Fi is on and a device exists; drives
+  the module's `scannerEnabled`), `scanning` (its first 4 s), `errors` (per
+  SSID), `wrongPassword`, `lastAttempt`; signal `failed(ssid, kind)`;
+  `toggleWifi()`, `attemptConnect(network)`, `attemptPassword(network,
+  password)`, `attemptForget(network)`, `reportFailure(network, reason)`
+  (an `Instantiator` watches every listed network), `setError(ssid, text)`,
+  the raw `setScanning(value)`, `connectTo`, `connectWithPassword`,
+  `disconnectFrom`, `forget`, and the row helpers `signalIcon`, `secured`,
+  `needsPassword`, `detailText`, `failureText`.
+- `Bluetooth`: `btEnabled`, `powered` (the adapter state is Enabled),
+  `connectedDevices`, `available`, `discovering`,
+  `devices` (connected, paired, then named discovered devices),
+  `discoveryWanted` (`Shell.centreState` is `bluetooth` and the adapter is
+  powered; drives discovery, capped at 30 s), `scanning` (its first 4 s),
+  `errors` (per address), `pendingPairs`, `pendingConnects`;
+  `toggleBluetooth()`, `startConnect(device)`, `startPair(device)` (then
+  trust and connect), `setError(address, text)`, `deviceFor(address)`,
+  `openTerminal()` (`bluetoothctl`), the raw `setDiscovering(value)`,
+  `connectDevice`, `disconnectDevice`, `pair`, `trustAndConnect`, `forget`,
+  and the row helpers `deviceIcon`, `batteryText`, `detailText`,
+  `connectSettled`. Everything is native: the module has
+  discovery, pairing and battery levels, but no pairing agent.
 - `Dms`: `nightLight`, `doNotDisturb`, `caffeine`, `themeMode`, polled every
   10 s and after each call; `smartMode` (`matugenSmartMode`, shown as Auto)
   and `matugenScheme`, read at start, when the Theme panel opens and after
@@ -679,8 +807,10 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   one call at a time; see the Theme panel above), `themeBusy` (true while a
   queued theme call runs or its follow-up polls are pending; Light and Dark
   also start the Niri screen transition, see the Theme panel above),
-  `openSettingsWindow()`, `openSettingsTab(tab)` (a tab id from
-  `dms ipc call settings tabs`), `refresh()`, `refreshTheme()`.
+  `openSettingsTab(tab)` (a tab id from `dms ipc call settings tabs`; it
+  runs `~/.local/bin/dms-settings`, which
+  nudges DMS when its settings window does not map, see docs/dms.md Known
+  limits), `refresh()`, `refreshTheme()`.
 - `Notifications`: `items` (newest first: `id`, `appName`, `summary`,
   `body`, `timestamp` in ms, `appIcon`, `image`, `urgency`,
   `desktopEntry`), `count`, `alerts` (items from the last ten minutes not

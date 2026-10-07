@@ -9,7 +9,9 @@ import ".."
 Singleton {
     id: root
 
-    readonly property var panelStates: ["home", "settings", "player", "power", "theme", "wallpaper", "updates"]
+    readonly property var panelStates: ["home", "settings", "player", "power", "theme", "wallpaper", "updates", "wifi", "bluetooth"]
+    // Panels opened from Settings; back() returns to it.
+    readonly property var settingsChildren: ["wifi", "bluetooth"]
     readonly property var pillStates: ["collapsed", "detail", "musicbar"]
     // Only open while an MPRIS player exists; they close when the last one goes.
     readonly property var musicStates: ["musicbar", "player"]
@@ -25,6 +27,19 @@ Singleton {
     // The music bar is open by a now-playing peek, not by hover; its timer closes it.
     property bool peeking: false
     readonly property bool panelOpen: panelStates.includes(centreState)
+    // Niri's focus when the open panel opened or morphed: a move away from it
+    // closes the panel.
+    property int panelFocusWindow: -1
+    property var panelFocusWorkspace: null
+
+    // Recorded on every open and morph, so a morph keeps the panel open.
+    // panelOpen may not have followed centreState yet here.
+    onCentreStateChanged: {
+        if (panelStates.includes(centreState)) {
+            panelFocusWindow = Niri.focusedWindowId;
+            panelFocusWorkspace = Niri.focusedWorkspace ? Niri.focusedWorkspace.id : null;
+        }
+    }
 
     function stateOn(name: string): string {
         return name === screenName ? centreState : "collapsed";
@@ -61,6 +76,12 @@ Singleton {
     function close() {
         peeking = false;
         centreState = "collapsed";
+    }
+
+    // Backspace, Alt+Left or the back button in a panel opened from Settings.
+    function back() {
+        if (settingsChildren.includes(centreState))
+            open("settings", screenName);
     }
 
     // Shows the music bar for a moment on the focused screen after a track change.
@@ -120,6 +141,42 @@ Singleton {
         if (Brightness.available)
             Brightness.set(Brightness.percentage + step);
         showOsd(ipcScreen(), "brightness");
+    }
+
+    // A screen that goes away takes its island along: whatever it showed closes,
+    // so the services that follow centreState (scanner, discovery, sampling)
+    // stop with it.
+    function dropMissingScreen() {
+        if (centreState !== "collapsed" && screenName !== "" && !Quickshell.screens.some(screen => screen.name === screenName))
+            close();
+    }
+
+    Connections {
+        target: Quickshell
+
+        function onScreensChanged() {
+            root.dropMissingScreen();
+        }
+    }
+
+    // An open panel closes when Niri moves focus to another window or workspace
+    // (a shortcut, a new window, the focused window closing). "No window" is
+    // ignored: with the panel's Exclusive keyboard focus Niri may report it for
+    // the layer's own grab.
+    Connections {
+        target: Niri
+
+        function onFocusedWindowIdChanged() {
+            const id = Niri.focusedWindowId;
+            if (root.panelOpen && id !== null && id >= 0 && id !== root.panelFocusWindow)
+                root.close();
+        }
+
+        function onFocusedWorkspaceChanged() {
+            const workspace = Niri.focusedWorkspace;
+            if (root.panelOpen && workspace && workspace.id !== root.panelFocusWorkspace)
+                root.close();
+        }
     }
 
     // One owner for the sampling switch: every screen has a Home panel, but only

@@ -59,12 +59,6 @@ Item {
         return profiles[(profiles.indexOf(Battery.profile) + 1) % profiles.length];
     }
 
-    // The settings window needs the keyboard, which the open panel holds.
-    function openDmsSettings(tab: string) {
-        Dms.openSettingsTab(tab);
-        Shell.close();
-    }
-
     function dismiss(id: string) {
         if (!leavingIds.includes(id))
             leavingIds = leavingIds.concat([id]);
@@ -163,8 +157,9 @@ Item {
                 return "network_wifi_1_bar";
             }
             stateText: !Network.wifiEnabled ? "Off" : !Network.wifiConnected ? "Disconnected" : Network.weak ? "Weak · " + Network.ssid : Network.ssid
+            hasPanel: true
             onActivated: Network.toggleWifi()
-            onSecondaryAction: panel.openDmsSettings("network_wifi")
+            onSecondaryAction: Shell.open("wifi", Shell.screenName)
         }
 
         GridTile {
@@ -206,9 +201,9 @@ Item {
                 const devices = Bluetooth.connectedDevices;
                 return devices === 0 ? "On" : devices === 1 ? "1 device" : devices + " devices";
             }
+            hasPanel: true
             onActivated: Bluetooth.toggleBluetooth()
-            // DMS 1.6 has no Bluetooth settings tab; devices live in its control center.
-            onSecondaryAction: panel.openDmsSettings("network")
+            onSecondaryAction: Shell.open("bluetooth", Shell.screenName)
         }
 
         // Grows out of the cell Bluetooth frees; Tab skips it while docked.
@@ -422,17 +417,18 @@ Item {
                         Notifications.dismiss(notificationId);
                 }
             }
+        }
 
-            // A thin scroll hint while the list is longer than its window.
-            Rectangle {
-                visible: list.contentHeight > list.height
-                x: list.width - width
-                y: list.visibleArea.yPosition * list.height
-                width: 4
-                height: list.visibleArea.heightRatio * list.height
-                radius: width / 2
-                color: Qt.alpha(Colors.foreground, 0.25)
-            }
+        // A thin scroll hint while the list is longer than its window; outside
+        // the ListView, whose children scroll with the content.
+        Rectangle {
+            visible: list.contentHeight > list.height
+            x: list.x + list.width - width
+            y: list.y + list.visibleArea.yPosition * list.height
+            width: 4
+            height: list.visibleArea.heightRatio * list.height
+            radius: width / 2
+            color: Qt.alpha(Colors.foreground, 0.25)
         }
     }
 }

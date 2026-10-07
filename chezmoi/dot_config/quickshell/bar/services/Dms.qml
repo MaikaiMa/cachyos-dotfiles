@@ -196,13 +196,18 @@ Singleton {
         setAndRender("matugenSmartMode", "true");
     }
 
-    function openSettingsWindow() {
-        call(["settings", "open"]);
+    // A tab id from `dms ipc call settings tabs`, such as network_wifi. Through
+    // the helper: with the DMS bar off, DMS never maps its settings window on
+    // its own (docs/dms.md, Known limits).
+    function openSettingsTab(tab: string) {
+        runSettingsHelper([tab]);
     }
 
-    // A tab id from `dms ipc call settings tabs`, such as network_wifi.
-    function openSettingsTab(tab: string) {
-        call(["settings", "openWith", tab]);
+    function runSettingsHelper(args: var) {
+        const process = callComponent.createObject(root, {
+            command: [Quickshell.env("HOME") + "/.local/bin/dms-settings"].concat(args)
+        });
+        process.running = true;
     }
 
     // A scheme-* value from `Theme.schemes`; the colours follow through dms-colors.json.

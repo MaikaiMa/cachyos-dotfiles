@@ -27,7 +27,7 @@ binds {
     Mod+S                               hotkey-overlay-title="Settings" { spawn-sh "quickshell ipc -c bar call bar toggle settings"; }
     Mod+Shift+Return                    hotkey-overlay-title="Wallpaper Selector" { spawn-sh "quickshell ipc -c bar call bar toggle wallpaper"; }
     Mod+Ctrl+Return                     hotkey-overlay-title="Theme" { spawn-sh "quickshell ipc -c bar call bar toggle theme"; }
-    Mod+Shift+S                         hotkey-overlay-title=null { spawn-sh "dms ipc call settings focusOrToggle"; }
+    Mod+Shift+S                         hotkey-overlay-title=null { spawn-sh "exec \"$HOME/.local/bin/dms-settings\" --toggle"; }
     Mod+Shift+B                         hotkey-overlay-title="Toggle Bar" { spawn-sh "quickshell ipc -c bar call bar toggle hidden"; }
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen" { spawn-sh "dms ipc call lock lock"; }
     Mod+ESCAPE                          hotkey-overlay-title="Session Menu" { spawn-sh "quickshell ipc -c bar call bar toggle power"; }

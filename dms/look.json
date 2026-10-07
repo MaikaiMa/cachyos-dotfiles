@@ -4,7 +4,6 @@
   "niriLayoutRadiusOverride": 20,
   "currentThemeName": "dynamic",
   "currentThemeCategory": "dynamic",
-  "matugenSmartMode": true,
   "runUserMatugenTemplates": true,
   "runDmsMatugenTemplates": true,
   "matugenTemplateNeovim": true,

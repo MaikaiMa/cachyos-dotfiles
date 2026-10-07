@@ -93,6 +93,8 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/panels/PowerPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/ThemePanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/WallpaperPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/WifiPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/BluetoothPanel.qml \
 	chezmoi/dot_config/quickshell/bar/components/Orb.qml \
 	chezmoi/dot_config/quickshell/bar/components/RimLight.qml \
 	chezmoi/dot_config/quickshell/bar/components/TopWave.qml \
@@ -107,6 +109,9 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/Tile.qml \
 	chezmoi/dot_config/quickshell/bar/components/CapsuleSlider.qml \
 	chezmoi/dot_config/quickshell/bar/components/NotificationRow.qml \
+	chezmoi/dot_config/quickshell/bar/components/PanelControlRow.qml \
+	chezmoi/dot_config/quickshell/bar/components/RowList.qml \
+	chezmoi/dot_config/quickshell/bar/components/NetworkRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/WeatherIcon.qml \
 	chezmoi/dot_config/quickshell/bar/components/BatteryIcon.qml \
 	chezmoi/dot_config/quickshell/bar/components/SegmentedControl.qml \
@@ -132,6 +137,7 @@ require_files \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
 	chezmoi/dot_local/bin/executable_system-update \
+	chezmoi/dot_local/bin/executable_dms-settings \
 	chezmoi/dot_config/paru/paru.conf \
 	chezmoi/dot_local/share/applications/net.blip.Blip.desktop \
 	chezmoi/dot_local/share/applications/dev.noctalia.Noctalia.desktop \
@@ -252,6 +258,7 @@ require_files \
 	tests/setup-power-key.sh \
 	tests/setup-sessions.sh \
 	tests/system-update.sh \
+	tests/dms-settings.sh \
 	tests/build-vicinae-extensions.sh \
 	tests/validate.fish
 
@@ -363,6 +370,7 @@ shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
 	chezmoi/dot_local/bin/executable_system-update \
+	chezmoi/dot_local/bin/executable_dms-settings \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \
 	system/local/bin/niri-session \
@@ -377,6 +385,7 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_auto-rotate \
 	chezmoi/dot_local/bin/executable_osk \
 	chezmoi/dot_local/bin/executable_system-update \
+	chezmoi/dot_local/bin/executable_dms-settings \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \
 	system/local/bin/niri-session \
@@ -405,6 +414,7 @@ tests/osk.sh
 tests/setup-power-key.sh
 tests/setup-sessions.sh
 tests/system-update.sh
+tests/dms-settings.sh
 tests/build-vicinae-extensions.sh
 tests/bootstrap.sh
 

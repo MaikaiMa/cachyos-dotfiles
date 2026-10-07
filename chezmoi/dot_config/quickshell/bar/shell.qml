@@ -136,6 +136,15 @@ ShellRoot {
                         right.closeMenu();
                         Shell.close();
                     }
+                    // Back from Wi-Fi or Bluetooth to Settings; a focused text field
+                    // keeps Backspace for itself.
+                    Keys.onPressed: event => {
+                        const backKey = (event.key === Qt.Key_Backspace && event.modifiers === Qt.NoModifier) || (event.key === Qt.Key_Left && event.modifiers === Qt.AltModifier);
+                        if (backKey && Shell.settingsChildren.includes(Shell.centreState)) {
+                            event.accepted = true;
+                            Shell.back();
+                        }
+                    }
 
                     // Every state change hands the keys back here: a panel opens with
                     // nothing focused, and a control focused with Tab in a closed panel

@@ -64,4 +64,11 @@ Singleton {
     readonly property int longPressInterval: 500
     // A workspace's notification colour clears this long after it gains focus.
     readonly property int alertClearDelay: 3000
+    // A Bluetooth pair or connect that is idle this long after the request failed.
+    readonly property int pendingSettle: 2000
+    // A pair or connect still pending after this has failed; a Wi-Fi client
+    // failure this soon after a connect may be a stale password.
+    readonly property int pendingTimeout: 20000
+    // How long the Wi-Fi panel says "Scanning…" after it turned the scanner on.
+    readonly property int firstScanTime: 4000
 }

@@ -5,3 +5,5 @@ PlayerPanel 1.0 PlayerPanel.qml
 PowerPanel 1.0 PowerPanel.qml
 ThemePanel 1.0 ThemePanel.qml
 WallpaperPanel 1.0 WallpaperPanel.qml
+WifiPanel 1.0 WifiPanel.qml
+BluetoothPanel 1.0 BluetoothPanel.qml

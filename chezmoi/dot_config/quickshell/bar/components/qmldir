@@ -18,3 +18,6 @@ Orb 1.0 Orb.qml
 TopWave 1.0 TopWave.qml
 Carousel 1.0 Carousel.qml
 Osd 1.0 Osd.qml
+PanelControlRow 1.0 PanelControlRow.qml
+NetworkRow 1.0 NetworkRow.qml
+RowList 1.0 RowList.qml

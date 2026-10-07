@@ -18,10 +18,11 @@ services/        singletons that own state or data; Shell.qml is the centre isla
 islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, battery,
                  Detail, music orb and bar), RightIsland (tray, attention indicators)
 panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel, PlayerPanel,
-                 PowerPanel, ThemePanel, WallpaperPanel
+                 PowerPanel, ThemePanel, WallpaperPanel, WifiPanel, BluetoothPanel
 components/      Island surface and its animation, Hairline, Clock, Icon (Material Symbols),
                  WeatherIcon, BatteryIcon, SegmentedControl; Tile, CapsuleSlider and
-                 NotificationRow for Settings; TimeTile, WeatherTile, PerformanceTile and
+                 NotificationRow for Settings; PanelControlRow, RowList and
+                 NetworkRow for Wi-Fi and Bluetooth; TimeTile, WeatherTile, PerformanceTile and
                  PowerTile for Home; Orb, RimLight and TopWave for music; Carousel for
                  Theme and Wallpaper; Osd
 ```

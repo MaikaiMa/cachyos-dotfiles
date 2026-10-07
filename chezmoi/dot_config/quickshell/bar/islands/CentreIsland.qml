@@ -139,7 +139,9 @@ Island {
             player: playerPanel.implicitHeight,
             power: powerPanel.implicitHeight,
             theme: themePanel.implicitHeight,
-            wallpaper: wallpaperPanel.implicitHeight
+            wallpaper: wallpaperPanel.implicitHeight,
+            wifi: wifiPanel.implicitHeight,
+            bluetooth: bluetoothPanel.implicitHeight
         })
 
     targetHeight: panelOpen ? panelHeights[centreState] : detail ? Theme.islandDetailHeight : Theme.islandHeight
@@ -554,6 +556,24 @@ Island {
         height: implicitHeight
         screenName: island.screenName
         shown: island.centreState === "wallpaper"
+    }
+
+    WifiPanel {
+        id: wifiPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "wifi"
+    }
+
+    BluetoothPanel {
+        id: bluetoothPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "bluetooth"
     }
 
     component MusicFade: SequentialAnimation {

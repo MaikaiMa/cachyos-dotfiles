@@ -198,7 +198,6 @@ systemctl --user restart dms.service
 | `cornerRadius` | Global corner radius (`16`, matching Noctalia's `bar.radius`); DMS bar pills and popups use it unless a bar overrides its own corners. |
 | `niriLayoutGapsOverride`, `niriLayoutRadiusOverride` | Niri window gap and corner radius, already set live (`-2`, `20`); included so the file is a complete description of the look. |
 | `currentThemeName`, `currentThemeCategory` | `"dynamic"`: theme colors are generated from the wallpaper instead of a fixed palette. |
-| `matugenSmartMode` | Lets matugen pick light/dark and contrast from the wallpaper automatically. DMS turns it off whenever light/dark mode is switched by hand (Control Center, Settings, `dms ipc call theme`) or "Automatic Control" is enabled; `scripts/dms-apply-look.sh` turns it back on. |
 | `runUserMatugenTemplates`, `runDmsMatugenTemplates` | Regenerate both the user's and DMS's own matugen templates when the theme changes, so terminals and GTK/Qt apps stay in sync with the wallpaper too. `runUserMatugenTemplates` is also what makes DMS process `~/.config/matugen/config.toml`; see "matugen templates: Niri backdrop and the Z13 rear-window color" below. |
 | `matugenTemplateNeovim` | Renders DMS's Neovim colorscheme (`~/.config/nvim/colors/dms.lua`) and lualine theme from the wallpaper; off by default in DMS. See [docs/editor.md](editor.md#colours). |
 | `popupTransparency`, `foregroundLayerTransparency` | `0.85`: Control Center, Dashboard, and other popups read as translucent glass over the wallpaper rather than flat opaque panels. |
@@ -219,6 +218,11 @@ systemctl --user restart dms.service
 | `barConfigs[id=default].spacing`, `.widgetPadding`, `.barLengthPadding`, `.bottomGap`, `.innerPadding` | `6`, `10`, `12`, `0`, `4` — spacing between widgets, padding inside each capsule, and the margins from the screen edges, close to Noctalia's `widget_spacing = 6`, capsule `padding = 8-10`, and `margin_ends = 12`. `bottomGap` stays `0` because it widens the bar's exclusive zone, which `maximize-window-to-edges` (Mod+M) fills exactly; the `top -2` strut in `cfg/layout.kdl` keeps tiled windows at the same distance from the bar. |
 | `barConfigs[id=default].transparency`, `.widgetTransparency`, `.noBackground` | `0.6`, `0.75`, `false` — a translucent, blurred bar strip with a capsule per widget. In DMS `noBackground` removes the widget capsules, not the bar surface, so it stays off. |
 | `barConfigs[id=default].squareCorners`, `.gothCornersEnabled`, `.borderEnabled`, `.widgetOutlineEnabled`, `.shadowIntensity` | `false`, `false`, `false`, `false`, `0` — rounded corners (via the global `cornerRadius`), no borders or outlines, no shadow. |
+
+`matugenSmartMode` (Auto: matugen picks light or dark from the wallpaper)
+is not part of `dms/look.json` since 2026-10-07: the own bar's Theme panel
+sets it at runtime (Light and Dark turn it off, Auto turns it on), so
+recording it would make every bootstrap undo that choice.
 
 ### Spec keys that do not exist in DMS 1.6.2
 
@@ -474,10 +478,7 @@ the same path):
 dms ipc call wallpaper set (dms ipc call wallpaper get)
 ```
 
-Do not switch light/dark mode by hand to force a render: DMS 1.6.2 turns
-`matugenSmartMode` off on every manual mode change (`Theme.setLightMode`),
-which drifts the live settings away from `dms/look.json`. Then verify the
-output files:
+After the render, verify the output files:
 
 ```fish
 cat ~/.config/niri/matugen/backdrop.kdl
@@ -530,6 +531,19 @@ in [docs/greeter.md](greeter.md).
 - The lock screen is DMS's own built-in one, not a repository-owned
   Quickshell surface. That is a final decision, not a pending phase; see
   [ADR-0015](adr/ADR-0015-use-the-dms-greeter-under-greetd-and-keep-the-dms-lock-screen.md).
+- With the DMS bar disabled, `dms ipc call settings open`, `openWith` and
+  `focusOrToggle` return success but the Settings window never maps (DMS
+  1.6.2, verified 2026-10-07). DMS loads that window with an async
+  `LazyLoader` whose incubation only advances when one of its windows
+  renders a frame, and an idle DMS without a bar renders nothing. Once
+  loaded, the window stays loaded for that DMS session. The managed helper
+  `~/.local/bin/dms-settings [--toggle] [TAB]` makes the call, waits up to
+  400 ms for the window (`com.danklinux.dms`, title `Settings`) and, if it
+  did not exist before and still does not show, makes DMS render one frame
+  with `dms ipc call toast info " "` followed by `toast hide`, which shows no
+  visible message. `Mod+Shift+S` and the bar's settings buttons use it.
+  Upstream DMS could fix this by loading Settings with `active = true` on an
+  explicit open.
 - Do not run `dms setup` or `dms sync`: both write into the live Niri
   configuration (`~/.config/niri/`), which conflicts with the
   chezmoi-managed source tree.
