@@ -30,7 +30,9 @@ largest panel, keeps a 36 px exclusive zone so windows tile below the bar,
 and sets an input mask that only covers the visible islands. Everything
 outside an island is click-through to the desktop. Each island is a
 component that owns its collapsed and expanded sizes; the mask follows the
-islands' geometry.
+islands' geometry. What animates continuously with the music (the orb, the
+top-edge wave) gets a small surface of its own, because a frame in the
+screen-tall window makes the compositor redraw the whole screen.
 
 ## Islands
 
@@ -88,7 +90,7 @@ and the OSD shows over the collapsed pill.
 | Panel | Trigger | Content |
 | --- | --- | --- |
 | Home | click on the pill, or `Mod+Return` | Tile grid, see below. |
-| Player | click on the music bar | Large cover, title, artist, progress, controls, output picker. Approved 2026-10-04, including the orb, the music bar and the transitions (prototype r4). |
+| Player | click on the music bar | Large cover, title, artist, progress, controls, output picker. Approved 2026-10-04, including the orb, the music bar and the transitions (prototype r4). Hovering the cover dims it with an "open" glyph, and a click or Enter brings the playing app to the front (MPRIS Raise, else its Niri window) and closes the panel (added 2026-10-07). |
 | Sound, Display | chevron zone of the Volume or Microphone capsule (Sound) or the Brightness capsule (Display) | See "Sound panel" and "Display panel" below the Settings panel. Added 2026-10-07. |
 | Wi-Fi, Bluetooth | chevron, long press or right click on their Settings tile | See "Wi-Fi and Bluetooth panels" below the Settings panel. Added 2026-10-07. |
 | Settings | `Mod+S` (decided 2026-10-05; `Mod+Shift+S` opens the DMS settings window), or click on the right island | Quick toggles, Sound and Display sliders, notifications, see below. |
@@ -331,7 +333,9 @@ value was too subtle over the real wallpaper). It must read as a breathing band 
 whose shape moves with the music; no individual band may be
 distinguishable. Fades in over 600 ms when playback starts and out over
 2 s on pause; off under reduce motion; off by default on external
-monitors; one toggle.
+monitors; one toggle. Since 2026-10-07 the layer sits under the windows
+(Niri's Bottom layer), so its lowest few pixels pass under the tops of
+tiled windows instead of over them.
 
 Approved as prototyped (r4 · music) on 2026-10-04: orb, top-edge wave,
 hover music bar and the transitions. The Player panel is approved.
@@ -444,7 +448,8 @@ Material keys of that file.
 | Indicator appears or disappears in the right island | 180 ms width + opacity | ease-out |
 | Tray fans out or folds | 200 ms spacing | cubic-bezier(0.2, 0.8, 0.2, 1) |
 | OSD in / out | 160 ms / 240 ms | ease-out / ease-in |
-| Orb rim light and bloom | continuous while playing; rotation speed and rim brightness follow the level, bloom follows the low band, 60 fps |
+| Orb rim light and bloom | continuous while playing; rotation speed and rim brightness follow the level, bloom follows the low band, 30 fps (cava's own frame rate; 60 fps cost about a third of a core more for no new audio data, measured 2026-10-07) |
+| Music motion on battery | 15 fps for the orb, the rims and the wave while on battery; 30 fps on the charger. Every frame the bar presents makes niri recompose the screen (measured 2026-10-07: about 0.2 % GPU per frame per second), so the frame rate is the battery lever (decided 2026-10-07) |
 | Orb resting state | core 16 → 6 px and rim/bloom out over the shrink timing, 1 px ring in, ring breath opacity 0.2 ↔ 0.8 and diameter 12 ↔ 14 px over 5 s at ~15 fps |
 | Pill grows into the centred music bar | 280 ms, same curve as island grow; content fade-in starts at 120 ms |
 | Top-edge wave in / out | 600 ms in, 2 s out, ease-out |

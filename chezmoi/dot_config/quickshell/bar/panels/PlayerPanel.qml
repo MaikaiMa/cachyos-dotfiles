@@ -25,7 +25,10 @@ Item {
     // A drag on the track previews its position until the release seeks.
     property bool seeking: false
     property real seekFraction: 0
-    readonly property real fraction: seeking ? seekFraction : Music.length > 0 ? Math.max(0, Math.min(1, Music.position / Music.length)) : 0
+    // Read only while the panel shows: the position changes every second while
+    // playing, and a hidden item that changes still makes the window present a frame.
+    readonly property real position: visible ? Music.position : 0
+    readonly property real fraction: seeking ? seekFraction : Music.length > 0 ? Math.max(0, Math.min(1, position / Music.length)) : 0
 
     implicitWidth: Theme.panelWidths.player
     implicitHeight: (showsOutputs ? outputsY + Theme.outputChipHeight : controlsY + Theme.playerPlaySize) + Theme.panelPadding
@@ -39,6 +42,12 @@ Item {
             duration: Motion.crossfadeDuration
             easing.type: Motion.crossfadeEasing
         }
+    }
+
+    // The cover leads to the app that plays: raised, then the panel closes.
+    function openSource() {
+        if (Music.raise())
+            Shell.close();
     }
 
     function formatTime(seconds: real): string {
@@ -57,6 +66,18 @@ Item {
         y: Theme.panelPadding
         width: Theme.playerCoverSize
         height: Theme.playerCoverSize
+        activeFocusOnTab: true
+
+        Accessible.role: Accessible.Button
+        Accessible.name: "Open the player"
+        Accessible.onPressAction: panel.openSource()
+
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                event.accepted = true;
+                panel.openSource();
+            }
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -103,6 +124,39 @@ Item {
             maskThresholdMin: 0.5
             maskSpreadAtMin: 1
         }
+
+        Rectangle {
+            objectName: "coverOverlay"
+            anchors.fill: parent
+            radius: Theme.playerCoverRadius
+            color: Qt.alpha(Colors.surface, Theme.playerCoverOverlayOpacity)
+            opacity: coverPointer.containsMouse || cover.activeFocus ? 1 : 0
+            visible: opacity > 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Motion.crossfadeDuration
+                    easing.type: Motion.crossfadeEasing
+                }
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                name: "open_in_new"
+                size: Theme.playerCoverIconSize
+                color: Colors.foreground
+            }
+        }
+
+        MouseArea {
+            id: coverPointer
+
+            objectName: "coverPointer"
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: panel.openSource()
+        }
     }
 
     Column {
@@ -148,7 +202,7 @@ Item {
 
         Accessible.role: Accessible.Slider
         Accessible.name: "Position"
-        Accessible.description: panel.formatTime(Music.position)
+        Accessible.description: panel.formatTime(panel.position)
 
         Keys.onLeftPressed: Music.seek(Music.position - Theme.playerSeekStep)
         Keys.onRightPressed: Music.seek(Music.position + Theme.playerSeekStep)

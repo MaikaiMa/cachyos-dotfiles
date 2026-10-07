@@ -20,9 +20,21 @@ Island {
     readonly property bool osd: Shell.osdVisible && Shell.screenName === screenName
     readonly property bool showsPill: (centreState === "collapsed" || detail) && !osd
     readonly property bool musicBar: centreState === "musicbar"
-    // The orb lives in the window, outside this clipped island; the window adds it to the input mask.
+    // The orb lives in a small surface of its own (orbParent), so its 30 Hz rim
+    // does not make the bar window present frames. The owner places that surface
+    // over orbTravelLeft..orbTravelRight from the island's centre line and gives
+    // its left edge, in the island's parent's coordinates, as orbOrigin.
     readonly property alias orb: orbItem
-    // Also in the window, mirroring the orb on the right; click-through, so not in the mask.
+    property Item orbParent: parent
+    property real orbOrigin: 0
+    readonly property real centreLine: x + width / 2
+    // Where the orb's hit area can be, from the centre line: left of the pill,
+    // Detail or the OSD, or 7 px inside the music bar.
+    readonly property real orbOutside: Theme.orbGap + Theme.orbSize + Theme.orbHitPadding
+    readonly property real orbInsideBar: -Theme.musicBarWidth / 2 + Theme.orbInset - Theme.orbHitPadding
+    readonly property real orbTravelLeft: Math.floor(Math.min(-Math.max(pillWidth, detailWidth, Theme.osdWidth) / 2 - orbOutside, orbInsideBar))
+    readonly property real orbTravelRight: Math.ceil(Math.max(-Math.min(pillWidth, detailWidth, Theme.osdWidth) / 2 - orbOutside, orbInsideBar) + orbItem.width)
+    // In the bar window, mirroring the orb on the right; click-through, so not in the mask.
     readonly property alias privacyDots: privacyDotsItem
     // The mini island the dots sit in while the bar is hidden; blurred, not in the mask.
     readonly property alias privacyPill: privacyPillItem
@@ -127,7 +139,7 @@ Island {
 
     // From the island's left edge to the orb's hit area: left of the pill, or the
     // bar's first element. It moves with the island's own curve and duration.
-    property real orbOffset: musicBar ? Theme.orbInset - Theme.orbHitPadding : -Theme.orbGap - Theme.orbSize - Theme.orbHitPadding
+    property real orbOffset: musicBar ? Theme.orbInset - Theme.orbHitPadding : -orbOutside
 
     Behavior on orbOffset {
         IslandAnimation {
@@ -272,7 +284,11 @@ Island {
     }
 
     // The orb's travelling light runs around the bar's edge while it is open.
+    // The rims read the audio clock only while they show: a hidden item that
+    // changes still makes the window present a frame.
     Item {
+        id: barRim
+
         anchors.fill: parent
         opacity: island.musicBar ? 1 : 0
         visible: opacity > 0
@@ -286,12 +302,14 @@ Island {
             anchors.fill: parent
             radius: island.radius
             thickness: Theme.musicBarRimWidth
-            angle: -Cava.barRimAngle
+            angle: barRim.visible ? -Cava.barRimAngle : 0
             lift: Theme.musicBarRimLift
-            brightness: 0.85 + 0.5 * Cava.level
-            opacity: 0.6 + 0.4 * Cava.level
+            brightness: 0.85 + 0.5 * island.barLevel
+            opacity: 0.6 + 0.4 * island.barLevel
         }
     }
+
+    readonly property real barLevel: barRim.visible ? Cava.level : 0
 
     // Title and artist as one run, then previous, play or pause, next. The orb
     // sits in the left padding. A click anywhere but a control opens the Player.
@@ -468,6 +486,8 @@ Island {
     // The Player carries the rim light as a quiet continuation: thinner, slower,
     // no glow, fading with the panel body.
     Item {
+        id: playerRim
+
         anchors.fill: parent
         opacity: island.centreState === "player" ? 1 : 0
         visible: opacity > 0
@@ -484,12 +504,14 @@ Island {
             anchors.fill: parent
             radius: island.radius
             thickness: Theme.playerRimWidth
-            angle: -Cava.playerRimAngle
+            angle: playerRim.visible ? -Cava.playerRimAngle : 0
             lift: Theme.musicBarRimLift
-            brightness: 0.85 + 0.5 * Cava.level
-            opacity: 0.6 + 0.4 * Cava.level
+            brightness: 0.85 + 0.5 * island.playerLevel
+            opacity: 0.6 + 0.4 * island.playerLevel
         }
     }
+
+    readonly property real playerLevel: playerRim.visible ? Cava.level : 0
 
     // Under the panel bodies: a click on empty panel space stops here and does nothing.
     MouseArea {
@@ -730,21 +752,22 @@ Island {
                 height: island.height + 2 * modelData[0]
                 radius: island.radius + modelData[0]
                 thickness: Theme.musicBarGlowRingWidth
-                angle: -Cava.barRimAngle
+                angle: barRim.visible ? -Cava.barRimAngle : 0
                 lift: Theme.musicBarRimLift
-                brightness: 0.85 + 0.5 * Cava.level
-                opacity: modelData[1] * (0.6 + 0.4 * Cava.level)
+                brightness: 0.85 + 0.5 * island.barLevel
+                opacity: modelData[1] * (0.6 + 0.4 * island.barLevel)
             }
         }
     }
 
-    // Over the window, not in the island: the island clips its children.
+    // Not in the island: the island clips its children. Held inside its surface
+    // while a panel's island carries it farther out and it fades.
     Orb {
         id: orbItem
 
         objectName: "orb"
-        parent: island.parent
-        x: island.x + island.orbOffset
+        parent: island.orbParent
+        x: Math.max(island.centreLine + island.orbTravelLeft, Math.min(island.centreLine + island.orbTravelRight - width, island.x + island.orbOffset)) - island.orbOrigin
         y: island.y + (Theme.islandHeight - height) / 2
         z: island.z + 1
         opacity: Music.hasPlayer && !island.panelOpen ? 1 : 0

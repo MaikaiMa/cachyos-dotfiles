@@ -97,12 +97,18 @@ Rectangle {
             Accessible.description: Math.round(Battery.percentage) + "%"
 
             Item {
+                id: chargeFill
+
                 objectName: "chargeFill"
                 width: Battery.available ? capsule.width * Math.max(0, Math.min(100, Battery.percentage)) / 100 : 0
                 height: capsule.height
                 clip: true
 
+                // Not while Home is closed: an animation in the hidden panel still
+                // makes the bar window present frames.
                 Behavior on width {
+                    enabled: chargeFill.visible
+
                     NumberAnimation {
                         duration: 4 * Motion.crossfadeDuration
                         easing.type: Motion.crossfadeEasing

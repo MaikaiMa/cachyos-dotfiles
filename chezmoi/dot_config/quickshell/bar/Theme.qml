@@ -243,6 +243,9 @@ Singleton {
     readonly property int playerCoverSize: 88
     readonly property int playerCoverRadius: 14
     readonly property int playerCoverGap: 14
+    // Hover over the cover: a dimming surface and an "open" glyph.
+    readonly property real playerCoverOverlayOpacity: 0.45
+    readonly property int playerCoverIconSize: 24
     readonly property int playerTitleFontSize: 15
     readonly property int playerTextGap: 2
     readonly property int playerProgressGap: 14
@@ -281,6 +284,10 @@ Singleton {
     readonly property int waveHeight: 48
     readonly property int waveAmplitude: 20
     readonly property real wavePeakOpacity: 0.5
+    // The wave canvas paints at this fraction of its size and is scaled up.
+    readonly property real waveResolution: 0.5
+    // The filled band above the curve starts this far above the screen edge.
+    readonly property int waveTopOverdraw: 8
     // Width and alpha of the layered strokes, widest first; they stand in for a blur.
     // Together they reach about 0.95 alpha on the curve, so the top row shows
     // close to the full peak opacity.

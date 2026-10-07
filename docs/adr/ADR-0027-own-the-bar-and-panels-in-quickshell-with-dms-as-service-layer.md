@@ -112,6 +112,34 @@ new one matures.
   (such as a hidden DMS bar that keeps the popouts alive) is built. After
   the hand-over the DMS bar stays available as the fallback.
 
+- *Amended 2026-10-07 after a battery measurement:* the single window as
+  tall as the screen (Window architecture in `docs/shell.md`) is kept for
+  islands and panels, but nothing that animates continuously may live in
+  it. Qt Quick presents a whole surface per frame, so a 30 Hz animation
+  in that window makes niri recompose the entire output on every frame.
+  Measured on the Z13 with music playing (30 s each, same session): DMS
+  bar GPU busy 1.2 %, GPU/SoC 7.0 W, niri 6.1 % CPU; own bar with the
+  wave off 11.4 %, 8.5 W, 12.3 %; with the wave on 13.0 %, 9.0 W, 12.3 %.
+  Lowering the frame rate and the wave's resolution cut the bar's CPU from
+  48 % to 10 % but left the battery draw unchanged. Decided: the
+  continuously animating parts get small surfaces of their own. The
+  top-edge wave moves to a thin full-width strip on the Bottom layer
+  (under windows and under the islands, which keep blurring it); the orb
+  moves to a small Top-layer surface covering only the area it travels
+  in, with its own input region. The tall window then presents frames
+  only when something in it changes (hover, panels, island animations).
+  Acceptance: with music playing and nothing open, the tall window
+  presents no frames.
+  *Outcome, same day:* the split met its acceptance (live `bardebug
+  frames`: tall window 0 to 4, orb and wave 151 per 5 s), but niri's GPU
+  share stayed at about 7 %; window x-ray blur made no difference either.
+  Every frame any surface presents costs niri about 0.2 % GPU per frame
+  per second, independent of surface size, so the frame rate is the only
+  lever. Decided: music motion runs at 30 fps on the charger and 15 fps
+  on battery (live: 75 per 5 s unplugged). The split stays, because it
+  keeps panels, hovers and island animations from adding full-screen
+  frames, and it costs nothing.
+
 - Breakage in the bar moves from "wait for a DMS release" to "fix it
   yourself". Quickshell releases about twice a year and announced 0.3 as
   non-breaking, so the platform under it is calm; DMS updates can still

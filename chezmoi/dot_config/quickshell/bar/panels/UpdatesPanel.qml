@@ -339,7 +339,9 @@ Item {
                 color: button.contentColor
 
                 RotationAnimator on rotation {
-                    running: button.spinning && Motion.refreshSpinDuration > 0
+                    // Only while the panel shows: a spin in the hidden panel still
+                    // makes the bar window present frames.
+                    running: button.spinning && glyph.visible && Motion.refreshSpinDuration > 0
                     from: 0
                     to: 360
                     duration: Motion.refreshSpinDuration

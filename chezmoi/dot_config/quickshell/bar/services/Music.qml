@@ -98,6 +98,24 @@ Singleton {
             player.togglePlaying();
     }
 
+    // Brings the player's app to the front: MPRIS Raise when the player offers
+    // it, else the Niri window whose app id is the player's desktop entry or
+    // identity. Returns false when neither works.
+    function raise(): bool {
+        if (!player)
+            return false;
+        if (player.canRaise) {
+            player.raise();
+            return true;
+        }
+        const keys = [player.desktopEntry, player.identity].filter(key => key).map(key => key.toLowerCase());
+        const window = Niri.windows.find(candidate => keys.includes((candidate.appId || "").toLowerCase()));
+        if (!window)
+            return false;
+        Niri.focusWindow(window.id);
+        return true;
+    }
+
     // Absolute position in seconds.
     function seek(seconds: real) {
         if (canSeek)

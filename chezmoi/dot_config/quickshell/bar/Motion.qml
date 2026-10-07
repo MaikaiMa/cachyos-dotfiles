@@ -44,8 +44,13 @@ Singleton {
     readonly property int rimEaseDuration: 600
     // The resting orb's ring breathes once in this time.
     readonly property int orbRingBreathPeriod: 5000
-    // Audio animation ticks: 60 per second while playing, 15 while paused.
-    readonly property int audioFrameInterval: 16
+    // Audio animation ticks: 30 per second while playing, cava's own frame rate,
+    // 15 on battery and 15 while paused. Every frame the bar presents costs Niri
+    // a screen composite, so on battery the frame rate is the lever. Smoothing
+    // and rotation step by elapsed time, so the rates and the attack and release
+    // times do not depend on the tick.
+    readonly property int audioFrameInterval: 33
+    readonly property int audioFrameIntervalBattery: 66
     readonly property int audioPausedInterval: 66
     // Marquee: a hold at each end and this much time per pixel of overflow.
     readonly property int marqueeBase: 2000

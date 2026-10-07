@@ -18,3 +18,5 @@ singleton Updates 1.0 Updates.qml
 singleton Session 1.0 Session.qml
 singleton Tablet 1.0 Tablet.qml
 singleton Wallpapers 1.0 Wallpapers.qml
+singleton Settings 1.0 Settings.qml
+singleton Frames 1.0 Frames.qml

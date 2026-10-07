@@ -51,7 +51,7 @@ Singleton {
 
     // The wave fades in while playback runs and out after it stops; every
     // screen's wave draws at this opacity.
-    readonly property bool waveOn: Theme.topWaveEnabled && Music.hasPlayer && Music.playing && !Motion.reduceMotion
+    readonly property bool waveOn: Theme.topWaveEnabled && Settings.waveEnabled && Music.hasPlayer && Music.playing && !Motion.reduceMotion
     property real waveOpacity: waveOn ? Theme.wavePeakOpacity : 0
 
     Behavior on waveOpacity {
@@ -128,7 +128,7 @@ Singleton {
     Timer {
         property real last: 0
 
-        interval: root.fast ? Motion.audioFrameInterval : Motion.audioPausedInterval
+        interval: !root.fast ? Motion.audioPausedInterval : Battery.onBattery ? Motion.audioFrameIntervalBattery : Motion.audioFrameInterval
         repeat: true
         running: root.animating
         onRunningChanged: last = Date.now()

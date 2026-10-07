@@ -22,3 +22,4 @@ Osd 1.0 Osd.qml
 PanelControlRow 1.0 PanelControlRow.qml
 NetworkRow 1.0 NetworkRow.qml
 RowList 1.0 RowList.qml
+FrameCounter 1.0 FrameCounter.qml

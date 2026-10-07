@@ -59,6 +59,7 @@
       "enabled": false
     }
   ],
+  "lockBeforeSuspend": true,
   "acLockTimeout": 600,
   "acSuspendTimeout": 0,
   "batteryLockTimeout": 300,

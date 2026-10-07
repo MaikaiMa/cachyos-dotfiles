@@ -411,12 +411,52 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
   edges, and Quickshell 0.3 cannot name the exclusive edge. When another
   surface reserves the top edge (the DMS bar while both run), the window
   starts below it and runs past the bottom of the screen by that much.
+- **Three surfaces per screen.** Qt Quick renders and presents a whole
+  surface on every frame, and Niri then recomposes everything under it: a
+  30 Hz animation in the screen-tall window costs a full-output composite
+  30 times a second (measured 2026-10-07: GPU busy 11 to 13 % against
+  1.2 % for the DMS bar, see ADR-0027). So whatever animates continuously
+  lives in a small surface of its own, and the tall window presents frames
+  only when something in it changes (hover, Detail, panels, the hide
+  slide, the OSD):
+
+  | Surface | Namespace | Layer | Size and place | Input |
+  |---|---|---|---|---|
+  | Bar window | `dotfiles-bar` | Top | the screen's height, full width, exclusive zone 36 px | the islands (see below) |
+  | Wave strip | `dotfiles-bar-wave` | Bottom | `Theme.waveHeight` (48 px), full width, exclusion ignored | none (`mask: Region {}`) |
+  | Orb box | `dotfiles-bar-orb` | Top | about 81 x 36 px at the top edge, ending at the collapsed pill's left edge | the orb's 32 px ellipse |
+
+  The wave strip is mapped only while the wave shows (playing or fading
+  out, and `Settings.waveEnabled`), so it costs nothing otherwise. On the
+  Bottom layer it lies under the windows and under the islands, whose blur
+  still samples it; the bottom few pixels pass under the tops of tiled
+  windows. The orb box is mapped while a player exists. It covers every
+  place the orb takes outside a panel (collapsed, Detail, the OSD and 7 px
+  inside the music bar; `CentreIsland.orbTravelLeft` and
+  `orbTravelRight`, from the island's centre line), so the box never moves
+  or resizes while music plays: Detail, the music bar glide and the OSD
+  only change the orb's x inside it. It grows or shrinks by a pixel or two
+  only when the clock's width changes at a minute, together with the pill.
+  It ends at the collapsed pill's left edge and clips the bloom's faint
+  outermost 2 px there, so a frame of the box damages nothing over the
+  blurred island. The orb stays in this box in every
+  state, including the music bar, where it lies over the island: the
+  pointer never has to cross surfaces while it rests on the orb, so hover,
+  the rest delay and the click work as before. Niri stacks the surfaces of
+  one layer in the order they map, so the box maps only after the bar
+  window has presented its first frame. When a panel opens the orb fades
+  out at the box's left edge instead of travelling further out with the
+  island. Both small surfaces ignore exclusive zones and so sit at the very
+  top of the screen; while another surface reserves the top edge (the DMS
+  bar during a switch) the orb sits that much above the island. Niri's
+  `^dotfiles-bar` layer rule matches all three namespaces; only the bar
+  window requests blur.
 - **Input mask.** `mask` is a `Region` with one rounded child region per
   island, bound to the island's live `x`, `y`, `width`, `height` and
   `radius`. Each animation frame updates it, so the mask follows the island
   while it grows or shrinks; everything else in the window is click-through.
-  A fourth, elliptic region follows the music orb's 32 px hit area (the
-  size of its bloom), which sits outside the centre island. The privacy
+  The music orb's 32 px hit area is the input region of its own surface,
+  not part of this mask. The privacy
   dots right of the centre island have no region: they take no input and
   get no blur, so clicks there reach the window below. The mini island the
   dots sit in while the bar is hidden is in the blur region (only while
@@ -424,7 +464,7 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
   is open on any screen, the mask of every bar window switches to a region
   covering the whole window. A separate region of the three islands is the
   blur region (`BackgroundEffect.blurRegion`) in both states, so Niri blurs
-  only behind the islands and the orb floats on the wallpaper. Both regions
+  only behind the islands; the orb floats unblurred in its own surface. Both regions
   are flat lists of direct children and share no `Region` object.
 - **Keyboard focus.** `None` while no panel is open, `Exclusive` on the
   screen with an open panel. `OnDemand` is not enough: panels also open from
@@ -476,7 +516,7 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
 
 ```text
 chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
-  shell.qml                             entry point: per screen the bar window, its mask and close area
+  shell.qml                             entry point: per screen the bar window (mask, close area), the wave strip and the orb box
   Colors.qml                            singleton: DMS palette, watched
   Theme.qml                             singleton: sizes, radii, fonts, panel widths
   Motion.qml                            singleton: durations, curves, reduce motion
@@ -490,6 +530,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Display.qml                         night temperature and schedule, keyboard backlight, rear light
     Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
     Privacy.qml                         microphone, camera and screen share in use, with app names
+    Frames.qml                          frames presented per window, IPC target `bardebug`
   islands/                              the three islands
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
     CentreIsland.qml                    weather, clock and battery pill, Detail, orb, privacy dots, music bar, OSD and the eleven panels
@@ -528,7 +569,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Orb.qml                             music orb: album-colour sphere, rim light, bloom
     PrivacyDots.qml                     microphone, camera and share dots right of the centre island
     RimLight.qml                        conic-gradient ring inside a rounded rectangle (orb, music bar)
-    TopWave.qml                         top-edge wave canvas behind the islands
+    TopWave.qml                         top-edge wave canvas, in its own strip behind the islands
+    FrameCounter.qml                    counts a window's presented frames into Frames
     Carousel.qml                        sideways strip for Theme and Wallpaper: wheel, drag, arrows
     Osd.qml                             OSD body: icon, fill track, value
 chezmoi/dot_config/systemd/user/quickshell-bar.service
@@ -805,6 +847,21 @@ Bring the service back with:
 scripts/bar-switch.sh
 ```
 
+How many frames each surface presented, per screen, over the last given
+seconds (at most 59), for power debugging. Every window counts its frames
+all the time into one-second buckets, so the answer comes at once:
+
+```fish
+quickshell ipc -c bar call bardebug frames 5
+```
+
+It prints a line such as `eDP-1 bar=0 orb=151 wave=151 (5 s)`: `bar` is
+the tall window, `orb` the orb box, `wave` the wave strip. With music
+playing and nothing open, expect `bar` near 0 and `orb` and `wave` at 151
+per 5 s on the charger and 75 on battery (30 and 15 per second); anything
+at the display's refresh rate means an animation is running in that
+surface.
+
 ## Adding a widget
 
 1. Create the file with an upper-case name in the directory it belongs to
@@ -974,8 +1031,14 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   track), `artColor` (`artColorRaw` lifted to at least 0.35 HSL lightness,
   hue and saturation kept, so a near-black cover still reads), `artLight` and `artWarm` (a lighter and a warmer cut of it for the
   rim light and the wave, lifted the same way); `lifted(color)`; `play()`, `pause()`, `togglePlaying()`, `next()`,
-  `previous()`, `seek(seconds)` (absolute, when the player can seek).
-  playerctld's mirror player is left out of `players`.
+  `previous()`, `seek(seconds)` (absolute, when the player can seek),
+  `raise()` (MPRIS Raise when the player can, else Niri focus on the window
+  whose app id is the player's desktop entry or identity, case-insensitive;
+  false when neither works). playerctld's mirror player is left out of
+  `players`.
+- `Settings`: the bar's own runtime switches, kept in
+  `$XDG_STATE_HOME/dotfiles-bar/settings.json` (defaults when the file is
+  missing or unreadable): `waveEnabled`; `setWaveEnabled(enabled)`.
 - `Cava`: `running` (cava runs only while a player plays, never under
   reduce motion), `bands` (24 raw levels), `smoothBands`, `level`, `low`
   (mean of the first four bands; all three smoothed with 80 ms attack and
@@ -1064,9 +1127,9 @@ same 600 ms.
   No `qsb` is installed, so there is no custom shader; MultiEffect's blur
   spreads a 16 px disc by barely 3 px, which is why the bloom is a masked
   disc and not a blur.
-- **Music bar.** The orb lives in the bar window, not in the clipped
-  island, and moves with the island's own curve between 6 px left of the
-  pill and 7 px inside the bar. Resting on it for 80 ms opens `musicbar`;
+- **Music bar.** The orb lives in its own small surface (Window
+  architecture), not in the clipped island, and moves with the island's own
+  curve between 6 px left of the pill and 7 px inside the bar. Resting on it for 80 ms opens `musicbar`;
   leaving both the orb and the island for 120 ms closes it. The bar is
   280 px as in the prototype: the run of title (12 px semibold) and artist
   (11 px) scrolls as a marquee with soft edges while it is wider than its
@@ -1090,25 +1153,86 @@ same 600 ms.
   quiet continuation, on its own angle (`Cava.playerRimAngle`): one turn in
   8 s at rest down to 3 s at full level, fading with the panel body. The track seeks on
   press and drag (and Left and Right in 5 s steps) when the player can
-  seek; the output chips show only with more than one output.
-- **Top-edge wave.** `TopWave` is a `Canvas` under the islands, outside the
-  input mask and the blur region: a Catmull-Rom curve through the 24
+  seek; the output chips show only with more than one output. Hover over the
+  cover dims it with `surface` at 45 % and shows `open_in_new`; a click (or
+  Enter or Space on the focused cover) calls `Music.raise()` and closes the
+  panel when that worked.
+- **Top-edge wave.** `TopWave` is a `Canvas` in the click-through wave
+  strip on the Bottom layer, under the islands: a Catmull-Rom curve through the 24
   smoothed bands, four strokes from 58 px at 0.2 to 24 px at 0.8 alpha in
   a horizontal gradient of the orb colours, then faded toward the bottom
   with a `destination-in` gradient inside the canvas, because the window
   behind it is transparent. Together the strokes reach about 0.95 alpha on
   the curve, so the top row shows about 0.47 at the peak opacity.
   `Cava.waveOpacity` rises to 0.5 in 600 ms when
-  playback starts and falls in 2 s after it stops. `Theme.topWaveEnabled`
-  switches it off everywhere; it draws on every screen for now, also the
-  external monitors the design wants it off on by default.
+  playback starts and falls in 2 s after it stops. The canvas paints at half
+  the item's size (`Theme.waveResolution`) and is scaled up with smooth
+  filtering, with the strokes and the fade drawn through a scaled context so
+  the shape matches; the softer edges disappear in the glow. Before the
+  strokes, the band between 8 px above the screen edge and the curve is
+  filled at the core stroke's alpha, so the top row stays covered when the
+  curve swings down past the core stroke.
+  `Theme.topWaveEnabled` switches it off in the code; at runtime
+  `Settings.waveEnabled` switches it, kept across restarts, for example for
+  a power A/B:
+
+  ```fish
+  quickshell ipc -c bar call bar wave toggle
+  ```
+
+  `wave on`, `wave off` and `wave toggle` print the new state. Off hides the
+  wave at once and stops its repaints; the audio tick keeps running for the
+  orb and the rims, and unmaps the wave strip. It draws on every screen for now, also the external
+  monitors the design wants it off on by default.
 - **CPU gating.** cava runs only while a player plays. The clock ticks at
-  60 per second while playing or while the wave fades out, at about 15 per
-  second (66 ms) while a paused player exists (only the resting ring breathes), and
-  not at all without a player or under reduce motion. The wave repaints
-  only on a tick while its opacity is above zero. A `Timer` and not a
-  `FrameAnimation`: the clock is capped at 60 per second whatever the
+  30 per second while playing or while the wave fades out on the charger
+  (cava's own frame rate, so no audio frame is lost), at 15 per second
+  (66 ms, `Motion.audioFrameIntervalBattery`) while playing on battery
+  (`Battery.onBattery`, from UPower, switching live), at 15 per second while a
+  paused player exists (only the resting ring breathes), and not at all
+  without a player or under reduce motion. Smoothing and rotation step by
+  the elapsed time, so attack, release and turn rates do not depend on the
+  tick. The wave repaints only on a tick while its opacity is above zero. A
+  `Timer` and not a `FrameAnimation`: the clock is capped whatever the
   display's refresh rate.
+- **Why 15 per second on battery.** Every frame a surface presents makes
+  Niri recompose the output, whatever the surface's size or blur mode.
+  Measured live on 2026-10-07 on battery (per-process GPU time from the
+  amdgpu fdinfo counters, 30 s): with music playing at 30 frames per
+  second Niri used 7.5 % GPU, with the paused orb's 15 per second 2.7 %,
+  and with no frames 0.6 % (the DMS bar with its visualiser also 0.6 %).
+  About 0.2 % GPU per frame per second, so the frame rate is the lever.
+  The rotation and smoothing step by elapsed time, so the rims turn at the
+  same speed at 15 per second (harness: 151 and 153 degrees per second at
+  30 and 15 ticks); the motion is only coarser. `bardebug frames 5` then
+  reads 75 to 76 for `orb` and `wave`.
+- **Why 30 Hz and half resolution.** On 2026-10-07 the own bar with music
+  drew 14.7 W and 47.7 % CPU against 11.0 W for DMS. Profiling put almost
+  all of it in the wave: QPainter rasterises its four wide strokes on the
+  CPU across a 2560 x 84 device-pixel canvas, and it repainted at 62.5 Hz
+  while cava delivers 30 frames. In an offscreen harness on the real GPU
+  (2560 x 1600 at scale 1.75, simulated playback, 60 s, CPU from `/proc`)
+  the bar with the wave went from 66.8 % of a core (60 Hz, full
+  resolution) to 36.4 % at half resolution and 18.5 % with both changes.
+  The orb and the rims cost under 5 points. The battery draw did not
+  follow, because the screen-tall window was still presented on every
+  tick; that is what the separate wave strip and orb box solve.
+- **What may animate in the bar window.** Nothing continuously. The music
+  bar's rim and glow and the Player's rim read `Cava` only while they show
+  (`barLevel`, `playerLevel`, the angle bindings gated on visibility), and
+  the Player's progress reads `Music.position` only while the panel is
+  visible, the Updates refresh glyph spins and the Home charge fill
+  animates only while their panel shows: a hidden item whose property
+  changes still makes the window present a frame. In the offscreen harness
+  (2560 x 1600 at scale 1.75, real GPU, simulated playback, 60 s,
+  collapsed) the bar window went from 1886 frames to 7 to 9 (status
+  changes, and the pill resizing when the clock's width changes), the orb
+  box and the wave strip present 30 each per second, and opening Detail
+  animates the bar window for 300 ms. The process's CPU stayed the same
+  (23 % before, 22 to 23 % after; the wave's raster work did not change):
+  the saving is GPU and compositor time. Check a new binding to `Cava`,
+  `Music.position` or any other value that changes while music plays
+  against this.
 
 The services are linted with the rest of the bar:
 

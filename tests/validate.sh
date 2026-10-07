@@ -83,6 +83,8 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Tablet.qml \
 	chezmoi/dot_config/quickshell/bar/services/Wallpapers.qml \
 	chezmoi/dot_config/quickshell/bar/services/Privacy.qml \
+	chezmoi/dot_config/quickshell/bar/services/Settings.qml \
+	chezmoi/dot_config/quickshell/bar/services/Frames.qml \
 	chezmoi/dot_config/quickshell/bar/services/qmldir \
 	chezmoi/dot_config/quickshell/bar/islands/LeftIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/CentreIsland.qml \
@@ -102,6 +104,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/Orb.qml \
 	chezmoi/dot_config/quickshell/bar/components/RimLight.qml \
 	chezmoi/dot_config/quickshell/bar/components/TopWave.qml \
+	chezmoi/dot_config/quickshell/bar/components/FrameCounter.qml \
 	chezmoi/dot_config/quickshell/bar/components/Carousel.qml \
 	chezmoi/dot_config/quickshell/bar/components/Osd.qml \
 	chezmoi/dot_config/quickshell/bar/components/PrivacyDots.qml \

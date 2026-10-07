@@ -287,5 +287,16 @@ Singleton {
         function state(): string {
             return root.centreState + " on " + root.screenName;
         }
+
+        // on, off or toggle the top-edge wave; kept across restarts. Returns the new state.
+        function wave(action: string): string {
+            if (action === "on" || action === "off")
+                Settings.setWaveEnabled(action === "on");
+            else if (action === "toggle")
+                Settings.setWaveEnabled(!Settings.waveEnabled);
+            else
+                console.warn("Shell: unknown wave action " + action);
+            return Settings.waveEnabled ? "on" : "off";
+        }
     }
 }

@@ -26,6 +26,91 @@ ShellRoot {
 
             readonly property bool panelOpenHere: Shell.panelOpen && Shell.screenName === modelData.name
             readonly property bool osdHere: Shell.osdVisible && Shell.screenName === modelData.name
+            // The orb's surface maps only after the bar window has: Niri stacks
+            // the surfaces of a layer in mapping order, and the orb must lie over
+            // the music bar.
+            property bool barPresented: false
+            // The orb surface's left edge: it covers every place the orb takes
+            // outside a panel, so it never moves or resizes while music plays.
+            readonly property int orbLeft: Math.floor(modelData.width / 2 + centre.orbTravelLeft)
+
+            // Three surfaces per screen. Qt Quick presents a whole surface on every
+            // frame, so whatever animates continuously lives in a small surface of
+            // its own: the wave in a strip on the Bottom layer, the orb in a box
+            // left of the centre island. The tall bar window then presents frames
+            // only when something in it changes.
+            PanelWindow {
+                id: waveSurface
+
+                screen: screenScope.modelData
+                anchors {
+                    top: true
+                    left: true
+                    right: true
+                }
+                implicitHeight: Theme.waveHeight
+                visible: Theme.topWaveEnabled && Settings.waveEnabled && Cava.waveOpacity > 0
+                exclusionMode: ExclusionMode.Ignore
+                color: "transparent"
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.namespace: "dotfiles-bar-wave"
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                mask: Region {}
+
+                TopWave {
+                    id: wave
+
+                    width: parent.width
+                }
+
+                FrameCounter {
+                    item: wave
+                    screen: screenScope.modelData.name
+                    window: "wave"
+                }
+            }
+
+            PanelWindow {
+                id: orbSurface
+
+                screen: screenScope.modelData
+                anchors {
+                    top: true
+                    left: true
+                }
+                // PanelWindow's margins group is not in its type info.
+                margins.left: screenScope.orbLeft // qmllint disable unqualified unresolved-type
+                // Ends at the collapsed pill's left edge, clipping the bloom's faint
+                // last 2 px: a frame of this box then damages nothing over the
+                // blurred island, which Niri would otherwise redraw with it.
+                implicitWidth: Math.floor(screenScope.modelData.width / 2 - centre.pillWidth / 2) - screenScope.orbLeft
+                implicitHeight: Math.ceil(Theme.islandTop + (Theme.islandHeight + centre.orb.height) / 2)
+                visible: Music.hasPlayer && screenScope.barPresented
+                exclusionMode: ExclusionMode.Ignore
+                color: "transparent"
+                WlrLayershell.layer: WlrLayer.Top
+                WlrLayershell.namespace: "dotfiles-bar-orb"
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                mask: Region {
+                    shape: RegionShape.Ellipse
+                    x: centre.orb.x
+                    y: centre.orb.y
+                    width: centre.orb.visible ? centre.orb.width : 0
+                    height: centre.orb.visible ? centre.orb.height : 0
+                }
+
+                Item {
+                    id: orbLayer
+
+                    anchors.fill: parent
+                }
+
+                FrameCounter {
+                    item: orbLayer
+                    screen: screenScope.modelData.name
+                    window: "orb"
+                }
+            }
 
             // One window per screen, as tall as the screen: islands grow inside it instead
             // of opening popups. Not anchored to the bottom edge: with all four edges
@@ -58,8 +143,7 @@ ShellRoot {
                 mask: Shell.panelOpen || right.menuOpen ? fullRegion : inputRegion
                 // The blur type lives in Quickshell core, which the BackgroundEffect
                 // type info does not declare, so qmllint cannot resolve it.
-                // The orb takes input but gets no blur: it floats on the wallpaper. The
-                // privacy pill of the hidden bar gets blur but no input.
+                // The privacy pill of the hidden bar gets blur but no input.
                 BackgroundEffect.blurRegion: blurRegion // qmllint disable missing-type
 
                 Region {
@@ -69,8 +153,8 @@ ShellRoot {
                     height: bar.height
                 }
 
-                // Flat on purpose: each island and the orb is a direct child, and the
-                // input and blur regions share no Region object.
+                // Flat on purpose: each island is a direct child, and the input and
+                // blur regions share no Region object.
                 Region {
                     id: inputRegion
 
@@ -82,13 +166,6 @@ ShellRoot {
                     }
                     IslandRegion {
                         island: right
-                    }
-                    Region {
-                        shape: RegionShape.Ellipse
-                        x: centre.orb.x
-                        y: centre.orb.y
-                        width: centre.orb.visible ? centre.orb.width : 0
-                        height: centre.orb.visible ? centre.orb.height : 0
                     }
                 }
 
@@ -170,9 +247,19 @@ ShellRoot {
                         }
                     }
 
-                    // Behind the islands and outside the mask and the blur region.
-                    TopWave {
-                        width: parent.width
+                    FrameCounter {
+                        item: keyRoot
+                        screen: screenScope.modelData.name
+                        window: "bar"
+                    }
+
+                    Connections {
+                        target: keyRoot.Window.window
+                        enabled: !screenScope.barPresented
+
+                        function onFrameSwapped() {
+                            screenScope.barPresented = true;
+                        }
                     }
 
                     // Below the islands, so they keep their input; the centre island's
@@ -211,6 +298,8 @@ ShellRoot {
                         x: (parent.width - width) / 2
                         y: Theme.islandTop - keyRoot.centreShift
                         z: 1
+                        orbParent: orbLayer
+                        orbOrigin: screenScope.orbLeft
                     }
                 }
             }
