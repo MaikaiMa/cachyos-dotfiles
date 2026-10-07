@@ -39,8 +39,20 @@ if ! command -v z13ctl >/dev/null 2>&1; then
 	exit 1
 fi
 
+# Keep the level chosen in the bar's Display panel: `apply` resets it to high
+# unless a brightness is passed, and this runs on every theme change.
+brightness=high
+state_file=${Z13CTL_STATE:-${XDG_STATE_HOME:-$HOME/.local/state}/z13ctl/state.json}
+if [ -r "$state_file" ] && command -v jq >/dev/null 2>&1; then
+	case $(jq -r '.devices.lightbar.brightness // empty' "$state_file" 2>/dev/null || true) in
+	0) brightness=off ;;
+	1) brightness=low ;;
+	2) brightness=medium ;;
+	esac
+fi
+
 exec z13ctl apply \
 	--device lightbar \
 	--mode static \
 	--color "$colour" \
-	--brightness high
+	--brightness "$brightness"

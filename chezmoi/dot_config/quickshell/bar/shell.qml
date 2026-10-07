@@ -58,7 +58,8 @@ ShellRoot {
                 mask: Shell.panelOpen || right.menuOpen ? fullRegion : inputRegion
                 // The blur type lives in Quickshell core, which the BackgroundEffect
                 // type info does not declare, so qmllint cannot resolve it.
-                // The orb takes input but gets no blur: it floats on the wallpaper.
+                // The orb takes input but gets no blur: it floats on the wallpaper. The
+                // privacy pill of the hidden bar gets blur but no input.
                 BackgroundEffect.blurRegion: blurRegion // qmllint disable missing-type
 
                 Region {
@@ -103,6 +104,13 @@ ShellRoot {
                     IslandRegion {
                         island: right
                     }
+                    Region {
+                        x: centre.privacyPill.x
+                        y: centre.privacyPill.y
+                        width: centre.privacyPill.visible ? centre.privacyPill.width : 0
+                        height: centre.privacyPill.visible ? centre.privacyPill.height : 0
+                        radius: centre.privacyPill.radius
+                    }
                 }
 
                 Item {
@@ -136,7 +144,7 @@ ShellRoot {
                         right.closeMenu();
                         Shell.close();
                     }
-                    // Back from Wi-Fi or Bluetooth to Settings; a focused text field
+                    // Back from a panel opened from Settings; a focused text field
                     // keeps Backspace for itself.
                     Keys.onPressed: event => {
                         const backKey = (event.key === Qt.Key_Backspace && event.modifiers === Qt.NoModifier) || (event.key === Qt.Key_Left && event.modifiers === Qt.AltModifier);

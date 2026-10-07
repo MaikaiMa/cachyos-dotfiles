@@ -14,6 +14,8 @@ Item {
     property int fontSize: Theme.secondaryFontSize
     // Off: clicks and keys do nothing; the control looks the same.
     property bool interactive: true
+    // The pill under the segments; Display's rows sit on the panel, not on a tile.
+    property color trackColor: Colors.surfaceContainer
 
     signal selected(int index)
 
@@ -54,7 +56,7 @@ Item {
 
         anchors.fill: parent
         radius: height / 2
-        color: Colors.surfaceContainer
+        color: control.trackColor
 
         Rectangle {
             objectName: "segmentIndicator"

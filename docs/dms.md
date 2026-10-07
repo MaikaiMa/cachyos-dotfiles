@@ -488,8 +488,10 @@ head -n 12 ~/.local/share/vicinae/themes/dms.toml
 ```
 
 On a detected 2025 Z13 the rear lightbar should update to that color within a
-moment; on other hardware `sync-z13-window-color` exits without effect, and
-the cache file still updates.
+moment, keeping its current brightness level from z13ctl's own state file
+(`~/.local/state/z13ctl/state.json`; high when the file or jq is missing);
+on other hardware `sync-z13-window-color` exits without effect, and the
+cache file still updates.
 
 ## Iterating on the look
 

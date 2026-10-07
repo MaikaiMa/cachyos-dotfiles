@@ -22,6 +22,10 @@ Island {
     readonly property bool musicBar: centreState === "musicbar"
     // The orb lives in the window, outside this clipped island; the window adds it to the input mask.
     readonly property alias orb: orbItem
+    // Also in the window, mirroring the orb on the right; click-through, so not in the mask.
+    readonly property alias privacyDots: privacyDotsItem
+    // The mini island the dots sit in while the bar is hidden; blurred, not in the mask.
+    readonly property alias privacyPill: privacyPillItem
 
     // Collapsed: icon | clock | icon at the icon size. Even widths keep the
     // island symmetric around the whole-pixel clock.
@@ -141,7 +145,9 @@ Island {
             theme: themePanel.implicitHeight,
             wallpaper: wallpaperPanel.implicitHeight,
             wifi: wifiPanel.implicitHeight,
-            bluetooth: bluetoothPanel.implicitHeight
+            bluetooth: bluetoothPanel.implicitHeight,
+            sound: soundPanel.implicitHeight,
+            display: displayPanel.implicitHeight
         })
 
     targetHeight: panelOpen ? panelHeights[centreState] : detail ? Theme.islandDetailHeight : Theme.islandHeight
@@ -576,6 +582,24 @@ Island {
         shown: island.centreState === "bluetooth"
     }
 
+    SoundPanel {
+        id: soundPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "sound"
+    }
+
+    DisplayPanel {
+        id: displayPanel
+
+        x: (island.width - width) / 2
+        width: implicitWidth
+        height: implicitHeight
+        shown: island.centreState === "display"
+    }
+
     component MusicFade: SequentialAnimation {
         PauseAnimation {
             duration: island.musicBar ? Motion.musicContentDelay : 0
@@ -745,6 +769,75 @@ Island {
                 Shell.open("player", island.screenName);
             }
         }
+    }
+
+    // Hidden with something recording (and no OSD bringing the island back), the
+    // dots glide to the screen centre into a mini island of their own.
+    readonly property bool privacyDocked: Shell.hidden && !osd && Privacy.anyActive
+    // 0 at the island's right edge, 1 centred on the clock; the grow curve both ways.
+    property real privacyGlide: privacyDocked ? 1 : 0
+    property real privacyPillOpacity: privacyDocked ? 1 : 0
+    // The pill keeps its last width while it fades out with no dot left.
+    property real privacyPillWidth: Theme.privacyDotSize + 2 * Theme.privacyPillPadding
+
+    Behavior on privacyGlide {
+        IslandAnimation {}
+    }
+
+    Behavior on privacyPillOpacity {
+        id: privacyPillFade
+
+        IslandAnimation {
+            shrinking: privacyPillFade.targetValue < 1
+        }
+    }
+
+    // A dot coming or going while docked resizes the pill around the clock's x.
+    Behavior on privacyPillWidth {
+        id: privacyPillResize
+
+        enabled: island.privacyPillOpacity > 0
+
+        IslandAnimation {
+            shrinking: privacyPillResize.targetValue < island.privacyPillWidth
+        }
+    }
+
+    Binding on privacyPillWidth {
+        when: privacyDotsItem.implicitWidth > 0
+        value: privacyDotsItem.implicitWidth + 2 * Theme.privacyPillPadding
+        restoreMode: Binding.RestoreNone
+    }
+
+    Rectangle {
+        id: privacyPillItem
+
+        objectName: "privacyPill"
+        parent: island.parent
+        x: Math.round(island.x + island.width / 2 - width / 2)
+        y: Theme.islandTop + (Theme.islandHeight - height) / 2
+        z: island.z + 0.5
+        width: island.privacyPillWidth
+        height: Theme.privacyPillHeight
+        radius: height / 2
+        color: Qt.alpha(Colors.surfaceContainer, Theme.islandOpacity)
+        opacity: island.privacyPillOpacity
+        visible: opacity > 0
+    }
+
+    // Through Detail, the music bar and every panel: never hidden while something
+    // records. While the bar is hidden they stay at the islands' top row.
+    PrivacyDots {
+        id: privacyDotsItem
+
+        readonly property real edgeX: Math.round(island.x + island.width) + Theme.privacyDotOffset
+        readonly property real centredX: privacyPillItem.x + Theme.privacyPillPadding
+
+        objectName: "privacyDots"
+        parent: island.parent
+        x: edgeX + (centredX - edgeX) * island.privacyGlide
+        y: Math.round((Shell.hidden ? Theme.islandTop : island.y) + (Theme.islandHeight - height) / 2)
+        z: island.z + 1
     }
 
     // The music bar stays open while the pointer is on the orb or the island.

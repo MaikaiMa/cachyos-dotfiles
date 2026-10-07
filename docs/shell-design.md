@@ -89,6 +89,7 @@ and the OSD shows over the collapsed pill.
 | --- | --- | --- |
 | Home | click on the pill, or `Mod+Return` | Tile grid, see below. |
 | Player | click on the music bar | Large cover, title, artist, progress, controls, output picker. Approved 2026-10-04, including the orb, the music bar and the transitions (prototype r4). |
+| Sound, Display | chevron zone of the Volume or Microphone capsule (Sound) or the Brightness capsule (Display) | See "Sound panel" and "Display panel" below the Settings panel. Added 2026-10-07. |
 | Wi-Fi, Bluetooth | chevron, long press or right click on their Settings tile | See "Wi-Fi and Bluetooth panels" below the Settings panel. Added 2026-10-07. |
 | Settings | `Mod+S` (decided 2026-10-05; `Mod+Shift+S` opens the DMS settings window), or click on the right island | Quick toggles, Sound and Display sliders, notifications, see below. |
 | Power | `Mod+Escape` | One row of five square buttons: Lock, Suspend, Log Out, Reboot, Power Off. The first is focused. Approved 2026-10-04. |
@@ -129,8 +130,9 @@ The wide tile alternates sides so the grid reads playful rather than
 lopsided (decided 2026-10-05). While the tablet is detached, Bluetooth
 shrinks to an icon-only tile and frees the cell for the rotation lock;
 power profile always keeps its state line. Tablet mode itself is not in
-the grid (it follows the hinge; a shortcut covers the manual case). Night light, colour picker, screenshot, display profile
-and the settings window stay shortcut-only.
+the grid (it follows the hinge; a shortcut covers the manual case). Night
+light lives in the Display panel (decided 2026-10-07); colour picker,
+screenshot, display profile and the settings window stay shortcut-only.
 
 Under the grid three sliders, Volume, Microphone, Brightness, each a
 full-width 32 px capsule with 8 px between them, no thumb: the whole
@@ -152,6 +154,52 @@ right (about 40 px, a hairline separating it from the rest of the tile,
 press and a right click open that tile's own panel. The other tiles have
 no secondary action (decided 2026-10-07; replaces opening the DMS
 settings window).
+
+**Slider chevrons** (decided 2026-10-07). The Volume, Microphone and
+Brightness capsules carry a 40 px chevron zone at their right end, the
+same pattern as the Wi-Fi and Bluetooth tiles: a hairline, then
+`chevron_right`. The fill runs from 0 to 100 over the capsule minus that
+zone; the 44 px value zone sits left of the hairline. A press that starts
+in the chevron zone never drags, a drag that ends over it sets 100, and
+Enter, the menu key or a right click on a focused capsule opens the panel
+(Right keeps stepping the value). No long press: on touch people hold
+before they drag. Volume and Microphone open the Sound panel, Brightness
+the Display panel.
+
+**Sound panel** (centre state `sound`, 420 px, morphing from Settings).
+Control row: back to Settings, a state such as "Speakers · 44%" without a
+switch, and `open_in_new` to the DMS audio settings. Sections, each only
+when it has rows:
+
+- *Output:* 44 px rows with a type glyph (speaker, headphones, Bluetooth,
+  monitor) and the friendly name from the active port ("Speakers",
+  "Headphones"), the default tinted `primary`; a click makes it the
+  default.
+- *Input:* the same rows ("Internal Microphone"), with a live level bar
+  under the default input while the panel is open.
+- *Apps:* one row per application with its icon, name and a compact
+  capsule slider plus mute; streams of the same application are grouped
+  into one row whose slider moves all of them (Blip keeps five idle
+  streams). Streams are tracked only while the panel is open.
+
+Left out on purpose: port and profile switching (automatic), per-app
+routing, channel balance, volume above 100 %.
+
+**Display panel** (centre state `display`, 420 px). Control row: back to
+Settings, the night-light switch with "On · 4500 K" or "Off", and
+`open_in_new` to the DMS gamma settings (the schedule can only be changed
+there). Rows, in this order:
+
+1. Night light temperature as a capsule (DMS's range), and a read-only
+   schedule line.
+2. Brightness, the same capsule as in Settings.
+3. Keyboard backlight as an Off / Low / Medium / High segmented control,
+   only while the keyboard cover is attached.
+4. Rear window light as Off / Low / Medium / High, with a read-only colour
+   dot showing the theme colour it follows.
+
+Left out on purpose: external monitors over DDC (needs a new package and
+permissions), gamma and contrast, refresh rate, scale and rotation.
 
 **Wi-Fi and Bluetooth panels** (centre states `wifi` and `bluetooth`,
 420 px, morphing from Settings). No title; a control row on top: a back
@@ -235,6 +283,27 @@ changes size.
   carries the rim light too, as a quiet continuation rather than a frame:
   1.5 px, no outer glow, one turn in 8 s at rest down to 3 s at full
   level (added 2026-10-05).
+
+*Privacy dots* (decided 2026-10-07; verified live the same day with a Meet call and a screen share from Zen). Right of the centre island,
+mirroring the orb on its left: one 6 px dot per active capture, 4 px
+apart, 6 px from the island's right edge, centred on the top row. Fixed
+colours that do not follow the wallpaper palette: orange `#FF9F0A` for
+the microphone, green `#30D158` for the camera, blue `#0A84FF` for a
+screen share or cast, in that order from the island outward. The dots
+follow the island's right edge through Detail, the music bar and every
+panel, so they never disappear while something records, including while
+the bar is hidden: then they stay where the collapsed island sits. They are steady:
+they fade in and out over the crossfade duration and never pulse. No
+interaction in this version; a click listing the apps may follow. The
+bar's own audio capture for the visualiser does not count as microphone
+use. While the bar is hidden and at least one dot is active, the dots
+glide to the screen centre over the island's grow timing and sit in a
+mini island: a pill of the island surface (16 px tall, 6 px horizontal
+padding, full radius, same opacity and blur) centred on the clock's x at
+the islands' top. It appears only in that state and fades with the
+island's shrink timing; on show the pill dissolves and the dots glide
+back to the island's right edge (refined 2026-10-07 after the live test:
+bare dots without the island looked like a glitch).
 
 *Now-playing peek* (added 2026-10-05). The music bar also opens by itself
 for 5 s (raised from 3 s on 2026-10-05) when what is playing changes, then shrinks back to the orb, so a
@@ -357,7 +426,7 @@ every screen; the music dot and OSD only on the screen with the pointer.
 | Panel width | Settings 420 px, Player 360 px, Power 5 x 72 px buttons, Home, Theme and Wallpaper 560 px |
 | Tile grid | 12 px gap, tile radius 16 px, tile background `surface_container_high` |
 | Settings grid | 4 columns, 12 px gap, tile radius 16 px, tile height 64 px |
-| Settings slider | full-width capsule 32 px tall, 8 px gap, icon zone 32 px, value zone 44 px |
+| Settings slider | full-width capsule 32 px tall, 8 px gap, icon zone 32 px, value zone 44 px; with a panel a 40 px chevron zone at the right end, the value zone left of its hairline |
 | Shadow on expanded islands | 0 8 px 24 px `shadow` at 35 % |
 
 Colours come from the DMS palette (`Colors.qml`); the names above are the

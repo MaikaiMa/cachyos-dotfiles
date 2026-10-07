@@ -9,9 +9,9 @@ import ".."
 Singleton {
     id: root
 
-    readonly property var panelStates: ["home", "settings", "player", "power", "theme", "wallpaper", "updates", "wifi", "bluetooth"]
+    readonly property var panelStates: ["home", "settings", "player", "power", "theme", "wallpaper", "updates", "wifi", "bluetooth", "sound", "display"]
     // Panels opened from Settings; back() returns to it.
-    readonly property var settingsChildren: ["wifi", "bluetooth"]
+    readonly property var settingsChildren: ["wifi", "bluetooth", "sound", "display"]
     readonly property var pillStates: ["collapsed", "detail", "musicbar"]
     // Only open while an MPRIS player exists; they close when the last one goes.
     readonly property var musicStates: ["musicbar", "player"]

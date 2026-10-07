@@ -277,6 +277,8 @@ Item {
             iconName: Audio.muted ? "volume_off" : "volume_up"
             onMoved: target => Audio.setVolume(target / 100)
             onIconClicked: Audio.toggleMute()
+            hasPanel: true
+            onPanelRequested: Shell.open("sound", Shell.screenName)
         }
 
         CapsuleSlider {
@@ -289,6 +291,8 @@ Item {
             iconName: Audio.micMuted ? "mic_off" : "mic"
             onMoved: target => Audio.setMicVolume(target / 100)
             onIconClicked: Audio.toggleMicMute()
+            hasPanel: true
+            onPanelRequested: Shell.open("sound", Shell.screenName)
         }
 
         CapsuleSlider {
@@ -301,6 +305,8 @@ Item {
             iconName: "light_mode"
             onMoved: target => Brightness.set(target)
             onIconClicked: Brightness.cycle()
+            hasPanel: true
+            onPanelRequested: Shell.open("display", Shell.screenName)
         }
     }
 

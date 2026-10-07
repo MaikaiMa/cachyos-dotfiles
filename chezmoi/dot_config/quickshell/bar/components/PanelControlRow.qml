@@ -2,13 +2,15 @@ import QtQuick
 import ".."
 import "../services"
 
-// The top row of the Wi-Fi and Bluetooth panels: back to Settings, the on/off
-// switch with a short state, and on the right a button that leaves the bar for
-// a fuller tool (the DMS settings window), with an optional second one left of
-// it (a terminal).
+// The top row of the panels opened from Settings: back to Settings, the on/off
+// switch with a short state (Sound has no switch, only the state), and on the
+// right a button that leaves the bar for a fuller tool (the DMS settings
+// window), with an optional second one left of it (a terminal).
 Item {
     id: row
 
+    // False: no switch, the state follows the back button.
+    property bool hasSwitch: true
     property string switchName: ""
     property bool checked: false
     property bool switchEnabled: true
@@ -44,8 +46,9 @@ Item {
         anchors.left: backButton.right
         anchors.leftMargin: Theme.gap
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.switchWidth
+        width: row.hasSwitch ? Theme.switchWidth : 0
         height: Theme.switchHeight
+        visible: row.hasSwitch
         enabled: row.switchEnabled
         opacity: enabled ? 1 : 0.5
         activeFocusOnTab: true
@@ -118,8 +121,8 @@ Item {
         id: stateLabel
 
         objectName: "stateLabel"
-        anchors.left: toggle.right
-        anchors.leftMargin: Theme.controlLabelGap
+        anchors.left: row.hasSwitch ? toggle.right : backButton.right
+        anchors.leftMargin: row.hasSwitch ? Theme.controlLabelGap : Theme.gap
         anchors.right: extraButton.visible ? extraButton.left : settingsButton.left
         anchors.rightMargin: Theme.gap
         anchors.verticalCenter: parent.verticalCenter

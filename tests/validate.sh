@@ -68,6 +68,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Battery.qml \
 	chezmoi/dot_config/quickshell/bar/services/Audio.qml \
 	chezmoi/dot_config/quickshell/bar/services/Brightness.qml \
+	chezmoi/dot_config/quickshell/bar/services/Display.qml \
 	chezmoi/dot_config/quickshell/bar/services/Network.qml \
 	chezmoi/dot_config/quickshell/bar/services/Bluetooth.qml \
 	chezmoi/dot_config/quickshell/bar/services/Dms.qml \
@@ -81,6 +82,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Session.qml \
 	chezmoi/dot_config/quickshell/bar/services/Tablet.qml \
 	chezmoi/dot_config/quickshell/bar/services/Wallpapers.qml \
+	chezmoi/dot_config/quickshell/bar/services/Privacy.qml \
 	chezmoi/dot_config/quickshell/bar/services/qmldir \
 	chezmoi/dot_config/quickshell/bar/islands/LeftIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/CentreIsland.qml \
@@ -95,11 +97,14 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/panels/WallpaperPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/WifiPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/BluetoothPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/SoundPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/DisplayPanel.qml \
 	chezmoi/dot_config/quickshell/bar/components/Orb.qml \
 	chezmoi/dot_config/quickshell/bar/components/RimLight.qml \
 	chezmoi/dot_config/quickshell/bar/components/TopWave.qml \
 	chezmoi/dot_config/quickshell/bar/components/Carousel.qml \
 	chezmoi/dot_config/quickshell/bar/components/Osd.qml \
+	chezmoi/dot_config/quickshell/bar/components/PrivacyDots.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
 	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \

@@ -6,6 +6,9 @@ import ".."
 // A full-width capsule without a thumb: the fill runs from the left edge and its
 // edge is the handle. Icon and value are drawn twice, once on the track and once
 // in the accent's foreground clipped to the fill, so they flip where the fill passes.
+// A capsule with a panel ends in a chevron zone behind a hairline, as the Wi-Fi
+// tile does: the fill runs over the rest, and the zone, a right click, Enter or
+// the menu key open the panel. No long press: on touch people hold before they drag.
 Item {
     id: slider
 
@@ -16,11 +19,24 @@ Item {
     property bool muted: false
     property string iconName: ""
     property string label: ""
+    // The chevron zone at the right end and the panel signal.
+    property bool hasPanel: false
+    // What the value zone shows; the owner may map shownValue to its own unit.
+    property string valueText: Math.round(shownValue) + "%"
+    // Requests land on multiples of this (temperatures in 500 K steps).
+    property real snap: 1
+    property real stepSize: Theme.sliderStep
+    property int iconZone: Theme.sliderIconZone
+    property int valueZone: Theme.sliderValueZone
+    property int iconSize: Theme.iconSize
+    property color trackColor: Colors.surfaceContainerHigh
 
     // A drag, a click on the track or a key asks for a value; the owner writes it.
     signal moved(real value)
     // A click on the icon zone without movement.
     signal iconClicked
+    // The chevron zone, a right click, Enter or the menu key; only with hasPanel.
+    signal panelRequested
 
     // What the owner asked for last, shown until the service reports it back, so
     // the fill does not jump back while the write is under way.
@@ -29,14 +45,17 @@ Item {
     property bool dragging: false
     readonly property real shownTarget: holding ? requestedValue : Math.max(0, Math.min(100, value))
     property real shownValue: shownTarget
-    readonly property real fillWidth: width * shownValue / 100
+    // The value runs over the capsule minus the chevron zone.
+    readonly property real trackWidth: width - (hasPanel ? Theme.tileChevronZone : 0)
+    readonly property real fillWidth: trackWidth * shownValue / 100
+    readonly property bool overChevron: hasPanel && pointer.containsMouse && pointer.mouseX >= trackWidth
 
     implicitHeight: Theme.sliderHeight
     activeFocusOnTab: true
 
     Accessible.role: Accessible.Slider
     Accessible.name: label
-    Accessible.description: available ? Math.round(shownTarget) + "%" : ""
+    Accessible.description: available ? valueText : ""
 
     // Dragging follows the pointer; everything else glides.
     Behavior on shownValue {
@@ -55,7 +74,7 @@ Item {
     }
 
     function request(target: real) {
-        requestedValue = Math.max(minimum, Math.min(100, Math.round(target)));
+        requestedValue = Math.max(minimum, Math.min(100, Math.round(target / snap) * snap));
         holding = true;
         holdTimer.restart();
         moved(requestedValue);
@@ -68,7 +87,7 @@ Item {
     }
 
     function valueAt(pointerX: real): real {
-        return pointerX / width * 100;
+        return Math.max(0, Math.min(100, pointerX / trackWidth * 100));
     }
 
     // A value the service never reports exactly (rounding, a refused write)
@@ -80,15 +99,27 @@ Item {
         onTriggered: slider.holding = false
     }
 
+    // Right keeps stepping: the panel opens with Enter or the menu key. Space is
+    // the icon zone's click (mute), so an app row can be muted from the keyboard.
     Keys.onPressed: event => {
-        if (!available || event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))
+        if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))
+            return;
+        if (hasPanel && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Menu)) {
+            event.accepted = true;
+            panelRequested();
+            return;
+        }
+        if (!available)
             return;
         switch (event.key) {
         case Qt.Key_Left:
-            step(-Theme.sliderStep);
+            step(-stepSize);
             break;
         case Qt.Key_Right:
-            step(Theme.sliderStep);
+            step(stepSize);
+            break;
+        case Qt.Key_Space:
+            iconClicked();
             break;
         case Qt.Key_Home:
             request(0);
@@ -107,7 +138,52 @@ Item {
 
         anchors.fill: parent
         radius: height / 2
-        color: Colors.surfaceContainerHigh
+        color: slider.trackColor
+
+        // Hover tints only the chevron zone, clipped from the whole capsule so its
+        // outer end stays round and its inner edge straight.
+        Item {
+            visible: slider.hasPanel
+            x: slider.trackWidth
+            width: track.width - x
+            height: track.height
+            clip: true
+            opacity: slider.overChevron ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Motion.crossfadeDuration
+                    easing.type: Motion.crossfadeEasing
+                }
+            }
+
+            Rectangle {
+                x: -parent.x
+                width: track.width
+                height: track.height
+                radius: track.radius
+                color: Qt.tint(slider.trackColor, Qt.alpha(Colors.primary, 0.16))
+            }
+        }
+
+        Rectangle {
+            objectName: "chevronHairline"
+            visible: slider.hasPanel
+            x: slider.trackWidth
+            width: 1
+            height: parent.height
+            color: Qt.alpha(Colors.foregroundVariant, Theme.tileChevronHairlineOpacity)
+        }
+
+        Icon {
+            objectName: "chevron"
+            visible: slider.hasPanel
+            x: slider.trackWidth + (Theme.tileChevronZone - width) / 2
+            anchors.verticalCenter: parent.verticalCenter
+            name: "chevron_right"
+            size: Theme.toggleIconSize
+            color: Colors.foreground
+        }
 
         SliderLayer {
             tone: Colors.foreground
@@ -156,12 +232,20 @@ Item {
     }
 
     // Grabs the pointer on press, so a drag keeps setting the value outside the
-    // capsule; touch arrives as the same events.
+    // capsule; touch arrives as the same events. Reaches half the gap above and
+    // below, so the chevron zone is a 40 x 40 touch target.
     MouseArea {
+        id: pointer
+
+        objectName: "sliderPointer"
         anchors.fill: parent
-        enabled: slider.available
+        anchors.topMargin: -Theme.sliderHitExtension
+        anchors.bottomMargin: -Theme.sliderHitExtension
+        enabled: slider.available || slider.hasPanel
         preventStealing: true
+        hoverEnabled: slider.hasPanel
         cursorShape: Qt.PointingHandCursor
+        acceptedButtons: slider.hasPanel ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
 
         // Wheel notches are 120 units; touchpads send small deltas that add up
         // to the same 120 per step.
@@ -171,14 +255,27 @@ Item {
         property real startY: 0
         property bool travelled: false
         property bool onIcon: false
+        // Decided on press: a press in the chevron zone or with the right button
+        // never drags; it opens the panel when released over the zone (or anywhere
+        // for the right button).
+        property bool onChevron: false
+        property bool secondary: false
+
+        function inChevron(x: real, y: real): bool {
+            return slider.hasPanel && x >= slider.trackWidth && x <= width && y >= 0 && y <= height;
+        }
 
         onPressed: mouse => {
             startX = mouse.x;
             startY = mouse.y;
             travelled = false;
-            onIcon = mouse.x < Theme.sliderIconZone;
+            secondary = mouse.button === Qt.RightButton;
+            onChevron = inChevron(mouse.x, mouse.y);
+            onIcon = mouse.x < slider.iconZone;
         }
         onPositionChanged: mouse => {
+            if (!pressed || onChevron || secondary || !slider.available)
+                return;
             if (!travelled && Math.hypot(mouse.x - startX, mouse.y - startY) < Theme.sliderDragThreshold)
                 return;
             travelled = true;
@@ -186,10 +283,21 @@ Item {
             slider.request(slider.valueAt(mouse.x));
         }
         onReleased: mouse => {
+            if (secondary) {
+                slider.panelRequested();
+                return;
+            }
+            if (onChevron) {
+                if (inChevron(mouse.x, mouse.y))
+                    slider.panelRequested();
+                return;
+            }
             if (travelled) {
                 slider.dragging = false;
                 return;
             }
+            if (!slider.available)
+                return;
             if (onIcon)
                 slider.iconClicked();
             else
@@ -197,6 +305,10 @@ Item {
         }
         onCanceled: slider.dragging = false
         onWheel: wheel => {
+            if (!slider.available) {
+                wheel.accepted = true;
+                return;
+            }
             // The same rule as the Qt Quick Controls Slider.
             const delta = wheel.angleDelta.y === 0 ? wheel.angleDelta.x : wheel.inverted ? -wheel.angleDelta.y : wheel.angleDelta.y;
             if (Math.sign(delta) !== Math.sign(wheelRemainder))
@@ -205,7 +317,7 @@ Item {
             const steps = Math.trunc(wheelRemainder / 120);
             if (steps !== 0) {
                 wheelRemainder -= steps * 120;
-                slider.step(steps * Theme.sliderStep);
+                slider.step(steps * slider.stepSize);
             }
             wheel.accepted = true;
         }
@@ -221,19 +333,21 @@ Item {
         height: track.height
 
         Icon {
-            x: (Theme.sliderIconZone - width) / 2
+            x: (slider.iconZone - width) / 2
             anchors.verticalCenter: parent.verticalCenter
             name: slider.iconName
+            size: slider.iconSize
             color: layer.tone
         }
 
         Text {
-            x: layer.width - Theme.sliderValueZone
-            width: Theme.sliderValueZone
+            objectName: "valueText"
+            x: slider.trackWidth - slider.valueZone
+            width: slider.valueZone
             height: layer.height
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            text: slider.available ? Math.round(slider.shownValue) + "%" : "–"
+            text: slider.available ? slider.valueText : "–"
             color: layer.tone
             font.family: Theme.fontFamily
             font.pixelSize: Theme.sliderValueFontSize

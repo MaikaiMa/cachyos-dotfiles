@@ -33,14 +33,37 @@ fi
 
 printf '%s\n' 'ROG Flow Z13' >"$dmi_root/product_family"
 printf '%s\n' 'GZ302EA' >"$dmi_root/board_name"
-PATH="$fake_bin:$PATH" Z13CTL_CALLS="$calls" Z13_DMI_ROOT="$dmi_root" \
-	"$script" a1B2c3
+state="$test_root/state.json"
+run_z13() {
+	: >"$calls"
+	PATH="$fake_bin:$PATH" Z13CTL_CALLS="$calls" Z13_DMI_ROOT="$dmi_root" \
+		Z13CTL_STATE="$state" "$script" "$1"
+}
+expect_call() {
+	if [ "$(cat "$calls")" != "$1" ]; then
+		printf 'Unexpected z13ctl call: %s (expected %s)\n' "$(cat "$calls")" "$1" >&2
+		exit 1
+	fi
+}
 
-expected='apply --device lightbar --mode static --color a1B2c3 --brightness high'
-if [ "$(cat "$calls")" != "$expected" ]; then
-	printf 'Unexpected z13ctl call: %s\n' "$(cat "$calls")" >&2
-	exit 1
-fi
+run_z13 a1B2c3
+expect_call 'apply --device lightbar --mode static --color a1B2c3 --brightness high'
+
+printf '%s\n' '{"devices":{"lightbar":{"brightness":1}}}' >"$state"
+run_z13 a1B2c3
+expect_call 'apply --device lightbar --mode static --color a1B2c3 --brightness low'
+
+printf '%s\n' '{"devices":{"lightbar":{"brightness":0}}}' >"$state"
+run_z13 a1B2c3
+expect_call 'apply --device lightbar --mode static --color a1B2c3 --brightness off'
+
+printf '%s\n' '{"devices":{"lightbar":{"brightness":3}}}' >"$state"
+run_z13 a1B2c3
+expect_call 'apply --device lightbar --mode static --color a1B2c3 --brightness high'
+
+printf '%s\n' 'not json' >"$state"
+run_z13 a1B2c3
+expect_call 'apply --device lightbar --mode static --color a1B2c3 --brightness high'
 
 if Z13_DMI_ROOT="$dmi_root" "$script" invalid >/dev/null 2>&1; then
 	printf '%s\n' 'Invalid colours must be rejected.' >&2

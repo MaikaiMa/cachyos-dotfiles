@@ -3,8 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import ".."
 
-// A row of the Wi-Fi and Bluetooth lists: an icon, the name with a detail line,
-// a lock when secured. Expanded, it shows a password field with Connect, or a
+// A row of the Wi-Fi, Bluetooth and Sound lists: an icon, the name with a
+// detail line or a live level bar, a lock when secured. Expanded, it shows a password field with Connect, or a
 // line of buttons; an error adds a line in `error`. The panel owns which row is
 // expanded and the errors, so it knows the settled height before the row grows.
 Item {
@@ -22,6 +22,8 @@ Item {
     // [{ key, label, accent, danger }]
     property var actions: []
     property string errorText: ""
+    // 0..1 drawn as a thin bar under the name (the Sound panel's default input); -1 for none.
+    property real level: -1
 
     signal clicked
     signal secondaryClicked
@@ -170,6 +172,34 @@ Item {
             font.features: ({
                     tnum: 1
                 })
+        }
+
+        Item {
+            objectName: "levelBar"
+            visible: row.level >= 0
+            width: parent.width
+            height: Theme.levelBarGap + Theme.levelBarHeight
+
+            Rectangle {
+                y: Theme.levelBarGap
+                width: parent.width
+                height: Theme.levelBarHeight
+                radius: height / 2
+                color: Qt.alpha(Colors.foreground, 0.1)
+
+                Rectangle {
+                    width: parent.width * Math.max(0, Math.min(1, row.level))
+                    height: parent.height
+                    radius: height / 2
+                    color: Colors.primary
+
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: Motion.audioAttack
+                        }
+                    }
+                }
+            }
         }
     }
 

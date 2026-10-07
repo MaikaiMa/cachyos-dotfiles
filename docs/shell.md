@@ -13,7 +13,7 @@ dashboard, control center, power menu and wallpaper browser are anchored to
 that window: they do not open while the own bar is active. Since step 7 no
 shortcut calls them any more; the own bar has a panel for each. The DMS
 settings window is a separate window and opens from the `open_in_new`
-button of the Wi-Fi and Bluetooth panels. `scripts/bar-switch.sh dms` goes back to
+button of the Wi-Fi, Bluetooth, Sound and Display panels. `scripts/bar-switch.sh dms` goes back to
 the DMS bar; ADR-0027 records this as an amendment.
 
 ## What is built
@@ -255,6 +255,75 @@ terminal). Rows connect on a click and expand in place
 for a password, Disconnect and Forget, or Pair; see "Wi-Fi and Bluetooth
 panels" below.
 
+Also on 2026-10-07 the privacy dots arrived: 6 px right of the centre island,
+an orange dot while an app records the microphone, green while one uses the
+camera and blue while the screen is shared or cast, 4 px apart in that order
+and centred on the top row. They follow the island's right edge through
+Detail, the music bar and every panel, fade over 140 ms, never pulse and take
+no input; `Privacy` (see "Services") decides what counts, and the bar's own
+visualiser capture does not. While the bar is hidden and a dot is active
+they stay at the islands' top row and glide (grow timing, sideways only) to
+the screen centre, centred on the clock's x, into a mini island: a pill of
+the island surface, 16 px tall with 6 px padding on each side (18 x 16 px for
+one dot, 38 x 16 px for three), with the islands' colour, opacity and blur.
+The pill fades in with the glide; when the bar shows again it fades out with
+the shrink timing while the dots glide back to the island's right edge. A
+dot that comes or goes while docked resizes the pill around the clock's x.
+While the OSD brings the centre island back the dots return to its edge.
+
+Also on 2026-10-07 the three Settings capsules got panels of their own.
+
+- **Slider chevrons.** Volume, Microphone and Brightness end in the Wi-Fi
+  tile's 40 px chevron zone (`Theme.tileChevronZone`) behind a full-height
+  hairline at 15 % (`tileChevronHairlineOpacity`), `chevron_right`; hovering
+  the zone tints only the zone. The value runs from 0 to 100 over the capsule
+  minus the zone, so the 44 px value zone sits left of the hairline and the
+  fill at 100 % ends against it with a straight edge. `CapsuleSlider` decides
+  on press: a press in the zone (or with the right button) never drags and
+  opens the panel when released over the zone (the right button anywhere); a
+  drag that started on the track and ends over the zone sets 100. Enter, the
+  menu key or a right click on a focused capsule open the panel; Left and
+  Right keep stepping by 5, Space is the icon zone's click (mute, or the
+  brightness cycle). No long press, since on touch people hold before they
+  drag. The hit area reaches 4 px into the gap above and below
+  (`Theme.sliderHitExtension`), so the zone is a 40 x 40 touch target. Volume
+  and Microphone open `sound`, Brightness opens `display`; both return to
+  Settings with the back button, Backspace or Alt+Left, like Wi-Fi.
+- **Sound panel**, 420 px. `PanelControlRow` without a switch (`hasSwitch:
+  false`): back, the state ("Speakers · 44%", "muted" instead of the
+  percentage while muted) and `open_in_new` to the DMS settings on `audio`,
+  which closes the panel. Then up to three sections in one area that
+  scrolls inside 360 px (`Theme.soundListMaxHeight`), each with a small
+  header in the notification header's language and only while it has rows:
+  *Output* and *Input* as 44 px `NetworkRow`s (glyph `speaker`,
+  `headphones`, `bluetooth_audio` or `tv`; `mic` or `headset_mic`), the
+  default tinted `primary`, a click makes a row the default through
+  `Pipewire.preferredDefaultAudioSink/Source`. The default input carries a
+  3 px level bar under its name (the peak on a -60 to 0 dB scale). *Apps*
+  has one row per application: its themed icon (`application.icon-name`,
+  else the process binary or the lower-cased name through
+  `Quickshell.iconPath`, else `graphic_eq`), its name (ALSA clients'
+  "PipeWire ALSA [blip]" reads "Blip") and a compact 176 x 24 px capsule
+  whose icon zone mutes; the capsule moves every stream of the application
+  together. Rows sort by name and keep their delegates, so nothing moves
+  under a click or a drag. Tab walks back, settings, the rows and the app
+  capsules; a row Tab reaches below the visible part scrolls into view.
+- **Display panel**, 420 px. `PanelControlRow` with the night-light switch
+  ("On · 4500 K" or "Off") and `open_in_new` to the DMS settings on
+  `display_gamma`, where the schedule is changed. Then: the night
+  temperature as a capsule over DMS's range (1000 to 6000 K in 500 K steps,
+  capped at the day temperature; the value zone reads "4500 K", the fill
+  dims to 40 % while night light is off, and the icon zone toggles it), a
+  read-only schedule line ("No schedule · set one in settings", or the mode
+  and the next change); the Brightness capsule as in Settings; Keyboard as
+  Off / Low / Medium / High (`asus::kbd_backlight`, 0 to 3), only while the
+  cover is attached; Rear light as Off / Low / Medium / High with a 10 px
+  dot in the theme colour it follows, only when z13ctl's state file has a
+  lightbar. The segmented controls sit on a `surfaceContainerHigh` track
+  (`SegmentedControl.trackColor`). `sync-z13-window-color` keeps the chosen
+  rear-light level on theme changes. Tab walks back, switch, settings, the
+  two capsules and the two segmented controls.
+
 - **Wi-Fi and Bluetooth panels.** The wide Wi-Fi and Bluetooth tiles end in a
   40 px chevron zone behind a full-height hairline; a click there, a long press, a right
   click, or Right or the menu key on a focused tile opens the panel, a click on
@@ -319,12 +388,12 @@ panels" below.
 
 The `dms ipc` calls that remain are the ones DMS owns: `lock lock` (Lock
 button, `Mod+Alt+L`), `settings openWith` (the settings button of the
-Wi-Fi and Bluetooth panels, through `dms-settings`),
+Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
 `theme getMode` and `settings get|set` for `matugenScheme` and
 `matugenSmartMode` (Theme panel), `wallpaper get|set|getFor|setFor`
 (Wallpaper panel and the scheme re-render), `notifications
 getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
-`night status`; plus the fallbacks of the media keys (see "Shortcuts") and
+`night status|toggle|getDayTemp|getSchedule|setTargetTemp` (Display panel); plus the fallbacks of the media keys (see "Shortcuts") and
 `dms screenshot` for the screenshot binds.
 
 ### Window architecture
@@ -347,7 +416,11 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
   `radius`. Each animation frame updates it, so the mask follows the island
   while it grows or shrinks; everything else in the window is click-through.
   A fourth, elliptic region follows the music orb's 32 px hit area (the
-  size of its bloom), which sits outside the centre island. While a panel
+  size of its bloom), which sits outside the centre island. The privacy
+  dots right of the centre island have no region: they take no input and
+  get no blur, so clicks there reach the window below. The mini island the
+  dots sit in while the bar is hidden is in the blur region (only while
+  visible), never in the mask. While a panel
   is open on any screen, the mask of every bar window switches to a region
   covering the whole window. A separate region of the three islands is the
   blur region (`BackgroundEffect.blurRegion`) in both states, so Niri blurs
@@ -377,10 +450,10 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
   above it, such as the DMS bar, does not close the panel.
 - **State machine.** `services/Shell.qml` holds `centreState` (`collapsed`,
   `detail`, `home`, `settings`, `player`, `power`, `theme`, `wallpaper`,
-  `updates`, `wifi`, `bluetooth`, `musicbar`), the screen it applies to, `osdVisible`, `osdKind`
+  `updates`, `wifi`, `bluetooth`, `sound`, `display`, `musicbar`), the screen it applies to, `osdVisible`, `osdKind`
   (`volume`, `mic`, `brightness`) and `hidden`, with `open(state, screen)`,
-  `close()`, `toggle(state, screen)`, `back()` (from `wifi` or `bluetooth`
-  to `settings`), `showOsd(screen, kind)` and `setHidden(value)`. One state at a time, so opening another panel morphs
+  `close()`, `toggle(state, screen)`, `back()` (from `wifi`, `bluetooth`,
+  `sound` or `display` to `settings`), `showOsd(screen, kind)` and `setHidden(value)`. One state at a time, so opening another panel morphs
   the island into it; the OSD closes any panel first, and opening a panel
   shows a hidden bar. On every open and morph into a panel, `Shell` records
   `Niri.focusedWindowId` and the focused workspace's id
@@ -389,7 +462,7 @@ getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
   than the recorded one. A change to no window (-1) is ignored, because Niri
   may report that for the panel's own Exclusive keyboard grab; the pill
   states, Detail, the music bar and the OSD do not react. IPC target `bar`: `open`, `toggle` and `close` (the
-  state `hidden` toggles the hide; `toggle wifi|bluetooth` opens those panels), `osd`, `volume up|down|mute|micmute`,
+  state `hidden` toggles the hide; `toggle wifi|bluetooth|sound|display` opens those panels), `osd`, `volume up|down|mute|micmute`,
   `brightness up|down`, `media next|prev|playpause|play|pause` and `state`.
   IPC calls act on the screen Niri reports as focused (`Niri.focusedOutput`),
   else the last used screen, else the first one.
@@ -414,10 +487,12 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Niri.qml ... Updates.qml            data services, see "Services"
     Session.qml                         Power panel actions: lock, suspend, log out, reboot, power off
     Tablet.qml                          keyboard cover detached, on-screen keyboard, rotation lock
+    Display.qml                         night temperature and schedule, keyboard backlight, rear light
     Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
+    Privacy.qml                         microphone, camera and screen share in use, with app names
   islands/                              the three islands
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
-    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, music bar, OSD and the nine panels
+    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, privacy dots, music bar, OSD and the eleven panels
     RightIsland.qml                     tray stack, fan and menu, attention indicators
   panels/                               centre panel bodies
     HomePanel.qml                       Time, Weather, Performance and Power tiles, actions row
@@ -429,6 +504,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     WallpaperPanel.qml                  thumbnail strip of the DMS wallpaper folder
     WifiPanel.qml                       Wi-Fi switch and networks: connect, password, disconnect, forget
     BluetoothPanel.qml                  Bluetooth switch and devices: connect, pair, disconnect, forget
+    SoundPanel.qml                      outputs, inputs with the mic level, per-app volume
+    DisplayPanel.qml                    night light, brightness, keyboard backlight, rear light
   components/                           shared pieces
     Island.qml                          island surface: colour, radius, shadow, size animation
     IslandAnimation.qml                 grow or shrink animation from the Motion tokens
@@ -437,18 +514,19 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Icon.qml                            Material Symbols glyph by name, placeholder without the font
     WeatherIcon.qml                     Icon for a Weather service icon name
     BatteryIcon.qml                     Icon for the battery charge and state, red when low
-    SegmentedControl.qml                pill of segments with a sliding accent, Left and Right keys
+    SegmentedControl.qml                pill of segments with a sliding accent, Left and Right keys, track colour
     TimeTile.qml                        Home: hours over minutes and the Dutch date
     WeatherTile.qml                     Home: current weather, Hourly / Daily, five cards
     PerformanceTile.qml                 Home: CPU, temperature and memory bars
     PowerTile.qml                       Home: charge, capsule, time, health, capacity, profile
     Tile.qml                            Settings grid toggle, wide with state or small icon-only, chevron zone for a panel
-    CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer
+    CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer, optional chevron zone
     NotificationRow.qml                 one notification with dismiss, collapses when it leaves
-    PanelControlRow.qml                 Wi-Fi and Bluetooth: back, switch with state, DMS settings button
+    PanelControlRow.qml                 panels from Settings: back, optional switch with state, DMS settings button
     RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height
-    NetworkRow.qml                      Wi-Fi and Bluetooth row: icon, name, detail, expands in place
+    NetworkRow.qml                      Wi-Fi, Bluetooth and Sound row: icon, name, detail or level, expands in place
     Orb.qml                             music orb: album-colour sphere, rim light, bloom
+    PrivacyDots.qml                     microphone, camera and share dots right of the centre island
     RimLight.qml                        conic-gradient ring inside a rounded rectangle (orb, music bar)
     TopWave.qml                         top-edge wave canvas behind the islands
     Carousel.qml                        sideways strip for Theme and Wallpaper: wheel, drag, arrows
@@ -669,6 +747,45 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
 - `Mod+Shift+B` slides the islands away and windows grow into the strip;
   pressing it again brings them back. A volume key while hidden shows the
   OSD and the centre island goes away again.
+- Privacy dots: in a Meet call in Zen, an orange dot appears 6 px right of
+  the pill when the microphone is on and a green one next to it when the
+  camera is on (allow both in Zen); muting in Meet keeps the orange dot,
+  leaving the call removes both within about 4 s. Sharing a tab or the
+  screen from Zen adds a blue dot about half a second after the share
+  starts. A recording with `wf-recorder` (if installed) shows the blue dot
+  too. Open Detail, the music bar and a panel while a dot shows: the dots
+  move with the island's right edge and never disappear; a click on a dot
+  reaches the window below. While music plays and nothing records, no dot
+  shows.
+- Slider chevrons: hovering the chevron zone of a Settings capsule tints
+  only the zone; a click there, a tap by touch (also just above or below the
+  capsule) or a right click anywhere on it opens Sound or Display, and a
+  press that starts in the zone never moves the value. Dragging Volume to
+  the far right ends at 100 % against the hairline. Tab to a capsule: Enter
+  or the menu key opens its panel, Left and Right still step by 5. Backspace
+  or Alt+Left goes back to Settings.
+- Sound panel: the output reads "Speakers" (plug headphones in: within a
+  moment "Headphones" with the headphones glyph while the panel stays
+  open), the input "Internal Microphone" with a level bar that moves when
+  you speak (the analog input on this Z13 read near full scale even in a
+  quiet room on 2026-10-07; if the bar stays full, that is the device, not
+  the bar). Blip is one row. Play something in Zen: it gets its own row;
+  moving its capsule changes only that app, the icon zone mutes it. Connect
+  a Bluetooth headset: it appears under Output and Input; a click makes it
+  the default. While the panel is open no orange privacy dot appears.
+  `open_in_new` opens the DMS audio settings.
+- Display panel: the switch turns night light on and the state reads "On ·
+  4500 K"; dragging the temperature capsule warms the screen live in 500 K
+  steps; the schedule line matches DMS's settings, which `open_in_new` opens
+  on the gamma tab. Brightness follows the Settings capsule. Keyboard Off to
+  High changes the cover's backlight (check that `asus::kbd_backlight`
+  really drives the detachable cover; detached, the row disappears). Rear
+  light Off to High changes the lightbar; then change the wallpaper or theme:
+  the colour follows and the chosen level stays.
+- Hide the bar (`Mod+Shift+B`) during a Meet call: the islands slide away,
+  the privacy dots glide to the screen centre into a small blurred pill;
+  showing the bar dissolves the pill and the dots glide back. A click on
+  the pill reaches the window below.
 - With the cover detached: the keyboard button appears in the right island
   and toggles squeekboard; Settings shows the rotation lock tile and
   Bluetooth as an icon; re-attaching animates back.
@@ -727,7 +844,11 @@ owns.
 | Workspaces, windows, focus | Niri's own socket (`$NIRI_SOCKET`) through `Quickshell.Io.Socket`, event stream | No `niri msg` subprocess. App icons through `DesktopEntries` with an override map for web apps without a desktop file. |
 | Battery, health, capacity, time to empty, power profile | `Quickshell.Services.UPower` | Health and capacity are exposed directly. |
 | Volume, microphone, mute | `Quickshell.Services.Pipewire` | |
+| Outputs, inputs, per-app volume, mic level | `Quickshell.Services.Pipewire` (`preferredDefaultAudioSink/Source`, `PwObjectTracker`, `PwNodePeakMonitor`), port names from `pactl -f json list sinks` and `sources` | Quickshell exposes no ports: the friendly name ("Speakers", "Headphones", "Internal Microphone") is the active port's description, read at start, on every node change, when the Sound panel opens and, while it is open, on `pactl subscribe` sink, source or card events (a jack plug moves the port without a node change). Without pactl: Bluetooth by device name, HDMI as "HDMI / DisplayPort", the analog card as "Speakers" or "Microphone". `pactl` is `libpulse`, a dependency of `cava`. Playback streams are bound with `PwObjectTracker` only while the panel is open; the level monitor runs only then too, and its stream flags itself `stream.monitor`, so it is no microphone use for `Privacy`. |
 | Brightness | `brightnessctl` | No ambient light sensor on the Z13, so the icon cycles 25, 50, 75, 100. |
+| Night temperature and schedule | `dms ipc call night status`, `getDayTemp`, `getSchedule`, `setTargetTemp` | DMS 1.6.2 accepts 1000 to 6000 K, rounds to 500 K and refuses a value above the day temperature (read in its shipped `DisplayService.qml`); the schedule has no IPC setter, only the settings tab `display_gamma`. Read when the Display panel opens and after each write. |
+| Keyboard backlight | `brightnessctl -d asus::kbd_backlight` | 0 to 3; read when the Display panel opens and after a write. |
+| Rear window light | `~/.local/state/z13ctl/state.json` (watched), `z13ctl brightness off|low|medium|high --device lightbar` | `devices.lightbar.brightness` 0 to 3 (`enabled: false` reads as off) and `color`; `brightness` keeps the mode and colour, and `sync-z13-window-color` keeps the level. |
 | Wi-Fi, Bluetooth | `Quickshell.Networking`, `Quickshell.Bluetooth` | Native modules in Quickshell 0.3. Networks that are neither connected nor saved are listed only while the module's scanner is on (rescans at most every 10 s), so the Wi-Fi panel runs it only while open. |
 | Night light, do not disturb, caffeine, theme mode, scheme | `dms ipc call night|notifications|inhibit|theme|settings` | `settings set matugenScheme` only saves the key: DMS 1.6.2's IPC assigns the setting directly and skips the `regenSystemThemes` hook its own settings UI runs (read in the shipped QML, not tried). The bar re-renders by setting the current wallpaper again, as [dms.md](dms.md) describes; a light/dark switch would also render but turns smart mode off. |
 | Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper` | DMS has no folder setting; its picker remembers the last folder. |
@@ -740,6 +861,9 @@ owns.
 | Weather | Open-Meteo, called by the bar, auto location through geoclue's `where-am-i` demo | DMS keeps weather in memory only. |
 | Updates | `system-update --pending` from the repository helper | Never call `dms ipc call systemupdater updatestatus`: it starts a check instead of reporting one. |
 | CPU, temperature, memory | `/proc/stat`, `/proc/meminfo`, the `k10temp` hwmon resolved by name | hwmon numbers change between boots. |
+| Microphone in use | `Quickshell.Services.Pipewire`: capture streams with an active or paused link from an audio source node | Streams and links are bound with `PwObjectTracker`; unbound, `properties` is empty and every link reads `Unlinked`. Streams flagged `stream.monitor`, `stream.capture.sink` or `node.passive` (peak meters, pavucontrol, cava) and streams linked from a sink monitor do not count. |
+| Camera in use | PipeWire video streams linked from a `v4l2_input.*` or `libcamera_input.*` node, plus `/dev/video*` holders | Zen, Chromium and Electron open the webcam directly by default, invisible to PipeWire. The webcam's USB `power/runtime_status` (resolved from `/sys/class/video4linux/video*/device`) is read every 2 s; only while it is not `suspended` does `find /proc/[0-9]*/fd -lname '/dev/video*'` run, every 4 s (about 20 ms), and `pipewire` and `wireplumber` holders are skipped. |
+| Screen share or cast | Niri's event stream: `CastsChanged`, `CastStartedOrChanged`, `CastStopped` | A cast counts while `is_active`, after 500 ms without change. The app is the PipeWire consumer linked from the cast's `pw_node_id`, else `/proc/<pid>/comm` of the client Niri names, else "Screen". |
 
 ## Services
 
@@ -755,7 +879,9 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `focusedWorkspace`, `focusedOutput`, `overviewOpen`, `connected`;
   `windowsOn(id)`, `focusWorkspace(id)`, `focusWindow(id)`,
   `toggleOverview()`, `request(message, callback)`, `iconFor(appId)` with
-  `iconOverrides`. One connection reads the event stream and reconnects
+  `iconOverrides`, and `casts` (Niri's screencasts as it reports them:
+  `stream_id`, `session_id`, `kind`, `target`, `is_dynamic_target`,
+  `is_active`, `pid`, `pw_node_id`). One connection reads the event stream and reconnects
   with a backoff of 1 s doubling to 30 s; each request opens its own.
 - `Battery`: `percentage`, `state` (`charging`, `discharging`, `full`,
   `unknown`), `onBattery`, `timeToEmpty`, `timeToFull` (seconds),
@@ -763,15 +889,34 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `profile`, `profiles` (`power-saver`, `balanced`, `performance`),
   `setProfile(name)`.
 - `Audio`: `volume`, `muted`, `micVolume`, `micMuted`, `ready`, `sink`
-  (the default output), `sinks` (hardware and virtual outputs, no streams);
+  and `source` (the defaults), `sinks` and `sources` (hardware and virtual
+  outputs and inputs, no streams, sorted by label), `ports` (node name to
+  active port label and type, from pactl), `panelOpen` (`Shell.centreState`
+  is `sound`), `playbackStreams`, `appStreams` (`key`, `name`, `icon`,
+  `nodes`, grouped by `application.name`, else `media.name`, else node
+  name; capture and monitor streams, the bar's cava among them, are never
+  in it), `micLevel` (0..1, only while the panel is open);
   `setVolume(v)`, `toggleMute()`, `setMicVolume(v)`, `toggleMicMute()`,
-  `sinkLabel(node)`, `setDefaultSink(node)` (PipeWire's configured default).
+  `sinkLabel(node)` (the friendly name, also for the Player's output chips),
+  `deviceIcon(node)`, `setDefaultSink(node)`, `setDefaultSource(node)`
+  (PipeWire's configured default), `appGroup(key)`, `groupVolume(group)`
+  (the loudest member), `groupMuted(group)`, `setGroupVolume(group, v)`
+  and `toggleGroupMute(group)` (every member), `readPorts()`.
 - `Brightness`: `percentage` (-1 until read), `device`, `available`;
   `set(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
   backlight class every 5 s and after each write. While a write runs, only
   the newest `set` waits and follows it, so a slider drag never loses its
   last value. `set` moves `percentage` at once, so key repeats step from
   the new value and the OSD shows it.
+- `Display`: `panelOpen` (`Shell.centreState` is `display`),
+  `nightTemperature` (K, -1 until read), `nightMinimum`, `nightMaximum`,
+  `nightStep`, `schedule` (DMS's text), `scheduleText`, `keyboardLevel` and
+  `keyboardAvailable`, `rearLevel`, `rearColor` (RRGGBB) and
+  `rearAvailable`; `nightFraction(kelvin)` and `nightKelvin(fraction)` (the
+  capsule's 0..100), `setNightTemperature(kelvin)` (only the newest waits
+  while a call runs), `setKeyboardLevel(level)`, `setRearLevel(level)`,
+  `refresh()` (run when the panel opens). Night light on and off stay in
+  `Dms`.
 - `Network`: `wifiEnabled`, `connected` (any device), `wifiConnected`,
   `ssid`, `strength`, `weak` (under 40), `networks` (Quickshell
   `WifiNetwork`s, one per SSID, ordered for the panel), `scannerWanted`
@@ -869,6 +1014,16 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
 - `Wallpapers`: `folder`, `files` (absolute paths, at most 200, sorted by
   name), `current`, `loading`; `refresh(screen)` (called when the Wallpaper
   panel opens), `apply(path, screen)`, `fileName(path)`.
+- `Privacy`: `micApps`, `cameraApps`, `shareApps` (deduplicated display
+  names: `application.name`, else `media.name`, the node description or
+  name; for direct camera holders the process name), `micActive`,
+  `cameraActive`, `shareActive` (follows the active casts after 500 ms
+  without change, so a short screencopy does not flash), `anyActive`;
+  `cameraDevices` (the webcam USB devices), `deviceStatus`, `cameraAwake`,
+  `cameraHolders` (`pid`, `comm`). Event-driven apart from the 2 s sysfs
+  read and the holder scan while the webcam is awake. A muted app that keeps
+  its stream open (a paused link) still counts. Holders owned by another user
+  (root) are not readable and do not count.
 - `Updates`: `items` (fragile first: `source`, `name`, `oldVersion`,
   `newVersion`, `fragile`), `count`, `fragileCount`, `checking`, `ready`,
   `lastChecked`, `upgrading`, `reportPath`, `reportAvailable`; `refresh()`,

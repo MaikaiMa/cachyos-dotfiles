@@ -79,7 +79,9 @@ Singleton {
             wallpaper: 560,
             updates: 420,
             wifi: 420,
-            bluetooth: 420
+            bluetooth: 420,
+            sound: 420,
+            display: 420
         })
     readonly property int panelPadding: 12
     readonly property int tileGap: 12
@@ -100,6 +102,9 @@ Singleton {
     readonly property int sliderDragThreshold: 4
     // One arrow key press or one wheel notch.
     readonly property int sliderStep: 5
+    // The hit area reaches this far into the gap above and below, so the
+    // chevron zone of a capsule is a 40 x 40 touch target.
+    readonly property int sliderHitExtension: 4
     readonly property int notificationHeaderGap: 10
     readonly property int notificationHeaderHeight: 28
     readonly property int notificationRowHeight: 62
@@ -159,6 +164,25 @@ Singleton {
     readonly property int listRowErrorHeight: 16
     // While the panel is open; Bluetooth discovery stops after this at the latest.
     readonly property int bluetoothDiscoveryTime: 30000
+
+    // Sound: Output, Input and Apps sections of list rows in one scrolling area.
+    readonly property int sectionHeaderHeight: 24
+    readonly property int sectionGap: 8
+    readonly property int soundListMaxHeight: 360
+    // The live level bar under the default input's name.
+    readonly property int levelBarHeight: 3
+    readonly property int levelBarGap: 4
+    // An app row's compact capsule: mute icon zone, value zone.
+    readonly property int appSliderWidth: 176
+    readonly property int appSliderHeight: 24
+    readonly property int appSliderIconZone: 26
+    readonly property int appSliderValueZone: 40
+    readonly property int appIconSize: 20
+
+    // Display: capsules and segmented rows; the schedule line under the night capsule.
+    readonly property int scheduleLineHeight: 20
+    readonly property int displayLabelWidth: 132
+    readonly property int colorDotSize: 10
 
     // Updates: count line, fragile rows, a scrolling list and three buttons.
     readonly property int updatesHeadHeight: 20
@@ -239,6 +263,18 @@ Singleton {
     readonly property int outputChipMaxWidth: 150
     // Seconds per arrow key on the progress track.
     readonly property int playerSeekStep: 5
+
+    // Privacy dots right of the centre island, mirroring the orb. Fixed colours,
+    // not the wallpaper palette: they must read the same on every scheme.
+    readonly property int privacyDotSize: 6
+    readonly property int privacyDotGap: 4
+    readonly property int privacyDotOffset: 6
+    readonly property color privacyMicColor: "#FF9F0A"
+    readonly property color privacyCameraColor: "#30D158"
+    readonly property color privacyShareColor: "#0A84FF"
+    // While the bar is hidden the dots sit in a mini island at the screen centre.
+    readonly property int privacyPillHeight: 16
+    readonly property int privacyPillPadding: 6
 
     // Top-edge wave: a band of light along the top of every screen while music plays.
     readonly property bool topWaveEnabled: true

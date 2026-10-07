@@ -21,6 +21,9 @@ Singleton {
     readonly property var focusedWorkspace: workspaces.find(workspace => workspace.isFocused) ?? null
     readonly property string focusedOutput: focusedWorkspace ? focusedWorkspace.output : ""
     property bool overviewOpen: false
+    // Screencasts as Niri reports them: {stream_id, session_id, kind, target,
+    // is_dynamic_target, is_active, pid, pw_node_id}; pid and pw_node_id may be null.
+    property var casts: []
 
     // Web apps whose app_id matches no desktop file id; value is an icon name.
     // ChatGPT's desktop file is chatgpt.desktop with Icon=chatgpt (/usr/share/pixmaps).
@@ -33,6 +36,7 @@ Singleton {
 
     property var workspaceById: ({})
     property var windowById: ({})
+    property var castById: ({})
     property var eventSocket: null
     property int reconnectDelay: 1000
 
@@ -174,6 +178,10 @@ Singleton {
         });
     }
 
+    function publishCasts() {
+        casts = Object.values(castById).sort((a, b) => a.stream_id - b.stream_id);
+    }
+
     function updateWorkspace(id: int, change: var) {
         const workspace = workspaceById[id];
         if (workspace)
@@ -266,6 +274,19 @@ Singleton {
             publishWindows();
         } else if (event.OverviewOpenedOrClosed) {
             overviewOpen = event.OverviewOpenedOrClosed.is_open === true;
+        } else if (event.CastsChanged) {
+            const next = {};
+            for (const cast of event.CastsChanged.casts ?? [])
+                next[cast.stream_id] = cast;
+            castById = next;
+            publishCasts();
+        } else if (event.CastStartedOrChanged) {
+            const cast = event.CastStartedOrChanged.cast;
+            castById[cast.stream_id] = cast;
+            publishCasts();
+        } else if (event.CastStopped) {
+            delete castById[event.CastStopped.stream_id];
+            publishCasts();
         }
     }
 

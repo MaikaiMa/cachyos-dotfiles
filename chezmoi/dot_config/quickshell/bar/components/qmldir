@@ -15,6 +15,7 @@ PerformanceTile 1.0 PerformanceTile.qml
 PowerTile 1.0 PowerTile.qml
 RimLight 1.0 RimLight.qml
 Orb 1.0 Orb.qml
+PrivacyDots 1.0 PrivacyDots.qml
 TopWave 1.0 TopWave.qml
 Carousel 1.0 Carousel.qml
 Osd 1.0 Osd.qml
