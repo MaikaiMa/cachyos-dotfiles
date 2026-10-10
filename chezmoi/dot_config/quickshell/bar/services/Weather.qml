@@ -132,12 +132,16 @@ Singleton {
             locationFailed();
             return;
         }
-        const moved = isNaN(latitude) || Math.abs(lat - latitude) > 0.05 || Math.abs(lon - longitude) > 0.05;
-        useLocation(lat, lon, "geoclue");
         locationFile.setText(JSON.stringify({
             latitude: lat,
             longitude: lon
         }) + "\n");
+        // The fix is kept for a later unpin, but a pinned location is not moved
+        // by an answer that arrives after Settings loaded.
+        if (Settings.weatherFixedLocation)
+            return;
+        const moved = isNaN(latitude) || Math.abs(lat - latitude) > 0.05 || Math.abs(lon - longitude) > 0.05;
+        useLocation(lat, lon, "geoclue");
         if (moved || !ready)
             fetch();
     }

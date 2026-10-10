@@ -8,7 +8,8 @@ import Quickshell.Services.SystemTray
 Singleton {
     id: root
 
-    readonly property var items: SystemTray.items.values
+    // Under qmllint 6.12 `values` of UntypedObjectModel does not resolve although the type info declares it.
+    readonly property var items: SystemTray.items.values // qmllint disable missing-property
     readonly property int count: items.length
 
     function activate(item: SystemTrayItem) {

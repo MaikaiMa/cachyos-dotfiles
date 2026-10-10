@@ -67,8 +67,8 @@ PanelWindow {
     // click, and Niri only hands on-demand focus to a layer on a click.
     // A tray menu is handled like a panel on its own screen: Escape and
     // a press outside close it.
-    WlrLayershell.keyboardFocus: Shell.panelOpenOn(screenName) || right.menuOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    mask: Shell.panelOpen || right.menuOpen ? fullRegion : inputRegion
+    WlrLayershell.keyboardFocus: Shell.panelOpenOn(screenName) || rightIsland.menuOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    mask: Shell.panelOpen || rightIsland.menuOpen ? fullRegion : inputRegion
     // The blur type lives in Quickshell core, which the BackgroundEffect
     // type info does not declare, so qmllint cannot resolve it.
     // The privacy pill of the hidden bar gets blur but no input.
@@ -109,7 +109,7 @@ PanelWindow {
     IslandRegion {
         id: rightInput
 
-        island: right
+        island: rightIsland
     }
     Variants {
         id: inputBlobs
@@ -132,7 +132,7 @@ PanelWindow {
     IslandRegion {
         id: rightBlur
 
-        island: right
+        island: rightIsland
     }
     Variants {
         id: blurBlobs
@@ -179,7 +179,7 @@ PanelWindow {
         anchors.fill: parent
         focus: true
         Keys.onEscapePressed: {
-            right.closeMenu();
+            rightIsland.closeMenu();
             Shell.close();
         }
         // Back from a panel opened from Settings; a focused text field
@@ -204,7 +204,7 @@ PanelWindow {
 
             function onHiddenChanged() {
                 if (Shell.hidden)
-                    right.closeMenu();
+                    rightIsland.closeMenu();
             }
         }
 
@@ -227,10 +227,10 @@ PanelWindow {
         // panel guard keeps presses inside an open panel from reaching it.
         MouseArea {
             anchors.fill: parent
-            enabled: Shell.panelOpen || right.menuOpen
+            enabled: Shell.panelOpen || rightIsland.menuOpen
             acceptedButtons: Qt.AllButtons
             onPressed: {
-                right.closeMenu();
+                rightIsland.closeMenu();
                 Shell.close();
             }
         }
@@ -244,7 +244,7 @@ PanelWindow {
         }
 
         RightIsland {
-            id: right
+            id: rightIsland
 
             screenName: bar.screenName
             x: parent.width - width - Theme.gap
@@ -257,15 +257,15 @@ PanelWindow {
             id: blobs
 
             screenName: bar.screenName
-            x: right.x + right.width - width
-            y: right.y
-            islandWidth: right.width
-            islandBottom: right.height
-            bellX: width - right.bellCentreOffset
-            riseX: width - right.riseOffset
-            clearShown: right.peekOpen
+            x: rightIsland.x + rightIsland.width - width
+            y: rightIsland.y
+            islandWidth: rightIsland.width
+            islandBottom: rightIsland.height
+            bellX: width - rightIsland.bellCentreOffset
+            riseX: width - rightIsland.riseOffset
+            clearShown: rightIsland.peekOpen
             discOrigin: id => {
-                const disc = right.discFor(id);
+                const disc = rightIsland.discFor(id);
                 return disc ? disc.mapToItem(blobs, disc.width / 2, disc.height / 2) : null;
             }
         }

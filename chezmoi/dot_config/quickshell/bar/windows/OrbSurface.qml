@@ -30,7 +30,7 @@ PanelWindow {
         left: true
     }
     // PanelWindow's margins group is not in its type info.
-    margins.left: surface.boxLeft // qmllint disable unqualified unresolved-type
+    margins.left: surface.boxLeft // qmllint disable unqualified unresolved-type missing-property
     // Ends at the collapsed pill's left edge, clipping the bloom's faint last
     // 2 px: a frame of this box then damages nothing over the blurred island,
     // which Niri would otherwise redraw with it.

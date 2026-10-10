@@ -61,7 +61,7 @@ Surface {
         Accessible.description: text
 
         Label {
-            id: value
+            id: valueLabel
 
             anchors.horizontalCenter: parent.horizontalCenter
             text: meter.text
@@ -72,7 +72,7 @@ Surface {
         FillTrack {
             anchors.horizontalCenter: parent.horizontalCenter
             width: Theme.meterWidth
-            height: meter.height - value.height - Theme.iconSize - 2 * meter.spacing
+            height: meter.height - valueLabel.height - Theme.iconSize - 2 * meter.spacing
             vertical: true
             value: meter.level
         }

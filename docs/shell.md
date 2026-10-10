@@ -1273,7 +1273,10 @@ surface.
    `qmldir` and on any qmllint warning other than the known
    `PanelWindow is not creatable` one. It lints through a temporary import
    root whose `qs` entry links to the bar directory, the way Quickshell
-   maps `qs` to the folder of `shell.qml`.
+   maps `qs` to the folder of `shell.qml`. qmllint 6.12 also rejects an id
+   that shadows a property of its scope (`right`, `layer`, `clock`,
+   `value`), so an id names the item, not the role; and a comment must not
+   start with the word qmllint, which it reads as a directive.
 6. Where the widget opens something the own bar has no panel for yet, call
    the matching `dms ipc` function, as ADR-0027 describes.
 7. A new centre panel is a `Panel` (`panels/Panel.qml`) with a `name`; it

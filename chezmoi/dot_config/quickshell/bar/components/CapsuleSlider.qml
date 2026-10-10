@@ -279,7 +279,7 @@ Item {
     }
 
     component SliderLayer: Item {
-        id: layer
+        id: zoneLayer
 
         property color tone
 
@@ -291,17 +291,17 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             name: slider.iconName
             size: slider.iconSize
-            color: layer.tone
+            color: zoneLayer.tone
         }
 
         Label {
             x: slider.trackWidth - slider.valueZone
             width: slider.valueZone
-            height: layer.height
+            height: zoneLayer.height
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             text: slider.available ? slider.valueText : "–"
-            color: layer.tone
+            color: zoneLayer.tone
             elide: Text.ElideNone
             numeric: true
             font.pixelSize: Theme.sliderValueFontSize

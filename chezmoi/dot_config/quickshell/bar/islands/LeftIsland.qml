@@ -189,7 +189,7 @@ Island {
     }
 
     component AppsLayer: Item {
-        id: layer
+        id: appsLayer
 
         property int workspaceId: -1
         property bool shown: false
@@ -229,7 +229,7 @@ Island {
             }
 
             Repeater {
-                model: layer.windows
+                model: appsLayer.windows
 
                 IconImage {
                     id: appIcon
@@ -241,7 +241,7 @@ Island {
                     y: (Theme.islandHeight - height) / 2
                     implicitSize: Theme.iconSize
                     source: Niri.iconFor(modelData.appId)
-                    opacity: modelData.id === layer.activeWindowId ? 1 : Theme.inactiveAppOpacity
+                    opacity: modelData.id === appsLayer.activeWindowId ? 1 : Theme.inactiveAppOpacity
 
                     MouseArea {
                         anchors.fill: parent
@@ -260,8 +260,8 @@ Island {
         // Under the active icon; it slides on a focus change and jumps while
         // the row is still fading in after a workspace switch.
         Rectangle {
-            visible: layer.activeIndex >= 0
-            x: Theme.gap + Theme.workspaceSeparatorSize + Theme.gap + Math.max(0, layer.activeIndex) * (Theme.iconSize + Theme.gap) + (Theme.iconSize - width) / 2
+            visible: appsLayer.activeIndex >= 0
+            x: Theme.gap + Theme.workspaceSeparatorSize + Theme.gap + Math.max(0, appsLayer.activeIndex) * (Theme.iconSize + Theme.gap) + (Theme.iconSize - width) / 2
             y: (Theme.islandHeight + Theme.iconSize) / 2 + Theme.focusDotGap
             width: Theme.focusDot
             height: width
@@ -269,7 +269,7 @@ Island {
             color: Colors.primary
 
             Behavior on x {
-                enabled: layer.opacity === 1
+                enabled: appsLayer.opacity === 1
 
                 MorphAnimation {
                     durationOverride: Motion.workspaceSlideDuration

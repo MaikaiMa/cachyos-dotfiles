@@ -57,7 +57,7 @@ Panel {
     }
 
     Column {
-        id: fragile
+        id: fragileColumn
 
         x: panel.contentX
         y: Theme.panelPadding + Theme.updatesHeadHeight + Theme.updatesSectionGap
@@ -71,7 +71,7 @@ Panel {
             UpdateRow {
                 required property var modelData
 
-                width: fragile.width
+                width: fragileColumn.width
                 height: Theme.updatesFragileRowHeight
                 item: modelData
                 fragile: true

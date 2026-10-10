@@ -23,7 +23,7 @@ Appear {
 
     // Collapsed: icon | clock | icon at the icon size. Even widths keep the
     // island symmetric around the whole-pixel clock.
-    readonly property int clockWidth: 2 * Math.ceil(clock.implicitWidth / 2)
+    readonly property int clockWidth: 2 * Math.ceil(clockItem.implicitWidth / 2)
     readonly property int pillWidth: columnsWidth(Theme.iconSize, clockWidth)
     // Detail: measured from the label text once on entering, not from live layout,
     // so the target does not hop while a font loads. See measureDetail().
@@ -32,7 +32,7 @@ Appear {
     readonly property int detailWidth: columnsWidth(detailSideWidth, detailClockWidth)
     // The owner's hover hit area: the collapsed pill and Detail, at a fixed size.
     readonly property int hoverWidth: Math.max(pillWidth, detailWidth)
-    readonly property alias clock: clock
+    readonly property alias clock: clockItem
 
     // Distance from the centre line to the centre of a side column.
     readonly property real collapsedIconOffset: clockWidth / 2 + 2 * Theme.gap + Theme.hairlineWidth + Theme.iconSize / 2
@@ -56,7 +56,7 @@ Appear {
 
     function measureDetail() {
         detailSideWidth = Math.max(Theme.iconSize, Math.ceil(weatherMetrics.advanceWidth), Math.ceil(batteryMetrics.advanceWidth));
-        detailClockWidth = 2 * Math.ceil(Math.max(clock.implicitWidth, dateMetrics.advanceWidth) / 2);
+        detailClockWidth = 2 * Math.ceil(Math.max(clockItem.implicitWidth, dateMetrics.advanceWidth) / 2);
     }
 
     // "Zo 04-10": Dutch short weekday with a capital, then day and month.
@@ -161,7 +161,7 @@ Appear {
     }
 
     Clock {
-        id: clock
+        id: clockItem
 
         x: pill.onPixel(pill.localCentreX - width / 2)
         y: (Theme.islandHeight - height) / 2

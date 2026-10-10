@@ -11,7 +11,8 @@ Singleton {
     // The display device aggregates all batteries; health and design capacity
     // only exist on the laptop battery itself.
     readonly property UPowerDevice device: UPower.displayDevice
-    readonly property UPowerDevice laptopBattery: UPower.devices.values.find(candidate => candidate.isLaptopBattery) ?? null
+    // Under qmllint 6.12 `values` of UntypedObjectModel does not resolve although the type info declares it.
+    readonly property UPowerDevice laptopBattery: UPower.devices.values.find(candidate => candidate.isLaptopBattery) ?? null // qmllint disable missing-property
     readonly property bool available: laptopBattery !== null
 
     // 0..100; Quickshell reports 0..1.

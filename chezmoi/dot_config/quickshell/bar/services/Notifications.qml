@@ -488,7 +488,8 @@ Singleton {
         property var keyByServerId: ({})
         // The previous generation's map after a config reload, until relink.
         property var restoredKeys: ({})
-        readonly property var liveNotifications: server.trackedNotifications.values
+        // Under qmllint 6.12 `values` of UntypedObjectModel does not resolve although the type info declares it.
+        readonly property var liveNotifications: server.trackedNotifications.values // qmllint disable missing-property
     }
 
     // The key map across config reloads, as JSON: a JS object would belong to
@@ -521,7 +522,7 @@ Singleton {
     }
 
     Connections {
-        target: server.trackedNotifications
+        target: server.trackedNotifications // qmllint disable incompatible-type
 
         function onObjectRemovedPre(object: QtObject, index: int) {
             root.liveGone((object as Notification).id);
