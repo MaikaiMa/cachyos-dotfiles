@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import "../panels"
+import qs.panels
 
 // The eleven centre panels, each at its own settled size and centred on the
 // island, which clips them while it grows. The panel whose name is the

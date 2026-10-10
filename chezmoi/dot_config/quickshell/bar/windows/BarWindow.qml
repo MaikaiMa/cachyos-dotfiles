@@ -3,10 +3,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import ".."
-import "../components"
-import "../islands"
-import "../services"
+import qs
+import qs.services
+import qs.components
+import qs.islands
 
 // One window per screen, as tall as the screen: islands grow inside it instead
 // of opening popups. Not anchored to the bottom edge: with all four edges

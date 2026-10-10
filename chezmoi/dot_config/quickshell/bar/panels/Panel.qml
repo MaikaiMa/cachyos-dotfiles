@@ -1,6 +1,6 @@
 import QtQuick
-import ".."
-import "../components"
+import qs
+import qs.components
 
 // The body of one centre panel: as wide as Theme.panelWidths[name] and as
 // tall as its settled implicitHeight, centred on its host, which the island

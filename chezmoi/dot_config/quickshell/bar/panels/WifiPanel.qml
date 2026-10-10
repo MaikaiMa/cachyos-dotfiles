@@ -1,10 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
-import "../components/RowActions.js" as RowActions
+import qs
+import qs.services
+import qs.components
 
 // The Wi-Fi state of the centre island, opened from the Settings tile; what
 // a click does is in docs/shell.md, "Wi-Fi and Bluetooth panels". The
@@ -112,7 +111,6 @@ Panel {
     RowList {
         id: list
 
-        objectName: "networkList"
         x: panel.contentX
         y: controls.y + controls.height + Theme.gap
         width: panel.contentWidth

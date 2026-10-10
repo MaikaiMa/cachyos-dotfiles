@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // Growing and morphing use the spring-like curve, shrinking the standard one.
 // A change with a Motion token of its own (a workspace slide, a tray fan)

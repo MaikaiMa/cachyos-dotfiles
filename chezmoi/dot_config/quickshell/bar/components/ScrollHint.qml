@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A thin bar at the right edge of a list that is longer than its window.
 // A sibling of the view, not its child: a Flickable's children scroll with

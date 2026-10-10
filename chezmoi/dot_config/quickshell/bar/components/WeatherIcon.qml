@@ -1,5 +1,4 @@
 import QtQuick
-import ".."
 
 // A Weather service icon name ("partly-cloudy-day") as its Material Symbols glyph.
 Icon {

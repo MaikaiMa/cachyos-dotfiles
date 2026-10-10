@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import ".."
+import qs
 
 // The IPC targets `bar` and `notifications` for the Niri shortcuts. A plain
 // Scope, not a singleton: singletons load lazily, so shell.qml creates this

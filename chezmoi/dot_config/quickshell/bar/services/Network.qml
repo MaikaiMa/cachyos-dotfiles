@@ -4,7 +4,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Networking
-import "maps.js" as Maps
 
 // Wi-Fi state from Quickshell's NetworkManager backend.
 Singleton {

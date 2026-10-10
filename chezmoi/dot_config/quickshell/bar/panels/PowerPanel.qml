@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Power state of the centre island: one row of five square buttons. The
 // first takes the keyboard on open, Left and Right move it, Enter or Space
@@ -75,7 +75,6 @@ Panel {
 
                 readonly property bool current: panel.focusIndex === index
 
-                objectName: "power_" + modelData.action
                 width: Theme.powerButtonSize
                 height: Theme.powerButtonSize
                 accessibleName: modelData.text

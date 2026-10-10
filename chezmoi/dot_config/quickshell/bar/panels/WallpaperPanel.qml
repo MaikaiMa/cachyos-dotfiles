@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Wallpaper state of the centre island: the DMS wallpaper folder as a strip
 // of thumbnails. Left and Right move the selection, Enter or a click applies
@@ -57,7 +57,6 @@ Panel {
     Carousel {
         id: walls
 
-        objectName: "wallpapers"
         y: Theme.panelPadding
         width: panel.width
         height: panel.height - 2 * Theme.panelPadding
@@ -75,7 +74,6 @@ Panel {
             readonly property bool selected: index === walls.currentIndex
             readonly property bool applied: modelData === Wallpapers.current
 
-            objectName: "wallpaperThumb"
             width: Theme.thumbWidth + 2 * Theme.thumbRing
             height: walls.height
 
@@ -112,7 +110,6 @@ Panel {
                 }
 
                 RoundedImage {
-                    objectName: "thumbImage"
                     anchors.fill: parent
                     source: Wallpapers.urlFor(thumb.modelData)
                     maskSource: thumbMask
@@ -120,7 +117,6 @@ Panel {
                 }
 
                 Rectangle {
-                    objectName: "currentMarker"
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.margins: Theme.thumbMarker

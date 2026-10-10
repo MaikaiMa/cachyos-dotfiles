@@ -45,9 +45,16 @@ for file in $qml_files; do
 	}
 done
 
+# The bar imports itself as the qs module (`import qs.services`); Quickshell
+# maps qs to the folder of shell.qml, so qmllint gets an import root whose qs
+# entry is that folder.
+import_root=$(mktemp -d)
+trap 'rm -rf "$import_root"' EXIT HUP INT TERM
+ln -s "$bar_dir" "$import_root/qs"
+
 qml_status=0
 # shellcheck disable=SC2086 # the file list is newline-separated paths without spaces
-qml_report=$(cd "$bar_dir" && "$qmllint_command" -I "$qml_import_path" -I . $qml_files 2>&1) || qml_status=$?
+qml_report=$(cd "$bar_dir" && "$qmllint_command" -I "$qml_import_path" -I "$import_root" $qml_files 2>&1) || qml_status=$?
 # PanelWindow is registered through an interface type, so qmllint warns that
 # it is not creatable; every other warning (a misspelt property) fails.
 unexpected=$(printf '%s\n' "$qml_report" | grep -E '^(Warning|Error):' | grep -v 'Type PanelWindow is not creatable' || true)

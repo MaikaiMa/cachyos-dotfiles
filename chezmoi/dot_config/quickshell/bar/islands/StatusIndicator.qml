@@ -1,5 +1,6 @@
 import QtQuick
-import ".."
+import qs
+import qs.components
 
 // One attention indicator of the right island: a permanent pill hit area of
 // the indicator height; hover only tints it. The width and opacity carry the

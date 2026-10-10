@@ -2,8 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Services.Notifications
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // One bare row of the notification stack: the app's icon on a disc, the
 // summary over one line of body, and the hairline in the gap below it. Its own
@@ -291,7 +292,6 @@ Item {
     IconButton {
         id: dismissButton
 
-        objectName: "dismiss"
         x: parent.width - Theme.notificationPeekDismissInset - (Theme.iconSize + Theme.notificationPeekDismissHit) / 2
         y: Theme.notificationPeekDismissInset - (Theme.notificationPeekDismissHit - Theme.iconSize) / 2
         size: Theme.notificationPeekDismissHit
@@ -312,7 +312,6 @@ Item {
     }
 
     Rectangle {
-        objectName: "hairline"
         y: row.contentHeight + (Theme.notificationPeekRowGap - height) / 2
         width: parent.width
         height: Theme.hairlineWidth
@@ -327,7 +326,7 @@ Item {
     Accessible.role: Accessible.Button
     Accessible.name: internal.summaryText + (internal.bodyText !== "" ? ", " + internal.bodyText : "")
 
-    // Disc and two lines in the top 48 px; the backlog row has one line.
+    // Disc and two lines in the row's top notificationPeekRowHeight; the backlog row has one line.
     component Face: Item {
         id: faceItem
 

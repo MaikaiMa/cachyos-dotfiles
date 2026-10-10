@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
-import ".."
+import qs
 
 // The active MPRIS player (the first one playing, else the first one) and the
 // colours of its album art.

@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // The scrolling list of the Wi-Fi and Bluetooth panels. The model is patched by
 // key instead of replaced, so a row keeps its delegate (and a half-typed

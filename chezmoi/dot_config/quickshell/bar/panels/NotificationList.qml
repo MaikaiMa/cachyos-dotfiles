@@ -1,8 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The notification history under a header with Clear all: newest first, one
 // row expanded at a time. A dismissed row collapses before the service drops

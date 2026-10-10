@@ -128,20 +128,20 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/panels/BluetoothPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/SoundPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/DisplayPanel.qml \
-	chezmoi/dot_config/quickshell/bar/components/Orb.qml \
-	chezmoi/dot_config/quickshell/bar/components/RimLight.qml \
-	chezmoi/dot_config/quickshell/bar/components/TopWave.qml \
-	chezmoi/dot_config/quickshell/bar/components/FrameCounter.qml \
+	chezmoi/dot_config/quickshell/bar/windows/Orb.qml \
+	chezmoi/dot_config/quickshell/bar/islands/RimLight.qml \
+	chezmoi/dot_config/quickshell/bar/windows/TopWave.qml \
+	chezmoi/dot_config/quickshell/bar/windows/FrameCounter.qml \
 	chezmoi/dot_config/quickshell/bar/components/Carousel.qml \
-	chezmoi/dot_config/quickshell/bar/components/Osd.qml \
-	chezmoi/dot_config/quickshell/bar/components/PrivacyDots.qml \
+	chezmoi/dot_config/quickshell/bar/islands/Osd.qml \
+	chezmoi/dot_config/quickshell/bar/islands/PrivacyDots.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
 	chezmoi/dot_config/quickshell/bar/components/IslandShadow.qml \
-	chezmoi/dot_config/quickshell/bar/components/Marquee.qml \
-	chezmoi/dot_config/quickshell/bar/components/StatusIndicator.qml \
-	chezmoi/dot_config/quickshell/bar/components/NotificationList.qml \
-	chezmoi/dot_config/quickshell/bar/components/AppVolumeRow.qml \
+	chezmoi/dot_config/quickshell/bar/islands/Marquee.qml \
+	chezmoi/dot_config/quickshell/bar/islands/StatusIndicator.qml \
+	chezmoi/dot_config/quickshell/bar/panels/NotificationList.qml \
+	chezmoi/dot_config/quickshell/bar/panels/AppVolumeRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/RowActions.js \
 	chezmoi/dot_config/quickshell/bar/components/MorphAnimation.qml \
 	chezmoi/dot_config/quickshell/bar/components/Hairline.qml \
@@ -149,18 +149,20 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/Icon.qml \
 	chezmoi/dot_config/quickshell/bar/components/Tile.qml \
 	chezmoi/dot_config/quickshell/bar/components/CapsuleSlider.qml \
-	chezmoi/dot_config/quickshell/bar/components/NotificationRow.qml \
-	chezmoi/dot_config/quickshell/bar/components/PanelControlRow.qml \
+	chezmoi/dot_config/quickshell/bar/panels/NotificationRow.qml \
+	chezmoi/dot_config/quickshell/bar/panels/PanelControlRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/RowList.qml \
 	chezmoi/dot_config/quickshell/bar/components/ListRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/WeatherIcon.qml \
 	chezmoi/dot_config/quickshell/bar/components/BatteryIcon.qml \
 	chezmoi/dot_config/quickshell/bar/components/SegmentedControl.qml \
-	chezmoi/dot_config/quickshell/bar/components/TimeTile.qml \
-	chezmoi/dot_config/quickshell/bar/components/WeatherTile.qml \
-	chezmoi/dot_config/quickshell/bar/components/PerformanceTile.qml \
-	chezmoi/dot_config/quickshell/bar/components/PowerTile.qml \
+	chezmoi/dot_config/quickshell/bar/components/home/TimeTile.qml \
+	chezmoi/dot_config/quickshell/bar/components/home/WeatherTile.qml \
+	chezmoi/dot_config/quickshell/bar/components/home/PerformanceTile.qml \
+	chezmoi/dot_config/quickshell/bar/components/home/PowerTile.qml \
 	chezmoi/dot_config/quickshell/bar/components/qmldir \
+	chezmoi/dot_config/quickshell/bar/components/Surface.qml \
+	chezmoi/dot_config/quickshell/bar/components/home/qmldir \
 	chezmoi/dot_config/quickshell/bar/README.md \
 	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \

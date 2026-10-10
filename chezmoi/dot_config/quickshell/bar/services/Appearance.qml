@@ -3,7 +3,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import ".."
+import qs
 
 // Light / Dark / Auto and the matugen scheme: the theme state DMS owns, read
 // and changed through `dms ipc call` and the desktop portal. The colours

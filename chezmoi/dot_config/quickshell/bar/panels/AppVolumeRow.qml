@@ -1,8 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // One application in the Sound panel: its icon, its name and a compact
 // capsule that moves all of its streams together. key is an Audio.appStreams
@@ -15,7 +16,6 @@ Item {
     readonly property bool groupMuted: Audio.groupMuted(group)
     readonly property string name: group ? group.name : key
 
-    objectName: "appRow"
     height: Theme.listRowHeight
 
     Rectangle {
@@ -59,7 +59,6 @@ Item {
     CapsuleSlider {
         id: slider
 
-        objectName: "appSlider"
         x: parent.width - (Theme.listRowHeight - Theme.appSliderHeight) / 2 - width
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.appSliderWidth

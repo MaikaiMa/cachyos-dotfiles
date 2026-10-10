@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
+import qs
 
 // A full-width capsule without a thumb: the fill runs from the left edge and its
 // edge is the handle. Icon and value are drawn twice, once on the track and once
@@ -161,7 +161,6 @@ Item {
         Item {
             id: fillClip
 
-            objectName: "fillClip"
             width: slider.fillWidth
             height: parent.height
             clip: true
@@ -179,7 +178,6 @@ Item {
             }
 
             SliderLayer {
-                objectName: "accentLayer"
                 tone: Colors.primaryForeground
             }
         }
@@ -195,7 +193,6 @@ Item {
     MouseArea {
         id: pointer
 
-        objectName: "sliderPointer"
         anchors.fill: parent
         anchors.topMargin: -Theme.sliderHitExtension
         anchors.bottomMargin: -Theme.sliderHitExtension
@@ -272,9 +269,9 @@ Item {
             if (Math.sign(delta) !== Math.sign(wheelRemainder))
                 wheelRemainder = 0;
             wheelRemainder += delta;
-            const steps = Math.trunc(wheelRemainder / 120);
+            const steps = Math.trunc(wheelRemainder / Theme.wheelNotch);
             if (steps !== 0) {
-                wheelRemainder -= steps * 120;
+                wheelRemainder -= steps * Theme.wheelNotch;
                 slider.step(steps * slider.stepSize);
             }
             wheel.accepted = true;
@@ -298,7 +295,6 @@ Item {
         }
 
         Label {
-            objectName: "valueText"
             x: slider.trackWidth - slider.valueZone
             width: slider.valueZone
             height: layer.height

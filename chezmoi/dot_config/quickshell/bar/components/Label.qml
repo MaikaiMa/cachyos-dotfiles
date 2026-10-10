@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // Text in the bar's font. secondary is the small line in the variant colour,
 // strong is demi-bold, numeric uses tabular figures so changing digits do not

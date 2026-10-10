@@ -1,6 +1,6 @@
 import QtQuick
-import ".."
-import "../components"
+import qs
+import qs.components
 
 // The music bar's cross-fade: on opening, the content comes in after the
 // island has grown into the bar; on closing it fades at once.

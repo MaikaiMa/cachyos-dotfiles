@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Services.Pipewire
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Player state of the centre island: cover beside title, artist and album,
 // a thin seekable progress track with times, previous / play / next, and the
@@ -40,7 +40,6 @@ Panel {
     Pressable {
         id: cover
 
-        objectName: "cover"
         x: panel.contentX
         y: Theme.panelPadding
         width: Theme.playerCoverSize
@@ -68,7 +67,6 @@ Panel {
         }
 
         Rectangle {
-            objectName: "coverOverlay"
             anchors.fill: parent
             radius: Theme.playerCoverRadius
             color: Qt.alpha(Colors.surface, Theme.playerCoverOverlayOpacity)
@@ -95,7 +93,6 @@ Panel {
         spacing: Theme.playerTextGap
 
         Label {
-            objectName: "playerTitle"
             width: parent.width
             text: Music.title || "Nothing playing"
             strong: true
@@ -121,7 +118,6 @@ Panel {
     Item {
         id: progress
 
-        objectName: "progress"
         x: panel.contentX
         y: panel.progressY + (Theme.playerTrackHeight - height) / 2
         width: panel.contentWidth
@@ -209,7 +205,6 @@ Panel {
         spacing: Theme.playerControlSpacing
 
         IconButton {
-            objectName: "playerPrevious"
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.playerControlSize
             iconSize: Theme.playerControlIconSize
@@ -221,7 +216,6 @@ Panel {
         }
 
         IconButton {
-            objectName: "playerToggle"
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.playerPlaySize
             iconSize: Theme.playerPlayIconSize
@@ -233,7 +227,6 @@ Panel {
         }
 
         IconButton {
-            objectName: "playerNext"
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.playerControlSize
             iconSize: Theme.playerControlIconSize
@@ -246,7 +239,6 @@ Panel {
     }
 
     Flickable {
-        objectName: "outputs"
         x: panel.contentX
         y: panel.outputsY
         width: panel.contentWidth

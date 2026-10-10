@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // The keyboard focus ring around its parent; the owner binds visible to its
 // activeFocus. Focus only arrives through Tab, so the ring never shows on a

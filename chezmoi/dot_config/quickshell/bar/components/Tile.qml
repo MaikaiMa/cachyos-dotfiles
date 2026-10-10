@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A Settings grid toggle. Wide tiles show an icon disc, a title and a one-line
 // state; small tiles only the icon. Active tiles take the accent. A tile with a
@@ -67,7 +67,7 @@ Item {
         anchors.fill: parent
         radius: Theme.tileRadius
         color: tile.restColor
-        scale: pointer.pressed ? 0.98 : 1
+        scale: pointer.pressed ? Theme.tilePressedScale : 1
 
         Behavior on color {
             ColorCrossfade {}

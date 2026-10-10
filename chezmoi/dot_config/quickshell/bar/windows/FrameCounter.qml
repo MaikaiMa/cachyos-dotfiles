@@ -1,5 +1,5 @@
 import QtQuick
-import "../services"
+import qs.services
 
 // Counts the frames the window of `item` presents into Frames.
 Connections {

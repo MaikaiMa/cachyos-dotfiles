@@ -10,3 +10,7 @@ BluetoothPanel 1.0 BluetoothPanel.qml
 SoundPanel 1.0 SoundPanel.qml
 DisplayPanel 1.0 DisplayPanel.qml
 Panel 1.0 Panel.qml
+AppVolumeRow 1.0 AppVolumeRow.qml
+NotificationList 1.0 NotificationList.qml
+NotificationRow 1.0 NotificationRow.qml
+PanelControlRow 1.0 PanelControlRow.qml

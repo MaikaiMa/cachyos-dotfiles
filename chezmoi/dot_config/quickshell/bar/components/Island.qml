@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
+import qs
 
 // The surface every island is drawn on. The owner sets targetWidth, targetHeight,
 // expanded, targetOpacity and optionally targetBlend; one animation carries size,
@@ -115,6 +115,11 @@ Rectangle {
         to: 1
     }
 
+    // Reminder: the layer and its shadow pass run even while shadowStrength is
+    // 0, and the music bar's rim redraws the centre island on every Cava tick.
+    // Measure with Frames (`quickshell ipc -c bar call bardebug frames 5` while
+    // music plays) before choosing a RectangularShadow sibling from
+    // QtQuick.Effects or `layer.enabled: shadowStrength > 0`.
     layer.enabled: true
     layer.effect: IslandShadow {
         shadowOpacity: island.shadowStrength

@@ -1,6 +1,7 @@
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The OSD body inside the collapsed island: an icon, a thin fill track and the
 // value. Shell.osdKind says what it shows; the owner sets shown.
@@ -45,7 +46,6 @@ Item {
     Icon {
         id: icon
 
-        objectName: "osdIcon"
         x: Theme.osdPadding
         anchors.verticalCenter: parent.verticalCenter
         name: osd.iconName
@@ -53,7 +53,6 @@ Item {
     }
 
     FillTrack {
-        objectName: "osdTrack"
         x: icon.x + icon.width + Theme.osdGap
         anchors.verticalCenter: parent.verticalCenter
         width: valueText.x - Theme.osdGap - x
@@ -70,7 +69,6 @@ Item {
     Label {
         id: valueText
 
-        objectName: "osdValue"
         x: osd.width - Theme.osdPadding - width
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.osdValueWidth

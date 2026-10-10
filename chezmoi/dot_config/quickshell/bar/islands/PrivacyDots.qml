@@ -1,6 +1,7 @@
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // One steady dot per capture in use, from the left edge outward: microphone,
 // camera, screen share. A dot that goes fades where it was while the dots
@@ -17,21 +18,18 @@ Item {
     Accessible.name: [Privacy.micActive ? "Microphone in use: " + Privacy.micApps.join(", ") : "", Privacy.cameraActive ? "Camera in use: " + Privacy.cameraApps.join(", ") : "", Privacy.shareActive ? "Screen shared: " + Privacy.shareApps.join(", ") : ""].filter(text => text !== "").join("; ")
 
     Dot {
-        objectName: "privacyMic"
         shown: Privacy.micActive
         slot: 0
         color: Colors.privacyMic
     }
 
     Dot {
-        objectName: "privacyCamera"
         shown: Privacy.cameraActive
         slot: Privacy.micActive ? 1 : 0
         color: Colors.privacyCamera
     }
 
     Dot {
-        objectName: "privacyShare"
         shown: Privacy.shareActive
         slot: (Privacy.micActive ? 1 : 0) + (Privacy.cameraActive ? 1 : 0)
         color: Colors.privacyShare

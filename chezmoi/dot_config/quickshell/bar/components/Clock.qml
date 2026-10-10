@@ -1,5 +1,5 @@
 import QtQuick
-import "../services"
+import qs.services
 
 Label {
     property string format: "HH:mm"

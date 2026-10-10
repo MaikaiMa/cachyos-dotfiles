@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
+import qs
 
 // A row of the Wi-Fi, Bluetooth and Sound lists: an icon, the title with a
 // subtitle or a live level bar, a lock when secured. Expanded, it shows a
@@ -84,8 +84,7 @@ Pressable {
     Rectangle {
         anchors.fill: parent
         radius: Theme.listRowRadius
-        // A whole row under the pointer takes a quieter, neutral tint than a button.
-        color: row.hovered ? Qt.tint(row.baseColor, Qt.alpha(Colors.foreground, 0.05)) : row.baseColor
+        color: row.hovered ? Qt.tint(row.baseColor, Qt.alpha(Colors.foreground, Theme.listRowHoverTint)) : row.baseColor
 
         Behavior on color {
             ColorCrossfade {}
@@ -126,7 +125,6 @@ Pressable {
         }
 
         Item {
-            objectName: "levelBar"
             visible: row.level >= 0
             width: parent.width
             height: Theme.levelBarGap + Theme.levelBarHeight
@@ -136,7 +134,7 @@ Pressable {
                 width: parent.width
                 height: Theme.levelBarHeight
                 value: row.level
-                trackColor: Qt.alpha(Colors.foreground, 0.1)
+                trackColor: Qt.alpha(Colors.foreground, Theme.levelTrackOpacity)
                 duration: Motion.audioAttack
                 easingType: Easing.Linear
             }
@@ -157,7 +155,6 @@ Pressable {
     Item {
         id: expansion
 
-        objectName: "expansion"
         x: row.textX
         y: Theme.listRowHeight - Theme.listRowExpansionLift
         width: row.width - x - Theme.listRowPadding
@@ -173,7 +170,6 @@ Pressable {
         InlineField {
             id: passwordField
 
-            objectName: "passwordField"
             visible: row.mode === "password"
             width: parent.width
             height: parent.height
@@ -215,7 +211,6 @@ Pressable {
     }
 
     Label {
-        objectName: "errorLine"
         x: row.textX
         y: Theme.listRowHeight + (row.expanded ? Theme.listRowExpansion : 0) - Theme.listRowErrorLift
         width: row.width - x - Theme.listRowPadding

@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A rounded track filled to value (0..1) from the left, or from the bottom
 // when vertical. capsuleClip clips a whole capsule instead of shortening it,

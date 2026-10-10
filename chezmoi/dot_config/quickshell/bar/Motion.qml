@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import "services"
+import qs.services
 
 // Durations and curves from the Motion table in docs/shell-design.md.
 Singleton {
@@ -27,6 +27,8 @@ Singleton {
     readonly property int osdOutDuration: reduceMotion ? 0 : 240
     readonly property int osdInEasing: Easing.OutCubic
     readonly property int osdOutEasing: Easing.InCubic
+    // The OSD stays this long after the last change.
+    readonly property int osdHold: 1500
     // The bar's colours glide to a new palette (theme, scheme or wallpaper change).
     readonly property int paletteDuration: reduceMotion ? 0 : 300
     readonly property int musicContentDelay: reduceMotion ? 0 : 120
@@ -59,6 +61,10 @@ Singleton {
     // Marquee: a hold at each end and this much time per pixel of overflow.
     readonly property int marqueeBase: 2000
     readonly property int marqueePerPixel: 28
+    // Shares of that time: each glide takes the travel share, each end the hold
+    // share twice, so one loop lasts twice the time.
+    readonly property real marqueeTravelShare: 0.7
+    readonly property real marqueeHoldShare: 0.15
 
     // The CSS cubic-bezier control points, then the end point (1, 1) that
     // Easing.BezierSpline wants; the indicator's is CSS ease-out.
@@ -72,6 +78,8 @@ Singleton {
     readonly property int orbHoverDelay: 80
     readonly property int nowPlayingPeekHold: 5000
     readonly property int longPressInterval: 500
+    // After a wheel step, further wheel events are ignored this long.
+    readonly property int wheelCooldown: 100
     // A slider shows the value it asked for until the service reports it, at most this long.
     readonly property int sliderHoldFallback: 1000
     // A scroll of the user's has come to rest after this long without a wheel event.

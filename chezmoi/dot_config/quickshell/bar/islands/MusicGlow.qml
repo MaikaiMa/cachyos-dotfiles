@@ -1,9 +1,8 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
 
 // The music bar rim's soft outer glow: rings outside the island's edge,
 // fainter the farther out. The island clips its children, so the owner
@@ -32,7 +31,6 @@ Item {
 
             required property var modelData
 
-            objectName: "musicBarGlow"
             x: -modelData[0]
             y: -modelData[0]
             width: glow.width + 2 * modelData[0]

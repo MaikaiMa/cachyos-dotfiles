@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Display state of the centre island, opened from the Brightness capsule:
 // the night-light switch in the control row, then the night temperature with
@@ -53,7 +53,6 @@ Panel {
             CapsuleSlider {
                 id: nightSlider
 
-                objectName: "nightSlider"
                 width: parent.width
                 accessibleName: "Night light temperature"
                 available: Display.nightTemperature > 0
@@ -68,7 +67,6 @@ Panel {
             }
 
             Label {
-                objectName: "scheduleLine"
                 width: parent.width
                 height: Theme.scheduleLineHeight
                 leftPadding: Theme.sliderIconZone
@@ -79,7 +77,6 @@ Panel {
         }
 
         CapsuleSlider {
-            objectName: "displayBrightnessSlider"
             width: parent.width
             accessibleName: "Brightness"
             available: Brightness.available
@@ -91,7 +88,6 @@ Panel {
         }
 
         LevelRow {
-            objectName: "keyboardRow"
             shown: panel.keyboardShown
             iconName: "keyboard"
             title: "Keyboard"
@@ -100,7 +96,6 @@ Panel {
         }
 
         LevelRow {
-            objectName: "rearRow"
             shown: panel.rearShown
             iconName: "wb_iridescent"
             title: "Rear light"
@@ -144,7 +139,6 @@ Panel {
             }
 
             Rectangle {
-                objectName: "colorDot"
                 anchors.verticalCenter: parent.verticalCenter
                 visible: levelRow.dotColor.a > 0
                 width: Theme.colorDotSize

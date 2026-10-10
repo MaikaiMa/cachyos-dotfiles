@@ -1,12 +1,13 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
+import qs.components.home
 
 // The Home state of the centre island: Time and Weather over Performance and
-// Power, a narrow and a wide column on the 12 px tile grid, and a row of
+// Power, a narrow and a wide column on the tile grid, and a row of
 // icon-only tiles that morph Home into the other panels, so each is reachable
 // by touch. The height is fixed by the Theme tokens, so the island grows to it
 // in one animation.
@@ -58,7 +59,6 @@ Panel {
     implicitHeight: Theme.homeHeight
 
     TimeTile {
-        objectName: "timeTile"
         x: panel.contentX
         y: Theme.panelPadding
         width: Theme.homeTimeColumnWidth
@@ -67,7 +67,6 @@ Panel {
 
     // Declared in reading order, which is also the Tab order of their segmented controls.
     WeatherTile {
-        objectName: "weatherTile"
         x: panel.wideColumnX
         y: Theme.panelPadding
         width: panel.wideColumnWidth
@@ -75,7 +74,6 @@ Panel {
     }
 
     PerformanceTile {
-        objectName: "performanceTile"
         x: panel.contentX
         y: panel.bottomRowY
         width: Theme.homeTimeColumnWidth
@@ -83,7 +81,6 @@ Panel {
     }
 
     PowerTile {
-        objectName: "powerTile"
         x: panel.wideColumnX
         y: panel.bottomRowY
         width: panel.wideColumnWidth
@@ -98,7 +95,6 @@ Panel {
             required property var modelData
             required property int index
 
-            objectName: "homeAction"
             x: Theme.panelPadding + index * (panel.actionWidth + Theme.tileGap)
             y: panel.actionsRowY
             width: panel.actionWidth

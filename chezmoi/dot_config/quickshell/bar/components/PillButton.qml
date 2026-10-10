@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A text pill, optionally with a leading icon that spins while busy. filled
 // is the accent pill of a main action; tone colours a plain pill's text,

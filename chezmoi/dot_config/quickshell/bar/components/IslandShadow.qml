@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Effects
-import ".."
+import qs
 
 // The islands' drop shadow, as a layer effect: the islands, and the blobs
 // that break out of the right one.

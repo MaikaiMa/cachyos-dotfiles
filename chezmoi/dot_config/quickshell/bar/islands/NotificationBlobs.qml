@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // Rows that broke out of the notification stack, as discs below the right
 // island: each starts as the row's icon disc, crosses the island's bottom edge

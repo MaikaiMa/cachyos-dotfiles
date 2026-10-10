@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Settings state of the centre island: toggle grid, three capsule sliders and,
 // when there are any, the notifications. implicitHeight is the settled height the
@@ -46,7 +46,6 @@ Panel {
         height: Theme.settingsGridHeight
 
         GridTile {
-            objectName: "wifiTile"
             x: panel.cellX(0)
             y: 0
             width: panel.spanWidth(2)
@@ -61,7 +60,6 @@ Panel {
         }
 
         GridTile {
-            objectName: "dndTile"
             x: panel.cellX(2)
             y: 0
             width: panel.spanWidth(1)
@@ -72,7 +70,6 @@ Panel {
         }
 
         GridTile {
-            objectName: "caffeineTile"
             x: panel.cellX(3)
             y: 0
             width: panel.spanWidth(1)
@@ -83,7 +80,6 @@ Panel {
         }
 
         GridTile {
-            objectName: "bluetoothTile"
             x: panel.cellX(0)
             y: grid.secondRow
             width: panel.spanWidth(Tablet.detached ? 1 : 2)
@@ -106,7 +102,6 @@ Panel {
 
         // Grows out of the cell Bluetooth frees; Tab skips it while docked.
         GridTile {
-            objectName: "rotationTile"
             x: panel.cellX(1)
             y: grid.secondRow
             width: panel.spanWidth(1)
@@ -128,7 +123,6 @@ Panel {
         }
 
         GridTile {
-            objectName: "profileTile"
             x: panel.cellX(2)
             y: grid.secondRow
             width: panel.spanWidth(2)
@@ -160,7 +154,6 @@ Panel {
         spacing: Theme.sliderGap
 
         CapsuleSlider {
-            objectName: "volumeSlider"
             width: parent.width
             accessibleName: "Volume"
             available: Audio.ready
@@ -174,7 +167,6 @@ Panel {
         }
 
         CapsuleSlider {
-            objectName: "micSlider"
             width: parent.width
             accessibleName: "Microphone"
             available: Audio.source !== null
@@ -188,7 +180,6 @@ Panel {
         }
 
         CapsuleSlider {
-            objectName: "brightnessSlider"
             width: parent.width
             accessibleName: "Brightness"
             available: Brightness.available
@@ -205,7 +196,6 @@ Panel {
     NotificationList {
         id: notifications
 
-        objectName: "notifications"
         y: sliders.y + sliders.height
         width: panel.width
     }

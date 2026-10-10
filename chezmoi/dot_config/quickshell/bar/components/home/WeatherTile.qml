@@ -1,18 +1,16 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
-// Home: the current weather, an Hourly / Daily switch and five forecast cards.
-Rectangle {
+// Home: the current weather, an Hourly / Daily switch and the forecast cards.
+Surface {
     id: tile
 
     // hourly or daily; Hourly each time the bar starts.
     property string tab: "hourly"
-
-    radius: Theme.tileRadius
-    color: Colors.surfaceContainerHigh
 
     function degrees(value: real): string {
         return Math.round(value) + "°";
@@ -43,7 +41,6 @@ Rectangle {
         }
 
         Label {
-            objectName: "weatherTemperature"
             anchors.verticalCenter: parent.verticalCenter
             text: Weather.ready ? tile.degrees(Weather.temperature) : "–"
             strong: true
@@ -55,13 +52,11 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
 
             Label {
-                objectName: "weatherCondition"
                 text: Weather.ready ? Weather.conditionText : ""
                 strong: true
             }
 
             Label {
-                objectName: "weatherFeelsLike"
                 text: Weather.ready ? "Feels like " + tile.degrees(Weather.apparent) : ""
                 secondary: true
                 numeric: true
@@ -70,7 +65,6 @@ Rectangle {
     }
 
     SegmentedControl {
-        objectName: "weatherTabs"
         x: Theme.homeTilePadding
         y: now.y + now.height + Theme.homeSectionGap
         width: Theme.weatherTabsWidth
@@ -80,7 +74,7 @@ Rectangle {
         onSelected: index => tile.tab = index === 1 ? "daily" : "hourly"
     }
 
-    // Both rows are always there and cross-fade; five cards each, "–" until data arrives.
+    // Both rows are always there and cross-fade; a card shows "–" until its data arrives.
     Item {
         id: cards
 
@@ -91,7 +85,6 @@ Rectangle {
         opacity: Weather.stale ? Theme.busyOpacity : 1
 
         CardRow {
-            objectName: "hourlyCards"
             width: cards.width
             shown: tile.tab === "hourly"
 
@@ -111,7 +104,6 @@ Rectangle {
         }
 
         CardRow {
-            objectName: "dailyCards"
             width: cards.width
             shown: tile.tab === "daily"
 
@@ -166,7 +158,6 @@ Rectangle {
             spacing: Theme.weatherCardGap
 
             Label {
-                objectName: "cardLabel"
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: card.text
                 secondary: true
@@ -184,7 +175,6 @@ Rectangle {
                 spacing: Theme.weatherTemperatureGap
 
                 Label {
-                    objectName: "cardHigh"
                     text: card.high
                     strong: true
                     numeric: true
@@ -192,7 +182,6 @@ Rectangle {
                 }
 
                 Label {
-                    objectName: "cardLow"
                     visible: card.low !== ""
                     text: card.low
                     color: Colors.foregroundVariant

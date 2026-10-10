@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
-import "services"
-import "windows"
+import qs.services
+import qs.windows
 
 ShellRoot {
     // The IPC targets; singletons load lazily, so this one is made here.

@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Updates state of the centre island: a count line, the fragile packages
 // with a reason, the rest in a scrolling list, and Update all, Refresh, Report.
@@ -19,7 +19,7 @@ Panel {
     readonly property var otherItems: Updates.items.filter(item => !item.fragile)
     readonly property real fragileHeight: fragileItems.length > 0 ? Theme.updatesSectionGap + fragileItems.length * Theme.updatesFragileRowHeight + (fragileItems.length - 1) * Theme.updatesFragileRowGap : 0
     readonly property real listHeight: Math.min(Theme.updatesListMaxHeight, otherItems.length * Theme.updatesRowHeight + Math.max(0, otherItems.length - 1) * Theme.updatesRowGap)
-    readonly property real actionWidth: (contentWidth - 2 * Theme.gap) / 3
+    readonly property real actionWidth: (contentWidth - (actions.children.length - 1) * Theme.gap) / actions.children.length
     readonly property real listSectionHeight: otherItems.length > 0 ? Theme.updatesSectionGap + listHeight : 0
 
     readonly property string headline: {
@@ -46,7 +46,6 @@ Panel {
     }
 
     Label {
-        objectName: "headline"
         x: Theme.panelPadding + Theme.updatesHeadInset
         y: Theme.panelPadding
         width: panel.width - 2 * x
@@ -72,7 +71,6 @@ Panel {
             UpdateRow {
                 required property var modelData
 
-                objectName: "fragileRow"
                 width: fragile.width
                 height: Theme.updatesFragileRowHeight
                 item: modelData
@@ -85,7 +83,6 @@ Panel {
     ListView {
         id: list
 
-        objectName: "updatesList"
         x: panel.contentX
         y: Theme.panelPadding + Theme.updatesHeadHeight + panel.fragileHeight + Theme.updatesSectionGap
         width: panel.contentWidth
@@ -99,7 +96,6 @@ Panel {
         delegate: UpdateRow {
             required property var modelData
 
-            objectName: "updateRow"
             width: ListView.view.width
             height: Theme.updatesRowHeight
             item: modelData
@@ -111,13 +107,14 @@ Panel {
     }
 
     Row {
+        id: actions
+
         x: panel.contentX
         y: panel.implicitHeight - Theme.panelPadding - Theme.updatesButtonHeight
         width: panel.contentWidth
         spacing: Theme.gap
 
         PillButton {
-            objectName: "updateAllButton"
             width: panel.actionWidth
             height: Theme.updatesButtonHeight
             text: "Update all"
@@ -131,7 +128,6 @@ Panel {
         }
 
         PillButton {
-            objectName: "refreshButton"
             width: panel.actionWidth
             height: Theme.updatesButtonHeight
             text: "Refresh"
@@ -141,7 +137,6 @@ Panel {
         }
 
         PillButton {
-            objectName: "reportButton"
             width: panel.actionWidth
             height: Theme.updatesButtonHeight
             text: "Report"

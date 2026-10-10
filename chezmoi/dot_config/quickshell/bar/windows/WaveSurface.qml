@@ -1,9 +1,8 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
 
 // The top-edge wave in a strip of its own on the Bottom layer: it animates
 // continuously, so it must not make the bar window present frames. Mapped

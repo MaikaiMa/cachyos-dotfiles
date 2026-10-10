@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A notification's app icon on a disc, the bell glyph until or unless the
 // image loads. The icon never grows past the disc.

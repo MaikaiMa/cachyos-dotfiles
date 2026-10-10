@@ -39,3 +39,25 @@
 # services/NotificationStack.qml, NetworkRow became components/ListRow.qml.
 .config/quickshell/bar/islands/NotificationStack.qml
 .config/quickshell/bar/components/NetworkRow.qml
+
+# Moved next to their owner in the structure cleanup's layout pass (docs/shell.md
+# "Layout"): Home tiles to components/home/, Settings and Sound parts and
+# PanelControlRow to panels/, island parts to islands/, Orb, TopWave and
+# FrameCounter to windows/.
+.config/quickshell/bar/components/TimeTile.qml
+.config/quickshell/bar/components/WeatherTile.qml
+.config/quickshell/bar/components/PerformanceTile.qml
+.config/quickshell/bar/components/PowerTile.qml
+.config/quickshell/bar/components/AppVolumeRow.qml
+.config/quickshell/bar/components/NotificationList.qml
+.config/quickshell/bar/components/NotificationRow.qml
+.config/quickshell/bar/components/PanelControlRow.qml
+.config/quickshell/bar/components/Marquee.qml
+.config/quickshell/bar/components/NotificationPeekRow.qml
+.config/quickshell/bar/components/Osd.qml
+.config/quickshell/bar/components/PrivacyDots.qml
+.config/quickshell/bar/components/StatusIndicator.qml
+.config/quickshell/bar/components/RimLight.qml
+.config/quickshell/bar/components/Orb.qml
+.config/quickshell/bar/components/TopWave.qml
+.config/quickshell/bar/components/FrameCounter.qml

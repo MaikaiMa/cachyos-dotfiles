@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Sound state of the centre island, opened from the Volume or Microphone
 // capsule: a control row without a switch, then Output, Input and Apps, each
@@ -112,7 +112,6 @@ Panel {
     Flickable {
         id: list
 
-        objectName: "soundList"
         x: panel.contentX
         y: controls.y + controls.height + Theme.gap
         width: panel.contentWidth
@@ -128,7 +127,6 @@ Panel {
             spacing: Theme.sectionGap
 
             SoundSection {
-                objectName: "outputSection"
                 rows: outputModel
                 iconName: "speaker"
                 title: "Output"
@@ -146,7 +144,6 @@ Panel {
             }
 
             SoundSection {
-                objectName: "inputSection"
                 rows: inputModel
                 iconName: "mic"
                 title: "Input"
@@ -165,7 +162,6 @@ Panel {
             }
 
             SoundSection {
-                objectName: "appSection"
                 rows: appModel
                 iconName: "apps"
                 title: "Apps"

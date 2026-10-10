@@ -5,7 +5,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
-import ".."
 
 // The bar is the notification daemon of the Niri session (ADR-0028). Quickshell's
 // server holds the live notifications; the history, the seen marks and do not

@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Widgets
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // Workspaces of this screen's output as dots, then the apps of its active
 // workspace. The owner fixes the left edge; the island grows to the right.
@@ -23,6 +23,9 @@ Island {
     // The pills' own padding completes the island padding at both ends.
     readonly property int edge: Theme.paddingHorizontal - Theme.workspaceDotPadding
     readonly property real appsWidth: appsLayers.shownLayer ? appsLayers.shownLayer.targetWidth : 0
+    // Accumulates wheel and touchpad deltas into one step at a time, as DMS's
+    // workspace switcher does, so a touchpad flick does not run through them all.
+    property real wheelAccumulated: 0
 
     function attention(workspace: var): bool {
         if (workspace.isUrgent)
@@ -42,15 +45,11 @@ Island {
     morphCurve: Motion.growCurve
     visible: workspaces.length > 0
 
-    // Accumulates wheel and touchpad deltas into one step at a time, as DMS's
-    // workspace switcher does, so a touchpad flick does not run through them all.
-    property real wheelAccumulated: 0
-
     WheelHandler {
         onWheel: event => {
             if (cooldown.running || Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y))
                 return;
-            const threshold = event.pixelDelta.y !== 0 ? 500 : 120;
+            const threshold = event.pixelDelta.y !== 0 ? Theme.touchpadWheelThreshold : Theme.wheelNotch;
             island.wheelAccumulated += event.angleDelta.y;
             if (Math.abs(island.wheelAccumulated) < threshold)
                 return;
@@ -63,13 +62,12 @@ Island {
     Timer {
         id: cooldown
 
-        interval: 100
+        interval: Motion.wheelCooldown
     }
 
     Row {
         id: pills
 
-        objectName: "pills"
         x: island.edge
         height: Theme.islandHeight
 
@@ -86,7 +84,6 @@ Island {
                 readonly property bool occupied: Niri.windowsOn(modelData.id).length > 0
                 readonly property bool alerting: island.attention(modelData)
 
-                objectName: "workspacePill"
                 width: (active ? Theme.workspaceActiveDot : Theme.workspaceDot) + 2 * Theme.workspaceDotPadding
                 height: Theme.islandHeight
 
@@ -133,7 +130,6 @@ Island {
 
     // The filled dot slides over the row to the active slot.
     Rectangle {
-        objectName: "activePill"
         visible: island.activeIndex >= 0
         x: pills.x + Theme.workspaceDotPadding + Math.max(0, island.activeIndex) * island.slotWidth
         y: (Theme.islandHeight - height) / 2
@@ -207,7 +203,6 @@ Island {
         readonly property int activeIndex: windows.findIndex(window => window.id === activeWindowId)
         readonly property real targetWidth: windows.length > 0 ? icons.implicitWidth : 0
 
-        objectName: "appsLayer"
         width: icons.implicitWidth
         height: Theme.islandHeight
         opacity: shown ? 1 : 0
@@ -227,7 +222,6 @@ Island {
             spacing: Theme.gap
 
             Icon {
-                objectName: "appsSeparator"
                 anchors.verticalCenter: parent.verticalCenter
                 name: "chevron_right"
                 size: Theme.workspaceSeparatorSize
@@ -242,7 +236,6 @@ Island {
 
                     required property var modelData
 
-                    objectName: "appIcon"
                     // Not anchored to the parent: the Repeater detaches a delegate
                     // before destroying it, and the anchor then reads a null parent.
                     y: (Theme.islandHeight - height) / 2
@@ -267,7 +260,6 @@ Island {
         // Under the active icon; it slides on a focus change and jumps while
         // the row is still fading in after a workspace switch.
         Rectangle {
-            objectName: "focusDot"
             visible: layer.activeIndex >= 0
             x: Theme.gap + Theme.workspaceSeparatorSize + Theme.gap + Math.max(0, layer.activeIndex) * (Theme.iconSize + Theme.gap) + (Theme.iconSize - width) / 2
             y: (Theme.islandHeight + Theme.iconSize) / 2 + Theme.focusDotGap

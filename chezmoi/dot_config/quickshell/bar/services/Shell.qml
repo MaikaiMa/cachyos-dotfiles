@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import ".."
+import qs
 
 // The one state machine of the centre island, shared by every screen.
 Singleton {
@@ -251,7 +251,7 @@ Singleton {
     Timer {
         id: osdTimer
 
-        interval: 1500
+        interval: Motion.osdHold
         onTriggered: root.osdVisible = false
     }
 }

@@ -53,6 +53,8 @@ Singleton {
     // Keyboard focus: a ring this far outside the focused item.
     readonly property int focusRingInset: 3
     readonly property int focusRingWidth: 2
+    // One mouse wheel notch in angleDelta units; a slider steps once per notch.
+    readonly property int wheelNotch: 120
     // Interaction states, as alphas over a surface (see Colors.hovered).
     readonly property real hoverTint: 0.16
     readonly property real hoverTintOnAccent: 0.10
@@ -80,13 +82,16 @@ Singleton {
     readonly property int sectionHeaderSpacing: 6
 
     // --- Left and right island ---
-    // Left island: dots in 3 px padded slots; the active one is wider and filled.
+    // Left island: dots in padded slots; the active one is wider and filled.
     readonly property int workspaceDot: 8
     readonly property int workspaceActiveDot: 22
     readonly property int workspaceDotPadding: 3
     readonly property int workspaceSeparatorSize: 12
     readonly property real workspaceOccupiedOpacity: 0.75
     readonly property real workspaceEmptyOpacity: 0.45
+    // A touchpad's pixel-precise scroll needs this much wheel delta, a longer
+    // swipe than one wheelNotch, to step one workspace.
+    readonly property int touchpadWheelThreshold: 500
     // An app icon of the active workspace that is not its active window.
     readonly property real inactiveAppOpacity: 0.5
     // Under the focused app icon, this far below it.
@@ -94,6 +99,8 @@ Singleton {
     readonly property int focusDotGap: 2
     // Right island: tray discs and attention pills.
     readonly property int trayDisc: 24
+    // The island-coloured ring just outside each disc.
+    readonly property int trayDiscRing: 1
     readonly property int trayOverlap: 10
     readonly property int trayGap: 4
     readonly property int trayStack: 2
@@ -112,13 +119,13 @@ Singleton {
     readonly property int indicatorGap: 2
     readonly property int indicatorCountGap: 4
     readonly property int indicatorCountFontSize: fontSizeDetail
-    // Keeps an end pill's 12 px corner concentric with the island's 15 px corner.
+    // Keeps an end pill's corner concentric with the island's corner.
     readonly property int rightEndInset: 3
 
     // --- Panel width and tile grid ---
     readonly property int powerButtonSize: 72
     // The Tokens table lists Settings, Player, Power, Home, Theme and
-    // Wallpaper; Updates and the panels opened from Settings take Settings' 420 px.
+    // Wallpaper; Updates and the panels opened from Settings take Settings' width.
     readonly property var panelWidths: ({
             home: 560,
             settings: 420,
@@ -142,6 +149,8 @@ Singleton {
     readonly property int tileTextGap: 10
     readonly property real tileDiscOnAccentOpacity: 0.14
     readonly property real tileStateOnAccentOpacity: 0.72
+    // A pressed tile gives a little less than a Power button (pressedScale).
+    readonly property real tilePressedScale: 0.98
 
     // --- Settings grid and slider ---
     readonly property int settingsColumns: 4
@@ -289,6 +298,8 @@ Singleton {
     readonly property int listRowExpansionLift: 2
     readonly property int listRowErrorLift: 4
     readonly property int listRowButtonWidth: 88
+    // A whole row under the pointer takes a quieter, neutral tint than a button.
+    readonly property real listRowHoverTint: 0.05
 
     // --- Sound ---
     // Sound: Output, Input and Apps sections of list rows in one scrolling area.
@@ -298,6 +309,7 @@ Singleton {
     // The live level bar under the default input's name.
     readonly property int levelBarHeight: 3
     readonly property int levelBarGap: 4
+    readonly property real levelTrackOpacity: 0.1
     // An app row's compact capsule: mute icon zone, value zone.
     readonly property int appSliderWidth: 176
     readonly property int appSliderHeight: 24
@@ -421,6 +433,12 @@ Singleton {
     readonly property real waveResolution: 0.5
     // The filled band above the curve starts this far above the screen edge.
     readonly property int waveTopOverdraw: 8
+    // The curve runs this fraction of the width past each edge, so its round
+    // caps stay off screen; at rest it lies waveBaseline below the edge.
+    readonly property real waveOverscan: 0.05
+    readonly property int waveBaseline: 2
+    // The fade toward the bottom starts at this fraction of the height.
+    readonly property real waveFadeStart: 0.25
     // Width and alpha of the layered strokes, widest first; they stand in for a blur.
     // Together they reach about 0.95 alpha on the curve, so the top row shows
     // close to the full peak opacity.

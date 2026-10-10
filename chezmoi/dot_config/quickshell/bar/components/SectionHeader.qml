@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A small glyph and a name over a group of rows. Children, such as a text
 // button, sit on the header and anchor to its right edge themselves.

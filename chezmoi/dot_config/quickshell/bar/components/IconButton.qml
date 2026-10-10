@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A round icon button. Plain, a subtle fill shows under the pointer; accent
 // tints the fill and lights the icon; filled is the accent disc, the main

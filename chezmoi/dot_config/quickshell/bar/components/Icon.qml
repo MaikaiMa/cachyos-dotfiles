@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A Material Symbols glyph by ligature name. Without the font, or without a
 // name, it draws a dim rounded square of the same size so the layout holds.

@@ -1,3 +1,6 @@
 BarWindow 1.0 BarWindow.qml
 OrbSurface 1.0 OrbSurface.qml
 WaveSurface 1.0 WaveSurface.qml
+Orb 1.0 Orb.qml
+TopWave 1.0 TopWave.qml
+FrameCounter 1.0 FrameCounter.qml

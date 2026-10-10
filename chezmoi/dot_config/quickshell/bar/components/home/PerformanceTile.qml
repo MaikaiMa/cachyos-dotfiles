@@ -1,16 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // Home: CPU load, CPU temperature and memory as three thin vertical bars. System
 // only samples while Home is open; Shell sets System.active from the state.
-Rectangle {
+Surface {
     id: tile
-
-    radius: Theme.tileRadius
-    color: Colors.surfaceContainerHigh
 
     readonly property real columnWidth: (width - 2 * Theme.homeTilePadding) / 3
 
@@ -21,7 +19,6 @@ Rectangle {
         y: Theme.homeTilePadding
 
         Meter {
-            objectName: "cpuMeter"
             width: tile.columnWidth
             height: tile.meterHeight
             text: Math.round(System.cpu * 100) + "%"
@@ -31,7 +28,6 @@ Rectangle {
         }
 
         Meter {
-            objectName: "tempMeter"
             width: tile.columnWidth
             height: tile.meterHeight
             text: isNaN(System.temperature) ? "–" : Math.round(System.temperature) + "°"
@@ -41,7 +37,6 @@ Rectangle {
         }
 
         Meter {
-            objectName: "memoryMeter"
             width: tile.columnWidth
             height: tile.meterHeight
             text: Math.round(System.memory * 100) + "%"
@@ -68,7 +63,6 @@ Rectangle {
         Label {
             id: value
 
-            objectName: "meterLabel"
             anchors.horizontalCenter: parent.horizontalCenter
             text: meter.text
             secondary: true
@@ -76,7 +70,6 @@ Rectangle {
         }
 
         FillTrack {
-            objectName: "meterFill"
             anchors.horizontalCenter: parent.horizontalCenter
             width: Theme.meterWidth
             height: meter.height - value.height - Theme.iconSize - 2 * meter.spacing

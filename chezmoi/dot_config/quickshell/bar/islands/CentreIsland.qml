@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The dynamic island: the pill and Detail, the OSD, the music bar and the
 // panels, one at a time. The owner centres it horizontally on the screen and
@@ -88,7 +88,6 @@ Island {
 
     // Over the collapsed pill while a volume or brightness key was pressed.
     Osd {
-        objectName: "osd"
         x: (island.width - width) / 2
         shown: island.osd
     }
@@ -103,7 +102,6 @@ Island {
 
     // Under the panel bodies: a click on empty panel space stops here and does nothing.
     MouseArea {
-        objectName: "panelGuard"
         anchors.fill: parent
         enabled: island.panelOpen
         acceptedButtons: Qt.AllButtons

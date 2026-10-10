@@ -1,6 +1,7 @@
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The top row of the panels opened from Settings: back to Settings, the on/off
 // switch with a short state (Sound has no switch, only the state), and on the
@@ -39,7 +40,6 @@ Item {
     IconButton {
         id: backButton
 
-        objectName: "backButton"
         anchors.verticalCenter: parent.verticalCenter
         iconName: "arrow_back"
         accessibleName: "Back to Settings"
@@ -49,7 +49,6 @@ Item {
     Pressable {
         id: toggle
 
-        objectName: "switch"
         anchors.left: backButton.right
         anchors.leftMargin: Theme.gap
         anchors.verticalCenter: parent.verticalCenter
@@ -111,7 +110,6 @@ Item {
     Label {
         id: stateLabel
 
-        objectName: "stateLabel"
         anchors.left: row.hasSwitch ? toggle.right : backButton.right
         anchors.leftMargin: row.hasSwitch ? Theme.controlLabelGap : Theme.gap
         anchors.right: extraButton.visible ? extraButton.left : actionButton.left
@@ -125,7 +123,6 @@ Item {
     IconButton {
         id: extraButton
 
-        objectName: "extraButton"
         anchors.right: actionButton.left
         anchors.rightMargin: Theme.gap
         anchors.verticalCenter: parent.verticalCenter
@@ -138,7 +135,6 @@ Item {
     IconButton {
         id: actionButton
 
-        objectName: "settingsButton"
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         iconName: row.actionIcon

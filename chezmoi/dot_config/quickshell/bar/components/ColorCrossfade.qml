@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // Crossfade for a colour: hover tints, selection and state colours.
 ColorAnimation {

@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
-import ".."
-import "../services"
+import qs
+import qs.services
 
 // A ring along the inside edge of a rounded rectangle, lit by a conic gradient in
 // the music colours. A thickness of half the short side fills the shape. The light

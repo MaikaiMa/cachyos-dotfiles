@@ -1,6 +1,6 @@
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
 
 // The battery glyph for the current charge and state, red when low.
 Icon {

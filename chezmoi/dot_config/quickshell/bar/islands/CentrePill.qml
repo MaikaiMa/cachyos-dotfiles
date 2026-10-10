@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // Weather icon | clock | battery icon, in Detail a label under each, and the
 // Detail hover. Everything is placed from the centre line with fixed sizes:
@@ -215,7 +215,6 @@ Appear {
     // so no click inside an open panel can reach it. A long press opens Power
     // instead: TapHandler emits tapped only for a release before the threshold.
     TapHandler {
-        objectName: "pillTap"
         enabled: pill.shown
         longPressThreshold: Motion.longPressInterval / 1000
         onTapped: Shell.toggle("home", pill.screenName)

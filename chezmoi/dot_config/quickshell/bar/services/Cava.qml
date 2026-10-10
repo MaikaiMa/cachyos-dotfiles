@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import ".."
+import qs
 
 // Audio levels and the one animation clock for the orb, the music bar's rim
 // and the top-edge wave. cava runs only while a player plays; the clock runs

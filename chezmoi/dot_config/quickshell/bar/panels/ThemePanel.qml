@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The Theme state of the centre island: Light / Dark / Auto, then the matugen
 // schemes as a strip of cards. Left and Right move the selection, Enter or a
@@ -40,7 +40,6 @@ Panel {
     SegmentedControl {
         id: mode
 
-        objectName: "themeMode"
         x: (panel.width - width) / 2
         y: Theme.panelPadding
         width: Theme.themeModeWidth
@@ -59,7 +58,6 @@ Panel {
     Carousel {
         id: schemes
 
-        objectName: "schemes"
         opacity: Appearance.busy ? Theme.busyOpacity : 1
         y: mode.y + mode.height + Theme.tileGap
         width: panel.width
@@ -80,7 +78,6 @@ Panel {
             readonly property bool selected: index === schemes.currentIndex
             readonly property bool applied: index === panel.appliedIndex
 
-            objectName: "schemeCard"
             width: Theme.schemeCardWidth
             height: schemes.height
 
@@ -133,7 +130,6 @@ Panel {
                 }
 
                 Rectangle {
-                    objectName: "appliedMarker"
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.margins: Theme.schemeCardPadding

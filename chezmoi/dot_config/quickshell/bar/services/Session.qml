@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import ".."
+import qs
 
 // The Power panel's actions. The panel closes first and the action runs once the
 // island has shrunk, so the lock screen or the shutdown never shows it half open.

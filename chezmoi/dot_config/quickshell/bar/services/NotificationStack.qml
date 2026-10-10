@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
-import ".."
+import qs
 
 // The notification stack, one for all screens, shown on the screen that had
 // focus when it started: the peek rows, the blobs that broke out of it and

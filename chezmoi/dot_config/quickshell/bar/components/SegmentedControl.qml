@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
+import qs
 
 // A pill of equal segments with a sliding accent under the current one. The owner
 // keeps currentIndex and writes it on selected, so a service can drive it too.
@@ -59,7 +59,6 @@ Item {
         color: control.trackColor
 
         Rectangle {
-            objectName: "segmentIndicator"
             // Drawn under the labels; never part of the hit test.
             enabled: false
             visible: control.currentIndex >= 0 && control.currentIndex < control.count
@@ -107,7 +106,6 @@ Item {
 
                 // Takes the press itself, so a click never reaches the island below.
                 MouseArea {
-                    objectName: "segmentHitArea"
                     anchors.fill: parent
                     enabled: control.interactive
                     acceptedButtons: Qt.LeftButton

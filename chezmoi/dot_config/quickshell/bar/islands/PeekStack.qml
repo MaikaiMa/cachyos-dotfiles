@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The notification stack's rows, newest on top, at a fixed width so the text
 // does not reflow while the island morphs. sync(ids) gives the rows that
@@ -61,7 +61,6 @@ Column {
             emptied();
     }
 
-    objectName: "peek"
     visible: rows.count > 0
 
     QtObject {

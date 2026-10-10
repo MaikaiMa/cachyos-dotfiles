@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Effects
-import ".."
+import qs
+import qs.components
 
 // A strong line and a secondary one as one run, clipped to its width. While
 // running and too long it glides to its end and back, holding at each end,
@@ -37,7 +38,6 @@ Item {
         Row {
             id: run
 
-            objectName: "musicRun"
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.musicArtistGap
 
@@ -61,8 +61,9 @@ Item {
             id: glide
 
             readonly property real shift: marquee.overflow + Theme.marqueeTail
-            readonly property int travel: Math.round((Motion.marqueeBase + marquee.overflow * Motion.marqueePerPixel) * 0.7)
-            readonly property int hold: Math.round((Motion.marqueeBase + marquee.overflow * Motion.marqueePerPixel) * 0.15)
+            readonly property real time: Motion.marqueeBase + marquee.overflow * Motion.marqueePerPixel
+            readonly property int travel: Math.round(time * Motion.marqueeTravelShare)
+            readonly property int hold: Math.round(time * Motion.marqueeHoldShare)
 
             running: marquee.scrolling
             loops: Animation.Infinite

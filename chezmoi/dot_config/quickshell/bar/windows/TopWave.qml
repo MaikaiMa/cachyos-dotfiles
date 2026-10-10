@@ -1,6 +1,6 @@
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
 
 // A breathing band of light along the top edge: one Catmull-Rom curve through
 // the smoothed cava bands, stroked several times wider and fainter in place of a
@@ -11,13 +11,14 @@ import "../services"
 // The canvas is rasterised by QPainter on the CPU, and four wide strokes across
 // the screen cost about half a core at full resolution. It paints at
 // Theme.waveResolution of the item's size and is scaled up with smooth filtering;
-// the soft glow hides the lower resolution.
+// the soft glow hides the lower resolution. Reminder: renderStrategy:
+// Canvas.Threaded would move that work off the GUI thread; keep it only if
+// Frames (`quickshell ipc -c bar call bardebug frames 5` while music plays)
+// shows a gain.
 Item {
     id: wave
 
     readonly property var colors: [Music.artColor, Music.artLight, Colors.primary, Music.artWarm, Music.artColor]
-
-    signal painted
 
     height: Theme.waveHeight
     opacity: Cava.waveOpacity
@@ -61,8 +62,6 @@ Item {
         transformOrigin: Item.TopLeft
         smooth: true
 
-        onPainted: wave.painted()
-
         // Drawn in the item's full-size coordinates; the context scale maps the
         // strokes, the gradients and the fade onto the smaller canvas.
         onPaint: {
@@ -72,9 +71,9 @@ Item {
             const width = wave.width;
             const height = wave.height;
             const bands = Cava.smoothBands;
-            // The curve runs a little past both edges so its round caps stay off screen.
-            const step = width * 1.1 / (bands.length - 1);
-            const points = bands.map((value, index) => [index * step - width * 0.05, 2 + Theme.waveAmplitude * value]);
+            const overscan = width * Theme.waveOverscan;
+            const step = (width + 2 * overscan) / (bands.length - 1);
+            const points = bands.map((value, index) => [index * step - overscan, Theme.waveBaseline + Theme.waveAmplitude * value]);
 
             const gradient = context.createLinearGradient(0, 0, width, 0);
             wave.colors.forEach((color, index) => gradient.addColorStop(index / (wave.colors.length - 1), String(color)));
@@ -103,7 +102,7 @@ Item {
             context.globalCompositeOperation = "destination-in";
             const fade = context.createLinearGradient(0, 0, 0, height);
             fade.addColorStop(0, "rgba(0, 0, 0, 1)");
-            fade.addColorStop(0.25, "rgba(0, 0, 0, 1)");
+            fade.addColorStop(Theme.waveFadeStart, "rgba(0, 0, 0, 1)");
             fade.addColorStop(1, "rgba(0, 0, 0, 0)");
             context.fillStyle = fade;
             context.fillRect(0, 0, width, height);

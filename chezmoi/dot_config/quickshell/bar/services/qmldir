@@ -29,3 +29,4 @@ CommandWriter 1.0 CommandWriter.qml
 LineWatcher 1.0 LineWatcher.qml
 BarIpc 1.0 BarIpc.qml
 singleton Time 1.0 Time.qml
+Maps 1.0 maps.js

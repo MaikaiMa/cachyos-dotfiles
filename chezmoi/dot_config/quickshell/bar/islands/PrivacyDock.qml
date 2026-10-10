@@ -1,7 +1,7 @@
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The privacy dots right of the centre island, through Detail, the music bar
 // and every panel: never hidden while something records. Hidden with
@@ -59,7 +59,6 @@ Item {
     Rectangle {
         id: pillItem
 
-        objectName: "privacyPill"
         x: Math.round(dock.centreLine - width / 2)
         y: Theme.islandTop + (Theme.islandHeight - height) / 2
         width: dock.pillWidth
@@ -76,7 +75,6 @@ Item {
         readonly property real edgeX: Math.round(dock.islandRight) + Theme.privacyDotOffset
         readonly property real centredX: pillItem.x + Theme.privacyPillPadding
 
-        objectName: "privacyDots"
         x: edgeX + (centredX - edgeX) * dock.glide
         y: Math.round((Shell.hidden ? Theme.islandTop : dock.islandY) + (Theme.islandHeight - height) / 2)
     }

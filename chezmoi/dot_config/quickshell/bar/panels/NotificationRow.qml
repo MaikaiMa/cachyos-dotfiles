@@ -1,8 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // One notification in the Settings list: app icon, app name, summary, one line
 // of body and a dismiss button. A click expands it in place: the full body,

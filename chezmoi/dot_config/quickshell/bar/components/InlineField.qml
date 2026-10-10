@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A one-line text field with a button after it: the Wi-Fi password and the
 // notification reply. Return or the button submits non-empty text, and the

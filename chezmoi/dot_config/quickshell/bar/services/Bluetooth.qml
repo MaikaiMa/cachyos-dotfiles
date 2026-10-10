@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import "maps.js" as Maps
 // Namespaced: this singleton has the same name as the module's.
 import Quickshell.Bluetooth as Bluez
 

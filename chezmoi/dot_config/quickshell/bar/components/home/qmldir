@@ -1,0 +1,4 @@
+TimeTile 1.0 TimeTile.qml
+WeatherTile 1.0 WeatherTile.qml
+PerformanceTile 1.0 PerformanceTile.qml
+PowerTile 1.0 PowerTile.qml

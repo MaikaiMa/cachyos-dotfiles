@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // A sideways strip of cards for the Theme and Wallpaper panels. The wheel (either
 // axis, notches and touchpad pixels), a drag and a flick move only the strip;

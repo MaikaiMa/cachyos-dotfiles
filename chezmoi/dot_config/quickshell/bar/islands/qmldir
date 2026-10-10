@@ -10,3 +10,9 @@ TrayMenu 1.0 TrayMenu.qml
 PeekStack 1.0 PeekStack.qml
 MusicGlow 1.0 MusicGlow.qml
 MusicFade 1.0 MusicFade.qml
+Marquee 1.0 Marquee.qml
+NotificationPeekRow 1.0 NotificationPeekRow.qml
+Osd 1.0 Osd.qml
+PrivacyDots 1.0 PrivacyDots.qml
+StatusIndicator 1.0 StatusIndicator.qml
+RimLight 1.0 RimLight.qml

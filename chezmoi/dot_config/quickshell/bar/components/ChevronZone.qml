@@ -1,5 +1,5 @@
 import QtQuick
-import ".."
+import qs
 
 // The zone at the right end of a tile or capsule that opens its panel: a
 // hairline at its left edge and a chevron. The hover tint clips a copy of the
@@ -37,7 +37,6 @@ Item {
     }
 
     Rectangle {
-        objectName: "chevronHairline"
         visible: opacity > 0
         opacity: zone.reveal
         width: Theme.hairlineWidth
@@ -46,7 +45,6 @@ Item {
     }
 
     Icon {
-        objectName: "chevron"
         visible: opacity > 0
         opacity: zone.reveal
         anchors.centerIn: parent

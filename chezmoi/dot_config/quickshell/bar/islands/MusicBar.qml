@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // The music bar inside the centre island: title and artist as one run, then
 // previous, play or pause, next, with the orb's travelling light around the
@@ -38,7 +38,6 @@ Item {
         RimLight {
             id: barRimLight
 
-            objectName: "musicBarRim"
             anchors.fill: parent
             radius: bar.radius
             thickness: Theme.musicBarRimWidth
@@ -52,7 +51,6 @@ Item {
     // The orb sits in the left padding. A click anywhere but a control opens
     // the Player.
     Item {
-        objectName: "musicBar"
         x: (bar.width - width) / 2
         width: Theme.musicBarWidth
         height: Theme.islandHeight
@@ -72,7 +70,6 @@ Item {
         }
 
         Marquee {
-            objectName: "marquee"
             x: Theme.orbInset + Theme.orbSize + Theme.gap
             width: controls.x - Theme.gap - x
             height: parent.height
@@ -90,21 +87,18 @@ Item {
             spacing: Theme.gap
 
             MusicButton {
-                objectName: "musicPrevious"
                 iconName: "skip_previous"
                 accessibleName: "Previous"
                 onActivated: Music.previous()
             }
 
             MusicButton {
-                objectName: "musicToggle"
                 iconName: Music.playing ? "pause" : "play_arrow"
                 accessibleName: Music.playing ? "Pause" : "Play"
                 onActivated: Music.togglePlaying()
             }
 
             MusicButton {
-                objectName: "musicNext"
                 iconName: "skip_next"
                 accessibleName: "Next"
                 onActivated: Music.next()
@@ -123,7 +117,6 @@ Item {
         RimLight {
             id: playerRimLight
 
-            objectName: "playerRim"
             anchors.fill: parent
             radius: bar.radius
             thickness: Theme.playerRimWidth

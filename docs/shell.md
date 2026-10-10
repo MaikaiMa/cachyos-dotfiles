@@ -4,7 +4,9 @@ The bar is moving from DMS to a repository-owned Quickshell configuration
 ([ADR-0027](adr/ADR-0027-own-the-bar-and-panels-in-quickshell-with-dms-as-service-layer.md)).
 DMS stays the service layer: lock screen, polkit, theming and wallpaper;
 in the Niri session the bar is also the notification daemon
-([ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md)). This page is the index for the own bar; [dms.md](dms.md)
+([ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md));
+its structure, the primitives, the service helpers and the `qs` imports
+are [ADR-0029](adr/ADR-0029-structure-the-own-bar-primitives-service-helpers-and-qs-imports.md). This page is the index for the own bar; [dms.md](dms.md)
 keeps describing DMS.
 
 ## DMS panels while the own bar runs
@@ -685,6 +687,9 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     BarWindow.qml                       the tall bar window: islands, blobs, glow, privacy dock, mask, blur, keys, close area
     OrbSurface.qml                      the orb's own box left of the centre island, its input region the orb
     WaveSurface.qml                     the top-edge wave's strip on the Bottom layer
+    Orb.qml                             music orb: album-colour sphere, rim light, bloom
+    TopWave.qml                         top-edge wave canvas, in its own strip behind the islands
+    FrameCounter.qml                    counts a window's presented frames into Frames
   islands/                              the three islands and their parts
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
     CentreIsland.qml                    state-to-size mapping and composition: pill, OSD, music bar, panels; music hover
@@ -698,6 +703,12 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     TrayMenu.qml                        a tray item's menu, flattened one level, measured on open
     PeekStack.qml                       the notification stack's rows and their settled height
     NotificationBlobs.qml               disc blobs of rows that left the stack, below the right island
+    Osd.qml                             OSD body: icon, fill track, value
+    Marquee.qml                         a strong and a secondary line as one run that glides when too long
+    RimLight.qml                        conic-gradient ring inside a rounded rectangle (music bar, glow, orb)
+    PrivacyDots.qml                     microphone, camera and share dots right of the centre island
+    StatusIndicator.qml                 one attention indicator pill of the right island, with an optional count
+    NotificationPeekRow.qml             one bare row of the notification stack: hold, dismiss glyph, text actions, replace cross-fade
   panels/                               centre panel bodies
     Panel.qml                           base: name, shown with the cross-fade, opened and closed, content geometry, focusWhenShown
     HomePanel.qml                       Time, Weather, Performance and Power tiles, actions row
@@ -711,7 +722,11 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     BluetoothPanel.qml                  Bluetooth switch and devices: connect, pair, disconnect, forget
     SoundPanel.qml                      outputs, inputs with the mic level, per-app volume
     DisplayPanel.qml                    night light, brightness, keyboard backlight, rear light
-  components/                           shared primitives, then feature pieces built on them
+    PanelControlRow.qml                 panels from Settings: back, optional switch with state, DMS settings button
+    NotificationList.qml                Settings: the notification history under its header, with its settled height
+    NotificationRow.qml                 one notification with dismiss, expands in place, collapses when it leaves
+    AppVolumeRow.qml                    Sound: one application's icon, name and volume capsule
+  components/                           shared pieces, service-free except Clock and BatteryIcon
     Island.qml                          island surface: colour, radius, shadow, size animation
     IslandShadow.qml                    the islands' drop shadow as a layer effect (islands, blobs)
     MorphAnimation.qml                  grow or shrink animation from the Motion tokens, with duration and curve overrides
@@ -737,29 +752,18 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     WeatherIcon.qml                     Icon for a Weather service icon name
     BatteryIcon.qml                     Icon for the battery charge and state, red when low
     SegmentedControl.qml                pill of segments with a sliding accent, Left and Right keys, track colour
-    TimeTile.qml                        Home: hours over minutes and the Dutch date
-    WeatherTile.qml                     Home: current weather, Hourly / Daily, five cards
-    PerformanceTile.qml                 Home: CPU, temperature and memory bars
-    PowerTile.qml                       Home: charge, capsule, time, health, capacity, profile
+    Surface.qml                         raised rounded surface a Home tile sits on
     Tile.qml                            Settings grid toggle, wide with state or small icon-only, chevron zone for a panel
     CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer, optional chevron zone
-    NotificationRow.qml                 one notification with dismiss, expands in place, collapses when it leaves
-    NotificationList.qml                Settings: the notification history under its header, with its settled height
-    NotificationPeekRow.qml             one bare row of the notification stack: hold, dismiss glyph, text actions, replace cross-fade
-    PanelControlRow.qml                 panels from Settings: back, optional switch with state, DMS settings button
     RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height and the one expanded row
     RowActions.js                       Wi-Fi and Bluetooth: the actions an expanded row offers
-    AppVolumeRow.qml                    Sound: one application's icon, name and volume capsule
     ListRow.qml                         Wi-Fi, Bluetooth and Sound row: icon, title, subtitle or level, expands in place
-    Orb.qml                             music orb: album-colour sphere, rim light, bloom
-    PrivacyDots.qml                     microphone, camera and share dots right of the centre island
-    RimLight.qml                        conic-gradient ring inside a rounded rectangle (orb, music bar)
-    TopWave.qml                         top-edge wave canvas, in its own strip behind the islands
-    FrameCounter.qml                    counts a window's presented frames into Frames
     Carousel.qml                        sideways strip for Theme and Wallpaper: wheel, drag, arrows
-    Osd.qml                             OSD body: icon, fill track, value
-    Marquee.qml                         a strong and a secondary line as one run that glides when too long
-    StatusIndicator.qml                 one attention indicator pill of the right island, with an optional count
+    home/                               the Home panel's tiles, module qs.components.home
+      TimeTile.qml                      hours over minutes and the Dutch date
+      WeatherTile.qml                   current weather, Hourly / Daily, the forecast cards
+      PerformanceTile.qml               CPU, temperature and memory bars
+      PowerTile.qml                     charge, capsule, time, health, capacity, profile
 chezmoi/dot_config/systemd/user/quickshell-bar.service
 chezmoi/dot_local/bin/executable_bar-notifications   release/claim hooks and name owner (~/.local/bin/bar-notifications)
 scripts/bar-switch.sh                   switches between the DMS and the own bar
@@ -768,8 +772,12 @@ tests/bar-notifications.sh              helper test with stubs
 tests/quickshell-bar.sh                 qmldir check and qmllint over every bar QML file
 ```
 
-Each directory with types has its own `qmldir`; types import each other by
-relative directory (`import "../services"`, `import ".."` for the tokens).
+Each directory with types has its own `qmldir`; types import each other as
+Quickshell modules (`import qs` for the tokens, `import qs.services`,
+`import qs.components`), which Quickshell resolves from the folder of
+`shell.qml`. The two script libraries are `qmldir` resources too:
+`RowActions` comes with `qs.components`, `Maps` with the services' own
+directory.
 
 `quickshell-bar.service` runs `quickshell -c bar -n`, is part of
 `niri.service`, and starts before `dms.service` (see "Notification handover"
@@ -1198,17 +1206,23 @@ surface.
 
 ## Adding a widget
 
-1. Create the file with an upper-case name in the directory it belongs to
-   (`islands/`, `panels/`, `components/`, or `services/` for a singleton
-   that owns data). Take colours from `Colors`, sizes and fonts from `Theme`
-   and durations from `Motion`; never hard-code a colour. Interaction
-   colours are tokens too: `Colors.hovered(base, onAccent)` for a hover,
-   `hoverSurface`, `hoverFill`, `selectedSurface`, `subtleFill`,
-   `errorSurface`, `errorChip`, `dotOutline`, `scrollHint`, and
-   `Theme.disabledOpacity` and `mutedOpacity`. Font sizes come from the type
-   scale (`fontSizeSmall` 11, `fontSizeDetail` 12, `fontSize` 13,
-   `fontSizeTitle` 15, `fontSizeLarge` 22, `fontSizeDisplay` 44) or a domain
-   name for one of its steps.
+1. Create the file with an upper-case name in the directory it belongs to:
+   next to its owner (`islands/`, `panels/`, `windows/`) when one place
+   uses it or it reads a service; in `components/` when it is shared and
+   reads none (`Clock` and `BatteryIcon` are the two shared exceptions); in
+   `components/<feature>/` with its own `qmldir` when the owner's directory
+   would grow past about twenty files, as the Home tiles do in
+   `components/home/`; or in `services/` for a singleton that owns data.
+   Visible text is English; dates stay in the system locale, nl_NL
+   (`Time.shortDay`, `Time.shortMonth`). Take colours from `Colors`, sizes
+   and fonts from `Theme` and durations from `Motion`; never hard-code a
+   colour. Interaction colours are tokens too: `Colors.hovered(base,
+   onAccent)` for a hover, `hoverSurface`, `hoverFill`, `selectedSurface`,
+   `subtleFill`, `errorSurface`, `errorChip`, `dotOutline`, `scrollHint`,
+   and `Theme.disabledOpacity` and `mutedOpacity`. Font sizes come from the
+   type scale (`fontSizeSmall` 11, `fontSizeDetail` 12, `fontSize` 13,
+   `fontSizeTitle` 15, `fontSizeLarge` 22, `fontSizeDisplay` 44) or a
+   domain name for one of its steps.
 2. Build it from the primitives in `components/`, not from raw items:
    `Label` for text, `Pressable` (or `IconButton`, `PillButton`) for
    anything that acts on a click, with `FocusRing` where it draws its own
@@ -1216,20 +1230,27 @@ surface.
    `MorphAnimation` in every `Behavior`, `Appear` for a container that
    fades with a `shown` flag, `KeyedListModel` for a model that a view must
    keep its delegates in, `ScrollHint`, `SectionHeader`, `FillTrack`,
-   `ChevronZone`, `RoundedImage` and `AppIconDisc` where they fit. Keyboard
-   behaviour then is the same everywhere: Tab reaches every control, Space,
-   Return and Enter activate it, and keys with Alt, Ctrl or Meta go on to
-   the window. When a primitive lacks an option, extend the primitive
-   instead of copying it. Name its API as the others do: visible text is
-   `text`, a two-line row has `title` and `subtitle`, the accessible name
-   is `accessibleName`; the signal that opens an item's own panel is
-   `panelRequested`; an action object is `{ id, text, tone }` (tone
-   `neutral`, `accent` or `danger`, as `PillButton` takes it); state an
-   owner must not write goes into a `QtObject { id: internal }`.
+   `ChevronZone`, `RoundedImage`, `AppIconDisc` and `Surface` where they
+   fit. Keyboard behaviour then is the same everywhere: Tab reaches every
+   control, Space, Return and Enter activate it, and keys with Alt, Ctrl or
+   Meta go on to the window. When a primitive lacks an option, extend the
+   primitive instead of copying it. Name its API as the others do: visible
+   text is `text`, a two-line row has `title` and `subtitle`, the
+   accessible name is `accessibleName`; the signal that opens an item's own
+   panel is `panelRequested`; an action object is `{ id, text, tone }`
+   (tone `neutral`, `accent` or `danger`, as `PillButton` takes it); state
+   an owner must not write goes into a `QtObject { id: internal }`. Set no
+   `objectName`: nothing reads them, and a type check (`child as MenuRow`)
+   finds an item instead.
 3. Add `<Name> 1.0 <Name>.qml` (or `singleton <Name> 1.0 <Name>.qml`) to
    that directory's `qmldir`. A hand-written `qmldir` stops Quickshell from
    synthesising one, so a type that is not listed is not found.
-4. Import it by relative directory where it is used.
+4. Import it as a module where it is used: `import qs` for `Colors`,
+   `Theme` and `Motion`, then `import qs.services`, `qs.components`,
+   `qs.components.home`, `qs.islands`, `qs.panels` or `qs.windows`; never a
+   relative path (`import "../services"`). Types of the file's own
+   directory need no import. A script library is a `qmldir` resource
+   (`RowActions 1.0 RowActions.js`) and comes with its module.
    For an icon use `components/Icon.qml` with a Material Symbols ligature
    name (`name: "battery_5_bar"`, see fonts.google.com/icons). The glyphs
    come from the "Material Symbols Rounded" font of the
@@ -1242,7 +1263,9 @@ surface.
    `Theme` logs one warning at start.
 5. Run `tests/quickshell-bar.sh`; it fails when a type is missing from its
    `qmldir` and on any qmllint warning other than the known
-   `PanelWindow is not creatable` one.
+   `PanelWindow is not creatable` one. It lints through a temporary import
+   root whose `qs` entry links to the bar directory, the way Quickshell
+   maps `qs` to the folder of `shell.qml`.
 6. Where the widget opens something the own bar has no panel for yet, call
    the matching `dms ipc` function, as ADR-0027 describes.
 7. A new centre panel is a `Panel` (`panels/Panel.qml`) with a `name`; it
@@ -1293,7 +1316,7 @@ owns.
 ## Services
 
 Every data source above is one `pragma Singleton` under `services/`, with
-no UI; widgets import `"../services"` and bind to the properties. Quickshell
+no UI; widgets import `qs.services` and bind to the properties. Quickshell
 creates a singleton on first use, so a service that no widget references
 does not run. Percentages are 0..100 and levels 0..1 unless noted. The
 entries below list what other files read or call, and what the IPC targets
@@ -1642,8 +1665,8 @@ Three shapes hold for every service:
   fallbacks), `localBin`, `barState` (`state/dotfiles-bar`), `barRuntime`
   (`runtime/dotfiles-bar`), `dmsCache`, `dmsState`, and `ready` once its one
   `mkdir -p` has created the two bar directories. `Colors` and `Motion` in
-  the root module import it too (`import "services"`; the cycle with the
-  services' `import ".."` is fine for QML and qmllint).
+  the root module import it too (`import qs.services`; the cycle with the
+  services' `import qs` is fine for QML and qmllint).
 
 ### Music
 
@@ -1678,7 +1701,7 @@ same 600 ms.
   No `qsb` is installed, so there is no custom shader; MultiEffect's blur
   spreads a 16 px disc by barely 3 px, which is why the bloom is a masked
   disc and not a blur.
-- **Music bar** (`islands/MusicBar.qml`, the run in `components/Marquee.qml`,
+- **Music bar** (`islands/MusicBar.qml`, the run in `islands/Marquee.qml`,
   the glow in `islands/MusicGlow.qml`). The orb lives in its own small surface (Window
   architecture), not in the clipped island, and moves with the island's own
   curve between 6 px left of the pill and 7 px inside the bar. Resting on it for 80 ms opens `musicbar`;
@@ -1784,6 +1807,15 @@ same 600 ms.
   the saving is GPU and compositor time. Check a new binding to `Cava`,
   `Music.position` or any other value that changes while music plays
   against this.
+- **Open: two measurements.** `Island` renders through a layer with a
+  `MultiEffect` shadow at all times, also while `shadowStrength` is 0, and
+  the music bar's rim redraws the centre island on every Cava tick. If
+  `bardebug frames 5` with music playing shows the bar window paying for
+  it, draw the shadow as a `RectangularShadow` sibling (QtQuick.Effects,
+  Qt 6.11 is installed) or gate it with `layer.enabled: shadowStrength >
+  0`. `TopWave`'s `Canvas` paints on the GUI thread;
+  `renderStrategy: Canvas.Threaded` may take that off it, kept only if
+  the same measurement shows a gain. Both are reminders in the code.
 
 The services are linted with the rest of the bar:
 

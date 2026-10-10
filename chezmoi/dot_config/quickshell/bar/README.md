@@ -14,8 +14,8 @@ Theme.qml        singleton: bar, island and panel sizes, radii, fonts, opacities
 Motion.qml       singleton: durations and curves; reduce motion follows Settings
 qmldir           registers the token singletons
 windows/         BarWindow (islands, blobs, glow, privacy dock, mask, blur, keyboard focus,
-                 and the close area while a panel is open), OrbSurface (the orb's own box),
-                 WaveSurface (the top-edge wave's strip)
+                 and the close area while a panel is open), OrbSurface (the orb's own box)
+                 with Orb, WaveSurface (the top-edge wave's strip) with TopWave; FrameCounter
 services/        singletons that own state or data; Shell.qml is the centre island state machine
                  and sets every service's `active`; BarIpc.qml holds the IPC targets `bar` and
                  `notifications`; Notifications.qml is the notification daemon (ADR-0028),
@@ -23,27 +23,27 @@ services/        singletons that own state or data; Shell.qml is the centre isla
                  Appearance.qml the Light / Dark / Auto and scheme switching through DMS,
                  Dms.qml the rest of `dms ipc`; Settings.qml the bar's runtime switches,
                  Paths.qml the XDG paths; the types Command, CommandReader, CommandWriter and
-                 LineWatcher wrap external commands
+                 LineWatcher wrap external commands; maps.js (the Maps resource)
 islands/         LeftIsland (workspaces, apps); CentreIsland with CentrePill (weather, clock,
-                 battery, Detail), MusicBar, MusicGlow and MusicFade, CentrePanels (the eleven
-                 panels) and PrivacyDock beside it; RightIsland (tray, attention indicators,
-                 or the notification stack in their place) with TrayMenu and PeekStack;
+                 battery, Detail), Osd, MusicBar with Marquee and RimLight, MusicGlow and
+                 MusicFade, CentrePanels (the eleven panels) and PrivacyDock with PrivacyDots
+                 beside it; RightIsland (tray, StatusIndicator pills, or the notification
+                 stack in their place) with TrayMenu and PeekStack of NotificationPeekRow;
                  NotificationBlobs (disc blobs below it)
 panels/          Panel (the base) and the centre panel bodies: HomePanel, SettingsPanel,
                  UpdatesPanel, PlayerPanel, PowerPanel, ThemePanel, WallpaperPanel, WifiPanel,
-                 BluetoothPanel, SoundPanel, DisplayPanel
-components/      primitives every widget is built from: Island, IslandShadow and MorphAnimation,
-                 Crossfade, ColorCrossfade, Appear, Label, FocusRing, Pressable, IconButton,
-                 PillButton, InlineField, KeyedListModel, ScrollHint, SectionHeader,
-                 AppIconDisc, FillTrack, ChevronZone, RoundedImage, Marquee, Hairline, Clock,
-                 Icon (Material Symbols), WeatherIcon, BatteryIcon, SegmentedControl;
-                 then feature pieces: Tile, CapsuleSlider, NotificationRow and
-                 NotificationList for Settings; NotificationPeekRow for the stack;
-                 StatusIndicator for the right island; PanelControlRow, RowList,
-                 RowActions.js, ListRow and AppVolumeRow for Wi-Fi, Bluetooth and Sound;
-                 TimeTile, WeatherTile, PerformanceTile and PowerTile for Home; Orb,
-                 RimLight and TopWave for music; Carousel for Theme and Wallpaper; Osd;
-                 PrivacyDots
+                 BluetoothPanel, SoundPanel, DisplayPanel; their parts NotificationList and
+                 NotificationRow (Settings), AppVolumeRow (Sound), PanelControlRow (the
+                 panels opened from Settings)
+components/      shared pieces every widget is built from, service-free except Clock and
+                 BatteryIcon: Island, IslandShadow and MorphAnimation, Crossfade,
+                 ColorCrossfade, Appear, Label, FocusRing, Pressable, IconButton, PillButton,
+                 InlineField, KeyedListModel, ScrollHint, SectionHeader, AppIconDisc,
+                 FillTrack, ChevronZone, RoundedImage, Surface, Hairline, Clock, Icon
+                 (Material Symbols), WeatherIcon, BatteryIcon, SegmentedControl, Tile,
+                 CapsuleSlider, Carousel, ListRow, RowList and RowActions.js (the RowActions
+                 resource)
+components/home/ the Home tiles: TimeTile, WeatherTile, PerformanceTile, PowerTile
 ```
 
 Every directory with types has its own `qmldir` that lists all of them.
@@ -56,7 +56,9 @@ systemctl --user stop quickshell-bar.service
 quickshell -c bar -n
 ```
 
-Run the repository copy without deploying it:
+Run the repository copy without deploying it. Files import each other as
+`qs` modules (`import qs.services`), which Quickshell resolves from the
+folder of `shell.qml`, so any copy of this directory runs as it is:
 
 ```fish
 quickshell -p chezmoi/dot_config/quickshell/bar -n

@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import ".."
-import "../components"
+import qs
+import qs.components
 
 // A tray item's menu, hanging from the right island's left padding. Submenus
 // are flattened one level: the parent becomes a header over its indented
@@ -39,7 +39,6 @@ Appear {
         menuWidth = Math.max(Theme.trayMenuWidth, Math.min(Theme.trayMenuMaxWidth, Math.ceil(widest)));
     }
 
-    objectName: "trayMenu"
     width: menuWidth
     height: entries.implicitHeight
     shown: open
@@ -119,7 +118,6 @@ Appear {
         readonly property real naturalWidth: textX + singleLine.implicitWidth + trailing
         readonly property bool listed: present && (separator || label !== "")
 
-        objectName: "menuRow"
         width: trayMenu.menuWidth
         height: separator ? Theme.trayMenuSeparatorHeight : Math.max(Theme.trayMenuRowHeight, Math.ceil(labelText.implicitHeight) + Theme.trayMenuRowPadding)
         visible: listed
@@ -147,7 +145,6 @@ Appear {
         Label {
             id: labelText
 
-            objectName: "menuLabel"
             visible: !row.separator
             x: row.textX
             anchors.verticalCenter: parent.verticalCenter

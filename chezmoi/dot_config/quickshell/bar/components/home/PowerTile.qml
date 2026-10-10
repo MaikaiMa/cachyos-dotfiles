@@ -1,16 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // Home: charge, state, a read-only charge capsule, time, health and capacity,
 // and the power profile as a segmented control.
-Rectangle {
+Surface {
     id: tile
-
-    radius: Theme.tileRadius
-    color: Colors.surfaceContainerHigh
 
     readonly property string subtitle: {
         if (!Battery.available)
@@ -53,7 +51,6 @@ Rectangle {
             }
 
             Label {
-                objectName: "batteryPercentage"
                 anchors.verticalCenter: parent.verticalCenter
                 text: Battery.available ? Math.round(Battery.percentage) + "%" : "–"
                 strong: true
@@ -62,7 +59,6 @@ Rectangle {
             }
 
             Label {
-                objectName: "batteryState"
                 anchors.verticalCenter: parent.verticalCenter
                 text: tile.subtitle
                 color: Colors.foregroundVariant
@@ -71,7 +67,6 @@ Rectangle {
 
         // The Settings slider language without a handle.
         FillTrack {
-            objectName: "chargeFill"
             width: parent.width
             height: Theme.chargeCapsuleHeight
             capsuleClip: true
@@ -92,14 +87,12 @@ Rectangle {
             height: Theme.powerStatsHeight
 
             Stat {
-                objectName: "timeStat"
                 anchors.left: parent.left
                 title: Battery.state === "charging" ? "To full" : "Remaining"
                 value: !Battery.available || Battery.state === "full" ? "–" : tile.duration(Battery.state === "charging" ? Battery.timeToFull : Battery.timeToEmpty)
             }
 
             Stat {
-                objectName: "healthStat"
                 anchors.horizontalCenter: parent.horizontalCenter
                 alignment: Text.AlignHCenter
                 title: "Health"
@@ -107,7 +100,6 @@ Rectangle {
             }
 
             Stat {
-                objectName: "capacityStat"
                 anchors.right: parent.right
                 alignment: Text.AlignRight
                 title: "Capacity"
@@ -116,7 +108,6 @@ Rectangle {
         }
 
         SegmentedControl {
-            objectName: "profileTabs"
             width: parent.width
             accessibleName: "Power profile"
             model: Battery.profiles.map(name => Battery.profileLabel(name))
@@ -140,7 +131,6 @@ Rectangle {
         Label {
             id: titleText
 
-            objectName: "statTitle"
             width: stat.width
             horizontalAlignment: stat.alignment
             text: stat.title
@@ -150,7 +140,6 @@ Rectangle {
         Label {
             id: valueText
 
-            objectName: "statValue"
             width: stat.width
             horizontalAlignment: stat.alignment
             text: stat.value

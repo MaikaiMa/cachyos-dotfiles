@@ -1,10 +1,10 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import ".."
-import "../components"
-import "../islands"
-import "../services"
+import qs
+import qs.services
+import qs.components
+import qs.islands
 
 // The music orb in a small box of its own left of the centre island, so its
 // 30 Hz rim does not make the bar window present frames. The box covers
@@ -64,7 +64,6 @@ PanelWindow {
             readonly property real leftmostX: surface.centre.centreLine + surface.centre.orbTravelLeft
             readonly property real rightmostX: surface.centre.centreLine + surface.centre.orbTravelRight - width
 
-            objectName: "orb"
             x: Math.max(leftmostX, Math.min(rightmostX, restX)) - surface.boxLeft
             y: surface.centre.y + (Theme.islandHeight - height) / 2
             opacity: Music.hasPlayer && !surface.centre.panelOpen ? 1 : 0

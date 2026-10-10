@@ -1,8 +1,10 @@
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Shapes
-import ".."
-import "../services"
+import qs
+import qs.services
+import qs.components
+import qs.islands
 
 // The music orb: a solid sphere in the album colour with a travelling rim light
 // and a bloom that follows the low band. Paused or stopped, it rests: the core
@@ -26,7 +28,6 @@ Item {
     }
 
     Rectangle {
-        objectName: "orbRing"
         anchors.centerIn: parent
         width: Theme.orbRingDiameter
         height: Theme.orbRingDiameter
@@ -42,7 +43,6 @@ Item {
 
     // Core, rim and bloom scale together around the same centre.
     Item {
-        objectName: "orbLive"
         anchors.centerIn: parent
         width: Theme.orbSize
         height: Theme.orbSize
@@ -53,7 +53,6 @@ Item {
         // colour change, not per frame. MultiEffect's blur spreads a 16 px disc by
         // barely 3 px, too little for the glow.
         Item {
-            objectName: "orbBloom"
             anchors.centerIn: parent
             width: Theme.orbSize + 2 * Theme.orbBloom
             height: width
@@ -129,7 +128,6 @@ Item {
         }
 
         Rectangle {
-            objectName: "orbCore"
             anchors.centerIn: parent
             width: Theme.orbSize
             height: Theme.orbSize
@@ -140,7 +138,6 @@ Item {
         RimLight {
             id: rim
 
-            objectName: "orbRim"
             anchors.centerIn: parent
             width: Theme.orbSize
             height: Theme.orbSize

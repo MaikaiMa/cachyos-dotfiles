@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Widgets
-import ".."
-import "../components"
-import "../services"
+import qs
+import qs.services
+import qs.components
 
 // Tray group, hairline and attention indicators, or the notification stack in
 // their place. The owner fixes the right edge; the content is laid out from it,
@@ -209,7 +209,6 @@ Island {
     // Middle click on the stack outside its rows clears the stack; a row's own
     // middle click dismisses only that row.
     MouseArea {
-        objectName: "background"
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
@@ -243,7 +242,6 @@ Island {
 
     // The status content; while the stack shows it is faded out and not drawn.
     Row {
-        objectName: "content"
         anchors.right: parent.right
         anchors.rightMargin: Theme.rightEndInset
         height: Theme.islandHeight
@@ -258,7 +256,6 @@ Island {
         Item {
             id: trayGroup
 
-            objectName: "trayGroup"
             width: island.trayWidth
             height: Theme.islandHeight
 
@@ -290,7 +287,6 @@ Island {
                         readonly property bool extra: index >= island.stackCount
                         property real offset: island.discOffset(index, island.fanned)
 
-                        objectName: "trayDisc"
                         x: -offset - width
                         y: (Theme.islandHeight - height) / 2
                         z: extra ? 1 : index + 2
@@ -309,11 +305,11 @@ Island {
                         // The ring sits just outside the disc, in the island colour.
                         Rectangle {
                             anchors.centerIn: parent
-                            width: parent.width + 2
+                            width: parent.width + 2 * Theme.trayDiscRing
                             height: width
                             radius: width / 2
                             color: discPointer.containsMouse ? Colors.hoverSurface : Colors.surfaceContainerHigh
-                            border.width: 1
+                            border.width: Theme.trayDiscRing
                             border.color: Colors.surfaceContainer
                         }
 
@@ -351,7 +347,6 @@ Island {
 
                     property real offset: island.chevronOffset
 
-                    objectName: "trayChevron"
                     visible: island.chevronShown
                     x: -offset - width
                     y: (Theme.islandHeight - height) / 2
@@ -396,7 +391,6 @@ Island {
         }
 
         Item {
-            objectName: "separator"
             width: island.separatorShown ? island.separatorWidth : 0
             height: Theme.islandHeight
             opacity: island.separatorShown ? 1 : 0
@@ -417,7 +411,6 @@ Island {
         Indicator {
             id: caffeineIndicator
 
-            objectName: "caffeine"
             shown: Dms.caffeine
             gap: island.gapBefore(caffeineIndicator)
             iconName: "coffee"
@@ -428,7 +421,6 @@ Island {
         Indicator {
             id: mutedIndicator
 
-            objectName: "muted"
             shown: Audio.muted
             gap: island.gapBefore(mutedIndicator)
             iconName: "volume_off"
@@ -441,7 +433,6 @@ Island {
         Indicator {
             id: wifiIndicator
 
-            objectName: "wifi"
             shown: !Network.wifiEnabled || Network.weak
             gap: island.gapBefore(wifiIndicator)
             iconName: Network.statusIcon
@@ -453,7 +444,6 @@ Island {
         Indicator {
             id: keyboardIndicator
 
-            objectName: "keyboard"
             shown: Tablet.detached
             gap: island.gapBefore(keyboardIndicator)
             iconName: Tablet.keyboardVisible ? "keyboard_hide" : "keyboard"
@@ -465,7 +455,6 @@ Island {
         Indicator {
             id: updatesIndicator
 
-            objectName: "updates"
             shown: Updates.count > 0
             gap: island.gapBefore(updatesIndicator)
             iconName: "download"
@@ -479,7 +468,6 @@ Island {
         Indicator {
             id: notificationsIndicator
 
-            objectName: "notifications"
             shown: NotificationStack.bellCount > 0 || Notifications.doNotDisturb
             held: island.bellHeld
             gap: island.gapBefore(notificationsIndicator)
