@@ -27,9 +27,12 @@ is preserved only as the `noctalia-final` Git tag.
   "Plugin settings" below.
 - **Service layer and fallback bar.** Since 2026-10-05 the own Quickshell bar
   ([docs/shell.md](shell.md)) is the daily bar; DMS keeps running underneath
-  it for theming (matugen), notifications, idle and lock, the updater and the
-  `dms ipc` surface. Its own bar stays available as a fallback with the
-  built-in widgets `launcherButton`, `workspaceSwitcher`, `runningApps`,
+  it for theming (matugen), idle and lock, the updater and the `dms ipc`
+  surface. Notifications are the exception in the Niri session: since
+  [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md)
+  the own bar owns the notification daemon and DMS only registers the name
+  when the bar is not running (`scripts/bar-switch.sh dms`). The DMS bar stays
+  available as a fallback with the built-in widgets `launcherButton`, `workspaceSwitcher`, `runningApps`,
   `music`, `systemTray` and so on, listed in "The mat-glass look" below;
   `scripts/bar-switch.sh dms` brings it back.
 - **Retired plugins.** The five repository plugins `dotfilesLauncher`,

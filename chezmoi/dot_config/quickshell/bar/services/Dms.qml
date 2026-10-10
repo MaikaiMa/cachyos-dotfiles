@@ -12,7 +12,6 @@ Singleton {
     id: root
 
     property bool nightLight: false
-    property bool doNotDisturb: false
     // Idle inhibit.
     property bool caffeine: false
     // dark or light.
@@ -84,7 +83,6 @@ Singleton {
 
     function refresh() {
         nightStatus.running = true;
-        dndStatus.running = true;
         caffeineStatus.running = true;
         themeStatus.running = true;
     }
@@ -98,10 +96,6 @@ Singleton {
 
     function toggleNightLight() {
         call(["night", "toggle"]);
-    }
-
-    function toggleDoNotDisturb() {
-        call(["notifications", "toggleDoNotDisturb"]);
     }
 
     function toggleCaffeine() {
@@ -348,16 +342,6 @@ Singleton {
         command: ["dms", "ipc", "call", "night", "status"]
         stdout: StdioCollector {
             onStreamFinished: root.nightLight = /^Night mode: enabled/m.test(text)
-        }
-    }
-
-    // "true" or "false".
-    Process {
-        id: dndStatus
-
-        command: ["dms", "ipc", "call", "notifications", "getDoNotDisturb"]
-        stdout: StdioCollector {
-            onStreamFinished: root.doNotDisturb = text.trim() === "true"
         }
     }
 

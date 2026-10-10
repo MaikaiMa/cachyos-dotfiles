@@ -16,6 +16,19 @@ ShellRoot {
         radius: island.radius
     }
 
+    // One disc blob slot under the right island (NotificationBlobs.area), empty
+    // when nothing is there; the input and blur regions each list
+    // Theme.notificationBlobMax + 2 of them: the blobs, "+N" and clear-all.
+    component BlobRegion: Region {
+        required property rect area
+
+        shape: RegionShape.Ellipse
+        x: area.x
+        y: area.y
+        width: area.width
+        height: area.height
+    }
+
     Variants {
         model: Quickshell.screens
 
@@ -167,6 +180,30 @@ ShellRoot {
                     IslandRegion {
                         island: right
                     }
+                    BlobRegion {
+                        area: blobs.area(0)
+                    }
+                    BlobRegion {
+                        area: blobs.area(1)
+                    }
+                    BlobRegion {
+                        area: blobs.area(2)
+                    }
+                    BlobRegion {
+                        area: blobs.area(3)
+                    }
+                    BlobRegion {
+                        area: blobs.area(4)
+                    }
+                    BlobRegion {
+                        area: blobs.area(5)
+                    }
+                    BlobRegion {
+                        area: blobs.area(6)
+                    }
+                    BlobRegion {
+                        area: blobs.area(7)
+                    }
                 }
 
                 Region {
@@ -180,6 +217,30 @@ ShellRoot {
                     }
                     IslandRegion {
                         island: right
+                    }
+                    BlobRegion {
+                        area: blobs.area(0)
+                    }
+                    BlobRegion {
+                        area: blobs.area(1)
+                    }
+                    BlobRegion {
+                        area: blobs.area(2)
+                    }
+                    BlobRegion {
+                        area: blobs.area(3)
+                    }
+                    BlobRegion {
+                        area: blobs.area(4)
+                    }
+                    BlobRegion {
+                        area: blobs.area(5)
+                    }
+                    BlobRegion {
+                        area: blobs.area(6)
+                    }
+                    BlobRegion {
+                        area: blobs.area(7)
                     }
                     Region {
                         x: centre.privacyPill.x
@@ -288,6 +349,17 @@ ShellRoot {
                         screenName: screenScope.modelData.name
                         x: parent.width - width - Theme.gap
                         y: Theme.islandTop - keyRoot.hideShift
+                        peekMaxWidth: parent.width - Theme.gap - (centre.x + centre.width) - Theme.notificationPeekCentreClearance
+                    }
+
+                    // Over the right island, so a blob crosses its bottom edge in sight.
+                    NotificationBlobs {
+                        id: blobs
+
+                        screenName: screenScope.modelData.name
+                        island: right
+                        x: right.x + right.width - width
+                        y: right.y
                     }
 
                     // Above the right island: an open panel is never covered by it.

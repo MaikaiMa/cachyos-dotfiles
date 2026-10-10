@@ -2,8 +2,9 @@
 
 The bar is moving from DMS to a repository-owned Quickshell configuration
 ([ADR-0027](adr/ADR-0027-own-the-bar-and-panels-in-quickshell-with-dms-as-service-layer.md)).
-DMS stays the service layer: notifications, lock screen, polkit, theming
-and wallpaper. This page is the index for the own bar; [dms.md](dms.md)
+DMS stays the service layer: lock screen, polkit, theming and wallpaper;
+in the Niri session the bar is also the notification daemon
+([ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md)). This page is the index for the own bar; [dms.md](dms.md)
 keeps describing DMS.
 
 ## DMS panels while the own bar runs
@@ -39,6 +40,23 @@ brightness that drag, click, scroll and take arrow keys, and the
 notification list with dismiss and "Clear all". The Wi-Fi and Bluetooth
 tiles open their own panels (see below). The island grows to the panel's own height,
 so it shrinks in one island animation when notifications leave.
+
+Since ADR-0028 the list is the bar's own daemon's: newest first, a click
+on a row expands it in place (one row at a time, with the island's grow
+and shrink timing) to the full body in at most four lines, the image at
+most 64 px right of the text when it is not already the icon, every
+action as a pill (the default action first, tinted `primary`, labelled
+"Open" when the sender gives it no text) and, when the sender asks for it
+(`hasInlineReply`), a reply field with Send; Enter sends. Actions and the
+reply exist only while the sender's notification is alive, so rows
+restored from the history after a bar restart show neither. An action or
+a reply closes the notification with reason "dismissed by user" and its
+row leaves, unless the sender marked it resident. The x closes a live
+notification the same way and drops a historic one; "Clear all" does that
+for every row. The header count is the list length. The do not disturb
+tile is the bar's own flag (`Notifications.doNotDisturb`). The collapsed
+row keeps its 62 px three-line look (app, summary, body), as the design
+contract records since 2026-10-08.
 
 Step 4 made Home real, 560 px wide and 436 px tall: a narrow and a wide
 column on the 12 px tile grid. Time (hours over minutes, "zo 04 okt") and
@@ -115,6 +133,76 @@ Step 5 made the side islands and the Updates panel real.
   panel, Wi-Fi (shown when off or weak) opens Settings, muted unmutes and
   its wheel changes the volume, caffeine turns itself off; a click on the
   background opens Settings. The do not disturb tile stays in Settings.
+  The bell counts the list items that are neither peeking nor a disc
+  blob (`bellCount`), so a notification joins the count when the stack
+  morphs back into the bell.
+- **Notification peek** (ADR-0028, `NotificationPeekRow`,
+  `NotificationBlobs`). A notification replaces the right island of the
+  screen that had Niri's focus: a fanned tray folds first (200 ms) or an
+  open tray menu closes first (220 ms), then the island morphs into the
+  stack keeping its right edge (280 ms grow, the status content fades out
+  in 140 ms) and nothing else is drawn in it: no tray, no indicators, no
+  bell. On an empty day the island appears as the stack. The stack is
+  360 px wide, capped 8 px clear of the centre island (`peekMaxWidth`
+  from `shell.qml`, truncating the text), radius 20 px, padding 10 px
+  horizontal and 8 px vertical. Rows are bare, 48 px, 12 px apart, with a
+  full-width 1 px `outline` hairline at 12 % centred in each gap and none
+  under the last row; up to three, newest on top, each new one growing
+  the island down by a row while the others slide down. A row is the
+  app's icon on a 26 px disc (the Settings row's icon choice), 10 px, the
+  summary (13 px, `error` when critical) over one line of body (11 px),
+  both elided 28 px before the right edge. Each row holds on its own: 5 s,
+  3 s for low urgency, a positive sender timeout clamped to 2 to 15 s, a
+  critical one until it is clicked or dismissed. The pointer on a row
+  pauses its hold; leaving restarts it after the 120 ms grace. Resting
+  250 ms on a row fades in a 16 px `close` glyph 8 px from its top and
+  right (24 px hit area, `on_surface` on hover), and on a row with sender
+  actions grows it to 80 px (200 ms, tray curve) while up to three text
+  actions rise from under the body: 12 px, 500, 24 px apart in 32 px hit
+  zones, the default action first in `primary`, the others in
+  `on_surface`. A 500 ms long press on touch does the same, and a tap on
+  the row folds it again. A `replaces_id` update cross-fades the row in
+  place (140 ms) and restarts its hold. Clicks: the text runs the default
+  action, or without one focuses the app's window (the workspace pill's
+  app key matching) and marks it seen; a text action runs its action;
+  both close the notification with reason "dismissed by user" unless it
+  is resident. The glyph and a middle click on a row dismiss that row,
+  right click opens Settings. A row whose hold ends, or that a fourth row pushes out, while
+  other rows stay breaks out as a disc blob (`Notifications.blobIds`): its
+  icon disc travels down through the island's bottom edge, grows from 26
+  to 30 px and settles 8 px below the island (220 ms, shrink curve), a
+  circle in the island background and shadow, right-aligned with the
+  island, newest on the right, 8 px apart, at most six and then a "+N"
+  blob on the far left. Blobs follow the island's bottom edge, shift left
+  with the shrink timing and never climb back into the stack on their
+  own. A click on a blob re-peeks it (`Notifications.repeek`): it rises
+  into the island onto the top row's disc while that row grows in place
+  (280 ms grow), with its actions, dismiss glyph and a fresh hold; with
+  three rows already shown the bottom one breaks out as a blob. A click
+  on "+N" opens Settings at the list. A clear-all blob sits at the far
+  left of the blob row as long as the stack shows (a hover-only reveal
+  was dropped on 2026-10-10: too easy to lose on the trackpad), left of
+  "+N" or alone when there are no blobs: the blob size, a 16 px `close`
+  glyph in `on_surface_variant`, `on_surface` on hover. Its
+  click, and a middle click on a blob or on the stack outside its rows,
+  dismisses every row and blob (`Notifications.clearStack`) and the
+  island morphs back with nothing of them counted. A row that is
+  dismissed, runs an action, or is the last one leaves without a blob. When the last row
+  leaves, the island morphs back (220 ms shrink, the status content fades
+  in), the blobs slide up into the bell's place shrinking to 16 px and
+  fading, and only then the bell with its count fades in (180 ms); with
+  nothing to show the island shrinks away. The blobs live in their own
+  item beside the island (the island clips its content), and the bar
+  window's input and blur regions have one ellipse per blob slot, "+N"
+  and the clear-all blob included (`NotificationBlobs.area`), so blobs take clicks and get blur while the
+  rest of the window stays click-through. No peek, only the count, while
+  do not disturb is on (critical ones still peek), a centre panel is open
+  (opening one moves every peeking row and blob into the count), or the
+  focused window is fullscreen (`Niri.focusedFullscreen`). While the bar
+  is hidden or the session is locked (`Session.locked`) arrivals wait and
+  come back as one "N new notifications" row without actions, whose click
+  opens Settings. Reduce motion makes every duration 0 and keeps the
+  holds. `Theme.notificationPeek` turns the peek off.
 - **Updates panel**, 420 px: "48 updates · checked 3 min ago", the fragile
   packages first in `error` with a reason (kernel, shell, greeter, else a
   reboot), then the rest with a source chip and `old → new` in a list that
@@ -391,8 +479,7 @@ button, `Mod+Alt+L`), `settings openWith` (the settings button of the
 Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
 `theme getMode` and `settings get|set` for `matugenScheme` and
 `matugenSmartMode` (Theme panel), `wallpaper get|set|getFor|setFor`
-(Wallpaper panel and the scheme re-render), `notifications
-getDoNotDisturb|toggleDoNotDisturb|clearAll`, `inhibit status|toggle` and
+(Wallpaper panel and the scheme re-render), `inhibit status|toggle` and
 `night status|toggle|getDayTemp|getSchedule|setTargetTemp` (Display panel); plus the fallbacks of the media keys (see "Shortcuts") and
 `dms screenshot` for the screenshot binds.
 
@@ -525,7 +612,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
   services/                             singletons that own state or data
     Shell.qml                           centre island state machine and IPC target `bar`
     Niri.qml ... Updates.qml            data services, see "Services"
-    Session.qml                         Power panel actions: lock, suspend, log out, reboot, power off
+    Session.qml                         Power panel actions: lock, suspend, log out, reboot, power off; logind lock state
+    Notifications.qml                   the notification daemon: history, do not disturb, peek stack
     Tablet.qml                          keyboard cover detached, on-screen keyboard, rotation lock
     Display.qml                         night temperature and schedule, keyboard backlight, rear light
     Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
@@ -534,7 +622,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
   islands/                              the three islands
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
     CentreIsland.qml                    weather, clock and battery pill, Detail, orb, privacy dots, music bar, OSD and the eleven panels
-    RightIsland.qml                     tray stack, fan and menu, attention indicators
+    RightIsland.qml                     tray stack, fan and menu, attention indicators, or the notification stack in their place
+    NotificationBlobs.qml               disc blobs of rows that left the stack, below the right island
   panels/                               centre panel bodies
     HomePanel.qml                       Time, Weather, Performance and Power tiles, actions row
     SettingsPanel.qml                   toggle grid, three sliders, notification list
@@ -562,7 +651,9 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     PowerTile.qml                       Home: charge, capsule, time, health, capacity, profile
     Tile.qml                            Settings grid toggle, wide with state or small icon-only, chevron zone for a panel
     CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer, optional chevron zone
-    NotificationRow.qml                 one notification with dismiss, collapses when it leaves
+    NotificationRow.qml                 one notification with dismiss, expands in place, collapses when it leaves
+    NotificationPeekRow.qml             one bare row of the notification stack: hold, dismiss glyph, text actions, replace cross-fade
+    NotificationActionPill.qml          one notification action as a 24 px pill in the Settings list
     PanelControlRow.qml                 panels from Settings: back, optional switch with state, DMS settings button
     RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height
     NetworkRow.qml                      Wi-Fi, Bluetooth and Sound row: icon, name, detail or level, expands in place
@@ -583,7 +674,8 @@ Each directory with types has its own `qmldir`; types import each other by
 relative directory (`import "../services"`, `import ".."` for the tokens).
 
 `quickshell-bar.service` runs `quickshell -c bar -n`, is part of
-`niri.service`, and starts after `dms.service`. It is not enabled through a
+`niri.service`, and starts before `dms.service` (see "Notification handover"
+under "Switching bars"). It is not enabled through a
 chezmoi-managed symlink: `scripts/bar-switch.sh` enables or disables it to
 match `dms/look.json`.
 
@@ -649,6 +741,49 @@ runs it that way after applying the DMS look, so a fresh machine comes up
 with the recorded bar. The switch edits the tracked `dms/look.json`; commit
 it when the choice should stick.
 
+### Notification handover
+
+The own bar is meant to own `org.freedesktop.Notifications`
+([ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md)),
+and DMS cannot give the name up, so the order of starts decides who holds
+it. `quickshell-bar.service` is `Before=dms.service` and waits for the name
+with `ExecStartPost=-gdbus wait --session --timeout 30
+org.freedesktop.Notifications`; the `-` keeps a bar that cannot register
+from failing, in which case DMS claims the name as before. The drop-in
+`dms.service.d/notifications.conf` makes `dms.service` `Type=simple`, so
+systemd no longer waits for DMS to hold the name and DMS starts when the
+bar's wait ends. The drop-in also sets `PartOf=quickshell-bar.service`
+(DMS is Quickshell too and takes the name the moment it frees, so a bar
+restart alone would hand it to DMS for good), which makes a stop or restart
+of the bar propagate to DMS: restarting the bar restarts DMS with it, and
+the wallpaper and polkit agent blink for a second. The drop-in stays
+installed in both modes: with the bar stopped, DMS registers the name
+exactly as before.
+
+A bar that starts after DMS holds no name, so `scripts/bar-switch.sh own`
+stops `dms.service`, restarts `quickshell-bar.service` and starts
+`dms.service` again, and `scripts/bar-switch.sh dms` disables the bar and
+restarts `dms.service`. Each does nothing when the state already matches
+(for `own`: the bar enabled and running, DMS running, the bar holding the
+name). `scripts/bar-switch.sh status` adds a line with the process that
+holds the name (`quickshell`, `dms`, `nobody`, or `unknown` without
+`busctl` or a session bus), read with `busctl --user status`; DMS's process
+is called `qs`, so the script recognises it by its command line.
+
+An automatic restart after a bar crash does not propagate to DMS, so DMS may
+take the name in the gap. When `status` names `dms` as the holder while the
+own bar runs, hand the name back:
+
+```fish
+scripts/bar-switch.sh own
+```
+
+Recovery from any state is one command:
+
+```fish
+scripts/bar-switch.sh dms
+```
+
 ## Shortcuts
 
 The Niri binds in
@@ -674,6 +809,25 @@ know the function yet), and the bind then runs the `dms ipc` call it used
 before. They stay allowed while the screen is locked. `Mod+Alt+L` still
 locks through DMS. The DMS settings window opens with `Mod+Shift+S` and from
 the settings button of the Wi-Fi and Bluetooth panels.
+
+The notification binds call the bar's IPC target `notifications`
+(`quickshell ipc -c bar call notifications ...`):
+
+| Keys | Call | Overlay title |
+| --- | --- | --- |
+| `Mod+N` | `openList` (toggles Settings at the list, the bell's click; also while the stack shows) | Notifications |
+| `Mod+Shift+N` | `clearAll` (rows, blobs and the list, nothing counted) | Clear Notifications |
+| `Mod+Ctrl+N` | `toggleDnd` | Do Not Disturb |
+
+`toggleDnd` replaces `dms ipc call notifications toggleDoNotDisturb`; it and
+`dnd` print the resulting state, `on` or `off`:
+
+```fish
+quickshell ipc -c bar call notifications openList
+quickshell ipc -c bar call notifications clearAll
+quickshell ipc -c bar call notifications toggleDnd
+quickshell ipc -c bar call notifications dnd
+```
 
 ## Running it by hand
 
@@ -740,6 +894,49 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   Tab walks the tiles and sliders, arrow keys (5 per press), Home and End
   move a focused slider, and Escape still closes. Dismissing a notification
   collapses its row and the island shrinks; "Clear all" removes the section.
+- Notifications, with the bar holding the name (`busctl --user status
+  org.freedesktop.Notifications` names `quickshell`): `notify-send Test
+  body` replaces the right island on the focused screen: the tray, the
+  indicators and the bell are gone while it shows, the island is exactly
+  360 px wide and keeps its right edge, and after the hold it morphs back
+  and the bell appears with its count. Resting on the row fades in the
+  `close` glyph at its top right; a click on it dismisses the row.
+  `notify-send -A yes=Yes -A no=No Test body`: resting on the row grows
+  it and shows "Yes" (in the accent) and "No" as plain text under the
+  body, no pills; a click prints its key in the terminal and the row
+  leaves the list. Three in a row (`notify-send One; notify-send Two;
+  notify-send Three`) show three rows with a hairline between them that
+  is barely visible, none under the last. A fourth pushes the bottom row
+  out as a disc blob below the island; as the holds end the next rows
+  become blobs, right-aligned and newest on the right, and the last row
+  morphs back while the blobs slide into the bell. Re-peek: send four
+  (`for n in 1 2 3 4; notify-send "Row $n"; end`), then click the blob:
+  it rises back into the island as the top row with its own hold, and
+  the bottom row breaks out as a blob in its place. Clear-all: with a
+  blob under the stack, rest the pointer on the island for a moment; a
+  blob with a `close` glyph fades in at the far left of the blob row (and
+  alone, without other blobs, on a single row) and fades out shortly
+  after leaving; its click removes every row and blob, the island morphs
+  back and the bell does not count them. A middle click on a blob, or on
+  the island's padding between rows, does the same at once; a middle
+  click on a row still dismisses only that row. Keys: `Mod+N` opens
+  Settings at the list (also while the stack shows, which then joins the
+  count) and closes it again; `Mod+Shift+N` empties the stack, the blobs
+  and the list; `Mod+Ctrl+N` toggles do not disturb and the bell crosses
+  out. The overlay (`Mod+Shift+/`) lists Notifications, Clear
+  Notifications and Do Not Disturb. `notify-send -p Progress` prints an id;
+  `notify-send -r <id> Progress 50%` cross-fades that row in place.
+  `notify-send -u critical Critical` stays until clicked and draws its
+  summary in `error`. With do not disturb on (right click on the bell, or
+  the IPC call under "Shortcuts") nothing peeks except critical, and the
+  state survives `systemctl --user restart quickshell-bar.service`. That
+  restart also restarts DMS (PartOf=), and afterwards `scripts/bar-switch.sh
+  status` still names `quickshell`; after a bar crash use
+  `scripts/bar-switch.sh own`, and `status` names the holder `quickshell` or
+  `dms`.
+  Locking with `Mod+Alt+L`, sending one and unlocking shows "1 new
+  notification". A notification DMS sends itself (an update or Bluetooth
+  prompt) shows here and its action reaches DMS.
 - Wi-Fi and Bluetooth tiles: hovering the chevron zone tints only the zone,
   hovering the rest only the rest; a click on the zone, a right click or a
   500 ms long press morphs Settings into the panel, a click on the rest
@@ -911,7 +1108,9 @@ owns.
 | Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper` | DMS has no folder setting; its picker remembers the last folder. |
 | Keyboard cover, on-screen keyboard, rotation lock | `~/.local/bin/tablet-mode watch`, `osk watch` (only while detached), `$XDG_STATE_HOME/dotfiles/rotation-lock` | The helpers from [tablet.md](tablet.md); the bar calls `osk toggle` and `auto-rotate lock toggle`. |
 | Session actions | `systemctl suspend|reboot|poweroff`, `niri msg action quit --skip-confirmation`, `dms ipc call lock lock` | |
-| Notifications list | DMS history file `~/.cache/DankMaterialShell/notification_history.json`, watched | DMS owns the notification daemon and Quickshell cannot run a second one. DMS's IPC cannot remove history entries (`dismiss` closes the newest popup, `clearAll` clears active notifications), so the bar remembers what it dismissed in its own state file. Taking the daemon over needs an ADR and belongs with the lock-screen phase. |
+| Notification daemon handover | `dms.service.d/notifications.conf` drop-in (`Type=simple`, `PartOf=quickshell-bar.service`), `quickshell-bar.service` (`Before=dms.service`, `gdbus wait`), `busctl --user status org.freedesktop.Notifications` | Decided in [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md), see "Notification handover". The packaged `BusName=` stays: systemd 262 rejects an empty `BusName=` and only `Type=dbus` waits for the name. |
+| Notifications list | The bar is the daemon: `Quickshell.Services.Notifications` `NotificationServer` with actions, markup, images, inline reply and persistence announced; history, seen marks and do not disturb in `$XDG_STATE_HOME/dotfiles-bar/notifications.json`; do not disturb by `quickshell ipc -c bar call notifications toggleDnd` | Decided in [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md). The file holds `doNotDisturb` and `notifications` (non-transient only: `id`, `serverId`, `appName`, `summary`, `body`, `appIcon`, `image` paths, `desktopEntry`, `urgency`, `timestamp`, `seen`), at most 200 entries and 7 days, pruned and written at most once per second. Raw image data is not kept. DMS's history is not imported. Quickshell's notification ids restart at 1 per process, so entries carry their own id. |
+| Session locked | logind `LockedHint` of the user's display session (`/org/freedesktop/login1/user/self` `Display`), read with `busctl --system` and followed with `gdbus monitor --system` | DMS sets the hint through its `loginctl.setLockedHint` (in the shipped `dms` binary). Read-only, no polling; verified on 2026-10-08 (`b false`, monitor attached to `/org/freedesktop/login1/session/_33`). The change line format of `gdbus monitor` is read from glib's output format, not seen with a real lock. |
 | Music, album colour | `Quickshell.Services.Mpris` plus Quickshell's `ColorQuantizer` | |
 | Audio levels for orb and wave | `cava` raw ascii output on stdout, 24 bars, 30 fps, run only while something plays | |
 | Tray | `Quickshell.Services.SystemTray` | |
@@ -933,7 +1132,11 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `output`, `isActive`, `isFocused`, `isUrgent`, `activeWindowId`),
   `windows` (`id`, `title`, `appId`, `workspaceId`, `isFocused`,
   `isFloating`, `isUrgent`, `column`, `row`), `focusedWindowId`,
-  `focusedWorkspace`, `focusedOutput`, `overviewOpen`, `connected`;
+  `focusedWorkspace`, `focusedOutput`, `overviewOpen`, `connected`,
+  `focusedFullscreen` (the focused window is as large as its output's
+  logical size: Niri 26.04 reports no fullscreen flag, and a fullscreen
+  window is drawn over the bar; windows carry `width` and `height` from
+  `layout.window_size`);
   `windowsOn(id)`, `focusWorkspace(id)`, `focusWindow(id)`,
   `toggleOverview()`, `request(message, callback)`, `iconFor(appId)` with
   `iconOverrides`, and `casts` (Niri's screencasts as it reports them:
@@ -999,12 +1202,12 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   and the row helpers `deviceIcon`, `batteryText`, `detailText`,
   `connectSettled`. Everything is native: the module has
   discovery, pairing and battery levels, but no pairing agent.
-- `Dms`: `nightLight`, `doNotDisturb`, `caffeine`, `themeMode`, polled every
+- `Dms`: `nightLight`, `caffeine`, `themeMode`, polled every
   10 s and after each call; `smartMode` (`matugenSmartMode`, shown as Auto)
   and `matugenScheme`, read at start, when the Theme panel opens and after
   each call; `schemes` (value and label of every scheme DMS accepts);
   `terminal` (DMS's `terminalOverride` from its `session.json`, watched);
-  `toggleNightLight()`, `toggleDoNotDisturb()`, `toggleCaffeine()`,
+  `toggleNightLight()`, `toggleCaffeine()`,
   `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued and run
   one call at a time; see the Theme panel above), `themeBusy` (true while a
   queued theme call runs or its follow-up polls are pending; Light and Dark
@@ -1013,17 +1216,43 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   runs `~/.local/bin/dms-settings`, which
   nudges DMS when its settings window does not map, see docs/dms.md Known
   limits), `refresh()`, `refreshTheme()`.
-- `Notifications`: `items` (newest first: `id`, `appName`, `summary`,
-  `body`, `timestamp` in ms, `appIcon`, `image`, `urgency`,
-  `desktopEntry`), `count`, `alerts` (items from the last ten minutes not
-  yet seen), `recentAppKeys` (name keys of their apps), `seenIds`,
-  `focusedAlertIds` (alerts of the apps on `Niri.focusedWorkspace`);
-  `dismiss(id)`, `markSeen(ids)`, `clearAll()`, `appKeys(name)`,
-  `hasRecentFor(appId)`. While `focusedAlertIds` is not empty and stays
-  the same for `Motion.alertClearDelay`, they are marked seen. A missing or
-  malformed history file is an empty list. Dismissals and seen marks live in
-  `$XDG_STATE_HOME/dotfiles-bar/notifications.json`; `clearAll()` also
-  clears DMS's active notifications through `dms ipc`.
+- `Notifications`: the notification daemon (ADR-0028). `items` (newest
+  first: `id`, `serverId`, `appName`, `summary`, `body`, `timestamp` in ms,
+  `appIcon`, `image`, `urgency`, `desktopEntry`, `seen`, and `live`: the
+  sender's notification still exists), `count` (the list length),
+  `bellCount` (items neither peeking nor a blob), `alerts` (items from the last ten
+  minutes not yet seen), `recentAppKeys` (name keys of their apps),
+  `seenIds`, `focusedAlertIds` (alerts of the apps on
+  `Niri.focusedWorkspace`), `liveIds`, `liveNotifications`,
+  `doNotDisturb`; `peekIds` (the peek stack, newest first, at most three;
+  `backlogRow` is the combined row), `blobIds` (rows that left the stack
+  while others stayed, newest first, cleared when the stack ends),
+  `peekScreen`, `backlogCount`,
+  `peekDeferred` (bar hidden or session locked), `peekBlocked` (a panel
+  open or a fullscreen focused window); signal `replaced(id)`.
+  `dismiss(id)` (closes a live one with reason "dismissed by user", drops
+  the entry), `markSeen(ids)`, `clearAll()` (every entry, row and blob:
+  the list, the stack and the count empty), `clearStack()` (only the
+  stack's rows and blobs; the combined row just ends and what it stands
+  for stays listed), `repeek(id)` (a blob back as the top row with a fresh
+  hold), `invoke(id, identifier)`,
+  `reply(id, text)`, `activate(id, identifier)` and `open(id)` (the peek's
+  verbs: they close unless resident), `isResident(id)`,
+  `hasDefaultAction(id)`, `pillActions(notification)`, `holdFor(id)`,
+  `expirePeek(id)` (a row's hold ended: a blob when other rows stay),
+  `endPeek(id)` (a row leaves without a blob), `liveObject(id)`, `entryFor(id)`, `setDoNotDisturb(on)`,
+  `toggleDoNotDisturb()`, `appKeys(name)`, `hasRecentFor(appId)`,
+  `iconSource(appIcon, desktopEntry, image)`, `storedImage(image)`,
+  `plainText(text)`, `oneLine(text)`. While `focusedAlertIds` is not empty
+  and stays the same for `Motion.alertClearDelay`, they are marked seen. A
+  sender's `replaces_id` arrives as changed properties on the same
+  Quickshell object; the entry is rewritten (new timestamp, unseen) and
+  `replaced` fires, but no new peek starts. A notification the sender
+  closes stays in the list as history; one that falls out of the 200
+  entries or 7 days expires. After a config reload the server keeps its
+  notifications (`keepOnReload`) and they find their entries again by
+  server id and text. A missing or unreadable state file is an empty
+  history.
 - `Music`: `hasPlayer`, `title`, `artist`, `album`, `artUrl`, `playing`,
   `position`, `length` (seconds), `canSeek`, `artColors` (the quantiser's
   buckets), `artColorRaw` (the most frequent bucket colour,
@@ -1067,7 +1296,9 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   every 2 s only while `active` is true.
 - `Session`: `perform(action)` for `lock`, `suspend`, `logout`, `reboot`,
   `poweroff`: closes the panel, then runs the command once the island has
-  shrunk.
+  shrunk. `locked`: logind's `LockedHint` on the user's display session,
+  read once and then followed by one `gdbus monitor` process (restarted
+  after 5 s when it exits).
 - `Tablet`: `detached` (from `tablet-mode watch`), `keyboardVisible` (from
   `osk watch`, which runs only while detached), `rotationLocked` (the state
   file, watched and read again when Settings opens); `toggleKeyboard()`

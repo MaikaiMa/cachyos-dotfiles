@@ -36,3 +36,4 @@ alternatives considered.
 - [ADR-0025: Guard system updates with a helper behind the DMS updater](ADR-0025-guard-system-updates-with-a-helper-behind-the-dms-updater.md)
 - [ADR-0026: Local-first writing tools with Ollama, Claude on request](ADR-0026-local-first-writing-tools-with-ollama-and-claude-on-request.md)
 - [ADR-0027: Own the bar and panels in Quickshell, keep DMS as the service layer](ADR-0027-own-the-bar-and-panels-in-quickshell-with-dms-as-service-layer.md)
+- [ADR-0028: Own the notification daemon in the bar for the Niri session](ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md)

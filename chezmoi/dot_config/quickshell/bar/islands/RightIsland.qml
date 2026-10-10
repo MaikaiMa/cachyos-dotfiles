@@ -7,13 +7,16 @@ import ".."
 import "../components"
 import "../services"
 
-// Tray group, hairline and attention indicators. The owner fixes the right
-// edge; the content is laid out from it, so the island grows leftward, and a
-// tray menu grows it downward. A click on the background opens Settings.
+// Tray group, hairline and attention indicators, or the notification stack in
+// their place. The owner fixes the right edge; the content is laid out from it,
+// so the island grows leftward, and a tray menu or the stack grows it
+// downward. A click on the background opens Settings.
 Island {
     id: island
 
     required property string screenName
+    // The widest the island may be on this screen: clear of the centre island.
+    property real peekMaxWidth: Theme.notificationPeekWidth
 
     property bool fanned: false
     property bool menuOpen: false
@@ -38,10 +41,28 @@ Island {
     readonly property real chevronOffset: rowWidth + Theme.trayGap
     readonly property real trayWidth: trayCount === 0 ? 0 : chevronShown ? chevronOffset + chevronWidth : rowWidth
 
+    // The notification stack: the service's rows when its stack is on this
+    // screen. Before it opens, a tray menu closes and a fanned tray folds; while
+    // it is open nothing else is drawn. It closes as the last row starts to
+    // leave, and the island morphs back with the bell held until it has settled.
+    readonly property var servicePeekIds: Notifications.peekScreen === screenName ? Notifications.peekIds : []
+    readonly property bool peekWanted: servicePeekIds.length > 0
+    property bool peekOpen: false
+    readonly property var shownPeekIds: peekOpen ? servicePeekIds : []
+    property bool bellHeld: false
+    // The rows that stay, without the gap under the last; set by measurePeek.
+    property real peekRowsHeight: 0
+    property string lastPeekId: ""
+    readonly property real peekWidth: Math.min(Theme.notificationPeekWidth, peekMaxWidth)
+    // For the blobs' clear-all: the pointer on the stack, or a row's controls
+    // revealed by a long press.
+    // From the island's right edge, where the blobs go on the morph back.
+    readonly property real bellCentreOffset: Theme.rightEndInset + notificationsIndicator.pillWidth / 2
+
     readonly property bool wifiShown: !Network.wifiEnabled || Network.weak
     // Left to right, the reverse of the design's reading order from the right edge.
     // Do not disturb has no indicator of its own: the bell crosses out and stays.
-    readonly property bool notificationsShown: Notifications.count > 0 || Dms.doNotDisturb
+    readonly property bool notificationsShown: Notifications.bellCount > 0 || Notifications.doNotDisturb
     // The keyboard button only while the cover is detached (docs/tablet.md).
     readonly property var shownFlags: [Dms.caffeine, Audio.muted, wifiShown, Tablet.detached, Updates.count > 0, notificationsShown]
     readonly property bool anyIndicator: shownFlags.includes(true)
@@ -89,6 +110,89 @@ Island {
         menuWidth = Math.max(Theme.trayMenuWidth, Math.min(Theme.trayMenuMaxWidth, Math.ceil(widest)));
     }
 
+    // Rows that leave stay until their collapse is done (removePeekRow).
+    function syncPeek() {
+        const ids = shownPeekIds;
+        for (let index = 0; index < peekModel.count; index++) {
+            const entry = peekModel.get(index);
+            if (!entry.leaving && !ids.includes(entry.rowId))
+                peekModel.setProperty(index, "leaving", true);
+        }
+        ids.forEach((id, position) => {
+            let found = false;
+            for (let index = 0; index < peekModel.count; index++) {
+                const entry = peekModel.get(index);
+                if (entry.rowId === id && !entry.leaving)
+                    found = true;
+            }
+            if (!found)
+                peekModel.insert(Math.min(position, peekModel.count), {
+                    rowId: id,
+                    leaving: false
+                });
+        });
+        let settled = 0;
+        for (let index = 0; index < peekModel.count; index++) {
+            if (!peekModel.get(index).leaving)
+                settled++;
+        }
+        motion = "peek";
+        measurePeek();
+        // The last row starts leaving: the island morphs back with it.
+        if (settled === 0)
+            peekOpen = false;
+    }
+
+    function removePeekRow(id: string) {
+        for (let index = peekModel.count - 1; index >= 0; index--) {
+            const entry = peekModel.get(index);
+            if (entry.rowId === id && entry.leaving)
+                peekModel.remove(index);
+        }
+    }
+
+    // The island is as tall as the rows that stay; the last one has no hairline.
+    function measurePeek() {
+        let height = 0;
+        let settled = 0;
+        let last = "";
+        for (let index = 0; index < peekRepeater.count; index++) {
+            const row = peekRepeater.itemAt(index) as NotificationPeekRow;
+            if (!row || row.leaving)
+                continue;
+            height += row.settledHeight;
+            settled++;
+            last = row.rowId;
+        }
+        if (settled === 0)
+            return;
+        peekRowsHeight = height + (settled - 1) * Theme.notificationPeekRowGap;
+        lastPeekId = last;
+    }
+
+    // Where a row's icon disc is, for the blob that starts from it.
+    function peekDisc(id: string): Item {
+        for (let index = 0; index < peekRepeater.count; index++) {
+            const row = peekRepeater.itemAt(index) as NotificationPeekRow;
+            if (row && row.rowId === id)
+                return row.disc;
+        }
+        return null;
+    }
+
+    // A tray menu closes and a fanned tray folds before the stack opens.
+    function preparePeek() {
+        const wait = Math.max(menuOpen ? Motion.shrinkDuration : 0, fanned ? Motion.trayDuration : 0);
+        closeMenu();
+        fanned = false;
+        if (wait === 0) {
+            peekOpen = true;
+            return;
+        }
+        peekPrepareTimer.interval = wait;
+        peekPrepareTimer.restart();
+    }
+
     function closeMenu() {
         if (!menuOpen)
             return;
@@ -105,14 +209,52 @@ Island {
         if (menuOpen)
             Qt.callLater(measureMenu);
     }
-    onShownFlagsChanged: motion = "indicator"
+    onShownFlagsChanged: motion = peekOpen || bellHeld ? "peek" : "indicator"
+    onShownPeekIdsChanged: syncPeek()
+    onPeekWantedChanged: {
+        if (!peekWanted)
+            peekPrepareTimer.stop();
+        else if (!peekOpen)
+            preparePeek();
+    }
+    onPeekOpenChanged: {
+        motion = "peek";
+        if (peekOpen) {
+            bellRelease.stop();
+            bellHeld = true;
+            fanned = false;
+        } else {
+            bellRelease.restart();
+        }
+    }
 
-    targetWidth: menuOpen ? Math.max(collapsedWidth, menuWidth + 2 * Theme.paddingHorizontal) : collapsedWidth
-    targetHeight: menuOpen ? Theme.islandHeight + menuColumn.implicitHeight + Theme.trayMenuInset : Theme.islandHeight
-    expanded: menuOpen
-    morphDuration: motion === "menu" ? -1 : motion === "tray" ? Motion.trayDuration : Motion.indicatorDuration
-    morphCurve: motion === "menu" ? [] : motion === "tray" ? Motion.growCurve : Motion.indicatorCurve
+    targetWidth: peekOpen ? peekWidth : menuOpen ? Math.max(collapsedWidth, menuWidth + 2 * Theme.paddingHorizontal) : collapsedWidth
+    targetHeight: peekOpen ? peekRowsHeight + 2 * Theme.notificationPeekPaddingVertical : menuOpen ? Theme.islandHeight + menuColumn.implicitHeight + Theme.trayMenuInset : Theme.islandHeight
+    expanded: menuOpen || peekOpen
+    morphDuration: motion === "menu" || motion === "peek" ? -1 : motion === "tray" || motion === "actions" ? Motion.trayDuration : Motion.indicatorDuration
+    morphCurve: motion === "menu" || motion === "peek" ? [] : motion === "tray" || motion === "actions" ? Motion.growCurve : Motion.indicatorCurve
     visible: width > 0
+
+    Timer {
+        id: peekPrepareTimer
+
+        onTriggered: {
+            if (island.peekWanted)
+                island.peekOpen = true;
+        }
+    }
+
+    // The bell appears once the morph back has settled.
+    Timer {
+        id: bellRelease
+
+        interval: Motion.shrinkDuration
+        onTriggered: island.bellHeld = false
+    }
+
+    ListModel {
+        id: peekModel
+    }
 
     Timer {
         id: menuClear
@@ -130,11 +272,19 @@ Island {
         }
     }
 
+    // Middle click on the stack outside its rows clears the stack; a row's own
+    // middle click dismisses only that row.
     MouseArea {
         objectName: "background"
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+        onClicked: mouse => {
+            if (mouse.button === Qt.MiddleButton) {
+                if (island.peekOpen)
+                    Notifications.clearStack();
+                return;
+            }
             island.fanned = false;
             if (island.menuOpen)
                 island.closeMenu();
@@ -143,11 +293,54 @@ Island {
         }
     }
 
+    // Newest on top, at the island's right edge with a fixed width, so the text
+    // does not reflow while the island morphs; the island clips the rest.
+    Column {
+        objectName: "peek"
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.notificationPeekPaddingHorizontal
+        y: Theme.notificationPeekPaddingVertical
+        width: island.peekWidth - 2 * Theme.notificationPeekPaddingHorizontal
+        visible: peekModel.count > 0
+
+        Repeater {
+            id: peekRepeater
+
+            model: peekModel
+
+            NotificationPeekRow {
+                width: parent.width
+                backlogCount: Notifications.backlogCount
+                holding: island.peekOpen && island.servicePeekIds.includes(rowId)
+                lastRow: rowId === island.lastPeekId
+                onHoldEnded: Notifications.expirePeek(rowId)
+                onSettingsRequested: Shell.open("settings", island.screenName)
+                onGone: island.removePeekRow(rowId)
+                onRevealedChanged: {
+                    if (!leaving)
+                        island.motion = "actions";
+                }
+                onSettledHeightChanged: Qt.callLater(island.measurePeek)
+            }
+        }
+    }
+
+    // The status content; while the stack shows it is faded out and not drawn.
     Row {
         objectName: "content"
         anchors.right: parent.right
         anchors.rightMargin: Theme.rightEndInset
         height: Theme.islandHeight
+        opacity: island.peekOpen ? 0 : 1
+        visible: opacity > 0
+        enabled: !island.peekOpen
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Motion.crossfadeDuration
+                easing.type: Motion.crossfadeEasing
+            }
+        }
 
         Item {
             id: trayGroup
@@ -373,13 +566,14 @@ Island {
 
             objectName: "notifications"
             shown: island.shownFlags[5]
+            held: island.bellHeld
             gap: island.gapBefore(5)
-            iconName: Dms.doNotDisturb ? "notifications_off" : "notifications"
-            count: Notifications.count
-            label: Notifications.count + " notifications" + (Dms.doNotDisturb ? ", do not disturb on" : "") + ", open Settings"
+            iconName: Notifications.doNotDisturb ? "notifications_off" : "notifications"
+            count: Notifications.bellCount
+            label: Notifications.bellCount + " notifications" + (Notifications.doNotDisturb ? ", do not disturb on" : "") + ", open Settings"
             onActivated: Shell.open("settings", island.screenName)
             onMiddleClicked: Notifications.clearAll()
-            onRightClicked: Dms.toggleDoNotDisturb()
+            onRightClicked: Notifications.toggleDoNotDisturb()
         }
     }
 
@@ -576,6 +770,9 @@ Island {
         id: indicator
 
         property bool shown: false
+        // Keeps its place but is not drawn: the bell while the stack shows and
+        // the island morphs back; then it fades in.
+        property bool held: false
         property bool gap: false
         property string iconName: ""
         property int count: 0
@@ -593,11 +790,13 @@ Island {
 
         width: targetWidth
         height: Theme.islandHeight
-        opacity: shown ? 1 : 0
-        enabled: shown
+        opacity: shown && !held ? 1 : 0
+        enabled: shown && !held
         clip: true
 
         Behavior on width {
+            enabled: !indicator.held
+
             IndicatorAnimation {}
         }
         Behavior on opacity {

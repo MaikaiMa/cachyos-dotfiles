@@ -15,9 +15,20 @@ Singleton {
 
     // Sorted by output, then idx: {id, idx, name, output, isActive, isFocused, isUrgent, activeWindowId}.
     property var workspaces: []
-    // Sorted by workspace, column, row: {id, title, appId, workspaceId, isFocused, isFloating, isUrgent, column, row}.
+    // Sorted by workspace, column, row: {id, title, appId, workspaceId, isFocused,
+    // isFloating, isUrgent, column, row, width, height}; the size is logical.
     property var windows: []
     property int focusedWindowId: -1
+    // Niri draws a fullscreen window above the Top layer, so the bar is not
+    // visible over it. Niri 26.04 reports no fullscreen flag; a focused window
+    // as large as its output's logical size stands in. A windowed fullscreen
+    // window is tiled and does not count, and the bar does show over it.
+    readonly property bool focusedFullscreen: {
+        const window = windows.find(candidate => candidate.id === focusedWindowId);
+        const workspace = window ? workspaces.find(candidate => candidate.id === window.workspaceId) : null;
+        const screen = workspace ? Quickshell.screens.find(candidate => candidate.name === workspace.output) : null;
+        return !!screen && window.width >= screen.width && window.height >= screen.height;
+    }
     readonly property var focusedWorkspace: workspaces.find(workspace => workspace.isFocused) ?? null
     readonly property string focusedOutput: focusedWorkspace ? focusedWorkspace.output : ""
     property bool overviewOpen: false
@@ -149,6 +160,7 @@ Singleton {
 
     function toWindow(raw: var): var {
         const position = raw.layout ? raw.layout.pos_in_scrolling_layout : null;
+        const size = raw.layout ? raw.layout.window_size : null;
         return {
             id: raw.id,
             title: raw.title ?? "",
@@ -158,7 +170,9 @@ Singleton {
             isFloating: raw.is_floating === true,
             isUrgent: raw.is_urgent === true,
             column: position ? position[0] : -1,
-            row: position ? position[1] : -1
+            row: position ? position[1] : -1,
+            width: size ? size[0] : 0,
+            height: size ? size[1] : 0
         };
     }
 
@@ -258,10 +272,13 @@ Singleton {
             for (const change of event.WindowLayoutsChanged.changes) {
                 const window = windowById[change[0]];
                 const position = change[1] ? change[1].pos_in_scrolling_layout : null;
+                const size = change[1] ? change[1].window_size : null;
                 if (window)
                     windowById[change[0]] = Object.assign({}, window, {
                         column: position ? position[0] : -1,
-                        row: position ? position[1] : -1
+                        row: position ? position[1] : -1,
+                        width: size ? size[0] : window.width,
+                        height: size ? size[1] : window.height
                     });
             }
             publishWindows();

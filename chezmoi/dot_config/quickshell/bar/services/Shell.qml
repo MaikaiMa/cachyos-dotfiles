@@ -299,4 +299,29 @@ Singleton {
             return Settings.waveEnabled ? "on" : "off";
         }
     }
+
+    // The notification binds: quickshell ipc -c bar call notifications openList
+    IpcHandler {
+        target: "notifications"
+
+        // Settings scrolled to the list, as the bell's click; also while the stack shows.
+        function openList(): void {
+            root.toggle("settings", root.ipcScreen());
+        }
+
+        // The list, the rows and the blobs, nothing left counted.
+        function clearAll(): void {
+            Notifications.clearAll();
+        }
+
+        // Returns the new state, on or off.
+        function toggleDnd(): string {
+            Notifications.toggleDoNotDisturb();
+            return Notifications.doNotDisturb ? "on" : "off";
+        }
+
+        function dnd(): string {
+            return Notifications.doNotDisturb ? "on" : "off";
+        }
+    }
 }

@@ -39,6 +39,7 @@ power-profiles-daemon # dashboard power profiles
 protonmail-bridge-core # enabled user service
 jq # focus-or-spawn, dms-settings, scripts/dms-apply-look.sh, scripts/dms-restore-plugins.sh and scripts/bar-switch.sh
 util-linux # flock in focus-or-spawn
+glib2 # gdbus wait in quickshell-bar.service (ADR-0028); the profile provides it as a dependency
 tinysparql # wallpaper-favorites reads Nautilus stars
 xorg-xprop # xwayland-scaled sets Xft.dpi for X11 apps such as Blip
 iio-sensor-proxy # monitor-sensor for auto-rotate (docs/tablet.md)

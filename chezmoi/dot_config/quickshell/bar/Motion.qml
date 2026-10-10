@@ -67,6 +67,14 @@ Singleton {
     readonly property int orbHoverDelay: 80
     readonly property int nowPlayingPeekHold: 5000
     readonly property int longPressInterval: 500
+    // A notification peek row holds by urgency, or for the sender's timeout clamped
+    // to these bounds; a critical one holds until it is clicked or dismissed.
+    readonly property int notificationHoldNormal: 5000
+    readonly property int notificationHoldLow: 3000
+    readonly property int notificationHoldMin: 2000
+    readonly property int notificationHoldMax: 15000
+    // The notification history is written at most this often.
+    readonly property int notificationSaveInterval: 1000
     // A workspace's notification colour clears this long after it gains focus.
     readonly property int alertClearDelay: 3000
     // A Bluetooth pair or connect that is idle this long after the request failed.

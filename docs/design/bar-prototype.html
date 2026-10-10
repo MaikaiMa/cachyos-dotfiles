@@ -36,6 +36,18 @@
   --item-gap: 8px;
   --hairline-height: 14px;
   --icon-size: 16px;
+  --peek-pad-x: 10px;
+  --peek-pad-y: 8px;
+  --peek-row: 48px;
+  --peek-row-open: 80px;
+  --peek-gap: 12px;
+  --peek-inner: 10px;
+  --peek-icon: 26px;
+  --peek-action: 32px;
+  --peek-action-gap: 24px;
+  --peek-x-reserve: 28px;
+  --disc-blob-size: 30px;
+  --disc-blob-gap: 8px;
   --tray-disc: 24px;
   --tray-overlap: 10px;
   --tray-gap: 4px;
@@ -73,6 +85,7 @@ html[data-theme="dark"] {
   --primary: #81d5ce;
   --on-primary: #003734;
   --surface: #0e1514;
+  --surface-container: #1a2120;
   --surface-high: #1f2726;
   --on-surface: #dde4e2;
   --on-surface-variant: #bec9c6;
@@ -85,6 +98,7 @@ html[data-theme="light"] {
   --primary: #006a65;
   --on-primary: #ffffff;
   --surface: #f4fbf9;
+  --surface-container: #e9f0ee;
   --surface-high: #e3eae8;
   --on-surface: #161d1c;
   --on-surface-variant: #3f4947;
@@ -432,10 +446,12 @@ html.reduce-motion .mtext .mrun { animation: none; }
 html.reduce-motion .up-btn.spin .i { animation: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-#right { right: 8px; cursor: pointer; transition: width var(--indicator-duration) var(--indicator-curve); }
+#right { right: 8px; cursor: pointer; transition: width var(--indicator-duration) var(--indicator-curve), opacity var(--indicator-duration) var(--indicator-curve); }
+#right.absent { opacity: 0; pointer-events: none; }
 #right.tray-motion { transition: width var(--tray-duration) var(--tray-curve); }
-.row { position: absolute; right: var(--right-end-inset); top: 0; height: 30px; display: flex; align-items: center; }
-.tgroup { position: relative; flex: none; height: 30px; color: var(--on-surface-variant); transition: width var(--tray-duration) var(--tray-curve); }
+.row { position: absolute; right: var(--right-end-inset); top: 0; height: 30px; display: flex; align-items: center; transition: opacity var(--crossfade-duration) var(--crossfade-curve), visibility 0s; }
+.tgroup { position: relative; flex: none; height: 30px; color: var(--on-surface-variant); transition: width var(--tray-duration) var(--tray-curve), opacity var(--crossfade-duration) var(--crossfade-curve); }
+.tgroup.gone { opacity: 0; pointer-events: none; }
 .titem, .tchev { position: absolute; right: 0; transition: transform var(--tray-duration) var(--tray-curve), opacity var(--tray-duration) var(--tray-curve), background-color var(--crossfade-duration), color var(--crossfade-duration); }
 .titem {
   top: calc((30px - var(--tray-disc)) / 2); width: var(--tray-disc); height: var(--tray-disc); border-radius: 50%; display: grid; place-items: center;
@@ -474,6 +490,64 @@ html.reduce-motion .up-btn.spin .i { animation: none; }
 .tmi { display: flex; align-items: center; width: 100%; height: 32px; padding: 0 10px; border-radius: 10px; font-size: 13px; text-align: left; transition: background-color var(--crossfade-duration) var(--crossfade-curve); }
 .tmi:hover { background: color-mix(in srgb, var(--primary) 16%, var(--surface-high)); }
 
+/* Notification peek: the stack replaces the right island (tray, indicators and bell are not drawn); rows are bare content, 10 px / 8 px island padding, 12 px between rows. */
+#right[data-peek] { overflow: hidden; --pd: var(--island-grow-duration); --pc: var(--island-grow-curve); }
+#right[data-peek="shrink"] { --pd: var(--island-shrink-duration); --pc: var(--island-shrink-curve); }
+#right[data-peek="actions"] { --pd: var(--tray-duration); --pc: var(--tray-curve); }
+#right[data-peek] {
+  transition: width var(--pd) var(--pc), height var(--pd) var(--pc), border-radius var(--pd) var(--pc), box-shadow var(--pd) var(--pc), opacity var(--indicator-duration) var(--indicator-curve);
+}
+#right.peeking { border-radius: var(--island-radius-expanded); box-shadow: var(--shadow-expanded); }
+#right.peeking .row { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--crossfade-duration) var(--crossfade-curve), visibility 0s linear var(--crossfade-duration); }
+#peek { position: absolute; inset: var(--peek-pad-y) var(--peek-pad-x); pointer-events: none; }
+.pk-row {
+  position: absolute; left: 0; right: 0; height: var(--peek-row); overflow: hidden; pointer-events: auto;
+  transition: top var(--pd, var(--island-grow-duration)) var(--pc, var(--island-grow-curve)), height var(--pd, var(--island-shrink-duration)) var(--pc, var(--island-shrink-curve)), opacity var(--crossfade-duration) var(--crossfade-curve);
+}
+.pk-row.enter { opacity: 0; }
+.pk-row.leaving { height: 0; opacity: 0; pointer-events: none; }
+.pk-row.to-strip .pk-app { visibility: hidden; }
+.pk-in { position: absolute; left: 0; top: 0; right: 0; height: var(--peek-row); display: flex; align-items: center; gap: var(--peek-inner); transition: opacity var(--crossfade-duration) var(--crossfade-curve); }
+.pk-in.ghost { pointer-events: none; }
+.pk-app { flex: none; width: var(--peek-icon); height: var(--peek-icon); border-radius: 50%; font-size: 11px; }
+.pk-text { flex: 1; min-width: 0; padding-right: var(--peek-x-reserve); cursor: pointer; }
+.pk-sum, .pk-body { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-sum { font-size: 13px; line-height: 16px; font-weight: 500; }
+.pk-body { margin-top: 1px; font-size: 11px; line-height: 14px; color: var(--on-surface-variant); }
+.pk-row.critical .pk-sum { color: var(--error); }
+.pk-acts { position: absolute; left: calc(var(--peek-icon) + var(--peek-inner)); right: 0; top: var(--peek-row); height: var(--peek-action); display: flex; align-items: center; gap: var(--peek-action-gap); overflow: hidden; }
+.pk-act {
+  flex: none; height: var(--peek-action); padding: 0; font-size: 12px; font-weight: 500; line-height: var(--peek-action); white-space: nowrap; color: var(--on-surface);
+  opacity: 0; transform: translateY(10px); pointer-events: none;
+  transition: transform var(--tray-duration) var(--tray-curve), opacity var(--tray-duration) var(--tray-curve), color var(--crossfade-duration) var(--crossfade-curve);
+}
+.pk-act.default { color: var(--primary); }
+.pk-x {
+  position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; display: grid; place-items: center; color: var(--on-surface-variant);
+  opacity: 0; pointer-events: none; transition: opacity var(--crossfade-duration) var(--crossfade-curve), color var(--crossfade-duration) var(--crossfade-curve);
+}
+.pk-row.open .pk-x { opacity: 1; pointer-events: auto; }
+.pk-x:hover { color: var(--on-surface); }
+.pk-act + .pk-act { transition-delay: calc(var(--tray-duration) * .15), calc(var(--tray-duration) * .15), 0s; }
+.pk-row.open .pk-act { opacity: 1; transform: none; pointer-events: auto; }
+.pk-act:hover { text-decoration: underline; text-underline-offset: 3px; }
+.pk-sep {
+  position: absolute; left: 0; right: 0; height: 1px; background: color-mix(in srgb, var(--outline) 12%, transparent); opacity: 0; pointer-events: none;
+  transition: top var(--pd, var(--island-grow-duration)) var(--pc, var(--island-grow-curve)), opacity var(--crossfade-duration) var(--crossfade-curve);
+}
+.pk-sep.inset { left: calc(var(--peek-icon) + var(--peek-inner)); }
+.pk-sep.on { opacity: 1; }
+#blobs { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 2; --bd: var(--island-shrink-duration); --bc: var(--island-shrink-curve); }
+.pk-blob {
+  position: absolute; width: var(--disc-blob-size); height: var(--disc-blob-size); border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 650; cursor: pointer;
+  background: var(--island-bg); color: var(--on-surface-variant); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); box-shadow: var(--shadow-expanded);
+  transition: left var(--bd) var(--bc), top var(--bd) var(--bc), width var(--bd) var(--bc), height var(--bd) var(--bc), opacity var(--crossfade-duration) var(--crossfade-curve), background-color var(--crossfade-duration);
+}
+.pk-blob:hover { background: color-mix(in srgb, var(--primary) 16%, var(--island-bg)); }
+.pk-blob.gone { opacity: 0; pointer-events: none; }
+.pk-blob.more { color: var(--on-surface-variant); cursor: default; }
+.pk-blob.sink { opacity: 0; pointer-events: none; transition: left var(--island-shrink-duration) var(--island-shrink-curve), top var(--island-shrink-duration) var(--island-shrink-curve), width var(--island-shrink-duration) var(--island-shrink-curve), height var(--island-shrink-duration) var(--island-shrink-curve), opacity var(--island-shrink-duration) var(--island-shrink-curve); }
+
 #controls {
   position: fixed; right: 16px; bottom: 16px; width: 330px; z-index: 20; padding: 12px; border-radius: 12px;
   background: color-mix(in srgb, #111 82%, transparent); color: #e6e6e6; border: 1px dashed #777;
@@ -491,6 +565,8 @@ html.reduce-motion .up-btn.spin .i { animation: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; }
 .chips button { padding: 3px 8px; border-radius: 10px; background: #2a2a2a; color: #ccc; font-size: 11px; }
 .chips button.on { background: #3c8f88; color: #fff; }
+.chips button:hover { background: #3a3a3a; }
+.ctl-log { margin-top: 8px; min-height: 14px; font: 10.5px/1.3 ui-monospace, monospace; color: #9fb4b1; }
 #help {
   position: fixed; right: 358px; bottom: 16px; width: 310px; z-index: 21; padding: 14px 16px; border-radius: 12px;
   background: #151515; color: #e6e6e6; border: 1px dashed #777; font: 11.5px/1.5 system-ui, sans-serif;
@@ -615,7 +691,9 @@ html.reduce-motion .up-btn.spin .i { animation: none; }
 
   <div id="osd"><span id="osd-ic"></span><span class="osd-track"><i id="osd-fill"></i></span><span class="osd-val" id="osd-val"></span></div>
 
+  <div id="blobs"></div>
   <div id="right" class="island" role="button" aria-label="Status, opens settings">
+    <div id="peek" aria-live="polite"></div>
     <div class="row"></div>
     <div id="tmenu" role="menu" aria-label="Tray menu"></div>
   </div>
@@ -623,8 +701,16 @@ html.reduce-motion .up-btn.spin .i { animation: none; }
 
 <aside id="controls" aria-label="Prototype controls">
   <div class="ctl-head"><span>Prototype controls · not part of the bar</span><button class="ctl-help" id="help-btn" aria-label="Keyboard shortcuts">?</button></div>
-  <div class="ctl-version">prototype r4 · hover 2</div>
+  <div class="ctl-version">prototype r8 · notifications</div>
   <div class="switches" id="switches"></div>
+  <div class="chips" id="sep-btns" aria-label="Separator"><span>Separator</span><button data-sep="none">none</button><button data-sep="inset">inset</button><button data-sep="full">full</button></div>
+  <div class="chips" id="notify-btns">
+    <button data-notify="fire">Notify</button>
+    <button data-notify="burst">Burst ×4</button>
+    <button data-notify="replace">replaces_id update</button>
+    <button data-notify="reset">Reset</button>
+  </div>
+  <div class="ctl-log" id="pk-log" aria-live="polite"></div>
   <div class="chips" id="chips"></div>
 </aside>
 <aside id="help" aria-label="Keyboard shortcuts">
@@ -710,6 +796,19 @@ const SAMPLE_NOTIFICATIONS = [
   { id: 5, app: 'P', title: 'Screenshot', body: 'Saved to Pictures/Screenshots', time: '3 h' },
   { id: 6, app: 'C', title: 'Calendar', body: 'Design review starts at 10:30', time: '5 h' },
 ];
+// First label of actions is the default action. The sender's own icon letter stays in app.
+const PEEK_EXTRA_SAMPLES = [
+  { app: 'S', title: 'Chat', body: 'Anne: can you join the stand-up? We start in two minutes', actions: ['Open', 'Snooze'] },
+  { app: 'C', title: 'Calendar', body: 'Design review starts in 5 minutes, room 2.14', actions: ['Join', 'Snooze', 'Decline'] },
+  { app: 'B', title: 'Battery critically low', body: '8% left, plug in the charger now', urgency: 'critical', actions: ['Power saver'] },
+  { app: 'Y', title: 'Sync', body: 'Finished syncing 214 files', urgency: 'low' },
+  { app: 'M', title: 'Music', body: 'Now playing: Northern Lights', transient: true },
+  { app: 'N', title: 'Files', body: '3 items copied to Documents, nothing else to do' },
+];
+const PEEK_SAMPLES = SAMPLE_NOTIFICATIONS.flatMap(({ app, title, body }, index) => [{ app, title, body }, PEEK_EXTRA_SAMPLES[index]]);
+const PEEK_ROW = 48, PEEK_ROW_OPEN = 80, PEEK_GAP = 12, PEEK_PAD_X = 10, PEEK_PAD_Y = 8, PEEK_INNER = 10, PEEK_ICON = 26, PEEK_MIN_WIDTH = 260, PEEK_MAX_WIDTH = 420, PEEK_FIXED_WIDTH = 360, PEEK_CENTRE_CLEAR = 8, PEEK_MAX_ROWS = 3, PEEK_MAX_ACTIONS = 3;
+const PEEK_X_RESERVE = 28, BLOB_MAX = 6;
+const PEEK_REST = 250, PEEK_GRACE = 120, PEEK_LONG_PRESS = 500;
 const TRACKS = [
   { title: 'Northern Lights', artist: 'Tidewater', album: 'Low Tide Sessions', orb: { core: '#d99aaa', a: '#f2c2cd', b: '#e3a86b' }, cover: ['#e3a7b4', '#8e5a73', '#4a2f3d'] },
   { title: 'Everything Between the Tides (Extended Night Mix)', artist: 'Tidewater & The Harbour Lights', album: 'Night Crossings', orb: { core: '#e0a04a', a: '#f4cf8a', b: '#c8694a' }, cover: ['#f0c27b', '#9a6a3a', '#3d2c1d'] },
@@ -745,21 +844,22 @@ const SHORTCUTS = [
   ['Enter / click pill', 'Home'], ['o', 'Home'], ['s', 'Settings'], ['p', 'Power'], ['u', 'Updates'], ['t', 'Theme'], ['w', 'Wallpaper'], ['m', 'Music bar'],
   ['Escape', 'Close the panel or tray menu'], ['Right click tray', 'Tray menu'], ['Alt+↑ / ↓', 'Volume OSD, closes a panel first'], ['Alt+Shift+↑ / ↓', 'Brightness OSD'],
   ['← / →', 'Move focus in Power, Theme, Wallpaper'], ['Enter', 'Activate (Power) or apply (Wallpaper)'],
-  ['h', 'Hide or show the bar'], ['g', 'Toggle the 36 px guide'], ['?', 'This list'],
+  ['n', 'Fire a sample notification'], ['h', 'Hide or show the bar'], ['g', 'Toggle the 36 px guide'], ['?', 'This list'],
 ];
 
 const sys = {
   themeMode: 'dark', reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   music: true, playing: true, wave: true, track: 0, trackPos: 74, trackLength: 243, output: 0,
-  notifications: [], wifiOn: true, wifiWeak: false, muted: false, dnd: false, caffeine: false,
+  notifications: [], fixedWidth: true, discStrip: true, separator: 'none', wifiOn: true, wifiWeak: false, muted: false, dnd: false, caffeine: false,
   bluetooth: true, profile: 1, micMuted: false, mic: 70, autoBrightnessAvailable: false, autoBrightness: false, updates: 0, fragile: false,
   volume: 62, brightness: 74, guide: true, hidden: false, battery: 82, batteryState: 'discharging',
-  workspace: 0, wallpaper: 0, scheme: 0, weatherTab: 'hourly', extraRow: false,
+  workspace: 0, wallpaper: 0, scheme: 0, weatherTab: 'hourly', extraRow: false, tray: true, locked: false,
   perf: { cpu: 23, temp: 54, mem: 41 },
 };
 const BATTERY_STATES = { discharging: 'Discharging', charging: 'Charging', full: 'Fully charged' };
 const ui = { state: 'collapsed', via: null, powerIndex: 0, wallIndex: 0, trayOpen: false, trayMenu: -1, updatesKey: '', appsWorkspace: -1, notifKey: '', help: false };
-const geo = { centre: 0, clockWidth: 0, extent: 0, detailWidth: 0, detailOffset: 0 };
+const geo = { centre: 0, centreWidth: 0, clockWidth: 0, extent: 0, detailWidth: 0, detailOffset: 0 };
+const peek = { rows: [], queue: [], on: false, settle: false, preparing: false, blobs: [], missed: 0, seq: 100, cycle: 0, epoch: 0, cleanup: 0, settleTimer: 0 };
 
 const bar = $('#bar');
 const shell = $('#shell');
@@ -779,6 +879,9 @@ const wsBox = $('.ws');
 const wsIndicator = $('.ws-ind');
 const appsBox = $('.apps');
 const wallLayers = $$('.wl');
+const peekBox = $('#peek');
+const blobBox = $('#blobs');
+const peekLog = $('#pk-log');
 
 const effectiveTheme = () => sys.themeMode === 'auto'
   ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
@@ -809,12 +912,14 @@ const INDICATORS = [
   { id: 'muted', show: () => sys.muted, html: () => icon('mute') },
   { id: 'wifi', show: () => !sys.wifiOn || sys.wifiWeak, html: () => icon(sys.wifiOn ? 'wifiWeak' : 'wifiOff') },
   { id: 'updates', show: () => sys.updates > 0, html: () => `${icon('download')}<span>${pendingUpdates().length}</span>` },
-  { id: 'notifications', show: () => sys.notifications.length > 0, html: () => `${icon('bell')}<span>${sys.notifications.length}</span>` },
+  { id: 'notifications', show: () => sys.notifications.length > 0, html: () => `${icon('bell')}${sys.notifications.length ? `<span>${sys.notifications.length}</span>` : ''}` },
 ];
 
 const SWITCHES = [
   { label: 'Dark theme', get: () => effectiveTheme() === 'dark', set: on => { sys.themeMode = on ? 'dark' : 'light'; } },
   { label: 'Reduce motion', get: () => sys.reduceMotion, set: on => { sys.reduceMotion = on; } },
+  { label: 'Fixed width', get: () => sys.fixedWidth, set: on => { sys.fixedWidth = on; } },
+  { label: 'Disc blobs', get: () => sys.discStrip, set: on => { sys.discStrip = on; } },
   { label: 'Music playing', get: () => sys.music && sys.playing, set: on => {
     sys.music = on; sys.playing = on;
     if (!on && (ui.state === 'musicbar' || ui.state === 'player')) ui.state = 'collapsed';
@@ -832,6 +937,17 @@ const SWITCHES = [
   { label: 'Auto brightness available', get: () => sys.autoBrightnessAvailable, set: on => { sys.autoBrightnessAvailable = on; if (!on) sys.autoBrightness = false; } },
   { label: 'Battery low', get: () => sys.battery === 12, set: on => { sys.battery = on ? 12 : 82; sys.batteryState = 'discharging'; } },
   { label: 'Extra row', get: () => sys.extraRow, set: on => { sys.extraRow = on; } },
+  { label: 'Lock (no peeks)', get: () => sys.locked, set: on => {
+    sys.locked = on;
+    if (on) flushPeek(); else flushMissed();
+  } },
+  { label: 'Empty island', get: () => !sys.tray, set: on => {
+    sys.tray = !on;
+    if (!on) return;
+    flushPeek();
+    Object.assign(sys, { notifications: [], updates: 0, wifiOn: true, wifiWeak: false, muted: false, dnd: false, caffeine: false });
+    ui.trayOpen = false;
+  } },
   { label: '36 px guide', get: () => sys.guide, set: on => { sys.guide = on; } },
 ];
 
@@ -898,7 +1014,7 @@ function renderLeft() {
     const width = active ? ACTIVE : PILL;
     pill.style.width = `${width + 2 * PAD}px`;
     pill.classList.toggle('occupied', WORKSPACES[index].length > 0);
-    pill.classList.toggle('attention', index === ATTENTION_WORKSPACE && sys.notifications.length > 0);
+    pill.classList.toggle('attention', index === ATTENTION_WORKSPACE && (sys.notifications.length > 0 || peek.rows.some(row => !row.n.transient && row.n.kind !== 'summary')));
     if (active) indicatorX = x + PAD;
     x += width + 2 * PAD;
   });
@@ -948,40 +1064,434 @@ function layoutTray(open) {
 
 let lastTrayOpen = false;
 function renderRight() {
-  const group = $('#tgroup'), trayWidth = layoutTray(ui.trayOpen);
+  const group = $('#tgroup');
+  const trayVisible = sys.tray;
+  const trayOpen = ui.trayOpen && trayVisible && !peek.on;
+  const trayNatural = layoutTray(trayOpen);
+  const trayWidth = trayVisible ? trayNatural : 0;
   group.style.width = `${trayWidth}px`;
-  group.classList.toggle('open', ui.trayOpen);
-  right.classList.toggle('tray-motion', ui.trayOpen !== lastTrayOpen);
-  lastTrayOpen = ui.trayOpen;
-  let total = trayWidth, anyVisible = false;
+  group.classList.toggle('open', trayOpen);
+  group.classList.toggle('gone', !trayVisible);
+  right.classList.toggle('tray-motion', trayOpen !== lastTrayOpen);
+  lastTrayOpen = trayOpen;
+  let attention = 0, anyVisible = false, pendingBell = 0, pendingSeparator = 0;
   const separatorWidth = 2 * cssPx('--item-gap') + 1;
   for (const indicator of INDICATORS) {
-    const visible = indicator.show();
+    const wanted = indicator.show();
+    const held = indicator.id === 'notifications' && (peek.on || peek.settle);
+    const visible = wanted && !held;
     const base = $('.ind-base', indicator.el);
-    if (visible) base.innerHTML = indicator.html();
+    if (wanted) base.innerHTML = indicator.html();
+    if (wanted && held) {
+      pendingBell = (anyVisible ? cssPx('--indicator-gap') : 0) + parseFloat(getComputedStyle(base).width);
+      geo.bellBase = parseFloat(getComputedStyle(base).width);
+      pendingSeparator = !anyVisible && trayVisible ? separatorWidth : 0;
+    }
     const gap = visible && anyVisible ? cssPx('--indicator-gap') : 0;
     $('.ind-in', indicator.el).style.paddingLeft = `${gap}px`;
     const width = visible ? gap + parseFloat(getComputedStyle(base).width) : 0;
     indicator.el.style.width = `${width}px`;
     indicator.el.classList.toggle('on', visible);
     indicator.el.classList.toggle('fragile', indicator.id === 'updates' && sys.fragile);
-    total += width;
+    attention += width;
     anyVisible = anyVisible || visible;
   }
+  const separatorOn = anyVisible && trayVisible;
   const separator = $('#rsep');
-  separator.style.width = `${anyVisible ? separatorWidth : 0}px`;
-  separator.classList.toggle('on', anyVisible);
-  total += anyVisible ? separatorWidth : 0;
-  let width = total + 2 * cssPx('--right-end-inset'), height = 30;
-  const menuItem = $$('.titem', group)[ui.trayMenu];
-  if (menuItem) {
-    width = Math.max(width, TRAY_MENU_WIDTH + 2 * cssPx('--island-padding-x'));
-    height = 30 + TRAY_MENUS[ui.trayMenu].length * TRAY_MENU_ROW + TRAY_MENU_INSET;
+  separator.style.width = `${separatorOn ? separatorWidth : 0}px`;
+  separator.classList.toggle('on', separatorOn);
+  const separatorSpace = separatorOn ? separatorWidth : 0;
+  const inset = cssPx('--right-end-inset');
+  let width = trayWidth + attention + separatorSpace + 2 * inset + pendingBell + pendingSeparator, height = 30;
+  const live = peek.rows.filter(row => !row.leaving);
+  if (peek.on && live.length) {
+    const centreRight = geo.centre + geo.centreWidth / 2;
+    const room = bar.clientWidth - 8 - PEEK_CENTRE_CLEAR - centreRight;
+    if (sys.fixedWidth) width = Math.min(PEEK_FIXED_WIDTH, Math.max(PEEK_MIN_WIDTH, room));
+    else width = clamp(Math.max(...live.map(peekRowWidth)) + 2 * PEEK_PAD_X, PEEK_MIN_WIDTH, Math.max(PEEK_MIN_WIDTH, Math.min(PEEK_MAX_WIDTH, room)));
+    if (!sys.discStrip && peek.blobs.length) releaseBlobs(peek.blobs.splice(0), false);
+    height = 2 * PEEK_PAD_Y + layoutPeekRows();
+    right.classList.remove('menu-open');
+  } else {
+    const menuItem = $$('.titem', group)[ui.trayMenu];
+    if (menuItem) {
+      width = Math.max(width, TRAY_MENU_WIDTH + 2 * cssPx('--island-padding-x'));
+      height = 30 + TRAY_MENUS[ui.trayMenu].length * TRAY_MENU_ROW + TRAY_MENU_INSET;
+    }
+    right.classList.toggle('menu-open', !!menuItem);
   }
-  right.style.width = `${width}px`;
+  const absent = !trayVisible && !anyVisible && !pendingBell && !peek.on;
+  right.classList.toggle('absent', absent);
+  right.classList.toggle('peeking', peek.on);
+  right.style.width = `${absent ? 0 : width}px`;
   right.style.height = `${height}px`;
-  right.classList.toggle('menu-open', !!menuItem);
+  peek.islandHeight = height;
+  layoutBlobs();
 }
+
+const peekMeasure = document.createElement('canvas').getContext('2d');
+function textWidth(text, size) {
+  peekMeasure.font = `500 ${size}px ${getComputedStyle(document.body).fontFamily}`;
+  return peekMeasure.measureText(text).width;
+}
+const peekRowWidth = row => PEEK_ICON + PEEK_INNER + row.textWidth + PEEK_X_RESERVE;
+const peekRowHeight = row => (row.open && row.hasActions ? PEEK_ROW_OPEN : PEEK_ROW);
+function layoutPeekRows() {
+  let top = 0;
+  const live = peek.rows.filter(row => !row.leaving);
+  for (const row of peek.rows) {
+    row.el.style.top = `${top}px`;
+    if (row.leaving) { row.sep.classList.remove('on'); continue; }
+    const height = peekRowHeight(row);
+    row.el.style.height = `${height}px`;
+    row.sep.className = `pk-sep ${sys.separator}${sys.separator !== 'none' && row !== live[live.length - 1] ? ' on' : ''}`;
+    row.sep.style.top = `${top + height + PEEK_GAP / 2}px`;
+    top += height + PEEK_GAP;
+  }
+  const rowsHeight = Math.max(0, top - PEEK_GAP);
+  return rowsHeight;
+}
+const placeBlob = (el, left, top, size) => {
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
+  el.style.width = `${size}px`;
+  el.style.height = `${size}px`;
+};
+// Blobs hang 8 px below the island, right-aligned with it: newest on the right, "+N" on the far left.
+function layoutBlobs() {
+  const size = cssPx('--disc-blob-size'), step = size + cssPx('--disc-blob-gap');
+  const edge = bar.clientWidth - 8, top = right.offsetTop + (peek.islandHeight || 30) + cssPx('--disc-blob-gap');
+  peek.blobs.forEach((blob, index) => {
+    const shown = index < BLOB_MAX;
+    placeBlob(blob.el, edge - size - (shown ? index : BLOB_MAX) * step, top, size);
+    blob.el.classList.toggle('gone', !shown);
+  });
+  const more = $('#pk-more');
+  const extra = peek.blobs.length - BLOB_MAX;
+  if (extra > 0 && !more) {
+    const el = document.createElement('span');
+    el.className = 'pk-blob more';
+    el.id = 'pk-more';
+    el.style.transition = 'none';
+    blobBox.append(el);
+  }
+  const node = $('#pk-more');
+  if (!node) return;
+  placeBlob(node, edge - size - BLOB_MAX * step, top, size);
+  node.textContent = extra > 0 ? `+${extra}` : '';
+  node.classList.toggle('gone', extra <= 0);
+}
+function addBlob(row) {
+  const el = document.createElement('span');
+  el.className = 'app pk-blob';
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', `${row.n.title}, open the notification list`);
+  el.innerHTML = row.n.glyph ? icon(row.n.glyph, 14) : row.n.app;
+  const from = $('.pk-app', row.el).getBoundingClientRect();
+  el.style.transition = 'none';
+  placeBlob(el, from.left, from.top, PEEK_ICON);
+  blobBox.append(el);
+  void el.offsetWidth;
+  el.style.transition = '';
+  peek.blobs.unshift({ n: row.n, el });
+  layoutBlobs();
+}
+// When the stack ends the blobs slide up into the bell position, shrinking and fading, so the count appears where they vanished.
+function releaseBlobs(blobs, toBell = true) {
+  const size = 16, centre = bar.clientWidth - 8 - cssPx('--right-end-inset') - (geo.bellBase || 24) / 2;
+  for (const blob of blobs) {
+    blob.el.classList.add('sink');
+    if (toBell) placeBlob(blob.el, centre - size / 2, right.offsetTop + 15 - size / 2, size);
+  }
+  const more = $('#pk-more');
+  if (more) more.classList.add('gone');
+  setTimeout(() => { blobs.forEach(blob => blob.el.remove()); if (more) more.remove(); }, cssMs('--island-shrink-duration') + 40);
+}
+function setPeekMotion(kind) {
+  clearTimeout(peek.cleanup);
+  const timing = { grow: 'island-grow', shrink: 'island-shrink', actions: 'tray' }[kind] || 'island-shrink';
+  blobBox.style.setProperty('--bd', `var(--${timing}-duration)`);
+  blobBox.style.setProperty('--bc', `var(--${timing}-curve)`);
+  right.dataset.peek = kind;
+}
+const peekLogLine = text => { peekLog.textContent = text; };
+
+function fillPeekRow(row) {
+  const { n, el } = row;
+  const labels = (n.actions || []).slice(0, PEEK_MAX_ACTIONS);
+  $('.pk-app', el).innerHTML = n.glyph ? icon(n.glyph, 12) : n.app;
+  $('.pk-sum', el).textContent = n.title;
+  $('.pk-body', el).textContent = n.body;
+  $('.pk-acts', el).innerHTML = labels.map((_, index) => `<button class="pk-act${index === 0 ? ' default' : ''}" data-action="${index}"></button>`).join('');
+  $$('.pk-act', el).forEach((action, index) => { action.textContent = labels[index]; });
+  row.textWidth = Math.ceil(Math.max(textWidth(n.title, 13), textWidth(n.body, 11))) + 2;
+  row.hasActions = labels.length > 0;
+  el.classList.toggle('critical', n.urgency === 'critical');
+}
+
+function buildPeekRow(row) {
+  const el = document.createElement('div');
+  el.className = 'pk-row enter';
+  el.dataset.peek = row.n.id;
+  el.innerHTML = `<div class="pk-in"><span class="app pk-app"></span><span class="pk-text"><b class="pk-sum"></b><small class="pk-body"></small></span><span class="pk-acts"></span></div><button class="pk-x" aria-label="Dismiss">${icon('close', 16)}</button>`;
+  row.el = el;
+  row.sep = document.createElement('i');
+  row.sep.className = 'pk-sep';
+  peekBox.append(row.sep);
+  fillPeekRow(row);
+  el.addEventListener('pointerenter', event => {
+    if (isTouch(event) || row.leaving) return;
+    clearTimeout(row.grace);
+    clearTimeout(row.hold);
+    row.hovered = true;
+    if (!row.open) row.rest = setTimeout(() => setPeekActions(row, true), PEEK_REST);
+  });
+  el.addEventListener('pointerleave', event => {
+    if (isTouch(event) || row.leaving) return;
+    row.hovered = false;
+    clearTimeout(row.rest);
+    row.grace = setTimeout(() => { if (row.open) setPeekActions(row, false); else startHold(row); }, PEEK_GRACE);
+  });
+  el.addEventListener('pointerdown', event => {
+    if (!isTouch(event) || row.open) return;
+    row.press = setTimeout(() => setPeekActions(row, true), PEEK_LONG_PRESS);
+  });
+  for (const type of ['pointerup', 'pointercancel']) el.addEventListener(type, () => clearTimeout(row.press));
+  return el;
+}
+
+function setPeekActions(row, open) {
+  if (row.leaving || row.open === open) return;
+  row.open = open;
+  row.el.classList.toggle('open', open);
+  if (open) clearTimeout(row.hold);
+  else if (!row.hovered) startHold(row);
+  setPeekMotion('actions');
+  renderRight();
+}
+
+function holdDuration(n) {
+  if (n.urgency === 'critical') return null;
+  if (n.timeout > 0) return clamp(n.timeout, 2000, 15000);
+  return n.urgency === 'low' ? 3000 : 5000;
+}
+function startHold(row) {
+  clearTimeout(row.hold);
+  const duration = holdDuration(row.n);
+  if (duration === null || row.leaving) return;
+  row.hold = setTimeout(() => leaveRow(row, true, true), duration);
+}
+
+function addToCount(item) {
+  if (item.transient) return;
+  const at = sys.notifications.findIndex(existing => existing.id < item.id);
+  if (at < 0) sys.notifications.push(item);
+  else sys.notifications.splice(at, 0, item);
+}
+
+function leaveRow(row, counted, toStrip = false) {
+  if (row.leaving) return;
+  row.leaving = true;
+  for (const timer of ['hold', 'rest', 'grace', 'press']) clearTimeout(row[timer]);
+  if (counted && row.n.kind !== 'summary') addToCount(row.n);
+  const last = !peek.rows.some(other => !other.leaving);
+  let released = [];
+  if (last) {
+    released = peek.blobs.splice(0);
+    peek.on = false;
+    peek.settle = true;
+    clearTimeout(peek.settleTimer);
+    peek.settleTimer = setTimeout(() => {
+      peek.settle = false;
+      renderRight();
+      if (sys.notifications.length) pulse($('.ind[data-id="notifications"]'));
+    }, cssMs('--island-shrink-duration') + 20);
+  }
+  setPeekMotion('shrink');
+  row.el.style.height = '';
+  row.el.classList.add('leaving');
+  if (toStrip && !last && sys.discStrip && !row.n.transient && row.n.kind !== 'summary') {
+    row.el.classList.add('to-strip');
+    addBlob(row);
+  }
+  update();
+  if (released.length) releaseBlobs(released);
+  setTimeout(() => {
+    row.el.remove();
+    row.sep.remove();
+    peek.rows = peek.rows.filter(other => other !== row);
+    if (!peek.rows.length && !peek.on) peek.cleanup = setTimeout(() => { delete right.dataset.peek; }, 40);
+  }, cssMs('--island-shrink-duration') + 30);
+}
+
+function addPeekRow(item) {
+  const row = { n: item, leaving: false, open: false, hovered: false };
+  peekBox.append(buildPeekRow(row));
+  peek.rows.unshift(row);
+  const live = peek.rows.filter(other => !other.leaving);
+  if (live.length > PEEK_MAX_ROWS) leaveRow(live[live.length - 1], true, true);
+  setPeekMotion('grow');
+  renderRight();
+  requestAnimationFrame(() => requestAnimationFrame(() => row.el.classList.remove('enter')));
+  startHold(row);
+}
+
+function shouldPeek(item) {
+  return !sys.locked && !sys.hidden && !isPanel(ui.state) && (item.urgency === 'critical' || !sys.dnd);
+}
+
+// The stack replaces the island's content: fold a fanned tray (or close a tray menu) first, then morph.
+function beginPeek() {
+  peek.preparing = true;
+  clearTimeout(peek.cleanup);
+  clearTimeout(peek.settleTimer);
+  peek.settle = false;
+  const epoch = peek.epoch;
+  let wait = 0;
+  if (ui.trayMenu >= 0) { closeTrayMenu(); wait += cssMs('--island-shrink-duration'); }
+  if (ui.trayOpen) { ui.trayOpen = false; renderRight(); wait += cssMs('--tray-duration'); }
+  setTimeout(() => {
+    if (epoch !== peek.epoch) return;
+    peek.preparing = false;
+    const items = peek.queue.splice(0);
+    if (!items.length) { renderRight(); return; }
+    peek.on = true;
+    items.forEach(addPeekRow);
+  }, wait);
+}
+
+function deliver(item) {
+  if (!shouldPeek(item)) {
+    addToCount(item);
+    if ((sys.locked || sys.hidden) && !item.transient) peek.missed += 1;
+    update();
+    return;
+  }
+  if (peek.on) { addPeekRow(item); return; }
+  peek.queue.push(item);
+  if (!peek.preparing) beginPeek();
+}
+
+function notify(sample) {
+  const item = { time: 'now', urgency: 'normal', actions: [], ...sample, id: ++peek.seq };
+  peekLogLine(`${item.title}: ${item.urgency}${item.transient ? ', transient' : ''}${item.actions.length ? `, ${item.actions.length} action${item.actions.length > 1 ? 's' : ''}` : ''}`);
+  deliver(item);
+  return item;
+}
+function fireSample() {
+  const sample = PEEK_SAMPLES[peek.cycle % PEEK_SAMPLES.length];
+  peek.cycle += 1;
+  return notify(sample);
+}
+function fireBurst() {
+  for (let index = 0; index < 4; index += 1) setTimeout(fireSample, index * 160);
+}
+
+function crossfadeRow(row) {
+  const inner = $('.pk-in', row.el);
+  const ghost = inner.cloneNode(true);
+  ghost.classList.add('ghost');
+  row.el.append(ghost);
+  fillPeekRow(row);
+  inner.style.transition = 'none';
+  inner.style.opacity = '0';
+  void inner.offsetWidth;
+  inner.style.transition = '';
+  inner.style.opacity = '';
+  ghost.style.opacity = '1';
+  requestAnimationFrame(() => { ghost.style.opacity = '0'; });
+  setTimeout(() => ghost.remove(), cssMs('--crossfade-duration') + 60);
+}
+function updateTopRow() {
+  const row = peek.rows.find(other => !other.leaving);
+  if (!row) { fireSample(); peekLogLine('No row to update, fired a sample first'); return; }
+  row.updates = (row.updates || 0) + 1;
+  row.n = { ...row.n, base: row.n.base || row.n.body };
+  row.n.body = `${row.n.base} · update ${row.updates}`;
+  crossfadeRow(row);
+  if (row.open) { setPeekActions(row, false); }
+  startHold(row);
+  setPeekMotion('grow');
+  renderRight();
+  peekLogLine(`replaces_id: ${row.n.title} updated in place, hold restarted`);
+}
+
+function flushPeek() {
+  peek.epoch += 1;
+  peek.preparing = false;
+  peek.queue.splice(0).forEach(addToCount);
+  peek.rows.filter(row => !row.leaving).forEach(row => leaveRow(row, true));
+  update();
+}
+function flushMissed() {
+  const missed = peek.missed;
+  peek.missed = 0;
+  if (!missed || sys.locked || sys.hidden || isPanel(ui.state)) return;
+  deliver({ id: ++peek.seq, kind: 'summary', app: '', glyph: 'bell', title: `${missed} new notification${missed > 1 ? 's' : ''}`, body: 'Open the list', actions: [], urgency: 'normal', time: 'now' });
+}
+function resetPeeks() {
+  peek.epoch += 1;
+  clearTimeout(peek.settleTimer);
+  Object.assign(peek, { queue: [], on: false, settle: false, preparing: false, missed: 0 });
+  for (const row of peek.rows) for (const timer of ['hold', 'rest', 'grace', 'press']) clearTimeout(row[timer]);
+  peekBox.innerHTML = '';
+  blobBox.innerHTML = '';
+  peek.blobs = [];
+  peek.rows = [];
+  sys.notifications = [];
+  delete right.dataset.peek;
+  peekLogLine('');
+  update();
+}
+
+const peekRowOf = event => {
+  const el = event.target.closest('.pk-row');
+  return el ? peek.rows.find(row => row.el === el) : null;
+};
+peekBox.addEventListener('click', event => {
+  event.stopPropagation();
+    const row = peekRowOf(event);
+  if (!row || row.leaving) return;
+  if (event.target.closest('.pk-x')) {
+    peekLogLine(`x: ${row.n.title} dismissed`);
+    leaveRow(row, false);
+    return;
+  }
+  const action = event.target.closest('.pk-act');
+  if (action) {
+    peekLogLine(`action "${row.n.actions[+action.dataset.action]}" on ${row.n.title}, row closed`);
+    leaveRow(row, false);
+  } else if (row.n.kind === 'summary') {
+    peekLogLine('combined row: opens the list');
+    INDICATOR_ACTIONS.notifications();
+  } else {
+    peekLogLine(`default action on ${row.n.title}${row.n.actions.length ? ` ("${row.n.actions[0]}")` : ' (focus the app)'}, row closed`);
+    leaveRow(row, false);
+  }
+});
+blobBox.addEventListener('click', event => {
+  event.stopPropagation();
+  if (!event.target.closest('.pk-blob:not(.more)')) return;
+  peekLogLine('disc: opens the Settings list');
+  INDICATOR_ACTIONS.notifications();
+});
+peekBox.addEventListener('mousedown', event => { if (event.button === 1) event.preventDefault(); });
+peekBox.addEventListener('auxclick', event => {
+  if (event.button !== 1) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const row = peekRowOf(event);
+  if (row) { peekLogLine(`middle click: ${row.n.title} dismissed`); leaveRow(row, false); }
+});
+peekBox.addEventListener('contextmenu', event => {
+  event.preventDefault();
+  event.stopPropagation();
+  peekLogLine('right click: Settings list');
+  INDICATOR_ACTIONS.notifications();
+});
+document.addEventListener('pointerdown', event => {
+  for (const row of peek.rows) if (row.open && !row.el.contains(event.target)) setPeekActions(row, false);
+});
 
 let trayMenuTimer = 0;
 function openTrayMenu(index) {
@@ -1321,6 +1831,7 @@ function layoutCentre() {
   let width = pillWidth, height = 30;
   if (detail) { width = geo.detailWidth; height = 48; }
   else if (view) { width = view.offsetWidth; height = panel ? view.offsetHeight : 30; }
+  geo.centreWidth = width;
   const extent = width * height;
   if (extent !== geo.extent) bar.dataset.motion = extent < geo.extent ? 'shrink' : 'grow';
   geo.extent = extent;
@@ -1344,6 +1855,7 @@ function layoutCentre() {
   placeChrome(chrome.lblDate, 0);
   orb.style.left = `${musicbar ? left + ORB_INSET : geo.centre - (detail ? width : pillWidth) / 2 - ORB_GAP - ORB_SIZE}px`;
   osd.style.left = `${geo.centre - 110}px`;
+  if (peek.on) renderRight();
 }
 
 function measure() {
@@ -1355,6 +1867,7 @@ function measure() {
 function update() {
   root.classList.toggle('reduce-motion', sys.reduceMotion);
   root.classList.toggle('no-guide', !sys.guide);
+  $$('[data-sep]').forEach(button => button.classList.toggle('on', button.dataset.sep === sys.separator));
   root.dataset.theme = effectiveTheme();
   root.style.setProperty('--zone', sys.hidden ? '0px' : 'var(--bar-height)');
   bar.classList.toggle('hidden', sys.hidden);
@@ -1377,7 +1890,7 @@ function update() {
 function setState(name, via = 'click') {
   if (name === 'osd') { showOsd('volume', 0); return; }
   if ((name === 'musicbar' || name === 'player') && !sys.music) return;
-  if (isPanel(name)) closeTrayMenu();
+  if (isPanel(name)) { closeTrayMenu(); flushPeek(); }
   if (sys.hidden && name !== 'collapsed') sys.hidden = false;
   const previous = ui.state;
   const changed = name !== previous;
@@ -1640,6 +2153,19 @@ $('#chips').addEventListener('click', event => {
   const chip = event.target.closest('[data-chip]');
   if (chip) setState(chip.dataset.chip);
 });
+$('#sep-btns').addEventListener('click', event => {
+  const button = event.target.closest('[data-sep]');
+  if (!button) return;
+  sys.separator = button.dataset.sep;
+  update();
+});
+$('#notify-btns').addEventListener('click', event => {
+  const button = event.target.closest('[data-notify]');
+  if (!button) return;
+  const actions = { fire: fireSample, burst: fireBurst, replace: updateTopRow, reset: resetPeeks };
+  actions[button.dataset.notify]();
+  button.blur();
+});
 $('#help-btn').addEventListener('click', () => { ui.help = !ui.help; renderControls(); });
 $('#help').addEventListener('click', () => { ui.help = false; renderControls(); });
 
@@ -1697,7 +2223,8 @@ document.addEventListener('keydown', event => {
     t: () => toggleState('theme', 'key'),
     w: () => toggleState('wallpaper', 'key'),
     m: () => toggleState('musicbar', 'key'),
-    h: () => { sys.hidden = !sys.hidden; if (sys.hidden) ui.state = 'collapsed'; update(); },
+    h: () => { sys.hidden = !sys.hidden; if (sys.hidden) { ui.state = 'collapsed'; flushPeek(); } update(); if (!sys.hidden) flushMissed(); },
+    n: () => fireSample(),
     g: () => { sys.guide = !sys.guide; update(); },
     '?': () => { ui.help = !ui.help; renderControls(); },
   };

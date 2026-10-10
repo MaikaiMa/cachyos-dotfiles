@@ -2,11 +2,17 @@
 Description=Repository-owned Quickshell bar (ADR-0027)
 PartOf=niri.service
 After=niri.service
-# The bar reads its colours from the palette file that DMS writes.
-After=dms.service
+# The bar owns org.freedesktop.Notifications, so it starts before DMS
+# (ADR-0028). The palette file DMS writes may arrive later; the bar watches it.
+Before=dms.service
 
 [Service]
 ExecStart=/usr/bin/quickshell -c bar -n
+# Type=simple is "started" at fork, before the bar registers the name. This
+# holds dms.service back until the name exists or 30 seconds pass. The "-" keeps
+# a failed wait (bar cannot register, name already taken) from failing the unit:
+# DMS then claims the name as before and the bar stays up (ADR-0028).
+ExecStartPost=-gdbus wait --session --timeout 30 org.freedesktop.Notifications
 Restart=on-failure
 RestartSec=2
 

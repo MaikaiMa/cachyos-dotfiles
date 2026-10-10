@@ -236,7 +236,9 @@ Settings. The list below scrolls inside the Settings list maximum.
 Notifications only when there are any: the section is absent on an empty
 list and the panel ends at the brightness slider. With items: "Clear all"
 top right, the list scrolls inside a maximum height of 240 px, click-x
-per item.
+per item. Since the bar owns the daemon (ADR-0028) a row also expands
+into its full body, actions and reply field; see "Notifications" below
+the right island.
 
 Approved as prototyped (r3 · sliders) on 2026-10-04; keep as is.
 
@@ -398,6 +400,222 @@ dimmed. The group is absent when no tray items exist.
 Stacking order: an open centre panel is always drawn above the right
 island, including a fanned tray; the right island never overlaps a panel.
 
+### Notifications
+
+Added 2026-10-08 with
+[ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md):
+the bar is the notification daemon in the Niri session, so a notification
+is shown once as a peek, counted in the bell, listed in Settings and kept
+in the bar's own history. Nothing opens next to the bar; principle 2
+holds for notifications too.
+
+**Peek.** A notification replaces the right island, the way the music bar
+replaces the centre pill (rethought 2026-10-08 after the first live
+build: rows sitting next to the tray and the indicators were noise, and
+the column under the bell was wasted space). When a notification arrives
+the right island morphs into a stack of notification rows; nothing else
+is drawn in it: no tray, no indicators, no bell. When the last row leaves,
+the island morphs back into the status island and the bell with its count
+appears with the indicator animation; that morph is what links the
+notification to the bell, so the bell does not need to sit beside the
+rows. On an empty day with no tray and nothing to attend, the island
+appears as the stack and morphs back into a bell-only island. The
+indicators are out of sight for the hold; they are status, not alarms.
+The stack lives in the right island because the bell is what counts it
+and because the centre must stay free for the clock, the OSD, the panels
+and the music bar (decided 2026-10-08).
+
+Geometry (settled 2026-10-10, prototype r8): the island keeps its right
+edge and is always 360 px wide while the stack shows (the Player panel
+width; a width that followed the text made the blob a different shape
+every time), capped only by the 8 px clearance from the centre island on
+narrow screens, truncating the text instead; it grows downward one row at
+a time. Island radius 20 px (expanded), padding 10 px horizontal and 8 px
+vertical. Rows are bare content, no surface of their own (tried in r6
+and rejected: it took away the blob-like nature), 48 px tall with 12 px
+between them, separated by a full-width hairline, 1 px `outline` at
+12 %, centred in the gap and never drawn under the last row. Inside a
+row, left to right: the app's icon on a 26 px disc (the same icon choice
+as the Settings row: the app's own icon first, the notification image
+only when the app has none), 10 px, then two lines, the summary (13 px,
+500) over one line of body (11 px, `on_surface_variant`, markup
+stripped), both truncated with an ellipsis before the dismiss glyph's
+area (28 px reserved at the right). A critical notification sets only its
+summary in `error`; a low one looks like a normal one. Images and inline
+reply are not shown in the peek; they are one click away in the list.
+
+*Dismiss on hover.* A 16 px `close` glyph in `on_surface_variant` sits
+8 px from the row's top and right edges with a 24 px hit area. It fades
+in with the hover rest (250 ms) and out after the leave grace; hovering
+it tints it `on_surface`. A click dismisses the row, which leaves without
+a blob. The long press that reveals the actions on touch reveals it too.
+Middle click keeps dismissing without a hover.
+
+*Actions on hover* (settled 2026-10-10). A row is compact by default and
+shows no actions. When the pointer rests on it (250 ms, the hover rest
+delay) a row that has sender actions grows from 48 to 80 px (200 ms, the
+tray curve) and the action labels slide up from under the body while
+fading in: plain text, no background, 12 px at 500 weight, sentence
+case, left-aligned with the text column, 24 px between labels, each in a
+32 px tall hit zone; the default action first in `primary`, the others
+in `on_surface`, at most three (the rest are in the list). `error` is
+reserved for a destructive action the bar can recognise, which the
+notification specification does not mark, so it is unused for now. Rows
+beneath slide down with the growth; the island width does not change.
+Leaving folds the labels after the leave grace. On touch, where there
+is no hover, a long press (500 ms) on the row reveals the actions and a
+tap outside them folds them. A row with no actions never grows on hover;
+the hover only pauses its hold.
+Hold: 5 s for normal urgency, 3 s for low, and a critical notification
+stays until it is clicked or dismissed. A sender's `expireTimeout` is
+honoured when it is positive, clamped to 2 to 15 s; 0 or absent means
+the default. The pointer resting on a row pauses that row's hold, as the
+now-playing peek turns into a hover, and leaving restarts it with the
+usual leave grace. Transient notifications peek like any other but never
+enter the list or the count.
+
+*Stacking* (decided 2026-10-08). Each notification is its own row with
+its own hold. A notification that arrives while the stack is shown adds
+a row on top: the island grows downward by one row (the island grow
+timing) and the existing rows slide down, so the newest is always the
+top row. At most three rows are shown; a fourth arriving pushes the
+bottom row out early, and that one is simply in the count and the list
+like any expired row. Rows leave one by one as their holds end, each
+collapsing with the shrink timing while the rows below it move up,
+until the island morphs back. A sender that updates an existing
+notification through `replaces_id` (progress, "3 new messages") updates
+its row in place with a cross-fade and restarts that row's hold; it
+never adds a row. A burst of more than three within one hold therefore
+shows the last three and counts the rest; there is no separate "N new"
+row for a burst, only for what arrived while the bar could not show
+peeks (below). A fanned tray or an open tray menu finishes first (the
+menu closes, the tray folds), then the island morphs into the stack.
+
+*Disc blobs* (settled 2026-10-10). A row that leaves while other rows
+remain, because its hold ended or a fourth row pushed it out, does not
+vanish into the count: it breaks out of the island as its own small
+blob below it. The row shrinks into its 26 px icon disc, the disc
+travels down through the island's bottom edge, grows to 30 px as it
+clears the edge, and settles 8 px below the island as a separate circle
+in the island background (`surface_container` at 92 % over the blurred
+wallpaper, with the island shadow). Blobs are right-aligned with the
+island's right edge, the newest on the right, 8 px apart, at most six;
+further ones collapse into a "+N" blob on the far left. A click on a
+blob re-peeks that notification: it returns to the stack as the top row
+with its actions and dismiss glyph, its hold restarts and the blob is
+gone (decided 2026-10-10; this is the one way back into the stack, by
+explicit intent, and it previews how a pinned blob will open). The "+N"
+blob opens Settings scrolled to the list, since it stands for several.
+Blobs follow the island's bottom edge while it grows or shrinks. A row dismissed by a
+click, or closed by running an action, leaves without a blob; the last
+row never makes one. Blobs do not climb back into the stack on their own
+when a slot frees up (decided 2026-10-10: a blob either expired or had its moment,
+and climbing back would keep the island replaced for the length of a
+burst and move things under the reader's eyes). When the last row's hold
+ends, the island morphs back into the status island and the blobs slide
+up into the bell's position while shrinking to 16 px and fading (shrink
+timing), so the count appears where they vanished. The blob size is a
+single token so a later pinned state can use a smaller one.
+Clicks on the peek: the text runs the default action when the sender has
+one, otherwise it brings the app's window to the front (Niri focus by the
+app key matching already used for the workspace pills) and marks the
+notification seen; an action pill invokes that action; both close the
+notification with reason "dismissed by user" unless the sender marked it
+resident. Middle click dismisses without acting, right click opens
+Settings scrolled to the list. The peek never takes keyboard focus; there
+is nothing to type in it and Escape is not needed.
+
+No peek, and the notification goes straight to the count and the list,
+while: do not disturb is on (a critical one still peeks); the bar is
+hidden; a centre panel is open (the Settings list updates live instead);
+the session is locked (read from logind's `LockedHint`, which DMS sets;
+to be confirmed in the build); or the focused window is fullscreen and
+the bar is not visible over it. What arrived while locked or hidden
+shows one combined "N new notifications" row without actions when the
+bar is visible again, whose click opens the list; never a backlog of
+single peeks. Reduce motion does not suppress
+peeks: a notification is information, not decoration, so the peek shows
+with every duration at 0 and the same hold. The now-playing peek and a
+notification peek can be shown at the same time, one in each island.
+
+*Clear all from the stack* (decided 2026-10-10). As long as the stack
+shows, a clear-all blob sits at the far left of the blob row, left of
+"+N" when that exists and as the only blob when there are none: the
+blob size, the island background, a 16 px `close` glyph in
+`on_surface_variant` that tints `on_surface` on hover. It appears and
+leaves with the stack's morph. A click dismisses every row and blob and
+morphs the island back with nothing counted. A hover-only reveal was
+tried first and dropped the same day: on the trackpad the pointer lost
+it too easily. Middle click on the island outside the rows (padding
+and gaps) or on any blob does the same without the hover, as the mouse
+shortcut; middle click on a row keeps dismissing only that row. A text label inside
+the island was rejected because it would change the island's height on
+hover.
+
+*Keys* (decided 2026-10-10; the bar's bind pattern of a panel on
+`Mod+letter` with Shift and Ctrl siblings): `Mod+N` toggles Settings
+scrolled to the list, the keyboard twin of the bell click, also while
+the stack shows; `Mod+Shift+N` clears all (rows, blobs and the list,
+nothing counted); `Mod+Ctrl+N` toggles do not disturb. All three carry
+a hotkey overlay title.
+
+**Bell and count.** Unchanged in role: the count is the number of
+notifications in the list that are not peeking. A row joins the count
+when it leaves the peek, which is what the morph back into the bell
+shows; while rows peek the bell is not drawn at all. Opening a centre
+panel moves every live row into the count at once, since the list then
+shows them. Do not disturb shows the crossed bell, and the three clicks
+stay (open the list, middle click clears all, right click toggles do
+not disturb). The workspace pill alert is unchanged
+and now comes from the daemon itself instead of a history file.
+
+**List.** The Settings list keeps its rows as approved in r3 (app icon,
+app name, summary, one line of body, 62 px), newest first, a click-x per
+row and "Clear all". A click on a row expands it
+in place: the full body (at most four lines, scrolling inside the list
+beyond that), the image when there is one (at most 64 px, right of the
+text), every action as a pill, and the inline reply field with a Send
+button when the sender asked for one (`hasInlineReply`); Enter sends.
+A second click, or expanding another row, collapses it. Actions and the
+reply field exist only while the sender's notification is still alive;
+rows restored from history after a bar restart show neither and say
+nothing about it. Dismiss closes a live notification with reason
+"dismissed by user" and drops a historic one from the file; "Clear all"
+does that for every row. Resident notifications stay in the list after
+an action until dismissed.
+
+**History.** `$XDG_STATE_HOME/dotfiles-bar/notifications.json`, the
+file that already holds dismissals and seen marks, becomes the history:
+every non-transient notification with its id, app, summary, body, icon
+and image paths, urgency, timestamp and seen flag; at most 200 entries
+and nothing older than 7 days, pruned on write. DMS's history is not
+imported. The file is written at most once per second, so a burst of
+notifications is one write.
+
+**Do not disturb.** A flag in the same state file, so it survives a bar
+restart and a re-login. While on: nothing peeks except critical
+notifications, the count still grows, the bell shows `notifications_off`.
+Toggles: the Settings tile, the bell's right click, and a bar IPC
+function (`quickshell ipc -c bar call notifications toggleDnd`) for a
+Niri bind, replacing `dms ipc call notifications toggleDoNotDisturb`.
+There is no schedule and no per-app rule.
+
+Left out on purpose: sounds (ADR-0028), per-app rules, a notification
+center of its own (the Settings list is it), swipe to dismiss, and
+grouping by app in the list. Parked for a later change, not dropped:
+pinning (controls animating in left of the dismiss glyph on hover; a
+pinned notification keeps its blob below the island, smaller once the
+stack is gone, and hover-opens) and snoozing (re-peek after 30 minutes).
+
+Prototyped as r5 · notifications on 2026-10-08 (controls: Notify, Burst,
+`replaces_id` update, Lock, Empty island), reworked through r6 (stack
+replaces the island, actions below), r7 (bare rows, fixed width, text
+actions, separator control) and r8 (dismiss glyph, subtle divider, disc
+blobs). Approved as prototyped (r8 · notifications) on 2026-10-10 with
+the full divider; the prototype's "Fixed width", "Disc blobs" and
+"Separator" controls stay for comparison.
+
+
 On a normal day the island is the tray chip alone; on an empty day with
 no tray it is absent. Bluetooth, power profile, night light, dark mode
 and the power button are not shown; they live in the Settings panel and
@@ -432,6 +650,9 @@ every screen; the music dot and OSD only on the screen with the pointer.
 | Settings grid | 4 columns, 12 px gap, tile radius 16 px, tile height 64 px |
 | Settings slider | full-width capsule 32 px tall, 8 px gap, icon zone 32 px, value zone 44 px; with a panel a 40 px chevron zone at the right end, the value zone left of its hairline |
 | Shadow on expanded islands | 0 8 px 24 px `shadow` at 35 % |
+| Notification peek | replaces the right island: 360 px wide (8 px clear of the centre island), radius 20 px, padding 10 px horizontal and 8 px vertical, at most three bare rows of 48 px with 12 px between them and a full-width 1 px `outline` hairline at 12 % in each gap; app icon on a 26 px disc, 10 px to the text, 28 px reserved at the right for the 16 px dismiss glyph (24 px hit area, 8 px from the top and right); a hovered row with actions grows to 80 px with text actions (12 px, 500, `primary` for the default, `on_surface` for the rest, 24 px apart, 32 px hit zones) |
+| Disc blobs | 30 px circles in the island background and shadow, 8 px below the island, 8 px apart, right-aligned with the newest on the right, at most six then "+N"; a clear-all blob with a 16 px `close` glyph appears on hover at the far left; one size token |
+| Notification list row expanded | body at most four lines, image at most 64 px, actions as pills, reply field with Send |
 
 Colours come from the DMS palette (`Colors.qml`); the names above are the
 Material keys of that file.
@@ -448,6 +669,9 @@ Material keys of that file.
 | Indicator appears or disappears in the right island | 180 ms width + opacity | ease-out |
 | Tray fans out or folds | 200 ms spacing | cubic-bezier(0.2, 0.8, 0.2, 1) |
 | OSD in / out | 160 ms / 240 ms | ease-out / ease-in |
+| Right island morphs into the notification stack and back | island grow 280 ms / shrink 220 ms, same curves, content cross-fade 140 ms; a fanned tray folds or a tray menu closes first; the bell with its count appears after the morph back with the indicator timing | hold 5 s normal, 3 s low, critical until dismissed; sender timeout clamped 2 to 15 s; pointer pauses that row's hold; a new row pushes the stack down with the grow timing, a leaving row collapses with the shrink timing; `replaces_id` updates in place with a 140 ms cross-fade; shown with 0 ms durations under reduce motion |
+| Notification actions reveal | 200 ms, tray curve: the row grows from 48 to 80 px, the text actions slide up from under the body and fade in, rows beneath slide down; the dismiss glyph fades in over the cross-fade duration | on hover rest (250 ms) or long press (500 ms); fold after the leave grace |
+| Row breaks out into a disc blob | shrink timing: the row collapses into its icon disc, the disc crosses the island's bottom edge growing from 26 to 30 px and settles 8 px below; existing blobs shift left with the same timing | on hold end or push-out while other rows remain; blobs slide up into the bell and shrink to 16 px while fading on the morph back |
 | Orb rim light and bloom | continuous while playing; rotation speed and rim brightness follow the level, bloom follows the low band, 30 fps (cava's own frame rate; 60 fps cost about a third of a core more for no new audio data, measured 2026-10-07) |
 | Music motion on battery | 15 fps for the orb, the rims and the wave while on battery; 30 fps on the charger. Every frame the bar presents makes niri recompose the screen (measured 2026-10-07: about 0.2 % GPU per frame per second), so the frame rate is the battery lever (decided 2026-10-07) |
 | Orb resting state | core 16 → 6 px and rim/bloom out over the shrink timing, 1 px ring in, ring breath opacity 0.2 ↔ 0.8 and diameter 12 ↔ 14 px over 5 s at ~15 fps |

@@ -1,5 +1,6 @@
 #!/bin/sh
-# Switch between the DMS bar and the repository-owned Quickshell bar (ADR-0027).
+# Switch between the DMS bar and the repository-owned Quickshell bar (ADR-0027,
+# ADR-0028: the own bar owns the notification daemon).
 set -eu
 
 repo_root=$(
@@ -12,6 +13,9 @@ look_json=${LOOK_JSON:-$repo_root/dms/look.json}
 systemctl_command=${SYSTEMCTL_COMMAND:-systemctl}
 dms_apply_look_command=${DMS_APPLY_LOOK_COMMAND:-$repo_root/scripts/dms-apply-look.sh}
 unit=quickshell-bar.service
+dms_unit=dms.service
+notification_name=org.freedesktop.Notifications
+busctl_command=${BUSCTL_COMMAND:-busctl}
 dry_run=0
 action=
 
@@ -102,7 +106,82 @@ unit_enabled() {
 }
 
 unit_active() {
-	"$systemctl_command" --user is-active --quiet "$unit"
+	"$systemctl_command" --user is-active --quiet "${1:-$unit}"
+}
+
+# Who holds org.freedesktop.Notifications: quickshell, dms, nobody, unknown
+# (no busctl or no session bus), or the process name of any other owner. DMS is
+# Quickshell too and its process is called qs, so qs counts as dms when its
+# command line is the DMS runtime (qs -p /run/user/<uid>/danklinux-shell/...).
+name_owner() {
+	if ! command -v "$busctl_command" >/dev/null 2>&1; then
+		echo unknown
+		return 0
+	fi
+	if ! owner_status=$("$busctl_command" --user status "$notification_name" 2>/dev/null); then
+		if "$busctl_command" --user list --no-legend >/dev/null 2>&1; then
+			echo nobody
+		else
+			echo unknown
+		fi
+		return 0
+	fi
+	owner_comm=$(printf '%s\n' "$owner_status" | sed -n 's/^Comm=//p' | sed -n 1p)
+	owner_cmdline=$(printf '%s\n' "$owner_status" | sed -n 's/^CommandLine=//p' | sed -n 1p)
+	case $owner_comm in
+	qs)
+		case $owner_cmdline in
+		*danklinux-shell* | *dms*) owner_comm=dms ;;
+		esac
+		;;
+	esac
+	echo "${owner_comm:-unknown}"
+}
+
+run_systemctl() {
+	"$systemctl_command" --user "$@"
+}
+
+# The bar must hold the notification name before DMS starts (ADR-0028), and a
+# bar that started after DMS holds no name, so a start is not enough: stop DMS,
+# restart the bar (its readiness wait returns once it owns the name), start DMS.
+# The drop-in's PartOf= makes the bar's restart restart DMS as well; the final
+# start is then a no-op, and it still covers a drop-in that is not installed yet.
+# When the bar already owns the name and DMS runs there is nothing to do.
+apply_own() {
+	if unit_enabled && unit_active && unit_active "$dms_unit" && [ "$(name_owner)" = quickshell ]; then
+		printf 'bar-switch: %s is already enabled and running and owns the notification name\n' "$unit"
+		return 0
+	fi
+	if [ "$dry_run" -eq 1 ]; then
+		printf 'bar-switch: dry run, would enable %s, stop %s, restart %s, then start %s\n' "$unit" "$dms_unit" "$unit" "$dms_unit"
+		return 0
+	fi
+	# chezmoi may have installed the unit files moments ago.
+	run_systemctl daemon-reload
+	run_systemctl enable "$unit"
+	run_systemctl stop "$dms_unit"
+	run_systemctl restart "$unit"
+	run_systemctl start "$dms_unit"
+	printf 'bar-switch: enabled %s and started it before %s; the bar now owns the notification name\n' "$unit" "$dms_unit"
+}
+
+# Going back needs DMS to take the name from the stopped bar. Stopping the bar
+# already stops DMS (PartOf=), so the restart is what brings DMS back and lets
+# it register the name. When the bar is off and DMS owns the name there is
+# nothing to do.
+apply_dms() {
+	if ! unit_enabled && ! unit_active && unit_active "$dms_unit" && [ "$(name_owner)" = dms ]; then
+		printf 'bar-switch: %s is already disabled and stopped and DMS owns the notification name\n' "$unit"
+		return 0
+	fi
+	if [ "$dry_run" -eq 1 ]; then
+		printf 'bar-switch: dry run, would disable and stop %s, then restart %s\n' "$unit" "$dms_unit"
+		return 0
+	fi
+	run_systemctl disable --now "$unit"
+	run_systemctl restart "$dms_unit"
+	printf 'bar-switch: disabled and stopped %s and restarted %s; DMS now owns the notification name\n' "$unit" "$dms_unit"
 }
 
 apply_unit() {
@@ -111,25 +190,9 @@ apply_unit() {
 		return 0
 	fi
 	if [ "$1" = own ]; then
-		if unit_enabled && unit_active; then
-			printf 'bar-switch: %s is already enabled and running\n' "$unit"
-		elif [ "$dry_run" -eq 1 ]; then
-			printf 'bar-switch: dry run, would enable and start %s\n' "$unit"
-		else
-			# chezmoi may have installed the unit file moments ago.
-			"$systemctl_command" --user daemon-reload
-			"$systemctl_command" --user enable --now "$unit"
-			printf 'bar-switch: enabled and started %s\n' "$unit"
-		fi
+		apply_own
 	else
-		if ! unit_enabled && ! unit_active; then
-			printf 'bar-switch: %s is already disabled and stopped\n' "$unit"
-		elif [ "$dry_run" -eq 1 ]; then
-			printf 'bar-switch: dry run, would disable and stop %s\n' "$unit"
-		else
-			"$systemctl_command" --user disable --now "$unit"
-			printf 'bar-switch: disabled and stopped %s\n' "$unit"
-		fi
+		apply_dms
 	fi
 }
 
@@ -142,6 +205,7 @@ print_status() {
 	enabled_state=$("$systemctl_command" --user is-enabled "$unit" 2>/dev/null || true)
 	active_state=$("$systemctl_command" --user is-active "$unit" 2>/dev/null || true)
 	printf 'bar-switch: %s is %s and %s\n' "$unit" "${enabled_state:-unknown}" "${active_state:-unknown}"
+	printf 'bar-switch: %s is held by %s\n' "$notification_name" "$(name_owner)"
 }
 
 case $action in

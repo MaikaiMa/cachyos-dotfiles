@@ -19,8 +19,11 @@ Item {
     // Rows that are animating out; the service drops them once they are gone.
     property var leavingIds: []
     property bool clearing: false
+    // One row at a time is expanded; expandedExtra is what it adds once settled.
+    property string expandedId: ""
+    property real expandedExtra: 0
     readonly property int settledCount: clearing ? 0 : Notifications.items.filter(item => !leavingIds.includes(item.id)).length
-    readonly property real settledListHeight: Math.min(Theme.notificationListMaxHeight, settledCount * Theme.notificationRowHeight + Math.max(0, settledCount - 1) * Theme.notificationRowGap)
+    readonly property real settledListHeight: Math.min(Theme.notificationListMaxHeight, settledCount * Theme.notificationRowHeight + Math.max(0, settledCount - 1) * Theme.notificationRowGap + (clearing ? 0 : expandedExtra))
     readonly property real notificationsHeight: settledCount > 0 ? Theme.notificationHeaderGap + Theme.notificationHeaderHeight + settledListHeight : 0
 
     implicitWidth: Theme.panelWidths.settings
@@ -43,7 +46,13 @@ Item {
         if (shown) {
             list.positionViewAtBeginning();
             Tablet.refresh();
+        } else {
+            expandedId = "";
         }
+    }
+    onExpandedIdChanged: {
+        if (expandedId === "")
+            expandedExtra = 0;
     }
 
     function spanWidth(cells: int): real {
@@ -60,11 +69,36 @@ Item {
     }
 
     function dismiss(id: string) {
+        if (expandedId === id)
+            expandedId = "";
         if (!leavingIds.includes(id))
             leavingIds = leavingIds.concat([id]);
     }
 
+    function toggleExpanded(id: string) {
+        expandedId = expandedId === id ? "" : id;
+    }
+
+    function noteExtra(id: string, extra: real) {
+        if (id === expandedId)
+            expandedExtra = extra;
+    }
+
+    // A resident notification stays in the list after an action or a reply.
+    function invokeAction(id: string, identifier: string) {
+        const resident = Notifications.isResident(id);
+        if (Notifications.invoke(id, identifier) && !resident)
+            dismiss(id);
+    }
+
+    function sendReply(id: string, text: string) {
+        const resident = Notifications.isResident(id);
+        if (Notifications.reply(id, text) && !resident)
+            dismiss(id);
+    }
+
     function clearAll() {
+        expandedId = "";
         clearing = true;
         clearTimer.restart();
     }
@@ -96,6 +130,8 @@ Item {
         const kept = leavingIds.filter(id => ids.includes(id));
         if (kept.length !== leavingIds.length)
             leavingIds = kept;
+        if (expandedId !== "" && !ids.includes(expandedId))
+            expandedId = "";
     }
 
     Connections {
@@ -168,9 +204,9 @@ Item {
             y: 0
             width: panel.spanWidth(1)
             title: "Do not disturb"
-            active: Dms.doNotDisturb
+            active: Notifications.doNotDisturb
             iconName: "do_not_disturb_on"
-            onActivated: Dms.toggleDoNotDisturb()
+            onActivated: Notifications.toggleDoNotDisturb()
         }
 
         GridTile {
@@ -412,10 +448,13 @@ Item {
             model: notificationModel
 
             delegate: NotificationRow {
-                required property string notificationId
-
                 width: ListView.view.width
                 leaving: panel.clearing || panel.leavingIds.includes(notificationId)
+                expanded: panel.expandedId === notificationId
+                onToggled: panel.toggleExpanded(notificationId)
+                onExpansionExtraChanged: panel.noteExtra(notificationId, expansionExtra)
+                onActionInvoked: identifier => panel.invokeAction(notificationId, identifier)
+                onReplySent: text => panel.sendReply(notificationId, text)
                 onDismissClicked: panel.dismiss(notificationId)
                 // Clear all hands the whole list to the service at once.
                 onGone: {

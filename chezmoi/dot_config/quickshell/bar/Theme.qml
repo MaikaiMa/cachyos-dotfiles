@@ -111,6 +111,57 @@ Singleton {
     readonly property int notificationRowGap: 6
     readonly property int notificationRowRadius: 14
     readonly property int notificationListMaxHeight: 240
+    // A list row expanded in place: the body in at most four lines, the image
+    // right of the text, the action pills and the reply field under it.
+    readonly property int notificationRowPadding: 8
+    readonly property int notificationBodyLineHeight: 15
+    readonly property int notificationBodyMaxLines: 4
+    readonly property int notificationImageMaxSize: 64
+    readonly property int notificationReplyWidth: 72
+    // Notification peek: the stack replaces the right island at the Player's
+    // width, never closer to the centre island than the clearance (it truncates
+    // instead), and grows down one bare row at a time, newest on top.
+    readonly property bool notificationPeek: true
+    readonly property int notificationPeekWidth: 360
+    readonly property int notificationPeekCentreClearance: 8
+    readonly property int notificationPeekPaddingHorizontal: 10
+    readonly property int notificationPeekPaddingVertical: 8
+    readonly property int notificationPeekMaxRows: 3
+    readonly property int notificationPeekRowHeight: 48
+    // The hairline is centred in the gap and never drawn under the last row.
+    readonly property int notificationPeekRowGap: 12
+    readonly property real notificationPeekHairlineOpacity: 0.12
+    readonly property int notificationPeekDisc: 26
+    readonly property real notificationPeekDiscOpacity: 0.07
+    readonly property int notificationPeekTextGap: 10
+    readonly property int notificationPeekSummaryLineHeight: 16
+    readonly property int notificationPeekBodyLineHeight: 14
+    readonly property int notificationPeekLineGap: 1
+    // Kept free right of the text for the dismiss glyph, which sits this far
+    // from the row's top and right edges in a larger hit area.
+    readonly property int notificationPeekDismissReserve: 28
+    readonly property int notificationPeekDismissInset: 8
+    readonly property int notificationPeekDismissHit: 24
+    // A row with actions grows on hover rest or long press; the text actions
+    // rise this far from under the body, the rest are in the list.
+    readonly property int notificationPeekRowOpenHeight: 80
+    readonly property int notificationPeekActions: 3
+    readonly property int notificationPeekActionHeight: 32
+    readonly property int notificationPeekActionGap: 24
+    readonly property int notificationPeekActionFontSize: 12
+    readonly property int notificationPeekActionRise: 10
+    // Rows that broke out of the stack, under the island and right-aligned
+    // with it; past the maximum a "+N" blob on the far left.
+    readonly property int notificationBlobSize: 30
+    readonly property int notificationBlobGap: 8
+    readonly property int notificationBlobMax: 6
+    readonly property int notificationBlobCountWeight: Font.DemiBold
+    // Action pills in the Settings list.
+    readonly property int notificationActionHeight: 24
+    readonly property int notificationActionFontSize: 11
+    readonly property int notificationActionPadding: 10
+    readonly property int notificationActionGap: 4
+    readonly property int notificationActionMaxWidth: 140
     // The Wi-Fi and Bluetooth tiles: a chevron zone on the right opens their panel.
     readonly property int tileChevronZone: 40
     readonly property real tileChevronHairlineOpacity: 0.15
