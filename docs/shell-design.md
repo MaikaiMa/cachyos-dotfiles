@@ -667,7 +667,8 @@ Material keys of that file.
 | Hover rest before Detail / leave grace | 250 ms / 120 ms | the hover area never resizes with the island |
 | Workspace pill slide | 200 ms | cubic-bezier(0.2, 0.8, 0.2, 1) |
 | Segmented control accent slide | 200 ms | cubic-bezier(0.2, 0.8, 0.2, 1); the same slide as the workspace pill, its own token since 2026-10-10 |
-| Meter and charge fills (performance, charge, level bars) | 560 ms | ease-out; four times the content cross-fade, so a reading glides instead of jumping |
+| Charge fill (and level bars) | 560 ms | ease-out; four times the content cross-fade, so a reading glides instead of jumping |
+| Performance meter fills | 200 ms | ease-out; a move under 2 px is set at once, so a 2 s sample costs few presented frames |
 | Indicator appears or disappears in the right island | 180 ms width + opacity | ease-out |
 | Tray fans out or folds | 200 ms spacing | cubic-bezier(0.2, 0.8, 0.2, 1) |
 | OSD in / out | 160 ms / 240 ms | ease-out / ease-in |

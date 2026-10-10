@@ -13,8 +13,11 @@ Singleton {
     readonly property int shrinkDuration: reduceMotion ? 0 : 220
     readonly property int crossfadeDuration: reduceMotion ? 0 : 140
     readonly property int crossfadeEasing: Easing.OutCubic
-    // Level meters and the charge capsule glide to a new reading.
+    // The charge capsule glides to a new reading.
     readonly property int meterDuration: reduceMotion ? 0 : 560
+    // The Home performance meters glide to each 2 s sample, kept short so a
+    // sample costs few presented frames.
+    readonly property int performanceMeterDuration: reduceMotion ? 0 : 200
     // Detail labels start fading in this long after the island starts growing.
     readonly property int detailLabelDelay: reduceMotion ? 0 : 60
     readonly property int workspaceSlideDuration: reduceMotion ? 0 : 200

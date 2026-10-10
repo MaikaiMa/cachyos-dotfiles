@@ -1850,6 +1850,21 @@ same 600 ms.
   stayed within the run-to-run noise of about 0.5 W (Home 14.3 to 14.6,
   Player 20.3 to 20.3 W): the saving is GPU and compositor time, not
   watts on the charger.
+- **Home meters glide 200 ms, and only for a visible move.** The
+  Performance tile samples CPU, temperature and memory every 2 s while
+  Home shows, and each sample moved the three meters with a 560 ms glide.
+  A glide presents a frame on every display refresh, 180 per second on
+  the Z13, so a sample cost about 100 presented frames: about 52 frames
+  per second with Home open and nothing playing (measured 2026-10-10).
+  `FillTrack` now glides only while it shows and only when the fill moves
+  at least `Theme.meterGlideThreshold` (2 px); smaller moves are set at
+  once. The meters glide for `Motion.performanceMeterDuration` (200 ms);
+  the charge capsule, the OSD and the level bars keep their durations and
+  a threshold of 0. Measured on the charger on 2026-10-10 with Home open
+  and nothing playing (30 s): 50 to 1.8 frames per second, bar CPU 3.2 to
+  0.4 %, bar GPU 0.9 to 0.1 %, Niri GPU 3.4 to 0.2 %, package 14.6 to
+  11.3 W, the same as an idle bar. The meters move less smoothly; the
+  user judged the trade worth it.
 - **Open: one measurement.** `TopWave`'s `Canvas` paints on the GUI
   thread; `renderStrategy: Canvas.Threaded` may take that off it, kept
   only if `bardebug frames 5` with music playing shows a gain. It is a

@@ -267,6 +267,8 @@ Singleton {
     readonly property int weatherCardGap: 4
     readonly property int weatherTemperatureGap: 3
     readonly property int meterWidth: 6
+    // A performance meter jumps instead of gliding for a move shorter than this.
+    readonly property int meterGlideThreshold: 2
     readonly property int meterGap: 6
     readonly property int powerHeadHeight: 28
     readonly property int powerIconSize: 20

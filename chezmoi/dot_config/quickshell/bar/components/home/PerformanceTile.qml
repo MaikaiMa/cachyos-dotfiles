@@ -75,6 +75,8 @@ Surface {
             height: meter.height - valueLabel.height - Theme.iconSize - 2 * meter.spacing
             vertical: true
             value: meter.level
+            duration: Motion.performanceMeterDuration
+            glideThreshold: Theme.meterGlideThreshold
         }
 
         Icon {

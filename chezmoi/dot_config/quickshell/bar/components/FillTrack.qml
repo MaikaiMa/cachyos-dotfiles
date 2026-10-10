@@ -5,7 +5,9 @@ import qs
 // when vertical. capsuleClip clips a whole capsule instead of shortening it,
 // so the start stays round and the moving edge is straight. The fill glides
 // only while the track shows, unless glideWhileHidden: an animation in a
-// hidden panel still makes the bar window present frames.
+// hidden panel still makes the bar window present frames. A move shorter than
+// glideThreshold pixels is set at once: each glide frame is a presented frame,
+// and a meter that ticks every sample would otherwise keep the window busy.
 Item {
     id: track
 
@@ -18,17 +20,35 @@ Item {
     property int duration: Motion.meterDuration
     property int easingType: Motion.crossfadeEasing
     property bool glideWhileHidden: false
+    property real glideThreshold: 0
 
-    property real fraction: Math.max(0, Math.min(1, value))
+    readonly property real targetFraction: Math.max(0, Math.min(1, value))
+    property real fraction
+    readonly property real length: vertical ? height : width
     readonly property real radius: (vertical ? width : height) / 2
 
-    Behavior on fraction {
-        enabled: track.visible || track.glideWhileHidden
+    Component.onCompleted: fraction = targetFraction
 
-        NumberAnimation {
-            duration: track.duration
-            easing.type: track.easingType
+    onTargetFractionChanged: {
+        glide.stop();
+        const canGlide = track.visible || track.glideWhileHidden;
+        const distance = Math.abs(track.targetFraction - track.fraction) * track.length;
+        if (canGlide && distance >= track.glideThreshold) {
+            glide.from = track.fraction;
+            glide.to = track.targetFraction;
+            glide.start();
+        } else {
+            track.fraction = track.targetFraction;
         }
+    }
+
+    NumberAnimation {
+        id: glide
+
+        target: track
+        property: "fraction"
+        duration: track.duration
+        easing.type: track.easingType
     }
 
     Rectangle {
