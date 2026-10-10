@@ -15,7 +15,8 @@ Motion.qml       singleton: durations and curves, reduce motion
 qmldir           registers the token singletons
 services/        singletons that own state or data; Shell.qml is the centre island state machine
                  and the IPC targets `bar` and `notifications` the Niri shortcuts call;
-                 Notifications.qml is the notification daemon (ADR-0028)
+                 Notifications.qml is the notification daemon (ADR-0028); Theming.qml the
+                 Light / Dark / Auto and scheme switching through DMS, Dms.qml the rest of `dms ipc`
 islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, battery,
                  Detail, music orb and bar, privacy dots), RightIsland (tray, attention indicators,
                  or the notification stack in their place), NotificationBlobs (disc blobs below it)

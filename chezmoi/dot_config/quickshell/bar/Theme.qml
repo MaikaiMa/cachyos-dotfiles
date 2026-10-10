@@ -362,12 +362,16 @@ Singleton {
     readonly property int schemeDotsGap: 9
     readonly property int schemeLabelHeight: 14
     readonly property int schemeCardHeight: schemeCardPadding + schemeDotSize + schemeDotsGap + schemeLabelHeight + 10
-    // Light and Dark: the bar calls Niri's screen transition this long after the
-    // click, once the control has slid and the bar has recoloured, with a delay
-    // that covers DMS's render and its templates (measured, docs/shell.md).
+    // Light and Dark: the bar calls DMS this long after the click, once the
+    // control has slid and the bar has recoloured, then asks Niri for a screen
+    // transition whose delay covers DMS's render and its templates (about
+    // 0.8 s from the call; measure with scripts/theme-switch-timings.sh).
     readonly property bool themeCrossfade: true
     readonly property int themeCrossfadeLead: 300
-    readonly property int themeCrossfadeDelay: 2000
+    readonly property int themeCrossfadeDelay: 1400
+    // How long the blank toast that makes DMS paint stays up; the colour
+    // scheme is written after it, once DMS's own write has landed.
+    readonly property int themeNudgeDuration: 400
     // Static disabled look of the Theme panel while DMS works.
     readonly property real busyOpacity: 0.5
     readonly property int themePanelHeight: 2 * panelPadding + segmentedHeight + tileGap + 2 * carouselPadding + schemeCardHeight

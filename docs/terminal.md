@@ -94,12 +94,27 @@ change. The file is runtime state and is not managed by chezmoi. The
 writes `~/.config/ghostty/dank-background` in the same matugen run, with a
 `background = <surface_container colour>` and a `palette = 8=<outline colour>`
 line, and `config.ghostty`'s `config-file = ?dank-background` include applies it after
-the theme. After matugen has finished writing all templates, DMS sends
-`SIGUSR2` to every process named `ghostty`, which makes Ghostty reload its
-configuration. Because that signal comes only at the end of DMS's whole
-template run, the `ghostty_background` template also sends `SIGUSR2` in its
-own `post_hook` the moment the background file is written, so open windows
-recolour earlier; the later DMS signal is a harmless second reload.
+the theme.
+
+Ghostty re-reads its configuration, including the theme file, on `SIGUSR2`,
+and applies it to every open window, focused or not. The `ghostty-colors.path`
+user unit watches both files and runs `ghostty-colors.service`, which sends
+the signal (`pkill -USR2 -x ghostty`), after each write. It replaced a
+`post_hook` on the `ghostty_background` template on 2026-10-10: matugen
+renders its templates in no fixed order (checked with five templates, a
+different order on each run), so that hook could fire before DMS had written
+`dankcolors`, and Ghostty then reloaded the old theme with the new background
+and stayed one palette behind until the next change. DMS 1.6.2's own worker
+reports "No color changes detected, skipping refresh" when the palette is the
+same; what its refresh does to Ghostty when the palette did change was not
+found in the shipped binary, so the bar's own unit does not depend on it.
+Two writes close together mean two reloads; the second is the right one.
+chezmoi links the unit into `default.target.wants`, which takes effect at
+the next login; start it once by hand after applying:
+
+```fish
+systemctl --user daemon-reload; and systemctl --user start ghostty-colors.path
+```
 
 An edited `config.ghostty` is not reloaded automatically. Press
 `Ctrl+Shift+,` in a Ghostty window, or run:

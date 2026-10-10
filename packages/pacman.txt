@@ -25,6 +25,7 @@ quickshell # runs the repository-owned bar directly (ADR-0027, docs/shell.md)
 inter-font # Inter Variable for the own bar; fontconfig has no Inter without it
 ttf-material-symbols-variable # icons for the own bar, same glyph set DMS embeds
 capitaine-cursors # cursor theme in niri misc.kdl
+adw-gtk-theme # adw-gtk3 and adw-gtk3-dark: the GTK theme name the bar sets on a Light/Dark switch (docs/shell.md)
 
 # Login: greetd with the DMS greeter (ADR-0015); acl provides setfacl for
 # dms-greeter sync.

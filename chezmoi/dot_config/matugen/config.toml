@@ -11,12 +11,12 @@ post_hook = "~/.local/bin/sync-z13-window-color '{{ colors.primary.default.hex_s
 input_path = "~/.config/matugen/templates/niri-backdrop"
 output_path = "~/.config/niri/matugen/backdrop.kdl"
 
-# Ghostty reloads on SIGUSR2; DMS sends one only after its whole template run,
-# so send it here as well to recolour open terminals as soon as this file lands.
+# Ghostty reloads on SIGUSR2, sent by the ghostty-colors.path user unit when
+# this file or DMS's themes/dankcolors changes. Not a post hook here: matugen
+# renders templates in no fixed order, so a hook could fire before dankcolors.
 [templates.ghostty_background]
 input_path = "~/.config/matugen/templates/ghostty-background"
 output_path = "~/.config/ghostty/dank-background"
-post_hook = 'sh -c "pkill -USR2 -x ghostty || true"'
 
 [templates.zen_colors]
 input_path = "~/.config/matugen/templates/zen-colors"
@@ -28,3 +28,10 @@ output_path = "~/.config/zen/dms-colors.css"
 input_path = "~/.config/matugen/templates/vicinae-theme"
 output_path = "~/.local/share/vicinae/themes/dms.toml"
 post_hook = 'sh -c "command -v vicinae >/dev/null 2>&1 && vicinae theme set dms >/dev/null 2>&1 || true"'
+
+# Hylki is a Flatpak: its GTK reads $XDG_CONFIG_HOME/gtk-4.0/gtk.css inside
+# the sandbox, which Flatpak maps to this directory, so the file is written
+# there and no filesystem override is needed. See docs/mail.md.
+[templates.hylki_gtk]
+input_path = "~/.config/matugen/templates/hylki-gtk"
+output_path = "~/.var/app/co.hyprlab.Hylki/config/gtk-4.0/gtk.css"

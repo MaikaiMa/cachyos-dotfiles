@@ -87,10 +87,52 @@ session already runs.
 - `mailto:` and `mid:` links open in Hylki through the managed `mimeapps.list`.
 - Hylki opens on the `inbox` workspace.
 
+## Colours
+
+Hylki follows the wallpaper palette like the terminal, the launcher and the
+browser: the `hylki_gtk` matugen template in
+`chezmoi/dot_config/matugen/config.toml` renders
+`chezmoi/dot_config/matugen/templates/hylki-gtk` to
+`~/.var/app/co.hyprlab.Hylki/config/gtk-4.0/gtk.css` on every theme or
+wallpaper change. That is the sandbox's `$XDG_CONFIG_HOME`, where GTK 4 reads
+the user stylesheet, so Hylki needs no Flatpak override and no other GTK
+application is affected. The file is generated and not managed by chezmoi.
+
+The stylesheet sets libadwaita's named colours:
+
+| libadwaita | Material |
+| --- | --- |
+| `window_bg_color`, `headerbar_bg_color`, `sidebar_bg_color`, `dialog_bg_color` | `surface_container` (the Ghostty and Vicinae background) |
+| `secondary_sidebar_bg_color` | `surface_container_low` |
+| `view_bg_color` (message list, reading pane) | `surface_container_lowest`: darker than the window in dark mode, lighter in light mode, as Adwaita sets its views apart |
+| `card_bg_color`, `popover_bg_color`, `thumbnail_bg_color` | `surface_container_high` |
+| every `*_fg_color` | `on_surface` |
+| `accent_bg_color`, `accent_color` / `accent_fg_color` | `primary` / `on_primary` |
+| `destructive_*`, `error_*` | `error` / `on_error` |
+
+Light and dark follow the desktop portal's colour scheme, which the bar's
+Theme panel sets; libadwaita switches live. The palette does not: GTK 4
+reads `gtk.css` once at start-up, so after a Light/Dark switch or a new
+wallpaper Hylki shows the new colours at its next start. Closing the window
+is not enough: Hylki keeps running in the background (`run_in_background`
+in its settings, and it starts hidden at login), so quit the process and
+start it again:
+
+```fish
+flatpak kill co.hyprlab.Hylki; and flatpak run co.hyprlab.Hylki
+```
+
+The file renders for the mode that was active, so a Hylki started in the
+other mode shows that mode's palette on the current stylesheet until it is
+restarted again. Until the first render after
+installing Hylki the file is absent and Hylki uses stock Adwaita; render it
+as "Triggering a re-render" in [docs/dms.md](dms.md#triggering-a-re-render)
+describes.
+
 ## Machine-local state
 
-Hylki keeps account configuration, mail cache, and credentials under
-`~/.var/app/co.hyprlab.Hylki/`; Bridge keeps its encrypted vault under
+Hylki keeps account configuration, mail cache, credentials and the rendered
+stylesheet under `~/.var/app/co.hyprlab.Hylki/`; Bridge keeps its encrypted vault under
 `~/.config/protonmail/bridge-v3/` and its sync cache under
 `~/.local/share/protonmail/`. None of this is managed or committed. The
 Flatpak sandbox has read access to the home directory for attachments; treat

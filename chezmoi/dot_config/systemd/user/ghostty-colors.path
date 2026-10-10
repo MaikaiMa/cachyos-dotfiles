@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch the Ghostty colour files matugen writes
+
+[Path]
+# matugen renders its templates in no fixed order, so a post hook on one
+# template can signal Ghostty before DMS's theme file is written. Watching the
+# files themselves signals after each write; the last write wins.
+PathChanged=%h/.config/ghostty/themes/dankcolors
+PathChanged=%h/.config/ghostty/dank-background
+
+[Install]
+WantedBy=default.target

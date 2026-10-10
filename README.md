@@ -20,7 +20,7 @@ chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
   dot_config/DankMaterialShell/ DMS settings merge script
   dot_config/quickshell/bar/ repository-owned Quickshell bar; see docs/shell.md
-  dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen, Vicinae)
+  dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen, Vicinae, Hylki); see docs/dms.md
   dot_config/systemd/user/ managed ~/.config/systemd/user units
   dot_config/environment.d/ session environment (SSH agent socket)
   dot_config/git/         allowed signers for SSH commit signatures

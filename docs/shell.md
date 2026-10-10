@@ -239,42 +239,64 @@ pieces, and moved the shortcuts (built 2026-10-05).
 - **Theme panel**, 560 px: Light / Dark / Auto, then the ten schemes DMS 1.6
   accepts (`scheme-tonal-spot`, `-vibrant`, `-content`, `-expressive`,
   `-fidelity`, `-fruit-salad`, `-monochrome`, `-neutral`, `-rainbow`, and
-  DMS's own `-smart`) as 148 px cards in a strip. Light and Dark do not call
-  `dms ipc call theme`: that IPC always switches with a Niri screen
-  transition (the screen freezes, then cross-fades to a half-rendered
-  state). With `matugenSmartMode` off and `syncModeWithPortal` on, DMS
-  follows the GNOME colour scheme after a 750 ms settle and switches without
-  a transition, so the bar sets smart mode to false (only when it is on;
-  while on, DMS re-resolves the mode from the wallpaper) and then sets
-  `gsettings ... color-scheme default|prefer-dark`. On the click the bar
+  DMS's own `-smart`) as 148 px cards in a strip. Light and Dark call
+  `dms ipc call theme light|dark`, which switches DMS at once, turns smart
+  mode off and writes the GNOME colour scheme (`default` or `prefer-dark`)
+  for every other application. DMS applies the mode through two 100 ms QML
+  timers that only advance while DMS paints a frame, and an idle DMS without
+  its bar paints none, so a switch waited until something made it draw: a
+  panel opening, a toast, the mouse (journal 2026-10-10, 3 to 23 s). Right
+  after the call the bar shows a blank DMS toast (`toast info " "`, hidden
+  after `Theme.themeNudgeDuration`, 400 ms), behind the frozen screen, the
+  same nudge `dms-settings` uses; DMS then renders within about 0.2 s. The
+  bar then sets the GTK theme name, `adw-gtk3` or `adw-gtk3-dark` (package
+  `adw-gtk-theme`), and the explicit scheme, `prefer-light` or
+  `prefer-dark`, after DMS's own write: GTK 3 applications and Electron ones such
+  as the Claude app take light or dark from the theme name, not from the
+  colour scheme (checked 2026-10-10: at `prefer-light` the Claude app stayed
+  dark until the name changed), and Chromium reads `default` as no
+  preference. DMS changes the name only when its own GTK theming is applied,
+  which it is not here.
+  Until 2026-10-10 the bar set that colour scheme itself through `gsettings`
+  and let DMS follow the desktop portal, because the IPC runs DMS's own Niri
+  screen transition. The journal showed why that was unstable: DMS 1.6.2
+  polls the portal about every 10 s instead of listening, so a switch landed
+  0 to 10 s later, and a second click inside that window was applied as the
+  earlier value and written back to the colour scheme, reverting every
+  application. On the click the bar
   itself already glides to the other mode's colours from the loaded
   `dms-colors.json` (`Colors.preview`), and the next reload of that file
   wins. A second click on the mode already pending is ignored, and every
-  queued call is logged with `console.info` ("Dms: theme call: ...") in the
-  bar's journal. Auto is DMS's `matugenSmartMode` (matugen picks light or dark from
+  queued call is logged with `console.info` ("Theming: theme call: ...") in
+  the bar's journal. Auto is DMS's `matugenSmartMode` (matugen picks light or dark from
   the wallpaper), the mode `dms/look.json` records: it sets the key to true
   and re-renders by setting the current wallpaper again. The calls run one
   after another, each after the previous one has exited; the control slides
   to the choice at once and follows DMS again once it has settled (polls at
   300 ms, 1 s and 2.5 s after the last call). Light and Dark get one
-  screen-wide crossfade that the bar orchestrates: 300 ms after the click
-  (`Theme.themeCrossfadeLead`), once the control has slid and the bar has
-  recoloured, it runs `niri msg action do-screen-transition --delay-ms
-  2000` (`Theme.themeCrossfadeDelay`), so Niri shows the frozen old desktop
-  with the new bar while DMS and its templates render, then cross-fades
-  once to the result. `Theme.themeCrossfade: false` or reduce motion skips
-  it. Scheme changes get none: DMS starts rendering about 150 ms after
-  `settings set`, before a transition 300 ms later could freeze the old
-  state. While `themeBusy`, a 2 px `primary` line under the mode control
-  fills left to right over the 2.5 s the busy state is expected to last,
-  and the mode control and the scheme cards ignore clicks and keys (they
-  look the same); the strip still scrolls. DMS has no settable key for its time- or location-based automatic
-  mode (`themeModeAutoEnabled` is session state, which `settings set` cannot
-  reach). Each card has six dots drawn from the live palette with the hue
-  and saturation shifts of its scheme, not a matugen run per card; Smart
-  shows the live palette itself. The strip opens on the applied scheme,
-  which carries a dot; Left and Right move the selection ring, Enter or a
-  click applies it.
+  screen-wide crossfade: 300 ms after the click (`Theme.themeCrossfadeLead`),
+  once the control has slid and the bar has recoloured, the bar makes the
+  theme call; DMS freezes the screen through Niri with a 0 ms delay, which
+  would start fading before its render is done, so right after the call
+  returns the bar runs `niri msg action do-screen-transition --delay-ms 1400`
+  (`Theme.themeCrossfadeDelay`). Niri replaces a pending transition on the
+  next request and renders the frozen frame into the new starting texture
+  (`do_screen_transition` and `render` in niri's `src/niri.rs`), so the
+  desktop stays frozen on the old desktop with the new bar until DMS and its
+  templates are done, then cross-fades once. Under reduce motion, or with
+  `Theme.themeCrossfade: false`, the bar adds no transition and DMS's own
+  short fade shows. Scheme changes get none: DMS starts rendering about
+  150 ms after `settings set`, before a transition 300 ms later could freeze
+  the old state. While `themeBusy`, a 2 px `primary` line under the mode
+  control fills left to right over the 2.5 s the busy state is expected to
+  last, and the mode control and the scheme cards ignore clicks and keys
+  (they look the same); the strip still scrolls. DMS has no settable key for
+  its time- or location-based automatic mode (`themeModeAutoEnabled` is
+  session state, which `settings set` cannot reach). Each card has six dots
+  drawn from the live palette with the hue and saturation shifts of its
+  scheme, not a matugen run per card; Smart shows the live palette itself.
+  The strip opens on the applied scheme, which carries a dot; Left and Right
+  move the selection ring, Enter or a click applies it.
 - **Wallpaper panel**, 560 px: up to 200 images of the DMS wallpaper folder,
   sorted by name, as 120 x 68 px thumbnails with radius 10 and the file name
   under them. DMS has no setting for that folder: its picker remembers the
@@ -287,18 +309,25 @@ pieces, and moved the shortcuts (built 2026-10-05).
   wallpaper (`dms ipc call wallpaper get`, `getFor` in DMS's per-monitor
   mode) carries a dot; Enter or a click applies through
   `dms ipc call wallpaper set` (`setFor` in per-monitor mode).
-- **Crossfade delay, measured.** From the bar's and DMS's journals on
-  2026-10-05 (`journalctl --user`, five Light/Dark switches through the
-  portal alone): from the bar's `gsettings` call to DMS's "Setting desired
-  theme" took 1.10, 1.71, 2.30, 4.84 and 5.14 s; from there to "Theme
-  generation completed" 0.68 to 0.88 s, and the last template hook (Niri
-  reloading its config, ghostty's reload comes earlier) another 0.1 to
-  0.5 s, 0.89 to 1.18 s in all. The fastest switch was done 2.28 s after
-  the `gsettings` call; minus the 300 ms lead that is 1.98 s, rounded up to
-  2000 ms. DMS's pick-up of the portal change varies by seconds (its own
-  timing, not the bar's), so a slow switch still reveals part of the
-  render; raise the delay if that shows often (3000 ms covers the median
-  of 3.29 s, at the cost of a longer frozen screen).
+- **Crossfade delay, measured.** The pipeline after the theme call, read in
+  DMS 1.6.2's shipped QML and the journal: the IPC handler freezes the
+  screen and starts a 100 ms timer, `setLightMode` debounces another
+  100 ms, then the `dms matugen queue` worker renders DMS's and the user's
+  templates (0.5 s in the journal, of which matugen's quantisation of the
+  3840 x 2400 wallpaper is 160 ms) and writes `dms-colors.json`; Ghostty
+  and Niri pick their files up within about 0.2 s more. With the toast
+  nudge the timers run about 0.2 s after the call, so the whole switch is
+  about 1.0 to 1.2 s, and the default delay is 1400 ms. The portal path it
+  replaced measured 1.1 to 5.1 s to DMS's pick-up alone on 2026-10-05 and
+  up to 10.5 s on 2026-10-10. To re-measure, switch Light and Dark a few
+  times, then let `scripts/theme-switch-timings.sh` pair the bar's calls
+  with DMS's "Setting desired theme" and "Theme generation completed" lines
+  from the journal of the last seven days (or a `journalctl --since` value)
+  and suggest the delay that covers the median:
+
+  ```fish
+  ./scripts/theme-switch-timings.sh
+  ```
 - **Touch.** Every panel is reachable without a keyboard: a tap on the
   centre pill opens Home, whose actions row opens Settings, Updates, Theme,
   Wallpaper, Power and, while a player exists, Player; a 500 ms long press
@@ -1225,20 +1254,25 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   and the row helpers `deviceIcon`, `batteryText`, `detailText`,
   `connectSettled`. Everything is native: the module has
   discovery, pairing and battery levels, but no pairing agent.
-- `Dms`: `nightLight`, `caffeine`, `themeMode`, polled every
-  10 s and after each call; `smartMode` (`matugenSmartMode`, shown as Auto)
-  and `matugenScheme`, read at start, when the Theme panel opens and after
-  each call; `schemes` (value and label of every scheme DMS accepts);
-  `terminal` (DMS's `terminalOverride` from its `session.json`, watched);
-  `toggleNightLight()`, `toggleCaffeine()`,
+- `Dms`: `nightLight` and `caffeine`, polled every 10 s and after each
+  call; `terminal` (DMS's `terminalOverride` from its `session.json`,
+  watched); `toggleNightLight()`, `toggleCaffeine()`, `openSettingsTab(tab)`
+  (a tab id from `dms ipc call settings tabs`; it runs
+  `~/.local/bin/dms-settings`, which nudges DMS when its settings window
+  does not map, see docs/dms.md Known limits), `refresh()`.
+- `Theming`: the theme state DMS owns. `mode` (`dark` or `light`, polled
+  every 10 s), `smartMode` (`matugenSmartMode`, shown as Auto) and `scheme`
+  (`matugenScheme`), read at start, when the Theme panel opens and after
+  each action; `schemes` (value and label of every scheme DMS accepts);
+  `gtkThemeLight`, `gtkThemeDark` (the theme names written on a switch);
   `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued and run
-  one call at a time; see the Theme panel above), `themeBusy` (true while a
-  queued theme call runs or its follow-up polls are pending; Light and Dark
-  also start the Niri screen transition, see the Theme panel above),
-  `openSettingsTab(tab)` (a tab id from `dms ipc call settings tabs`; it
-  runs `~/.local/bin/dms-settings`, which
-  nudges DMS when its settings window does not map, see docs/dms.md Known
-  limits), `refresh()`, `refreshTheme()`.
+  one step at a time; see the Theme panel above), `busy` (true while a
+  queued action runs or its follow-up polls at 300 ms, 1 s and 2.5 s are
+  pending; `settleDuration` is the last of them), `pendingMode`, the
+  `reported` signal (a poll answered while nothing is pending; the panel
+  then drops its optimistic choice) and `refresh()`. Light and Dark also
+  start the Niri screen transition, see the Theme panel above. The colours
+  themselves come through `Colors`.
 - `Notifications`: the notification daemon (ADR-0028). `items` (newest
   first: `id`, `serverId`, `appName`, `summary`, `body`, `timestamp` in ms,
   `appIcon`, `image`, `urgency`, `desktopEntry`, `seen`, and `live`: the
@@ -1516,7 +1550,7 @@ the approach come first, the things that are only work come last.
 
 Code layout from step 0 on, under `chezmoi/dot_config/quickshell/bar/`:
 `services/` for singletons that own data (Niri, Audio, Battery, Weather,
-Music, Tray, Updates, Dms), `islands/` for the three islands,
+Music, Tray, Updates, Dms, Theming), `islands/` for the three islands,
 `panels/` for the centre panel states, `components/` for shared pieces,
 and `Theme.qml`, `Colors.qml`, `Motion.qml` for the tokens. Every step
 lands as its own change with docs and tests; the DMS bar plugins are

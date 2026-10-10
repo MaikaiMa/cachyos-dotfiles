@@ -35,6 +35,8 @@ Singleton {
     // Recorded on every open and morph, so a morph keeps the panel open.
     // panelOpen may not have followed centreState yet here.
     onCentreStateChanged: {
+        // Logged so journal timings of theme switches can be read against the panel.
+        console.info("Shell: centre " + centreState);
         if (panelStates.includes(centreState)) {
             panelFocusWindow = Niri.focusedWindowId;
             panelFocusWorkspace = Niri.focusedWorkspace ? Niri.focusedWorkspace.id : null;

@@ -49,6 +49,9 @@ require_files \
 	chezmoi/dot_config/systemd/user/default.target.wants/symlink_wallpaper-favorites.path \
 	chezmoi/dot_config/systemd/user/wallpaper-favorites.service \
 	chezmoi/dot_config/systemd/user/wallpaper-favorites.path \
+	chezmoi/dot_config/systemd/user/default.target.wants/symlink_ghostty-colors.path \
+	chezmoi/dot_config/systemd/user/ghostty-colors.service \
+	chezmoi/dot_config/systemd/user/ghostty-colors.path \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_auto-rotate.service \
 	chezmoi/dot_config/systemd/user/niri.service.wants/symlink_mobi.phosh.OSK.service \
 	chezmoi/dot_config/systemd/user/auto-rotate.service \
@@ -72,6 +75,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Network.qml \
 	chezmoi/dot_config/quickshell/bar/services/Bluetooth.qml \
 	chezmoi/dot_config/quickshell/bar/services/Dms.qml \
+	chezmoi/dot_config/quickshell/bar/services/Theming.qml \
 	chezmoi/dot_config/quickshell/bar/services/Notifications.qml \
 	chezmoi/dot_config/quickshell/bar/services/Music.qml \
 	chezmoi/dot_config/quickshell/bar/services/Cava.qml \
@@ -155,6 +159,7 @@ require_files \
 	chezmoi/dot_config/matugen/templates/ghostty-background \
 	chezmoi/dot_config/matugen/templates/zen-colors \
 	chezmoi/dot_config/matugen/templates/vicinae-theme \
+	chezmoi/dot_config/matugen/templates/hylki-gtk \
 	chezmoi/dot_config/private_zen/dms-userChrome.css \
 	chezmoi/dot_config/fish/config.fish \
 	chezmoi/dot_config/fish/conf.d/dotfiles.fish \
@@ -234,6 +239,7 @@ require_files \
 	scripts/bar-switch.sh \
 	scripts/dms-restore-plugins.sh \
 	scripts/dms-link-zen-theme.sh \
+	scripts/theme-switch-timings.sh \
 	scripts/setup-power-key.sh \
 	scripts/setup-sessions.sh \
 	scripts/build-vicinae-extensions.sh \
@@ -252,6 +258,8 @@ require_files \
 	tests/quickshell-bar.sh \
 	tests/dms-restore-plugins.sh \
 	tests/dms-link-zen-theme.sh \
+	tests/theme-switch-timings.sh \
+	tests/matugen-templates.sh \
 	tests/dms-clipboard-settings.sh \
 	tests/vicinae-settings.sh \
 	tests/fish-docs.sh \
@@ -412,6 +420,8 @@ tests/bar-switch.sh
 tests/quickshell-bar.sh
 tests/dms-restore-plugins.sh
 tests/dms-link-zen-theme.sh
+tests/theme-switch-timings.sh
+tests/matugen-templates.sh
 tests/dms-clipboard-settings.sh
 tests/vicinae-settings.sh
 tests/focus-or-spawn.sh

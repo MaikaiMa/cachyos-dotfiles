@@ -7,6 +7,7 @@ singleton Display 1.0 Display.qml
 singleton Network 1.0 Network.qml
 singleton Bluetooth 1.0 Bluetooth.qml
 singleton Dms 1.0 Dms.qml
+singleton Theming 1.0 Theming.qml
 singleton Notifications 1.0 Notifications.qml
 singleton Music 1.0 Music.qml
 singleton Cava 1.0 Cava.qml
