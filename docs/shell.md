@@ -767,6 +767,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
 chezmoi/dot_config/systemd/user/quickshell-bar.service
 chezmoi/dot_local/bin/executable_bar-notifications   release/claim hooks and name owner (~/.local/bin/bar-notifications)
 scripts/bar-switch.sh                   switches between the DMS and the own bar
+scripts/bar-power-sample.sh             CPU, GPU, watts and frames of the bar over a window
 tests/bar-switch.sh                     switch script test with stubs
 tests/bar-notifications.sh              helper test with stubs
 tests/quickshell-bar.sh                 qmldir check and qmllint over every bar QML file
@@ -1210,7 +1211,30 @@ the tall window, `orb` the orb box, `wave` the wave strip. With music
 playing and nothing open, expect `bar` near 0 and `orb` and `wave` at 151
 per 5 s on the charger and 75 on battery (30 and 15 per second); anything
 at the display's refresh rate means an animation is running in that
-surface.
+surface. The counter is retrospective: it reports the seconds that already
+passed, so read it only after a hands-off window, or let the sampler below
+read it at the end of its own window.
+
+What the bar costs over a window, in one block: CPU and GPU time of the
+bar, Niri and DMS (GPU from the amdgpu fdinfo counters), whole-GPU busy,
+the battery draw while discharging, the package draw from RAPL, the CPU
+time of helpers the bar spawned, and the frames line for the same window.
+RAPL is root-only, so cache a sudo ticket first; the script itself stays
+the desktop user, which the Frames IPC needs. With a panel open no
+command can be typed, so start the sample with a lead and open the panel
+during it:
+
+```fish
+sudo -v
+scripts/bar-power-sample.sh 30 "charger, idle"
+sleep 5; scripts/bar-power-sample.sh 30 "charger, Home open"
+```
+
+The CPU figures are percent of one core and run higher on battery for the
+same work, because the cores clock lower there; compare CPU on the
+charger and watts on battery. The battery draw is noisy by about 1 W over
+30 s and the package draw by about 0.5 W between runs; frames and GPU
+time are the stable signals.
 
 ## Adding a widget
 
