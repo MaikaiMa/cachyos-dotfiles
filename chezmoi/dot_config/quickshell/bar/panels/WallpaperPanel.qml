@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import ".."
 import "../components"
 import "../services"
@@ -10,11 +9,10 @@ import "../services"
 // of thumbnails. Left and Right move the selection, Enter or a click applies
 // it; the current wallpaper carries a dot. Thumbnails load small and
 // asynchronously, and only for the cards in and near view.
-Item {
+Appear {
     id: panel
 
     required property string screenName
-    property bool shown: false
     // Whether the strip has been centred on the current wallpaper since opening.
     property bool placed: false
 
@@ -22,17 +20,6 @@ Item {
 
     implicitWidth: Theme.panelWidths.wallpaper
     implicitHeight: Theme.wallpaperPanelHeight
-
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
 
     onShownChanged: {
         if (!shown)
@@ -66,14 +53,11 @@ Item {
         return dot > 0 ? name.slice(0, dot) : name;
     }
 
-    Text {
+    Label {
         anchors.centerIn: parent
         visible: !Wallpapers.loading && Wallpapers.files.length === 0
         text: "No wallpapers in " + Wallpapers.folder
-        color: Colors.foregroundVariant
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.secondaryFontSize
-        font.weight: Theme.fontWeight
+        secondary: true
     }
 
     Rectangle {
@@ -115,22 +99,19 @@ Item {
             Accessible.name: panel.label(modelData) + (applied ? ", current" : "")
             Accessible.selected: selected
 
-            // The selection ring sits 2 px outside the picture.
+            // The selection ring keeps a gap to the picture.
             Rectangle {
-                x: Theme.thumbRing - 4
-                y: Theme.thumbRing - 4
-                width: Theme.thumbWidth + 8
-                height: Theme.thumbHeight + 8
-                radius: Theme.thumbRadius + 4
+                x: Theme.thumbRing - Theme.thumbRingOffset
+                y: Theme.thumbRing - Theme.thumbRingOffset
+                width: Theme.thumbWidth + 2 * Theme.thumbRingOffset
+                height: Theme.thumbHeight + 2 * Theme.thumbRingOffset
+                radius: Theme.thumbRadius + Theme.thumbRingOffset
                 color: "transparent"
-                border.width: 2
+                border.width: Theme.focusRingWidth
                 border.color: thumb.selected ? Colors.primary : "transparent"
 
                 Behavior on border.color {
-                    ColorAnimation {
-                        duration: Motion.crossfadeDuration
-                        easing.type: Motion.crossfadeEasing
-                    }
+                    ColorCrossfade {}
                 }
             }
 
@@ -146,36 +127,12 @@ Item {
                     color: Colors.surfaceContainerHigh
                 }
 
-                Image {
-                    id: picture
-
+                RoundedImage {
                     objectName: "thumbImage"
                     anchors.fill: parent
                     source: panel.fileUrl(thumb.modelData)
-                    sourceSize.width: 2 * Theme.thumbWidth
-                    sourceSize.height: 2 * Theme.thumbHeight
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    visible: false
-                }
-
-                // Rounded through the panel's one shared mask, as the Player cover is.
-                MultiEffect {
-                    anchors.fill: parent
-                    source: picture
-                    maskEnabled: true
                     maskSource: thumbMask
-                    maskThresholdMin: 0.5
-                    maskSpreadAtMin: 1
-                    opacity: picture.status === Image.Ready ? 1 : 0
-                    visible: opacity > 0
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
-                    }
+                    fadeIn: true
                 }
 
                 Rectangle {
@@ -192,26 +149,20 @@ Item {
                     opacity: thumb.applied ? 1 : 0
 
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
+                        Crossfade {}
                     }
                 }
             }
 
-            Text {
+            Label {
                 x: Theme.thumbRing
                 y: Theme.thumbRing + Theme.thumbHeight + Theme.thumbLabelGap
                 width: Theme.thumbWidth
                 height: Theme.thumbLabelHeight
                 verticalAlignment: Text.AlignVCenter
                 text: panel.label(thumb.modelData)
-                elide: Text.ElideRight
+                secondary: true
                 color: thumb.applied ? Colors.foreground : Colors.foregroundVariant
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.secondaryFontSize
-                font.weight: Theme.fontWeight
             }
 
             MouseArea {

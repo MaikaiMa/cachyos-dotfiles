@@ -25,10 +25,17 @@ Singleton {
     readonly property real hairlineOpacity: 0.4
 
     readonly property string fontFamily: "Inter Variable"
+    // The type scale; the domain sizes below are names for its steps.
+    readonly property int fontSizeSmall: 11
+    readonly property int fontSizeDetail: 12
     readonly property int fontSize: 13
+    readonly property int fontSizeTitle: 15
+    readonly property int fontSizeLarge: 22
+    readonly property int fontSizeDisplay: 44
     readonly property int fontWeight: Font.Medium
-    readonly property int secondaryFontSize: 11
+    readonly property int secondaryFontSize: fontSizeSmall
     readonly property int iconSize: 16
+    readonly property int smallIconSize: 14
     // From ttf-material-symbols-variable; without it every Icon draws its placeholder.
     readonly property string iconFontFamily: "Material Symbols Rounded"
     readonly property bool iconFontAvailable: Qt.fontFamilies().includes(iconFontFamily)
@@ -37,11 +44,44 @@ Singleton {
     readonly property int shadowBlur: 24
     readonly property real shadowOpacity: 0.35
 
+    // Keyboard focus: a ring this far outside the focused item.
+    readonly property int focusRingInset: 3
+    readonly property int focusRingWidth: 2
+    // Interaction states, as alphas over a surface (see Colors.hovered).
+    readonly property real hoverTint: 0.16
+    readonly property real hoverTintOnAccent: 0.10
+    readonly property real selectedTint: 0.22
+    readonly property real subtleFillOpacity: 0.07
+    readonly property real errorSurfaceTint: 0.14
+    readonly property real errorChipTint: 0.18
+    readonly property real dotOutlineOpacity: 0.12
+    readonly property real disabledOpacity: 0.5
+    // A muted level: the fill of a muted slider or OSD.
+    readonly property real mutedOpacity: 0.4
+    readonly property int scrollHintWidth: 4
+    readonly property real scrollHintOpacity: 0.25
+    // Text pills and buttons; a text-only button pads its label by these.
+    readonly property int pillHeight: 24
+    readonly property int pillPadding: 10
+    readonly property int textButtonPadding: 8
+    readonly property int textButtonPaddingVertical: 4
+    // A one-line text field with a button after it, and the field's text inset.
+    readonly property int fieldHeight: 32
+    readonly property int fieldPadding: 12
+    // Lists that scroll: Wi-Fi, Bluetooth and the notifications.
+    readonly property int listMaxHeight: 240
+    // A small glyph and a name over a group of rows.
+    readonly property int sectionHeaderSpacing: 6
+
     // Left island: dots in 3 px padded slots; the active one is wider and filled.
     readonly property int workspaceDot: 8
     readonly property int workspaceActiveDot: 22
     readonly property int workspaceDotPadding: 3
     readonly property int workspaceSeparatorSize: 12
+    readonly property real workspaceOccupiedOpacity: 0.75
+    readonly property real workspaceEmptyOpacity: 0.45
+    // An app icon of the active workspace that is not its active window.
+    readonly property real inactiveAppOpacity: 0.5
     // Under the focused app icon, this far below it.
     readonly property int focusDot: 4
     readonly property int focusDotGap: 2
@@ -64,7 +104,7 @@ Singleton {
     readonly property int indicatorPill: 24
     readonly property int indicatorGap: 2
     readonly property int indicatorCountGap: 4
-    readonly property int indicatorCountFontSize: 12
+    readonly property int indicatorCountFontSize: fontSizeDetail
     // Keeps an end pill's 12 px corner concentric with the island's 15 px corner.
     readonly property int rightEndInset: 3
 
@@ -87,6 +127,12 @@ Singleton {
     readonly property int tileGap: 12
     readonly property int tileRadius: 16
     readonly property int toggleIconSize: 18
+    // A wide tile: its icon disc and text this far from the edges, on the
+    // accent a lighter disc and a dimmed state line.
+    readonly property int tileContentInset: 12
+    readonly property int tileTextGap: 10
+    readonly property real tileDiscOnAccentOpacity: 0.14
+    readonly property real tileStateOnAccentOpacity: 0.72
 
     readonly property int settingsColumns: 4
     readonly property int settingsTileHeight: 64
@@ -97,7 +143,7 @@ Singleton {
     readonly property int sliderCount: 3
     readonly property int sliderIconZone: 32
     readonly property int sliderValueZone: 44
-    readonly property int sliderValueFontSize: 12
+    readonly property int sliderValueFontSize: fontSizeDetail
     // Movement below this is a click, not a drag.
     readonly property int sliderDragThreshold: 4
     // One arrow key press or one wheel notch.
@@ -110,10 +156,20 @@ Singleton {
     readonly property int notificationRowHeight: 62
     readonly property int notificationRowGap: 6
     readonly property int notificationRowRadius: 14
-    readonly property int notificationListMaxHeight: 240
+    readonly property int notificationListMaxHeight: listMaxHeight
     // A list row expanded in place: the body in at most four lines, the image
     // right of the text, the action pills and the reply field under it.
     readonly property int notificationRowPadding: 8
+    // The app badge left of the text, the dismiss button at the right end.
+    readonly property int notificationBadge: 26
+    readonly property int notificationBadgeRadius: 8
+    readonly property int notificationBadgeInset: 10
+    readonly property int notificationTextGap: 10
+    readonly property int notificationColumnGap: 6
+    readonly property int notificationDismissSize: 22
+    readonly property int notificationAppLineHeight: 14
+    readonly property int notificationSummaryLineHeight: 17
+    readonly property int notificationBodyFontSize: fontSizeDetail
     readonly property int notificationBodyLineHeight: 15
     readonly property int notificationBodyMaxLines: 4
     readonly property int notificationImageMaxSize: 64
@@ -132,7 +188,6 @@ Singleton {
     readonly property int notificationPeekRowGap: 12
     readonly property real notificationPeekHairlineOpacity: 0.12
     readonly property int notificationPeekDisc: 26
-    readonly property real notificationPeekDiscOpacity: 0.07
     readonly property int notificationPeekTextGap: 10
     readonly property int notificationPeekSummaryLineHeight: 16
     readonly property int notificationPeekBodyLineHeight: 14
@@ -148,7 +203,7 @@ Singleton {
     readonly property int notificationPeekActions: 3
     readonly property int notificationPeekActionHeight: 32
     readonly property int notificationPeekActionGap: 24
-    readonly property int notificationPeekActionFontSize: 12
+    readonly property int notificationPeekActionFontSize: fontSizeDetail
     readonly property int notificationPeekActionRise: 10
     // Rows that broke out of the stack, under the island and right-aligned
     // with it; past the maximum a "+N" blob on the far left.
@@ -157,9 +212,9 @@ Singleton {
     readonly property int notificationBlobMax: 6
     readonly property int notificationBlobCountWeight: Font.DemiBold
     // Action pills in the Settings list.
-    readonly property int notificationActionHeight: 24
-    readonly property int notificationActionFontSize: 11
-    readonly property int notificationActionPadding: 10
+    readonly property int notificationActionHeight: pillHeight
+    readonly property int notificationActionFontSize: fontSizeSmall
+    readonly property int notificationActionPadding: pillPadding
     readonly property int notificationActionGap: 4
     readonly property int notificationActionMaxWidth: 140
     // The Wi-Fi and Bluetooth tiles: a chevron zone on the right opens their panel.
@@ -172,11 +227,13 @@ Singleton {
     readonly property int homeTimeColumnWidth: 150
     readonly property int homeTilePadding: 12
     readonly property int homeSectionGap: 10
-    readonly property int homeTimeFontSize: 44
-    readonly property int homeLargeFontSize: 22
-    readonly property int homeDetailFontSize: 12
+    readonly property int homeTimeFontSize: fontSizeDisplay
+    readonly property int homeLargeFontSize: fontSizeLarge
+    readonly property int homeDetailFontSize: fontSizeDetail
     readonly property int segmentedHeight: 28
     readonly property int segmentedInset: 3
+    // A segment's label keeps this far from the segment's ends.
+    readonly property int segmentedLabelInset: 4
     readonly property int weatherNowHeight: 40
     readonly property int weatherNowIconSize: 28
     readonly property int weatherTabsWidth: 150
@@ -184,7 +241,11 @@ Singleton {
     readonly property int weatherCardWidth: 64
     readonly property int weatherCardHeight: 72
     readonly property int weatherCardRadius: 12
+    // Label, icon and temperatures of a card; high and low.
+    readonly property int weatherCardGap: 4
+    readonly property int weatherTemperatureGap: 3
     readonly property int meterWidth: 6
+    readonly property int meterGap: 6
     // The temperature bar runs from empty at 30 °C to full at 95 °C.
     readonly property int tempScaleMin: 30
     readonly property int tempScaleMax: 95
@@ -204,6 +265,7 @@ Singleton {
     readonly property int switchWidth: 36
     readonly property int switchHeight: 20
     readonly property int switchKnob: 14
+    readonly property int switchHitExtension: 6
     readonly property int controlLabelGap: 12
     readonly property int listRowHeight: 44
     readonly property int listRowGap: 4
@@ -211,8 +273,11 @@ Singleton {
     readonly property int listRowPadding: 12
     // An expanded row adds a line of controls; an error adds a line of text.
     readonly property int listRowExpansion: 42
-    readonly property int listRowFieldHeight: 32
     readonly property int listRowErrorHeight: 16
+    // The expansion and the error line sit this much higher than their slots.
+    readonly property int listRowExpansionLift: 2
+    readonly property int listRowErrorLift: 4
+    readonly property int listRowButtonWidth: 88
     // While the panel is open; Bluetooth discovery stops after this at the latest.
     readonly property int bluetoothDiscoveryTime: 30000
 
@@ -237,6 +302,7 @@ Singleton {
 
     // Updates: count line, fragile rows, a scrolling list and three buttons.
     readonly property int updatesHeadHeight: 20
+    readonly property int updatesHeadInset: 4
     readonly property int updatesSectionGap: 8
     readonly property int updatesRowHeight: 32
     readonly property int updatesRowGap: 2
@@ -275,6 +341,11 @@ Singleton {
     // The music bar opens by itself for a moment when the playing track changes.
     readonly property bool nowPlayingPeek: true
     readonly property real musicBarRimWidth: 2.5
+    // A rim light follows the audio level from rest to full: brighter and more opaque.
+    readonly property real rimBrightnessRest: 0.85
+    readonly property real rimBrightnessGain: 0.5
+    readonly property real rimOpacityRest: 0.6
+    readonly property real rimOpacityGain: 0.4
     // How far the bar rim's lighter and warmer stops are pushed toward white.
     readonly property real musicBarRimLift: 0.25
     // The bar rim's outer glow: 2 px rings this far outside the edge, at this alpha.
@@ -284,7 +355,7 @@ Singleton {
     readonly property real playerRimWidth: 1.5
     readonly property int musicBarPaddingRight: 6
     readonly property int musicControlSize: 22
-    readonly property int musicTitleFontSize: 12
+    readonly property int musicTitleFontSize: fontSizeDetail
     readonly property int musicArtistGap: 6
     // Space after the run before the marquee turns back.
     readonly property int marqueeTail: 12
@@ -297,7 +368,9 @@ Singleton {
     // Hover over the cover: a dimming surface and an "open" glyph.
     readonly property real playerCoverOverlayOpacity: 0.45
     readonly property int playerCoverIconSize: 24
-    readonly property int playerTitleFontSize: 15
+    // The note drawn while the cover loads or is missing.
+    readonly property int playerCoverPlaceholderSize: 32
+    readonly property int playerTitleFontSize: fontSizeTitle
     readonly property int playerTextGap: 2
     readonly property int playerProgressGap: 14
     readonly property int playerTrackHeight: 4
@@ -311,7 +384,7 @@ Singleton {
     readonly property int playerControlIconSize: 20
     readonly property int playerPlayIconSize: 18
     readonly property int outputsGap: 12
-    readonly property int outputChipHeight: 24
+    readonly property int outputChipHeight: pillHeight
     readonly property int outputChipGap: 6
     readonly property int outputChipPadding: 10
     readonly property int outputChipMaxWidth: 150
@@ -348,13 +421,18 @@ Singleton {
     readonly property int powerPanelPadding: 10
     readonly property int powerButtonIconSize: 22
     readonly property int powerButtonLabelGap: 7
+    // A pressed button gives a little under the pointer.
+    readonly property real pressedScale: 0.97
     readonly property int powerPanelHeight: powerButtonSize + 2 * powerPanelPadding
 
     // Theme and Wallpaper: a strip of cards that scrolls sideways.
     readonly property int carouselGap: 8
     readonly property int carouselPadding: 3
     readonly property int themeModeWidth: 264
+    readonly property int themeModeFontSize: fontSizeDetail
     readonly property int schemeCardWidth: 148
+    // Only the visible cards and a few on either side exist.
+    readonly property int carouselCacheBuffer: 2 * schemeCardWidth
     readonly property int schemeCardPadding: 12
     readonly property int schemeCardRadius: 14
     readonly property int schemeDotSize: 16
@@ -382,6 +460,8 @@ Singleton {
     readonly property int thumbLabelHeight: 14
     // Room for the selection ring outside the thumbnail.
     readonly property int thumbRing: 4
+    // The ring's outer edge from the picture; its stroke leaves a gap inside.
+    readonly property int thumbRingOffset: 4
     readonly property int thumbMarker: 8
     readonly property int wallpaperPanelHeight: 2 * panelPadding + 2 * thumbRing + thumbHeight + thumbLabelGap + thumbLabelHeight
     // One wheel notch moves the strip this far.

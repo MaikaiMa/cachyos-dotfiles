@@ -43,41 +43,29 @@ Rectangle {
             condition: Weather.ready ? Weather.iconName : ""
         }
 
-        Text {
+        Label {
             objectName: "weatherTemperature"
             anchors.verticalCenter: parent.verticalCenter
             text: Weather.ready ? tile.degrees(Weather.temperature) : "–"
-            color: Colors.foreground
-            font.family: Theme.fontFamily
+            strong: true
+            numeric: true
             font.pixelSize: Theme.homeLargeFontSize
-            font.weight: Font.DemiBold
-            font.features: ({
-                    tnum: 1
-                })
         }
 
         Column {
             anchors.verticalCenter: parent.verticalCenter
 
-            Text {
+            Label {
                 objectName: "weatherCondition"
                 text: Weather.ready ? Weather.conditionText : ""
-                color: Colors.foreground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                font.weight: Font.DemiBold
+                strong: true
             }
 
-            Text {
+            Label {
                 objectName: "weatherFeelsLike"
                 text: Weather.ready ? "Feels like " + tile.degrees(Weather.apparent) : ""
-                color: Colors.foregroundVariant
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.secondaryFontSize
-                font.weight: Theme.fontWeight
-                font.features: ({
-                        tnum: 1
-                    })
+                secondary: true
+                numeric: true
             }
         }
     }
@@ -149,16 +137,12 @@ Rectangle {
         property bool shown: false
 
         height: Theme.weatherCardHeight
-        // Five fixed cards spread over the row.
         spacing: (width - Theme.weatherCardCount * Theme.weatherCardWidth) / (Theme.weatherCardCount - 1)
         opacity: shown ? 1 : 0
         visible: opacity > 0
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
     }
 
@@ -180,19 +164,14 @@ Rectangle {
 
         Column {
             anchors.centerIn: parent
-            spacing: 4
+            spacing: Theme.weatherCardGap
 
-            Text {
+            Label {
                 objectName: "cardLabel"
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: card.label
-                color: Colors.foregroundVariant
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.secondaryFontSize
-                font.weight: Theme.fontWeight
-                font.features: ({
-                        tnum: 1
-                    })
+                secondary: true
+                numeric: true
             }
 
             WeatherIcon {
@@ -203,31 +182,24 @@ Rectangle {
 
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 3
+                spacing: Theme.weatherTemperatureGap
 
-                Text {
+                Label {
                     objectName: "cardHigh"
                     text: card.high
-                    color: Colors.foreground
-                    font.family: Theme.fontFamily
+                    strong: true
+                    numeric: true
                     font.pixelSize: Theme.homeDetailFontSize
-                    font.weight: Font.DemiBold
-                    font.features: ({
-                            tnum: 1
-                        })
                 }
 
-                Text {
+                Label {
                     objectName: "cardLow"
                     visible: card.low !== ""
                     text: card.low
                     color: Colors.foregroundVariant
-                    font.family: Theme.fontFamily
+                    strong: true
+                    numeric: true
                     font.pixelSize: Theme.homeDetailFontSize
-                    font.weight: Font.DemiBold
-                    font.features: ({
-                            tnum: 1
-                        })
                 }
             }
         }

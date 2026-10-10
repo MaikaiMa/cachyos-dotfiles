@@ -23,13 +23,16 @@ islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, ba
 panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel, PlayerPanel,
                  PowerPanel, ThemePanel, WallpaperPanel, WifiPanel, BluetoothPanel,
                  SoundPanel, DisplayPanel
-components/      Island surface and its animation, Hairline, Clock, Icon (Material Symbols),
-                 WeatherIcon, BatteryIcon, SegmentedControl; Tile, CapsuleSlider and
-                 NotificationRow and NotificationActionPill for the Settings list;
-                 NotificationPeekRow for the stack; PanelControlRow, RowList and
-                 NetworkRow for Wi-Fi, Bluetooth and Sound; TimeTile, WeatherTile, PerformanceTile and
-                 PowerTile for Home; Orb, RimLight and TopWave for music; Carousel for
-                 Theme and Wallpaper; Osd; PrivacyDots
+components/      primitives every widget is built from: Island and MorphAnimation, Crossfade,
+                 ColorCrossfade, Appear, Label, FocusRing, Pressable, IconButton,
+                 PillButton, InlineField, KeyedListModel, ScrollHint, SectionHeader,
+                 AppIconDisc, FillTrack, ChevronZone, RoundedImage, Hairline, Clock,
+                 Icon (Material Symbols), WeatherIcon, BatteryIcon, SegmentedControl;
+                 then feature pieces: Tile, CapsuleSlider and NotificationRow for the
+                 Settings list; NotificationPeekRow for the stack; PanelControlRow,
+                 RowList and NetworkRow for Wi-Fi, Bluetooth and Sound; TimeTile,
+                 WeatherTile, PerformanceTile and PowerTile for Home; Orb, RimLight and
+                 TopWave for music; Carousel for Theme and Wallpaper; Osd; PrivacyDots
 ```
 
 Every directory with types has its own `qmldir` that lists all of them.

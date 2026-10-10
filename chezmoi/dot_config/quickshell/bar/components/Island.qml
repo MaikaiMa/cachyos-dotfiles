@@ -101,11 +101,11 @@ Rectangle {
     color: Qt.alpha(Colors.surfaceContainer, backgroundOpacity)
     clip: true
 
-    IslandAnimation {
+    MorphAnimation {
         id: morph
 
-        duration: island.morphDuration >= 0 ? island.morphDuration : shrinking ? Motion.shrinkDuration : Motion.growDuration
-        easing.bezierCurve: island.morphCurve.length > 0 ? island.morphCurve : shrinking ? Motion.shrinkCurve : Motion.growCurve
+        durationOverride: island.morphDuration
+        curveOverride: island.morphCurve
         target: island
         property: "progress"
         from: 0

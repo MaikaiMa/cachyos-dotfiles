@@ -44,6 +44,6 @@ Item {
         anchors.fill: parent
         visible: !icon.glyphShown
         radius: icon.size / 4
-        color: Qt.alpha(Colors.foregroundVariant, 0.4)
+        color: Qt.alpha(Colors.foregroundVariant, Theme.mutedOpacity)
     }
 }

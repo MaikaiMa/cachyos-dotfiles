@@ -46,19 +46,11 @@ Item {
         if (actions.length > 0)
             height += actionFlow.implicitHeight + Theme.notificationRowPadding;
         if (replyShown)
-            height += Theme.listRowFieldHeight + Theme.notificationRowPadding;
+            height += Theme.fieldHeight + Theme.notificationRowPadding;
         return Math.max(Theme.notificationRowHeight, Math.ceil(height));
     }
     // What the row settles at, for the panel's height while this one is open.
     readonly property real expansionExtra: expanded && !leaving ? expandedHeight - Theme.notificationRowHeight : 0
-
-    function submitReply() {
-        if (replyField.text === "")
-            return;
-        const text = replyField.text;
-        replyField.text = "";
-        row.replySent(text);
-    }
 
     implicitHeight: leaving ? 0 : expanded ? expandedHeight : Theme.notificationRowHeight
     height: implicitHeight
@@ -67,18 +59,15 @@ Item {
 
     // Leaving keeps its quick collapse; expanding uses the island's grow and shrink.
     Behavior on implicitHeight {
-        NumberAnimation {
-            duration: row.leaving ? Motion.crossfadeDuration : row.expanded ? Motion.growDuration : Motion.shrinkDuration
+        MorphAnimation {
+            shrinking: !row.expanded
+            durationOverride: row.leaving ? Motion.crossfadeDuration : -1
             easing.type: row.leaving ? Motion.crossfadeEasing : Easing.BezierSpline
-            easing.bezierCurve: row.expanded ? Motion.growCurve : Motion.shrinkCurve
         }
     }
 
     Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
+        Crossfade {}
     }
 
     onHeightChanged: {
@@ -87,7 +76,7 @@ Item {
     }
     onExpandedChanged: {
         if (!expanded)
-            replyField.text = "";
+            reply.clear();
     }
 
     Rectangle {
@@ -103,74 +92,54 @@ Item {
             onClicked: row.toggled()
         }
 
-        Rectangle {
+        AppIconDisc {
             id: badge
 
-            x: 10
+            x: Theme.notificationBadgeInset
             y: (Theme.notificationRowHeight - height) / 2
-            width: 26
-            height: 26
-            radius: 8
-            color: Qt.alpha(Colors.foreground, 0.07)
-
-            Image {
-                id: appImage
-
-                anchors.centerIn: parent
-                width: Theme.iconSize
-                height: Theme.iconSize
-                sourceSize.width: Theme.iconSize * 2
-                sourceSize.height: Theme.iconSize * 2
-                source: row.iconSource
-                fillMode: Image.PreserveAspectFit
-                asynchronous: true
-                visible: status === Image.Ready
-            }
-
-            Icon {
-                anchors.centerIn: parent
-                visible: !appImage.visible
-                name: "notifications"
-                color: Colors.foregroundVariant
-            }
+            size: Theme.notificationBadge
+            radius: Theme.notificationBadgeRadius
+            source: row.iconSource
         }
 
         Column {
             id: textColumn
 
             anchors.left: badge.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.notificationTextGap
             anchors.right: row.imageShown ? imageBox.left : dismiss.left
-            anchors.rightMargin: 6
+            anchors.rightMargin: Theme.notificationColumnGap
             y: Theme.notificationRowPadding
 
-            RowText {
+            Label {
                 id: appLine
 
+                width: parent.width
+                maximumLineCount: 1
                 text: row.appName
-                color: Colors.foregroundVariant
-                font.pixelSize: Theme.secondaryFontSize
+                secondary: true
                 font.weight: Font.Normal
-                lineHeight: 14
+                lineHeightPx: Theme.notificationAppLineHeight
             }
 
-            RowText {
+            Label {
                 id: summaryLine
 
+                width: parent.width
+                maximumLineCount: 1
                 text: Notifications.oneLine(row.summary)
-                color: Colors.foreground
-                font.pixelSize: Theme.fontSize
-                lineHeight: 17
+                lineHeightPx: Theme.notificationSummaryLineHeight
             }
 
-            RowText {
+            Label {
                 id: bodyLine
 
+                width: parent.width
                 text: row.expanded ? Notifications.plainText(row.body).trim() : Notifications.oneLine(row.body)
                 color: Colors.foregroundVariant
-                font.pixelSize: 12
+                font.pixelSize: Theme.notificationBodyFontSize
                 font.weight: Font.Normal
-                lineHeight: Theme.notificationBodyLineHeight
+                lineHeightPx: Theme.notificationBodyLineHeight
                 wrapMode: row.expanded ? Text.Wrap : Text.NoWrap
                 maximumLineCount: row.expanded ? Theme.notificationBodyMaxLines : 1
             }
@@ -180,7 +149,7 @@ Item {
             id: imageBox
 
             anchors.right: dismiss.left
-            anchors.rightMargin: 6
+            anchors.rightMargin: Theme.notificationColumnGap
             y: Theme.notificationRowPadding
             width: Theme.notificationImageMaxSize
             height: Theme.notificationImageMaxSize
@@ -200,62 +169,19 @@ Item {
             }
         }
 
-        Rectangle {
+        IconButton {
             id: dismiss
 
             anchors.right: parent.right
-            anchors.rightMargin: 6
+            anchors.rightMargin: Theme.notificationColumnGap
             y: (Theme.notificationRowHeight - height) / 2
-            width: 22
-            height: 22
-            radius: 11
-            color: dismissPointer.containsMouse ? Qt.alpha(Colors.foreground, 0.07) : "transparent"
-            activeFocusOnTab: !row.leaving
-
-            Keys.onPressed: event => {
-                if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                    event.accepted = true;
-                    row.dismissClicked();
-                }
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: -3
-                radius: height / 2
-                color: "transparent"
-                border.width: 2
-                border.color: Colors.primary
-                visible: dismiss.activeFocus
-            }
-
-            Icon {
-                anchors.centerIn: parent
-                name: "close"
-                size: 14
-                color: dismissPointer.containsMouse ? Colors.foreground : Colors.foregroundVariant
-            }
-
-            MouseArea {
-                id: dismissPointer
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                enabled: !row.leaving
-                onClicked: row.dismissClicked()
-            }
-
-            Accessible.role: Accessible.Button
-            Accessible.name: "Dismiss"
-            Accessible.onPressAction: row.dismissClicked()
+            size: Theme.notificationDismissSize
+            iconName: "close"
+            iconSize: Theme.smallIconSize
+            iconColor: dismiss.hovered ? Colors.foreground : Colors.foregroundVariant
+            enabled: !row.leaving
+            accessibleName: "Dismiss"
+            onActivated: row.dismissClicked()
         }
 
         Flow {
@@ -270,101 +196,36 @@ Item {
             Repeater {
                 model: row.actions
 
-                NotificationActionPill {
+                PillButton {
                     required property var modelData
 
-                    label: modelData.text
-                    primary: modelData.primary
+                    text: modelData.text
+                    tone: modelData.primary ? "accent" : "neutral"
+                    fontSize: Theme.notificationActionFontSize
+                    horizontalPadding: Theme.notificationActionPadding
+                    maxWidth: Theme.notificationActionMaxWidth
                     baseColor: Colors.surfaceContainer
                     onActivated: row.actionInvoked(modelData.identifier)
                 }
             }
         }
 
-        Item {
+        InlineField {
             id: reply
 
             x: textColumn.x
             y: actionFlow.y + (row.actions.length > 0 ? actionFlow.implicitHeight + Theme.notificationRowPadding : 0)
             width: parent.width - x - Theme.notificationRowPadding
-            height: Theme.listRowFieldHeight
+            height: Theme.fieldHeight
             visible: row.replyShown
-
-            Rectangle {
-                width: parent.width - sendButton.width - Theme.gap
-                height: parent.height
-                radius: height / 2
-                color: Colors.surfaceContainer
-                border.width: replyField.activeFocus ? 2 : 0
-                border.color: Colors.primary
-
-                TextInput {
-                    id: replyField
-
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    verticalAlignment: TextInput.AlignVCenter
-                    clip: true
-                    activeFocusOnTab: row.replyShown
-                    color: Colors.foreground
-                    selectionColor: Colors.primary
-                    selectedTextColor: Colors.primaryForeground
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
-
-                    // Handled here: TextInput passes Return on.
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            event.accepted = true;
-                            row.submitReply();
-                        }
-                    }
-
-                    Accessible.name: "Reply to " + row.appName
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: replyField.text === ""
-                        text: row.notification && row.notification.inlineReplyPlaceholder ? row.notification.inlineReplyPlaceholder : "Reply"
-                        color: Colors.foregroundVariant
-                        font: replyField.font
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.IBeamCursor
-                    onPressed: mouse => {
-                        replyField.forceActiveFocus();
-                        mouse.accepted = false;
-                    }
-                }
-            }
-
-            NotificationActionPill {
-                id: sendButton
-
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.notificationReplyWidth
-                height: parent.height
-                label: "Send"
-                primary: true
-                baseColor: Colors.surfaceContainer
-                onActivated: row.submitReply()
-            }
+            focusable: row.replyShown
+            placeholder: row.notification && row.notification.inlineReplyPlaceholder ? row.notification.inlineReplyPlaceholder : "Reply"
+            accessibleName: "Reply to " + row.appName
+            buttonText: "Send"
+            buttonWidth: Theme.notificationReplyWidth
+            button.tone: "accent"
+            button.fontSize: Theme.notificationActionFontSize
+            onSubmitted: text => row.replySent(text)
         }
-    }
-
-    // A fixed line height, so every collapsed row has the same height.
-    component RowText: Text {
-        width: parent.width
-        maximumLineCount: 1
-        elide: Text.ElideRight
-        textFormat: Text.PlainText
-        lineHeightMode: Text.FixedHeight
-        font.family: Theme.fontFamily
-        font.weight: Theme.fontWeight
     }
 }

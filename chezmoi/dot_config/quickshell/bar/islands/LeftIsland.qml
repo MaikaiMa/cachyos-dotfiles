@@ -91,10 +91,8 @@ Island {
                 height: Theme.islandHeight
 
                 Behavior on width {
-                    NumberAnimation {
-                        duration: Motion.workspaceSlideDuration
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: Motion.growCurve
+                    MorphAnimation {
+                        durationOverride: Motion.workspaceSlideDuration
                     }
                 }
 
@@ -104,13 +102,10 @@ Island {
                     width: parent.width - 2 * Theme.workspaceDotPadding
                     height: Theme.workspaceDot
                     radius: height / 2
-                    color: slot.alerting ? Colors.error : pointer.containsMouse ? Colors.foreground : slot.occupied ? Qt.alpha(Colors.foregroundVariant, 0.75) : Qt.alpha(Colors.outline, 0.45)
+                    color: slot.alerting ? Colors.error : pointer.containsMouse ? Colors.foreground : slot.occupied ? Qt.alpha(Colors.foregroundVariant, Theme.workspaceOccupiedOpacity) : Qt.alpha(Colors.outline, Theme.workspaceEmptyOpacity)
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
+                        ColorCrossfade {}
                     }
                 }
 
@@ -148,10 +143,8 @@ Island {
         color: island.activeWorkspace && island.attention(island.activeWorkspace) ? Colors.error : Colors.primary
 
         Behavior on x {
-            NumberAnimation {
-                duration: Motion.workspaceSlideDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Motion.growCurve
+            MorphAnimation {
+                durationOverride: Motion.workspaceSlideDuration
             }
         }
     }
@@ -222,10 +215,7 @@ Island {
         enabled: shown
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
 
         Row {
@@ -258,7 +248,7 @@ Island {
                     y: (Theme.islandHeight - height) / 2
                     implicitSize: Theme.iconSize
                     source: Niri.iconFor(modelData.appId)
-                    opacity: modelData.id === layer.activeWindowId ? 1 : 0.5
+                    opacity: modelData.id === layer.activeWindowId ? 1 : Theme.inactiveAppOpacity
 
                     MouseArea {
                         anchors.fill: parent
@@ -288,10 +278,9 @@ Island {
 
             Behavior on x {
                 enabled: layer.opacity === 1
-                NumberAnimation {
-                    duration: Motion.workspaceSlideDuration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: Motion.growCurve
+
+                MorphAnimation {
+                    durationOverride: Motion.workspaceSlideDuration
                 }
             }
         }

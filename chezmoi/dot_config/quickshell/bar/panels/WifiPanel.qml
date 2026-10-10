@@ -11,10 +11,8 @@ import "../services"
 // Disconnect and Forget, and a right click on a saved one into Connect and
 // Forget. One row is expanded at a time. The scanner, the errors and the
 // attempts live in `Network`; this panel only holds which row is expanded.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     property string expandedKey: ""
     // What the expanded row shows: "password", "connected" (Disconnect, Forget),
@@ -27,17 +25,6 @@ Item {
 
     implicitWidth: Theme.panelWidths.wifi
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + (Network.wifiEnabled ? Theme.gap + list.implicitHeight : 0)
-
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
 
     // Errors stay until the next attempt; only the expansion resets.
     onShownChanged: {

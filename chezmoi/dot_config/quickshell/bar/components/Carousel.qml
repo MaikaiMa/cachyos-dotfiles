@@ -113,8 +113,7 @@ Item {
         rightMargin: carousel.edgeMargin
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        // Only the visible cards and a few on either side exist.
-        cacheBuffer: 2 * Theme.schemeCardWidth
+        cacheBuffer: Theme.carouselCacheBuffer
         onMovementEnded: carousel.settle()
         onCountChanged: {
             if (carousel.selectedIndex >= 0)
@@ -122,14 +121,11 @@ Item {
         }
     }
 
-    NumberAnimation {
+    MorphAnimation {
         id: glide
 
         target: strip
         property: "contentX"
-        duration: Motion.growDuration
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: Motion.growCurve
     }
 
     // Wheel only: presses go through to the strip and its cards.
@@ -155,7 +151,7 @@ Item {
     Timer {
         id: settleTimer
 
-        interval: 140 + (glide.running ? Motion.growDuration : 0)
+        interval: Motion.scrollSettleDelay + (glide.running ? Motion.growDuration : 0)
         onTriggered: carousel.settle()
     }
 }

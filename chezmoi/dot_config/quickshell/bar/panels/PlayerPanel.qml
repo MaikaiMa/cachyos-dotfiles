@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import Quickshell.Services.Pipewire
 import ".."
 import "../components"
@@ -10,10 +9,8 @@ import "../services"
 // The Player state of the centre island: cover beside title, artist and album,
 // a thin seekable progress track with times, previous / play / next, and the
 // audio outputs as chips when there is more than one.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     // Undefined for a moment while a reload brings Audio up.
     readonly property bool showsOutputs: (Audio.sinks ?? []).length > 1
@@ -33,17 +30,6 @@ Item {
     implicitWidth: Theme.panelWidths.player
     implicitHeight: (showsOutputs ? outputsY + Theme.outputChipHeight : controlsY + Theme.playerPlaySize) + Theme.panelPadding
 
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
-
     // The cover leads to the app that plays: raised, then the panel closes.
     function openSource() {
         if (Music.raise())
@@ -58,7 +44,8 @@ Item {
         return hours > 0 ? hours + ":" + String(minutes).padStart(2, "0") + ":" + rest : minutes + ":" + rest;
     }
 
-    Item {
+    // The overlay is its focus mark.
+    Pressable {
         id: cover
 
         objectName: "cover"
@@ -66,18 +53,8 @@ Item {
         y: Theme.panelPadding
         width: Theme.playerCoverSize
         height: Theme.playerCoverSize
-        activeFocusOnTab: true
-
-        Accessible.role: Accessible.Button
-        Accessible.name: "Open the player"
-        Accessible.onPressAction: panel.openSource()
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true;
-                panel.openSource();
-            }
-        }
+        accessibleName: "Open the player"
+        onActivated: panel.openSource()
 
         Rectangle {
             anchors.fill: parent
@@ -87,42 +64,15 @@ Item {
             Icon {
                 anchors.centerIn: parent
                 name: "music_note"
-                size: 2 * Theme.iconSize
+                size: Theme.playerCoverPlaceholderSize
                 color: Colors.foregroundVariant
             }
         }
 
-        Image {
-            id: art
-
-            anchors.fill: parent
-            source: Music.artUrl
-            sourceSize.width: 2 * Theme.playerCoverSize
-            sourceSize.height: 2 * Theme.playerCoverSize
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            visible: false
-        }
-
-        Rectangle {
-            id: coverMask
-
+        RoundedImage {
             anchors.fill: parent
             radius: Theme.playerCoverRadius
-            visible: false
-            layer.enabled: true
-        }
-
-        MultiEffect {
-            anchors.fill: parent
-            source: art
-            visible: art.status === Image.Ready
-            maskEnabled: true
-            maskSource: coverMask
-            // A soft ramp over the mask's alpha keeps the antialiased corner; the
-            // default thresholds cut it at a single alpha.
-            maskThresholdMin: 0.5
-            maskSpreadAtMin: 1
+            source: Music.artUrl
         }
 
         Rectangle {
@@ -130,14 +80,11 @@ Item {
             anchors.fill: parent
             radius: Theme.playerCoverRadius
             color: Qt.alpha(Colors.surface, Theme.playerCoverOverlayOpacity)
-            opacity: coverPointer.containsMouse || cover.activeFocus ? 1 : 0
+            opacity: cover.hovered || cover.activeFocus ? 1 : 0
             visible: opacity > 0
 
             Behavior on opacity {
-                NumberAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
+                Crossfade {}
             }
 
             Icon {
@@ -147,16 +94,6 @@ Item {
                 color: Colors.foreground
             }
         }
-
-        MouseArea {
-            id: coverPointer
-
-            objectName: "coverPointer"
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: panel.openSource()
-        }
     }
 
     Column {
@@ -165,31 +102,30 @@ Item {
         width: panel.width - x - Theme.panelPadding
         spacing: Theme.playerTextGap
 
-        Text {
+        Label {
             objectName: "playerTitle"
             width: parent.width
             text: Music.title || "Nothing playing"
-            elide: Text.ElideRight
-            color: Colors.foreground
-            font.family: Theme.fontFamily
+            strong: true
             font.pixelSize: Theme.playerTitleFontSize
-            font.weight: Font.DemiBold
         }
 
-        SecondaryText {
+        Label {
             width: parent.width
             text: Music.artist
             visible: text !== ""
+            secondary: true
         }
 
-        SecondaryText {
+        Label {
             width: parent.width
             text: Music.album
             visible: text !== ""
+            secondary: true
         }
     }
 
-    // The visible track is 4 px; the hit area around it is taller.
+    // The hit area is taller than the visible track.
     Item {
         id: progress
 
@@ -260,19 +196,17 @@ Item {
         width: panel.width - 2 * Theme.panelPadding
         height: Theme.playerTimesHeight
 
-        SecondaryText {
+        Label {
             text: panel.formatTime(panel.fraction * Music.length)
-            font.features: ({
-                    tnum: 1
-                })
+            secondary: true
+            numeric: true
         }
 
-        SecondaryText {
+        Label {
             anchors.right: parent.right
             text: Music.length > 0 ? panel.formatTime(Music.length) : "–"
-            font.features: ({
-                    tnum: 1
-                })
+            secondary: true
+            numeric: true
         }
     }
 
@@ -282,28 +216,39 @@ Item {
         height: Theme.playerPlaySize
         spacing: Theme.playerControlSpacing
 
-        ControlButton {
+        IconButton {
             objectName: "playerPrevious"
             anchors.verticalCenter: parent.verticalCenter
+            size: Theme.playerControlSize
+            iconSize: Theme.playerControlIconSize
+            iconFill: 1
+            accent: true
             iconName: "skip_previous"
-            label: "Previous"
+            accessibleName: "Previous"
             onActivated: Music.previous()
         }
 
-        ControlButton {
+        IconButton {
             objectName: "playerToggle"
             anchors.verticalCenter: parent.verticalCenter
-            big: true
+            size: Theme.playerPlaySize
+            iconSize: Theme.playerPlayIconSize
+            iconFill: 1
+            filled: true
             iconName: Music.playing ? "pause" : "play_arrow"
-            label: Music.playing ? "Pause" : "Play"
+            accessibleName: Music.playing ? "Pause" : "Play"
             onActivated: Music.togglePlaying()
         }
 
-        ControlButton {
+        IconButton {
             objectName: "playerNext"
             anchors.verticalCenter: parent.verticalCenter
+            size: Theme.playerControlSize
+            iconSize: Theme.playerControlIconSize
+            iconFill: 1
+            accent: true
             iconName: "skip_next"
-            label: "Next"
+            accessibleName: "Next"
             onActivated: Music.next()
         }
     }
@@ -331,143 +276,24 @@ Item {
             Repeater {
                 model: Audio.sinks
 
-                OutputChip {}
-            }
-        }
-    }
+                PillButton {
+                    id: chip
 
-    component SecondaryText: Text {
-        elide: Text.ElideRight
-        color: Colors.foregroundVariant
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.secondaryFontSize
-        font.weight: Theme.fontWeight
-    }
+                    required property PwNode modelData
 
-    component FocusRing: Rectangle {
-        anchors.fill: parent
-        anchors.margins: -3
-        radius: height / 2
-        color: "transparent"
-        border.width: 2
-        border.color: Colors.primary
-    }
+                    height: Theme.outputChipHeight
+                    text: Audio.sinkLabel(chip.modelData)
+                    checked: chip.modelData === Audio.sink
+                    textColor: chip.checked ? Colors.foreground : Colors.foregroundVariant
+                    fontSize: Theme.secondaryFontSize
+                    horizontalPadding: Theme.outputChipPadding
+                    maxWidth: Theme.outputChipMaxWidth
+                    onActivated: Audio.setDefaultSink(chip.modelData)
 
-    component ControlButton: Item {
-        id: control
-
-        property string iconName: ""
-        property string label: ""
-        property bool big: false
-
-        signal activated
-
-        width: big ? Theme.playerPlaySize : Theme.playerControlSize
-        height: width
-        activeFocusOnTab: true
-
-        Accessible.role: Accessible.Button
-        Accessible.name: label
-        Accessible.onPressAction: control.activated()
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true;
-                control.activated();
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: {
-                if (control.big)
-                    return controlPointer.containsMouse ? Qt.tint(Colors.primary, Qt.alpha(Colors.primaryForeground, 0.10)) : Colors.primary;
-                return controlPointer.containsMouse ? Qt.alpha(Colors.primary, 0.12) : "transparent";
-            }
-
-            FocusRing {
-                visible: control.activeFocus
-            }
-        }
-
-        Icon {
-            anchors.centerIn: parent
-            name: control.iconName
-            size: control.big ? Theme.playerPlayIconSize : Theme.playerControlIconSize
-            fill: 1
-            color: control.big ? Colors.primaryForeground : controlPointer.containsMouse ? Colors.primary : Colors.foreground
-        }
-
-        MouseArea {
-            id: controlPointer
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: control.activated()
-        }
-    }
-
-    component OutputChip: Item {
-        id: chip
-
-        required property PwNode modelData
-        readonly property bool current: modelData === Audio.sink
-
-        width: Math.min(Theme.outputChipMaxWidth, chipText.implicitWidth + 2 * Theme.outputChipPadding)
-        height: Theme.outputChipHeight
-        activeFocusOnTab: true
-
-        Accessible.role: Accessible.RadioButton
-        Accessible.name: chipText.text
-        Accessible.checked: current
-        Accessible.onPressAction: Audio.setDefaultSink(chip.modelData)
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true;
-                Audio.setDefaultSink(chip.modelData);
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: height / 2
-            color: chip.current ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.22)) : chipPointer.containsMouse ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.12)) : Colors.surfaceContainerHigh
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
+                    Accessible.role: Accessible.RadioButton
+                    Accessible.checked: chip.checked
                 }
             }
-
-            FocusRing {
-                visible: chip.activeFocus
-            }
-        }
-
-        Text {
-            id: chipText
-
-            anchors.centerIn: parent
-            width: Math.min(implicitWidth, chip.width - 2 * Theme.outputChipPadding)
-            text: Audio.sinkLabel(chip.modelData)
-            elide: Text.ElideRight
-            color: chip.current ? Colors.foreground : Colors.foregroundVariant
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.secondaryFontSize
-            font.weight: Theme.fontWeight
-        }
-
-        MouseArea {
-            id: chipPointer
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: Audio.setDefaultSink(chip.modelData)
         }
     }
 }

@@ -8,10 +8,8 @@ import "../services"
 // The Power state of the centre island: one row of five square buttons. The
 // first takes the keyboard on open, Left and Right move it, Enter or Space
 // activate; the focused button is drawn in the accent.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     readonly property var buttons: [
         {
@@ -45,17 +43,6 @@ Item {
     implicitWidth: Theme.panelWidths.power
     implicitHeight: Theme.powerPanelHeight
 
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
-
     // After the window has taken the keys back on the state change.
     onShownChanged: {
         if (shown) {
@@ -81,7 +68,7 @@ Item {
 
             model: panel.buttons
 
-            Item {
+            Pressable {
                 id: button
 
                 required property var modelData
@@ -92,49 +79,40 @@ Item {
                 objectName: "power_" + modelData.action
                 width: Theme.powerButtonSize
                 height: Theme.powerButtonSize
-                activeFocusOnTab: true
-
-                Accessible.role: Accessible.Button
-                Accessible.name: modelData.label
-                Accessible.onPressAction: Session.perform(button.modelData.action)
+                accessibleName: modelData.label
 
                 onActiveFocusChanged: {
                     if (activeFocus)
                         panel.focusIndex = index;
                 }
+                onActivated: {
+                    panel.focusIndex = button.index;
+                    Session.perform(button.modelData.action);
+                }
 
-                Keys.onPressed: event => {
-                    if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))
+                Keys.onLeftPressed: event => button.step(event, -1)
+                Keys.onRightPressed: event => button.step(event, 1)
+
+                function step(event: var, direction: int) {
+                    if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier)) {
+                        event.accepted = false;
                         return;
-                    if (event.key === Qt.Key_Left)
-                        panel.focusButton(button.index - 1);
-                    else if (event.key === Qt.Key_Right)
-                        panel.focusButton(button.index + 1);
-                    else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)
-                        Session.perform(button.modelData.action);
-                    else
-                        return;
-                    event.accepted = true;
+                    }
+                    panel.focusButton(button.index + direction);
                 }
 
                 Rectangle {
                     anchors.fill: parent
                     radius: Theme.tileRadius
-                    color: button.current ? Colors.primary : pointer.containsMouse ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.18)) : Colors.surfaceContainerHigh
-                    scale: pointer.pressed ? 0.97 : 1
+                    color: button.current ? Colors.primary : button.hovered ? Colors.hoverSurface : Colors.surfaceContainerHigh
+                    scale: button.pressed ? Theme.pressedScale : 1
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
+                        ColorCrossfade {}
                     }
 
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
+                        Crossfade {}
                     }
 
                     Column {
@@ -148,26 +126,12 @@ Item {
                             color: button.current ? Colors.primaryForeground : Colors.foreground
                         }
 
-                        Text {
+                        Label {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: button.modelData.label
+                            secondary: true
                             color: button.current ? Colors.primaryForeground : Colors.foreground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.secondaryFontSize
-                            font.weight: Theme.fontWeight
                         }
-                    }
-                }
-
-                MouseArea {
-                    id: pointer
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        panel.focusIndex = button.index;
-                        Session.perform(button.modelData.action);
                     }
                 }
             }

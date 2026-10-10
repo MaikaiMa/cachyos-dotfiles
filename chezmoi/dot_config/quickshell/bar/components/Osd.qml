@@ -34,7 +34,7 @@ Item {
     Behavior on opacity {
         NumberAnimation {
             duration: osd.shown ? Motion.osdInDuration : Motion.osdOutDuration
-            easing.type: osd.shown ? Easing.OutCubic : Easing.InCubic
+            easing.type: osd.shown ? Motion.osdInEasing : Motion.osdOutEasing
         }
     }
 
@@ -52,35 +52,22 @@ Item {
         fill: 1
     }
 
-    Rectangle {
-        id: track
-
+    FillTrack {
         objectName: "osdTrack"
         x: icon.x + icon.width + Theme.osdGap
         anchors.verticalCenter: parent.verticalCenter
         width: valueText.x - Theme.osdGap - x
         height: Theme.osdTrackHeight
-        radius: height / 2
-        color: Colors.surfaceContainerHigh
-
-        Rectangle {
-            objectName: "osdFill"
-            width: parent.width * Math.min(100, osd.value) / 100
-            height: parent.height
-            radius: parent.radius
-            color: Colors.primary
-            opacity: osd.muted ? 0.4 : 1
-
-            Behavior on width {
-                NumberAnimation {
-                    duration: Motion.osdInDuration
-                    easing.type: Easing.OutCubic
-                }
-            }
-        }
+        value: osd.value / 100
+        trackColor: Colors.surfaceContainerHigh
+        fillOpacity: osd.muted ? Theme.mutedOpacity : 1
+        duration: Motion.osdInDuration
+        easingType: Motion.osdInEasing
+        // The first value arrives while the OSD fades in, still invisible.
+        glideWhileHidden: true
     }
 
-    Text {
+    Label {
         id: valueText
 
         objectName: "osdValue"
@@ -89,12 +76,7 @@ Item {
         width: Theme.osdValueWidth
         horizontalAlignment: Text.AlignRight
         text: Math.round(osd.value) + "%"
-        color: Colors.foreground
-        font.family: Theme.fontFamily
         font.pixelSize: Theme.secondaryFontSize
-        font.weight: Theme.fontWeight
-        font.features: ({
-                tnum: 1
-            })
+        numeric: true
     }
 }

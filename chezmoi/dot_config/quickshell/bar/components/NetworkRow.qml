@@ -4,10 +4,11 @@ import QtQuick
 import ".."
 
 // A row of the Wi-Fi, Bluetooth and Sound lists: an icon, the name with a
-// detail line or a live level bar, a lock when secured. Expanded, it shows a password field with Connect, or a
-// line of buttons; an error adds a line in `error`. The panel owns which row is
-// expanded and the errors, so it knows the settled height before the row grows.
-Item {
+// detail line or a live level bar, a lock when secured. Expanded, it shows a
+// password field with Connect, or a line of buttons; an error adds a line in
+// `error`. The panel owns which row is expanded and the errors, so it knows
+// the settled height before the row grows.
+Pressable {
     id: row
 
     property string iconName: ""
@@ -32,35 +33,27 @@ Item {
 
     readonly property real targetHeight: Theme.listRowHeight + (expanded ? Theme.listRowExpansion : 0) + (errorText !== "" ? Theme.listRowErrorHeight : 0)
     readonly property real textX: Theme.listRowPadding + Theme.toggleIconSize + Theme.listRowPadding
-    readonly property color baseColor: highlighted ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.16)) : Colors.surfaceContainerHigh
+    readonly property color baseColor: highlighted ? Colors.hoverSurface : Colors.surfaceContainerHigh
 
     implicitHeight: targetHeight
     height: implicitHeight
     clip: true
-    activeFocusOnTab: true
+    pointerHeight: Theme.listRowHeight
+    secondaryEnabled: true
+    accessibleName: title
 
     Behavior on implicitHeight {
         id: heightBehavior
 
-        IslandAnimation {
+        MorphAnimation {
             shrinking: heightBehavior.targetValue < row.implicitHeight
         }
     }
 
-    Accessible.role: Accessible.Button
-    Accessible.name: title
     Accessible.description: detail
-    Accessible.onPressAction: row.clicked()
 
-    Keys.onPressed: event => {
-        if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            event.accepted = true;
-            row.clicked();
-        } else if (event.key === Qt.Key_Menu) {
-            event.accepted = true;
-            row.secondaryClicked();
-        }
-    }
+    onActivated: row.clicked()
+    onSecondaryActivated: row.secondaryClicked()
 
     // The password field takes the keyboard as soon as it shows; collapsing with
     // the keyboard inside hands it back to the row, so Escape still reaches the
@@ -71,14 +64,14 @@ Item {
         if (!expanded) {
             if (focusInside())
                 row.forceActiveFocus();
-            passwordField.text = "";
+            passwordField.clear();
         }
     }
 
     // Later than the expansion itself: the mode may change in the same step.
     function focusField() {
         if (expanded && mode === "password")
-            passwordField.forceActiveFocus();
+            passwordField.takeFocus();
     }
 
     function focusInside(): bool {
@@ -89,51 +82,21 @@ Item {
         return false;
     }
 
-    function submit() {
-        if (passwordField.text === "")
-            return;
-        const password = passwordField.text;
-        passwordField.text = "";
-        row.passwordSubmitted(password);
-    }
-
     Rectangle {
         anchors.fill: parent
         radius: Theme.listRowRadius
-        color: headerPointer.containsMouse ? Qt.tint(row.baseColor, Qt.alpha(Colors.foreground, 0.05)) : row.baseColor
+        // A whole row under the pointer takes a quieter, neutral tint than a button.
+        color: row.hovered ? Qt.tint(row.baseColor, Qt.alpha(Colors.foreground, 0.05)) : row.baseColor
 
         Behavior on color {
-            ColorAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            ColorCrossfade {}
         }
     }
 
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: 1
+    FocusRing {
+        inset: -1
         radius: Theme.listRowRadius - 1
-        color: "transparent"
-        border.width: 2
-        border.color: Colors.primary
         visible: row.activeFocus
-    }
-
-    MouseArea {
-        id: headerPointer
-
-        width: parent.width
-        height: Theme.listRowHeight
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: mouse => {
-            if (mouse.button === Qt.RightButton)
-                row.secondaryClicked();
-            else
-                row.clicked();
-        }
     }
 
     Icon {
@@ -150,28 +113,17 @@ Item {
         y: (Theme.listRowHeight - height) / 2
         width: (lock.visible ? lock.x - Theme.gap : row.width - Theme.listRowPadding) - x
 
-        Text {
+        Label {
             width: parent.width
             text: row.title
-            elide: Text.ElideRight
-            color: Colors.foreground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            font.weight: Theme.fontWeight
         }
 
-        Text {
+        Label {
             width: parent.width
             visible: text !== ""
             text: row.detail
-            elide: Text.ElideRight
-            color: Colors.foregroundVariant
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.secondaryFontSize
-            font.weight: Theme.fontWeight
-            font.features: ({
-                    tnum: 1
-                })
+            secondary: true
+            numeric: true
         }
 
         Item {
@@ -180,25 +132,14 @@ Item {
             width: parent.width
             height: Theme.levelBarGap + Theme.levelBarHeight
 
-            Rectangle {
+            FillTrack {
                 y: Theme.levelBarGap
                 width: parent.width
                 height: Theme.levelBarHeight
-                radius: height / 2
-                color: Qt.alpha(Colors.foreground, 0.1)
-
-                Rectangle {
-                    width: parent.width * Math.max(0, Math.min(1, row.level))
-                    height: parent.height
-                    radius: height / 2
-                    color: Colors.primary
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: Motion.audioAttack
-                        }
-                    }
-                }
+                value: row.level
+                trackColor: Qt.alpha(Colors.foreground, 0.1)
+                duration: Motion.audioAttack
+                easingType: Easing.Linear
             }
         }
     }
@@ -210,7 +151,7 @@ Item {
         x: row.width - Theme.listRowPadding - width
         y: (Theme.listRowHeight - height) / 2
         name: "lock"
-        size: 14
+        size: Theme.smallIconSize
         color: Colors.foregroundVariant
     }
 
@@ -219,89 +160,33 @@ Item {
 
         objectName: "expansion"
         x: row.textX
-        y: Theme.listRowHeight - 2
+        y: Theme.listRowHeight - Theme.listRowExpansionLift
         width: row.width - x - Theme.listRowPadding
-        height: Theme.listRowFieldHeight
+        height: Theme.fieldHeight
         // Visible at once on expanding, so the field can take the keyboard.
         visible: row.expanded || opacity > 0
         opacity: row.expanded ? 1 : 0
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
 
-        Rectangle {
-            id: field
+        InlineField {
+            id: passwordField
 
+            objectName: "passwordField"
             visible: row.mode === "password"
-            width: parent.width - connectButton.width - Theme.gap
+            width: parent.width
             height: parent.height
-            radius: height / 2
-            color: Colors.surfaceContainer
-            border.width: passwordField.activeFocus ? 2 : 0
-            border.color: Colors.primary
-
-            TextInput {
-                id: passwordField
-
-                objectName: "passwordField"
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                verticalAlignment: TextInput.AlignVCenter
-                echoMode: TextInput.Password
-                passwordCharacter: "•"
-                clip: true
-                activeFocusOnTab: row.expanded && row.mode === "password"
-                color: Colors.foreground
-                selectionColor: Colors.primary
-                selectedTextColor: Colors.primaryForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-
-                // Handled here: TextInput passes Return on, and the row would
-                // take it as a click.
-                Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        event.accepted = true;
-                        row.submit();
-                    }
-                }
-
-                Accessible.name: "Password for " + row.title
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: passwordField.text === ""
-                    text: "Password"
-                    color: Colors.foregroundVariant
-                    font: passwordField.font
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.IBeamCursor
-                onPressed: mouse => {
-                    passwordField.forceActiveFocus();
-                    mouse.accepted = false;
-                }
-            }
-        }
-
-        RowButton {
-            id: connectButton
-
-            visible: row.mode === "password"
-            anchors.right: parent.right
-            width: 88
-            label: "Connect"
-            accent: true
+            password: true
+            placeholder: "Password"
+            accessibleName: "Password for " + row.title
+            buttonText: "Connect"
+            buttonWidth: Theme.listRowButtonWidth
             focusable: row.expanded
-            onActivated: row.submit()
+            button.filled: true
+            button.strong: true
+            onSubmitted: text => row.passwordSubmitted(text)
         }
 
         Row {
@@ -313,13 +198,16 @@ Item {
             Repeater {
                 model: row.actions
 
-                RowButton {
+                PillButton {
                     required property var modelData
 
                     width: (expansion.width - (row.actions.length - 1) * Theme.gap) / row.actions.length
-                    label: modelData.label
-                    accent: modelData.accent ?? false
-                    danger: modelData.danger ?? false
+                    height: Theme.fieldHeight
+                    text: modelData.label
+                    filled: modelData.accent ?? false
+                    tone: modelData.danger ? "danger" : "neutral"
+                    strong: true
+                    baseColor: Colors.surfaceContainer
                     focusable: row.expanded
                     onActivated: row.actionTriggered(modelData.key)
                 }
@@ -327,88 +215,16 @@ Item {
         }
     }
 
-    Text {
+    Label {
         objectName: "errorLine"
         x: row.textX
-        y: Theme.listRowHeight + (row.expanded ? Theme.listRowExpansion : 0) - 4
+        y: Theme.listRowHeight + (row.expanded ? Theme.listRowExpansion : 0) - Theme.listRowErrorLift
         width: row.width - x - Theme.listRowPadding
         height: Theme.listRowErrorHeight
         verticalAlignment: Text.AlignTop
         visible: row.errorText !== ""
         text: row.errorText
-        elide: Text.ElideRight
+        secondary: true
         color: Colors.error
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.secondaryFontSize
-        font.weight: Theme.fontWeight
-    }
-
-    component RowButton: Item {
-        id: button
-
-        property string label: ""
-        property bool accent: false
-        property bool danger: false
-        property bool focusable: false
-
-        signal activated
-
-        height: Theme.listRowFieldHeight
-        activeFocusOnTab: focusable
-
-        Accessible.role: Accessible.Button
-        Accessible.name: label
-        Accessible.onPressAction: button.activated()
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true;
-                button.activated();
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: height / 2
-            color: {
-                const base = button.accent ? Colors.primary : Colors.surfaceContainer;
-                return buttonPointer.containsMouse ? Qt.tint(base, Qt.alpha(button.accent ? Colors.primaryForeground : Colors.primary, button.accent ? 0.10 : 0.16)) : base;
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: -3
-                radius: height / 2
-                color: "transparent"
-                border.width: 2
-                border.color: Colors.primary
-                visible: button.activeFocus
-            }
-        }
-
-        Text {
-            anchors.centerIn: parent
-            text: button.label
-            color: button.accent ? Colors.primaryForeground : button.danger ? Colors.error : Colors.foreground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            font.weight: Font.DemiBold
-        }
-
-        MouseArea {
-            id: buttonPointer
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: button.activated()
-        }
     }
 }

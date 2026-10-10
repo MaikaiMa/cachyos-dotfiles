@@ -29,17 +29,17 @@ Item {
 
     implicitHeight: Theme.controlRowHeight
 
-    ControlButton {
+    IconButton {
         id: backButton
 
         objectName: "backButton"
         anchors.verticalCenter: parent.verticalCenter
         iconName: "arrow_back"
-        label: "Back to Settings"
+        accessibleName: "Back to Settings"
         onActivated: Shell.back()
     }
 
-    Item {
+    Pressable {
         id: toggle
 
         objectName: "switch"
@@ -50,22 +50,14 @@ Item {
         height: Theme.switchHeight
         visible: row.hasSwitch
         enabled: row.switchEnabled
-        opacity: enabled ? 1 : 0.5
-        activeFocusOnTab: true
+        opacity: enabled ? 1 : Theme.disabledOpacity
+        accessibleName: row.switchName
+        onActivated: row.toggled()
 
         Accessible.role: Accessible.CheckBox
-        Accessible.name: row.switchName
         Accessible.checkable: true
         Accessible.checked: row.checked
         Accessible.onToggleAction: row.toggled()
-        Accessible.onPressAction: row.toggled()
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true;
-                row.toggled();
-            }
-        }
 
         Rectangle {
             anchors.fill: parent
@@ -73,10 +65,7 @@ Item {
             color: row.checked ? Colors.primary : Colors.surfaceContainerHigh
 
             Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
+                ColorCrossfade {}
             }
 
             Rectangle {
@@ -90,17 +79,11 @@ Item {
                 color: row.checked ? Colors.primaryForeground : Colors.foregroundVariant
 
                 Behavior on x {
-                    NumberAnimation {
-                        duration: Motion.crossfadeDuration
-                        easing.type: Motion.crossfadeEasing
-                    }
+                    Crossfade {}
                 }
 
                 Behavior on color {
-                    ColorAnimation {
-                        duration: Motion.crossfadeDuration
-                        easing.type: Motion.crossfadeEasing
-                    }
+                    ColorCrossfade {}
                 }
             }
 
@@ -109,15 +92,16 @@ Item {
             }
         }
 
+        // A larger target than the switch itself.
         MouseArea {
             anchors.fill: parent
-            anchors.margins: -6
+            anchors.margins: -Theme.switchHitExtension
             cursorShape: Qt.PointingHandCursor
             onClicked: row.toggled()
         }
     }
 
-    Text {
+    Label {
         id: stateLabel
 
         objectName: "stateLabel"
@@ -127,15 +111,11 @@ Item {
         anchors.rightMargin: Theme.gap
         anchors.verticalCenter: parent.verticalCenter
         text: row.stateText
-        elide: Text.ElideRight
         color: Colors.foregroundVariant
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSize
-        font.weight: Theme.fontWeight
     }
 
     // Declared before the settings button: Tab reaches it first.
-    ControlButton {
+    IconButton {
         id: extraButton
 
         objectName: "extraButton"
@@ -144,84 +124,18 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         visible: row.extraIcon !== ""
         iconName: row.extraIcon
-        label: row.extraLabel
+        accessibleName: row.extraLabel
         onActivated: row.extraClicked()
     }
 
-    ControlButton {
+    IconButton {
         id: settingsButton
 
         objectName: "settingsButton"
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         iconName: row.actionIcon
-        label: row.actionLabel
+        accessibleName: row.actionLabel
         onActivated: row.actionTriggered()
-    }
-
-    component FocusRing: Rectangle {
-        anchors.fill: parent
-        anchors.margins: -3
-        radius: height / 2
-        color: "transparent"
-        border.width: 2
-        border.color: Colors.primary
-    }
-
-    component ControlButton: Item {
-        id: button
-
-        property string iconName: ""
-        property string label: ""
-
-        signal activated
-
-        width: Theme.controlButtonSize
-        height: Theme.controlButtonSize
-        activeFocusOnTab: true
-
-        Accessible.role: Accessible.Button
-        Accessible.name: label
-        Accessible.onPressAction: button.activated()
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true;
-                button.activated();
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: pointer.containsMouse ? Qt.alpha(Colors.foreground, 0.07) : "transparent"
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
-            }
-
-            FocusRing {
-                visible: button.activeFocus
-            }
-        }
-
-        Icon {
-            anchors.centerIn: parent
-            name: button.iconName
-            size: Theme.toggleIconSize
-            color: Colors.foreground
-        }
-
-        MouseArea {
-            id: pointer
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: button.activated()
-        }
     }
 }

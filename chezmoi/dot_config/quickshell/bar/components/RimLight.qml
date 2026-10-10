@@ -12,8 +12,12 @@ Shape {
     property real radius: Math.min(width, height) / 2
     property real thickness: Theme.orbRimWidth
     property real angle: 0
+    // The audio level, 0..1: the light brightens with it, and levelOpacity is
+    // the matching opacity for the owner to multiply into its own fade.
+    property real level: 0
+    readonly property real levelOpacity: Theme.rimOpacityRest + Theme.rimOpacityGain * level
     // Multiplies the colours' value: 1 is the plain palette.
-    property real brightness: 1
+    property real brightness: Theme.rimBrightnessRest + Theme.rimBrightnessGain * level
     // Pushes the lighter and warmer stops toward white, 0..1.
     property real lift: 0
 

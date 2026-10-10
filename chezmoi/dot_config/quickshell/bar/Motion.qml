@@ -13,9 +13,13 @@ Singleton {
     readonly property var shrinkEasing: [0.4, 0, 0.2, 1]
     readonly property int crossfadeDuration: reduceMotion ? 0 : 140
     readonly property int crossfadeEasing: Easing.OutCubic
+    // Level meters and the charge capsule glide to a new reading.
+    readonly property int meterDuration: reduceMotion ? 0 : 560
     // Detail labels start fading in this long after the island starts growing.
     readonly property int detailLabelDelay: reduceMotion ? 0 : 60
     readonly property int workspaceSlideDuration: reduceMotion ? 0 : 200
+    // The accent under a segmented control's current segment.
+    readonly property int segmentSlideDuration: reduceMotion ? 0 : 200
     readonly property int indicatorDuration: reduceMotion ? 0 : 180
     // CSS ease-out.
     readonly property var indicatorEasing: [0, 0, 0.58, 1]
@@ -23,6 +27,8 @@ Singleton {
     readonly property int refreshSpinDuration: reduceMotion ? 0 : 600
     readonly property int osdInDuration: reduceMotion ? 0 : 160
     readonly property int osdOutDuration: reduceMotion ? 0 : 240
+    readonly property int osdInEasing: Easing.OutCubic
+    readonly property int osdOutEasing: Easing.InCubic
     // The bar's colours glide to a new palette (theme, scheme or wallpaper change).
     readonly property int paletteDuration: reduceMotion ? 0 : 300
     readonly property int musicContentDelay: reduceMotion ? 0 : 120
@@ -67,6 +73,12 @@ Singleton {
     readonly property int orbHoverDelay: 80
     readonly property int nowPlayingPeekHold: 5000
     readonly property int longPressInterval: 500
+    // A slider shows the value it asked for until the service reports it, at most this long.
+    readonly property int sliderHoldFallback: 1000
+    // A scroll of the user's has come to rest after this long without a wheel event.
+    readonly property int scrollSettleDelay: 140
+    // A timer that waits for an animation to end adds this, so the last frame has landed.
+    readonly property int settleMargin: 20
     // A notification peek row holds by urgency, or for the sender's timeout clamped
     // to these bounds; a critical one holds until it is clicked or dismissed.
     readonly property int notificationHoldNormal: 5000

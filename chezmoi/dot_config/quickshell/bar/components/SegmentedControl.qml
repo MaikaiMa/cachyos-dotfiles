@@ -71,10 +71,8 @@ Item {
             color: Colors.primary
 
             Behavior on x {
-                NumberAnimation {
-                    duration: Motion.workspaceSlideDuration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: Motion.growCurve
+                MorphAnimation {
+                    durationOverride: Motion.segmentSlideDuration
                 }
             }
         }
@@ -95,21 +93,15 @@ Item {
                 width: control.segmentWidth
                 height: track.height - 2 * Theme.segmentedInset
 
-                Text {
+                Label {
                     anchors.centerIn: parent
-                    width: Math.min(implicitWidth, parent.width - 8)
+                    width: Math.min(implicitWidth, parent.width - 2 * Theme.segmentedLabelInset)
                     text: segment.modelData
-                    elide: Text.ElideRight
                     color: segment.current ? Colors.primaryForeground : Colors.foreground
-                    font.family: Theme.fontFamily
                     font.pixelSize: control.fontSize
-                    font.weight: Theme.fontWeight
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
+                        ColorCrossfade {}
                     }
                 }
 
@@ -127,14 +119,7 @@ Item {
             }
         }
 
-        // Keyboard focus only arrives through Tab, so the ring never shows on a click.
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -3
-            radius: height / 2
-            color: "transparent"
-            border.width: 2
-            border.color: Colors.primary
+        FocusRing {
             visible: control.activeFocus
         }
     }

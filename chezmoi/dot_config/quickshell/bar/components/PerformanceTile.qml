@@ -59,51 +59,29 @@ Rectangle {
         property string iconName: ""
         property string description: ""
 
-        spacing: 6
+        spacing: Theme.meterGap
 
         Accessible.role: Accessible.ProgressBar
         Accessible.name: description
         Accessible.description: label
 
-        Text {
+        Label {
             id: value
 
             objectName: "meterLabel"
             anchors.horizontalCenter: parent.horizontalCenter
             text: meter.label
-            color: Colors.foregroundVariant
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.secondaryFontSize
-            font.weight: Theme.fontWeight
-            font.features: ({
-                    tnum: 1
-                })
+            secondary: true
+            numeric: true
         }
 
-        Rectangle {
-            id: track
-
+        FillTrack {
+            objectName: "meterFill"
             anchors.horizontalCenter: parent.horizontalCenter
             width: Theme.meterWidth
             height: meter.height - value.height - Theme.iconSize - 2 * meter.spacing
-            radius: width / 2
-            color: Colors.surfaceContainer
-
-            Rectangle {
-                objectName: "meterFill"
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: parent.height * Math.max(0, Math.min(1, meter.level))
-                radius: width / 2
-                color: Colors.primary
-
-                Behavior on height {
-                    NumberAnimation {
-                        duration: 4 * Motion.crossfadeDuration
-                        easing.type: Motion.crossfadeEasing
-                    }
-                }
-            }
+            vertical: true
+            value: meter.level
         }
 
         Icon {

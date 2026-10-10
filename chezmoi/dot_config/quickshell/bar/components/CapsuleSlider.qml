@@ -61,11 +61,7 @@ Item {
     Behavior on shownValue {
         enabled: !slider.dragging
 
-        NumberAnimation {
-            duration: Motion.growDuration
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: Motion.growCurve
-        }
+        MorphAnimation {}
     }
 
     onValueChanged: {
@@ -95,7 +91,7 @@ Item {
     Timer {
         id: holdTimer
 
-        interval: 1000
+        interval: Motion.sliderHoldFallback
         onTriggered: slider.holding = false
     }
 
@@ -140,49 +136,15 @@ Item {
         radius: height / 2
         color: slider.trackColor
 
-        // Hover tints only the chevron zone, clipped from the whole capsule so its
-        // outer end stays round and its inner edge straight.
-        Item {
+        ChevronZone {
             visible: slider.hasPanel
             x: slider.trackWidth
             width: track.width - x
             height: track.height
-            clip: true
-            opacity: slider.overChevron ? 1 : 0
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
-            }
-
-            Rectangle {
-                x: -parent.x
-                width: track.width
-                height: track.height
-                radius: track.radius
-                color: Qt.tint(slider.trackColor, Qt.alpha(Colors.primary, 0.16))
-            }
-        }
-
-        Rectangle {
-            objectName: "chevronHairline"
-            visible: slider.hasPanel
-            x: slider.trackWidth
-            width: 1
-            height: parent.height
-            color: Qt.alpha(Colors.foregroundVariant, Theme.tileChevronHairlineOpacity)
-        }
-
-        Icon {
-            objectName: "chevron"
-            visible: slider.hasPanel
-            x: slider.trackWidth + (Theme.tileChevronZone - width) / 2
-            anchors.verticalCenter: parent.verticalCenter
-            name: "chevron_right"
-            size: Theme.toggleIconSize
-            color: Colors.foreground
+            shapeWidth: track.width
+            shapeRadius: track.radius
+            tint: Colors.hovered(slider.trackColor, false)
+            lit: slider.overChevron
         }
 
         SliderLayer {
@@ -204,13 +166,10 @@ Item {
                 height: track.height
                 radius: track.radius
                 color: Colors.primary
-                opacity: slider.muted ? 0.4 : 1
+                opacity: slider.muted ? Theme.mutedOpacity : 1
 
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: Motion.crossfadeDuration
-                        easing.type: Motion.crossfadeEasing
-                    }
+                    Crossfade {}
                 }
             }
 
@@ -220,13 +179,7 @@ Item {
             }
         }
 
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -3
-            radius: height / 2
-            color: "transparent"
-            border.width: 2
-            border.color: Colors.primary
+        FocusRing {
             visible: slider.activeFocus
         }
     }
@@ -323,7 +276,6 @@ Item {
         }
     }
 
-    // The icon zone and the value zone, fixed at the capsule's ends.
     component SliderLayer: Item {
         id: layer
 
@@ -340,7 +292,7 @@ Item {
             color: layer.tone
         }
 
-        Text {
+        Label {
             objectName: "valueText"
             x: slider.trackWidth - slider.valueZone
             width: slider.valueZone
@@ -349,12 +301,9 @@ Item {
             verticalAlignment: Text.AlignVCenter
             text: slider.available ? slider.valueText : "–"
             color: layer.tone
-            font.family: Theme.fontFamily
+            elide: Text.ElideNone
+            numeric: true
             font.pixelSize: Theme.sliderValueFontSize
-            font.weight: Theme.fontWeight
-            font.features: ({
-                    tnum: 1
-                })
         }
     }
 }

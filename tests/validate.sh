@@ -114,7 +114,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/PrivacyDots.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
-	chezmoi/dot_config/quickshell/bar/components/IslandAnimation.qml \
+	chezmoi/dot_config/quickshell/bar/components/MorphAnimation.qml \
 	chezmoi/dot_config/quickshell/bar/components/Hairline.qml \
 	chezmoi/dot_config/quickshell/bar/components/Clock.qml \
 	chezmoi/dot_config/quickshell/bar/components/Icon.qml \

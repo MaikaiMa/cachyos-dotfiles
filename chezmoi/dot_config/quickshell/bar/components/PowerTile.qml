@@ -58,77 +58,39 @@ Rectangle {
                 size: Theme.powerIconSize
             }
 
-            Text {
+            Label {
                 objectName: "batteryPercentage"
                 anchors.verticalCenter: parent.verticalCenter
                 text: Battery.available ? Math.round(Battery.percentage) + "%" : "–"
-                color: Colors.foreground
-                font.family: Theme.fontFamily
+                strong: true
+                numeric: true
                 font.pixelSize: Theme.homeLargeFontSize
-                font.weight: Font.DemiBold
-                font.features: ({
-                        tnum: 1
-                    })
             }
 
-            Text {
+            Label {
                 objectName: "batteryState"
                 anchors.verticalCenter: parent.verticalCenter
                 text: tile.stateText
                 color: Colors.foregroundVariant
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                font.weight: Theme.fontWeight
             }
         }
 
-        // The Settings slider language without a handle: the clip is square, the
-        // fill inside it is the whole capsule, so the left end stays round.
-        Rectangle {
-            id: capsule
-
+        // The Settings slider language without a handle.
+        FillTrack {
+            objectName: "chargeFill"
             width: parent.width
             height: Theme.chargeCapsuleHeight
-            radius: height / 2
-            color: Colors.surfaceContainer
+            capsuleClip: true
+            value: Battery.available ? Battery.percentage / 100 : 0
+            fillColor: Battery.isLow ? Colors.error : Colors.primary
+
+            Behavior on fillColor {
+                ColorCrossfade {}
+            }
 
             Accessible.role: Accessible.ProgressBar
             Accessible.name: "Battery charge"
             Accessible.description: Math.round(Battery.percentage) + "%"
-
-            Item {
-                id: chargeFill
-
-                objectName: "chargeFill"
-                width: Battery.available ? capsule.width * Math.max(0, Math.min(100, Battery.percentage)) / 100 : 0
-                height: capsule.height
-                clip: true
-
-                // Not while Home is closed: an animation in the hidden panel still
-                // makes the bar window present frames.
-                Behavior on width {
-                    enabled: chargeFill.visible
-
-                    NumberAnimation {
-                        duration: 4 * Motion.crossfadeDuration
-                        easing.type: Motion.crossfadeEasing
-                    }
-                }
-
-                Rectangle {
-                    width: capsule.width
-                    height: capsule.height
-                    radius: capsule.radius
-                    color: Battery.isLow ? Colors.error : Colors.primary
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
-                    }
-                }
-            }
         }
 
         Item {
@@ -181,33 +143,25 @@ Rectangle {
         Accessible.role: Accessible.StaticText
         Accessible.name: title + " " + value
 
-        Text {
+        Label {
             id: titleText
 
             objectName: "statTitle"
             width: stat.width
             horizontalAlignment: stat.alignment
             text: stat.title
-            color: Colors.foregroundVariant
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.secondaryFontSize
-            font.weight: Theme.fontWeight
+            secondary: true
         }
 
-        Text {
+        Label {
             id: valueText
 
             objectName: "statValue"
             width: stat.width
             horizontalAlignment: stat.alignment
             text: stat.value
-            color: Colors.foreground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            font.weight: Font.DemiBold
-            font.features: ({
-                    tnum: 1
-                })
+            strong: true
+            numeric: true
         }
     }
 }

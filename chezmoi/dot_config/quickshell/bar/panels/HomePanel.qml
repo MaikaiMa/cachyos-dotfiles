@@ -10,10 +10,8 @@ import "../services"
 // icon-only tiles that morph Home into the other panels, so each is reachable
 // by touch. The height is fixed by the Theme tokens, so the island grows to it
 // in one animation.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     readonly property real wideColumnX: Theme.panelPadding + Theme.homeTimeColumnWidth + Theme.tileGap
     readonly property real wideColumnWidth: width - wideColumnX - Theme.panelPadding
@@ -57,17 +55,6 @@ Item {
 
     implicitWidth: Theme.panelWidths.home
     implicitHeight: Theme.homeHeight
-
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
 
     TimeTile {
         objectName: "timeTile"

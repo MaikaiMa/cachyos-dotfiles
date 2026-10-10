@@ -26,10 +26,10 @@ Item {
     readonly property int step: Theme.notificationBlobSize + Theme.notificationBlobGap
     // Blobs that are not sliding into the bell or rising into the island; past
     // the maximum they make "+N".
-    property int settledCount: 0
+    readonly property int settledCount: blobModel.settledCount
     // Slots up to the leftmost settled blob: a blob that rises keeps its slot
     // until it has gone, so the clear-all blob does not land on it.
-    property int occupiedSlots: 0
+    readonly property int occupiedSlots: Math.min(blobModel.settledEnd, Theme.notificationBlobMax)
     readonly property int extra: Math.max(0, settledCount - Theme.notificationBlobMax)
     // Kept while "+N" fades out.
     property int moreCount: 0
@@ -58,59 +58,16 @@ Item {
     // that leaves for a row of its own rises into the island; the others sink
     // into the bell.
     function sync() {
-        const ids = serviceIds;
         const rows = Notifications.peekScreen === screenName ? Notifications.peekIds : [];
-        for (let index = 0; index < blobModel.count; index++) {
-            const entry = blobModel.get(index);
-            if (entry.sinking || entry.rising || ids.includes(entry.blobId))
-                continue;
-            blobModel.setProperty(index, rows.includes(entry.blobId) ? "rising" : "sinking", true);
-        }
-        for (let position = ids.length - 1; position >= 0; position--) {
-            const id = ids[position];
-            let found = false;
-            for (let index = 0; index < blobModel.count; index++) {
-                const entry = blobModel.get(index);
-                if (entry.blobId === id && !entry.sinking && !entry.rising)
-                    found = true;
-            }
-            if (found)
-                continue;
+        blobModel.sync(serviceIds, id => {
             const disc = island.peekDisc(id);
             const origin = disc ? disc.mapToItem(strip, disc.width / 2, disc.height / 2) : Qt.point(0, 0);
-            blobModel.insert(0, {
-                blobId: id,
-                sinking: false,
-                rising: false,
+            return {
                 fromDisc: !!disc,
                 originX: origin.x,
                 originY: origin.y
-            });
-        }
-        countSettled();
-    }
-
-    function countSettled() {
-        let settled = 0;
-        let occupied = 0;
-        for (let index = 0; index < blobModel.count; index++) {
-            const entry = blobModel.get(index);
-            if (entry.sinking || entry.rising)
-                continue;
-            settled++;
-            occupied = index + 1;
-        }
-        settledCount = settled;
-        occupiedSlots = Math.min(occupied, Theme.notificationBlobMax);
-    }
-
-    function removeBlob(id: string) {
-        for (let index = blobModel.count - 1; index >= 0; index--) {
-            const entry = blobModel.get(index);
-            if (entry.blobId === id && (entry.sinking || entry.rising))
-                blobModel.remove(index);
-        }
-        countSettled();
+            };
+        }, id => rows.includes(id) ? "rising" : "sinking");
     }
 
     function openList() {
@@ -127,8 +84,12 @@ Item {
             moreCount = extra;
     }
 
-    ListModel {
+    KeyedListModel {
         id: blobModel
+
+        keyRole: "blobId"
+        leavingRoles: ["sinking", "rising"]
+        newAtTop: true
     }
 
     Repeater {
@@ -150,22 +111,15 @@ Item {
         opacity: interactive ? 1 : 0
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
 
-        Text {
+        Label {
             anchors.centerIn: parent
             text: "+" + strip.moreCount
-            color: Colors.foregroundVariant
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.secondaryFontSize
+            secondary: true
+            numeric: true
             font.weight: Theme.notificationBlobCountWeight
-            font.features: ({
-                    tnum: 1
-                })
         }
 
         Accessible.name: strip.moreCount + " more notifications, open the list"
@@ -187,15 +141,12 @@ Item {
         opacity: interactive ? 1 : 0
 
         Behavior on slot {
-            IslandAnimation {
+            MorphAnimation {
                 shrinking: true
             }
         }
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
 
         Icon {
@@ -204,10 +155,7 @@ Item {
             color: clear.hovered ? Colors.foreground : Colors.foregroundVariant
 
             Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
+                ColorCrossfade {}
             }
         }
 
@@ -228,14 +176,11 @@ Item {
         signal activated
 
         radius: width / 2
-        color: pointer.containsMouse ? Qt.tint(Qt.alpha(Colors.surfaceContainer, Theme.islandOpacity), Qt.alpha(Colors.primary, 0.16)) : Qt.alpha(Colors.surfaceContainer, Theme.islandOpacity)
+        color: pointer.containsMouse ? Colors.hovered(Colors.islandSurface, false) : Colors.islandSurface
         visible: opacity > 0
 
         Behavior on color {
-            ColorAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            ColorCrossfade {}
         }
 
         layer.enabled: true
@@ -307,15 +252,12 @@ Item {
         opacity: presence * shownProgress * (1 - sink) * Math.max(0, 1 - rise * rise)
 
         Behavior on slot {
-            IslandAnimation {
+            MorphAnimation {
                 shrinking: true
             }
         }
         Behavior on shownProgress {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
 
         Component.onCompleted: {
@@ -341,7 +283,7 @@ Item {
         }
         onActivated: Notifications.repeek(blobId)
 
-        IslandAnimation {
+        MorphAnimation {
             id: travelIn
 
             target: blob
@@ -350,55 +292,39 @@ Item {
             shrinking: true
         }
 
-        NumberAnimation {
+        Crossfade {
             id: fadeIn
 
             target: blob
             property: "presence"
             to: 1
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
         }
 
-        IslandAnimation {
+        MorphAnimation {
             id: sinkUp
 
             target: blob
             property: "sink"
             to: 1
             shrinking: true
-            onFinished: strip.removeBlob(blob.blobId)
+            onFinished: blobModel.finish(blob.blobId)
         }
 
         // The row grows in place with the grow timing, so the rise uses it too.
-        IslandAnimation {
+        MorphAnimation {
             id: riseIn
 
             target: blob
             property: "rise"
             to: 1
-            onFinished: strip.removeBlob(blob.blobId)
+            onFinished: blobModel.finish(blob.blobId)
         }
 
-        Image {
-            id: appImage
-
-            anchors.centerIn: parent
-            width: Math.min(Theme.iconSize, parent.width)
-            height: width
-            sourceSize.width: Theme.iconSize * 2
-            sourceSize.height: Theme.iconSize * 2
+        // The blob is the disc: it brings the shape and the shadow.
+        AppIconDisc {
+            size: blob.width
+            color: "transparent"
             source: blob.iconUrl
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-            visible: status === Image.Ready
-        }
-
-        Icon {
-            anchors.centerIn: parent
-            visible: !appImage.visible
-            name: "notifications"
-            color: Colors.foregroundVariant
         }
 
         Accessible.name: blob.summary + ", show again"

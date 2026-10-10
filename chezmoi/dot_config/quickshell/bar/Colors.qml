@@ -45,6 +45,24 @@ Singleton {
     property color error: "#f2b8b5"
     property color shadow: "#000000"
 
+    // Interaction and state colours, derived from the palette with Theme's alphas.
+    readonly property color hoverSurface: hovered(surfaceContainerHigh, false)
+    // Hover on an item without a surface of its own.
+    readonly property color hoverFill: Qt.alpha(primary, Theme.hoverTint)
+    readonly property color selectedSurface: Qt.tint(surfaceContainerHigh, Qt.alpha(primary, Theme.selectedTint))
+    readonly property color subtleFill: Qt.alpha(foreground, Theme.subtleFillOpacity)
+    readonly property color errorSurface: Qt.tint(surfaceContainerHigh, Qt.alpha(error, Theme.errorSurfaceTint))
+    readonly property color errorChip: Qt.alpha(error, Theme.errorChipTint)
+    readonly property color dotOutline: Qt.alpha(foreground, Theme.dotOutlineOpacity)
+    readonly property color scrollHint: Qt.alpha(foreground, Theme.scrollHintOpacity)
+    readonly property color islandSurface: Qt.alpha(surfaceContainer, Theme.islandOpacity)
+
+    // A surface under the pointer: tinted with the accent, or on the accent
+    // itself with the accent's foreground.
+    function hovered(base: color, onAccent: bool): color {
+        return onAccent ? Qt.tint(base, Qt.alpha(primaryForeground, Theme.hoverTintOnAccent)) : Qt.tint(base, Qt.alpha(primary, Theme.hoverTint));
+    }
+
     Behavior on primary {
         PaletteAnimation {}
     }

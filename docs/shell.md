@@ -666,9 +666,25 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     BluetoothPanel.qml                  Bluetooth switch and devices: connect, pair, disconnect, forget
     SoundPanel.qml                      outputs, inputs with the mic level, per-app volume
     DisplayPanel.qml                    night light, brightness, keyboard backlight, rear light
-  components/                           shared pieces
+  components/                           shared primitives, then feature pieces built on them
     Island.qml                          island surface: colour, radius, shadow, size animation
-    IslandAnimation.qml                 grow or shrink animation from the Motion tokens
+    MorphAnimation.qml                  grow or shrink animation from the Motion tokens, with duration and curve overrides
+    Crossfade.qml                       NumberAnimation with the crossfade tokens
+    ColorCrossfade.qml                  ColorAnimation with the crossfade tokens
+    Appear.qml                          container that cross-fades with shown; hidden it is not drawn and takes no input
+    Label.qml                           themed Text: secondary, strong, numeric (tabular figures), lineHeightPx; plain text
+    FocusRing.qml                       keyboard focus ring around its parent
+    Pressable.qml                       click, Space, Return and Enter, right click and Menu, hover, pointing hand, accessible press
+    IconButton.qml                      round icon button on Pressable: plain, accent, filled, or icon only
+    PillButton.qml                      text pill on Pressable: optional icon, filled, tone, checked chip, spinning icon
+    InlineField.qml                     one-line text field with a submit button: Wi-Fi password, notification reply
+    KeyedListModel.qml                  ListModel patched by key with moves, or with leaving rows kept until finish(key)
+    ScrollHint.qml                      thin scroll bar beside a Flickable that is longer than its window
+    SectionHeader.qml                   small glyph and name over a group of rows, with room for a trailing button
+    AppIconDisc.qml                     a notification's app icon on a disc, the bell glyph as fallback
+    FillTrack.qml                       rounded track with a fill: horizontal, vertical or clipped capsule
+    ChevronZone.qml                     panel zone at the right end of a tile or capsule: hover tint, hairline, chevron
+    RoundedImage.qml                    image cropped and rounded through its own or a shared mask
     Hairline.qml                        1 x 14 px separator
     Clock.qml                           SystemClock text in a given format or formatter
     Icon.qml                            Material Symbols glyph by name, placeholder without the font
@@ -683,7 +699,6 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer, optional chevron zone
     NotificationRow.qml                 one notification with dismiss, expands in place, collapses when it leaves
     NotificationPeekRow.qml             one bare row of the notification stack: hold, dismiss glyph, text actions, replace cross-fade
-    NotificationActionPill.qml          one notification action as a 24 px pill in the Settings list
     PanelControlRow.qml                 panels from Settings: back, optional switch with state, DMS settings button
     RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height
     NetworkRow.qml                      Wi-Fi, Bluetooth and Sound row: icon, name, detail or level, expands in place
@@ -1121,11 +1136,30 @@ surface.
 1. Create the file with an upper-case name in the directory it belongs to
    (`islands/`, `panels/`, `components/`, or `services/` for a singleton
    that owns data). Take colours from `Colors`, sizes and fonts from `Theme`
-   and durations from `Motion`; never hard-code a colour.
-2. Add `<Name> 1.0 <Name>.qml` (or `singleton <Name> 1.0 <Name>.qml`) to
+   and durations from `Motion`; never hard-code a colour. Interaction
+   colours are tokens too: `Colors.hovered(base, onAccent)` for a hover,
+   `hoverSurface`, `hoverFill`, `selectedSurface`, `subtleFill`,
+   `errorSurface`, `errorChip`, `dotOutline`, `scrollHint`, and
+   `Theme.disabledOpacity` and `mutedOpacity`. Font sizes come from the type
+   scale (`fontSizeSmall` 11, `fontSizeDetail` 12, `fontSize` 13,
+   `fontSizeTitle` 15, `fontSizeLarge` 22, `fontSizeDisplay` 44) or a domain
+   name for one of its steps.
+2. Build it from the primitives in `components/`, not from raw items:
+   `Label` for text, `Pressable` (or `IconButton`, `PillButton`) for
+   anything that acts on a click, with `FocusRing` where it draws its own
+   shape, `InlineField` for a text field, `Crossfade`, `ColorCrossfade` and
+   `MorphAnimation` in every `Behavior`, `Appear` for a container that
+   fades with a `shown` flag, `KeyedListModel` for a model that a view must
+   keep its delegates in, `ScrollHint`, `SectionHeader`, `FillTrack`,
+   `ChevronZone`, `RoundedImage` and `AppIconDisc` where they fit. Keyboard
+   behaviour then is the same everywhere: Tab reaches every control, Space,
+   Return and Enter activate it, and keys with Alt, Ctrl or Meta go on to
+   the window. When a primitive lacks an option, extend the primitive
+   instead of copying it.
+3. Add `<Name> 1.0 <Name>.qml` (or `singleton <Name> 1.0 <Name>.qml`) to
    that directory's `qmldir`. A hand-written `qmldir` stops Quickshell from
    synthesising one, so a type that is not listed is not found.
-3. Import it by relative directory where it is used.
+4. Import it by relative directory where it is used.
    For an icon use `components/Icon.qml` with a Material Symbols ligature
    name (`name: "battery_5_bar"`, see fonts.google.com/icons). The glyphs
    come from the "Material Symbols Rounded" font of the
@@ -1136,10 +1170,10 @@ surface.
    holes and fringes. Without the font, or with an
    empty name, the icon draws a dim rounded square of the same size and
    `Theme` logs one warning at start.
-4. Run `tests/quickshell-bar.sh`; it fails when a type is missing from its
+5. Run `tests/quickshell-bar.sh`; it fails when a type is missing from its
    `qmldir` and on any qmllint warning other than the known
    `PanelWindow is not creatable` one.
-5. Where the widget opens something the own bar has no panel for yet, call
+6. Where the widget opens something the own bar has no panel for yet, call
    the matching `dms ipc` function, as ADR-0027 describes.
 
 ## Data sources

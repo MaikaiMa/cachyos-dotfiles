@@ -11,10 +11,8 @@ import "../services"
 // the default input shows its live level; each application gets one row whose
 // compact capsule moves all of its streams. Everything lives in `Audio`; the
 // level and the app streams run only while this panel is open.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     readonly property var outputKeys: Audio.sinks.map(node => String(node.id))
     readonly property var inputKeys: Audio.sources.map(node => String(node.id))
@@ -36,30 +34,21 @@ Item {
     implicitWidth: Theme.panelWidths.sound
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + Theme.gap + listHeight
 
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
-
     onShownChanged: {
         if (shown)
             list.contentY = 0;
     }
 
-    onOutputKeysChanged: sync(outputModel, outputKeys)
-    onInputKeysChanged: sync(inputModel, inputKeys)
-    onAppKeysChanged: sync(appModel, appKeys)
+    // Patched by key, not replaced: a row keeps its delegate, so a capsule being
+    // dragged is never rebuilt under the pointer.
+    onOutputKeysChanged: outputModel.sync(outputKeys)
+    onInputKeysChanged: inputModel.sync(inputKeys)
+    onAppKeysChanged: appModel.sync(appKeys)
 
     Component.onCompleted: {
-        sync(outputModel, outputKeys);
-        sync(inputModel, inputKeys);
-        sync(appModel, appKeys);
+        outputModel.sync(outputKeys);
+        inputModel.sync(inputKeys);
+        appModel.sync(appKeys);
     }
 
     function sectionHeight(count: int): real {
@@ -68,28 +57,6 @@ Item {
 
     function nodeFor(nodes: var, key: string): var {
         return nodes.find(node => String(node.id) === key) ?? null;
-    }
-
-    // Patched by key, not replaced: a row keeps its delegate, so a capsule being
-    // dragged is never rebuilt under the pointer.
-    function sync(model: ListModel, keys: var) {
-        for (let index = model.count - 1; index >= 0; index--) {
-            if (!keys.includes(model.get(index).rowKey))
-                model.remove(index);
-        }
-        keys.forEach((key, index) => {
-            if (index < model.count && model.get(index).rowKey === key)
-                return;
-            for (let from = index + 1; from < model.count; from++) {
-                if (model.get(from).rowKey === key) {
-                    model.move(from, index, 1);
-                    return;
-                }
-            }
-            model.insert(index, {
-                rowKey: key
-            });
-        });
     }
 
     // Tab can land on a row below the visible part.
@@ -101,15 +68,15 @@ Item {
             list.contentY = top + item.height - list.height;
     }
 
-    ListModel {
+    KeyedListModel {
         id: outputModel
     }
 
-    ListModel {
+    KeyedListModel {
         id: inputModel
     }
 
-    ListModel {
+    KeyedListModel {
         id: appModel
     }
 
@@ -153,7 +120,7 @@ Item {
                 visible: outputModel.count > 0
                 spacing: Theme.listRowGap
 
-                SectionHeader {
+                SoundSectionHeader {
                     iconName: "speaker"
                     text: "Output"
                 }
@@ -186,7 +153,7 @@ Item {
                 visible: inputModel.count > 0
                 spacing: Theme.listRowGap
 
-                SectionHeader {
+                SoundSectionHeader {
                     iconName: "mic"
                     text: "Input"
                 }
@@ -220,7 +187,7 @@ Item {
                 visible: appModel.count > 0
                 spacing: Theme.listRowGap
 
-                SectionHeader {
+                SoundSectionHeader {
                     iconName: "apps"
                     text: "Apps"
                 }
@@ -269,16 +236,11 @@ Item {
                             color: Colors.foregroundVariant
                         }
 
-                        Text {
+                        Label {
                             x: Theme.listRowPadding + Theme.toggleIconSize + Theme.listRowPadding
                             width: appSlider.x - Theme.gap - x
                             anchors.verticalCenter: parent.verticalCenter
                             text: appRow.group ? appRow.group.name : appRow.rowKey
-                            elide: Text.ElideRight
-                            color: Colors.foreground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize
-                            font.weight: Theme.fontWeight
                         }
 
                         CapsuleSlider {
@@ -291,7 +253,7 @@ Item {
                             implicitHeight: Theme.appSliderHeight
                             iconZone: Theme.appSliderIconZone
                             valueZone: Theme.appSliderValueZone
-                            iconSize: 14
+                            iconSize: Theme.smallIconSize
                             trackColor: Colors.surfaceContainer
                             label: (appRow.group ? appRow.group.name : appRow.rowKey) + " volume"
                             available: appRow.group !== null && appRow.group.nodes.some(node => node.audio !== null)
@@ -311,18 +273,11 @@ Item {
         }
     }
 
-    // A thin scroll hint while the sections are taller than their window.
-    Rectangle {
-        visible: list.contentHeight > list.height
-        x: list.x + list.width - width
-        y: list.y + list.visibleArea.yPosition * list.height
-        width: 4
-        height: list.visibleArea.heightRatio * list.height
-        radius: width / 2
-        color: Qt.alpha(Colors.foreground, 0.25)
+    ScrollHint {
+        view: list
     }
 
-    Text {
+    Label {
         x: list.x
         y: list.y
         width: list.width
@@ -332,41 +287,12 @@ Item {
         verticalAlignment: Text.AlignVCenter
         text: "No audio devices"
         color: Colors.foregroundVariant
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.homeDetailFontSize
-        font.weight: Theme.fontWeight
+        font.pixelSize: Theme.fontSizeDetail
     }
 
-    // The notifications header's language: a small glyph and the section name.
-    component SectionHeader: Item {
-        id: header
-
-        property string iconName: ""
-        property string text: ""
-
+    // The column's row gap follows the header; together they make the header token.
+    component SoundSectionHeader: SectionHeader {
         width: parent ? parent.width : 0
-        // The column's row gap follows it; together they make the header token.
         height: Theme.sectionHeaderHeight - Theme.listRowGap
-
-        Row {
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
-
-            Icon {
-                anchors.verticalCenter: parent.verticalCenter
-                name: header.iconName
-                size: 14
-                color: Colors.foregroundVariant
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: header.text
-                color: Colors.foregroundVariant
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.secondaryFontSize
-                font.weight: Theme.fontWeight
-            }
-        }
     }
 }

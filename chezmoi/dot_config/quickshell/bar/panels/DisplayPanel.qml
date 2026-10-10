@@ -10,10 +10,8 @@ import "../services"
 // a read-only schedule line, brightness, the keyboard backlight (only while
 // the cover is attached) and the rear window light with the theme colour it
 // follows. Values live in `Display`, `Brightness` and `Dms`.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     readonly property bool keyboardShown: Display.keyboardAvailable && !Tablet.detached
     readonly property bool rearShown: Display.rearAvailable
@@ -21,17 +19,6 @@ Item {
 
     implicitWidth: Theme.panelWidths.display
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + Theme.gap + Theme.sliderHeight + Theme.scheduleLineHeight + Theme.sliderGap + Theme.sliderHeight + (keyboardShown ? Theme.sliderGap + Theme.sliderHeight : 0) + (rearShown ? Theme.sliderGap + Theme.sliderHeight : 0)
-
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
 
     // The DMS settings change these behind the bar's back; Brightness reads
     // itself when the panel opens.
@@ -80,18 +67,14 @@ Item {
             onIconClicked: Dms.toggleNightLight()
         }
 
-        Text {
+        Label {
             objectName: "scheduleLine"
             width: parent.width
             height: Theme.scheduleLineHeight
             leftPadding: Theme.sliderIconZone
             verticalAlignment: Text.AlignVCenter
             text: Display.scheduleText
-            elide: Text.ElideRight
-            color: Colors.foregroundVariant
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.secondaryFontSize
-            font.weight: Theme.fontWeight
+            secondary: true
         }
 
         Item {
@@ -161,13 +144,9 @@ Item {
             height: Theme.sliderHeight
             spacing: Theme.gap
 
-            Text {
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: levelRow.title
-                color: Colors.foreground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                font.weight: Theme.fontWeight
             }
 
             Rectangle {
@@ -178,8 +157,8 @@ Item {
                 height: width
                 radius: width / 2
                 color: levelRow.dotColor
-                border.width: 1
-                border.color: Qt.alpha(Colors.foreground, 0.2)
+                border.width: Theme.hairlineWidth
+                border.color: Colors.dotOutline
 
                 Accessible.role: Accessible.StaticText
                 Accessible.name: "Follows the theme colour"

@@ -110,45 +110,14 @@ Island {
         menuWidth = Math.max(Theme.trayMenuWidth, Math.min(Theme.trayMenuMaxWidth, Math.ceil(widest)));
     }
 
-    // Rows that leave stay until their collapse is done (removePeekRow).
+    // Rows that leave stay until their collapse is done (peekModel.finish).
     function syncPeek() {
-        const ids = shownPeekIds;
-        for (let index = 0; index < peekModel.count; index++) {
-            const entry = peekModel.get(index);
-            if (!entry.leaving && !ids.includes(entry.rowId))
-                peekModel.setProperty(index, "leaving", true);
-        }
-        ids.forEach((id, position) => {
-            let found = false;
-            for (let index = 0; index < peekModel.count; index++) {
-                const entry = peekModel.get(index);
-                if (entry.rowId === id && !entry.leaving)
-                    found = true;
-            }
-            if (!found)
-                peekModel.insert(Math.min(position, peekModel.count), {
-                    rowId: id,
-                    leaving: false
-                });
-        });
-        let settled = 0;
-        for (let index = 0; index < peekModel.count; index++) {
-            if (!peekModel.get(index).leaving)
-                settled++;
-        }
+        peekModel.sync(shownPeekIds);
         motion = "peek";
         measurePeek();
         // The last row starts leaving: the island morphs back with it.
-        if (settled === 0)
+        if (peekModel.settledCount === 0)
             peekOpen = false;
-    }
-
-    function removePeekRow(id: string) {
-        for (let index = peekModel.count - 1; index >= 0; index--) {
-            const entry = peekModel.get(index);
-            if (entry.rowId === id && entry.leaving)
-                peekModel.remove(index);
-        }
     }
 
     // The island is as tall as the rows that stay; the last one has no hairline.
@@ -252,8 +221,11 @@ Island {
         onTriggered: island.bellHeld = false
     }
 
-    ListModel {
+    KeyedListModel {
         id: peekModel
+
+        keyRole: "rowId"
+        leavingRoles: ["leaving"]
     }
 
     Timer {
@@ -315,7 +287,7 @@ Island {
                 lastRow: rowId === island.lastPeekId
                 onHoldEnded: Notifications.expirePeek(rowId)
                 onSettingsRequested: Shell.open("settings", island.screenName)
-                onGone: island.removePeekRow(rowId)
+                onGone: peekModel.finish(rowId)
                 onRevealedChanged: {
                     if (!leaving)
                         island.motion = "actions";
@@ -336,10 +308,7 @@ Island {
         enabled: !island.peekOpen
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
 
         Item {
@@ -399,7 +368,7 @@ Island {
                             width: parent.width + 2
                             height: width
                             radius: width / 2
-                            color: discPointer.containsMouse ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.16)) : Colors.surfaceContainerHigh
+                            color: discPointer.containsMouse ? Colors.hoverSurface : Colors.surfaceContainerHigh
                             border.width: 1
                             border.color: Colors.surfaceContainer
                         }
@@ -452,7 +421,7 @@ Island {
                     Rectangle {
                         anchors.fill: parent
                         radius: height / 2
-                        color: chevronPointer.containsMouse ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.16)) : "transparent"
+                        color: chevronPointer.containsMouse ? Colors.hoverSurface : "transparent"
                     }
 
                     Icon {
@@ -578,22 +547,13 @@ Island {
     }
 
     // Hangs from the island's left padding whichever disc was clicked.
-    Item {
+    Appear {
         objectName: "trayMenu"
         x: Theme.paddingHorizontal
         y: Theme.islandHeight
         width: island.menuWidth
         height: menuColumn.implicitHeight
-        opacity: island.menuOpen ? 1 : 0
-        visible: opacity > 0
-        enabled: island.menuOpen
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
-        }
+        shown: island.menuOpen
 
         QsMenuOpener {
             id: menuOpener
@@ -646,16 +606,13 @@ Island {
         }
     }
 
-    component TrayAnimation: NumberAnimation {
-        duration: Motion.trayDuration
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: Motion.growCurve
+    component TrayAnimation: MorphAnimation {
+        durationOverride: Motion.trayDuration
     }
 
-    component IndicatorAnimation: NumberAnimation {
-        duration: Motion.indicatorDuration
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: Motion.indicatorCurve
+    component IndicatorAnimation: MorphAnimation {
+        durationOverride: Motion.indicatorDuration
+        curveOverride: Motion.indicatorCurve
     }
 
     // Some apps put multi-line status text in an entry: the row wraps it to
@@ -698,17 +655,14 @@ Island {
             visible: !row.separator
             anchors.fill: parent
             radius: Theme.paddingHorizontal
-            color: rowPointer.containsMouse && row.clickable ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.16)) : "transparent"
+            color: rowPointer.containsMouse && row.clickable ? Colors.hoverSurface : "transparent"
 
             Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
+                ColorCrossfade {}
             }
         }
 
-        MenuText {
+        Label {
             id: labelText
 
             objectName: "menuLabel"
@@ -719,12 +673,11 @@ Island {
             text: row.label
             wrapMode: Text.Wrap
             maximumLineCount: Theme.trayMenuMaxLines
-            elide: Text.ElideRight
             color: row.header ? Colors.foregroundVariant : Colors.foreground
-            opacity: row.present && !row.entry.enabled ? 0.5 : 1
+            opacity: row.present && !row.entry.enabled ? Theme.disabledOpacity : 1
         }
 
-        MenuText {
+        Label {
             id: singleLine
 
             visible: false
@@ -756,12 +709,6 @@ Island {
 
         Accessible.role: row.separator ? Accessible.Separator : Accessible.MenuItem
         Accessible.name: row.label
-    }
-
-    component MenuText: Text {
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSize
-        font.weight: Theme.fontWeight
     }
 
     // A permanent 24 px pill hit area; hover only tints it. The width and
@@ -811,13 +758,10 @@ Island {
             width: indicator.pillWidth
             height: Theme.indicatorPill
             radius: height / 2
-            color: pointer.containsMouse ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.16)) : "transparent"
+            color: pointer.containsMouse ? Colors.hoverSurface : "transparent"
 
             Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
+                ColorCrossfade {}
             }
 
             Icon {
@@ -827,7 +771,7 @@ Island {
                 color: indicator.tint
             }
 
-            Text {
+            Label {
                 id: countText
 
                 visible: indicator.count > 0
@@ -835,12 +779,8 @@ Island {
                 anchors.verticalCenter: parent.verticalCenter
                 text: indicator.count
                 color: indicator.tint
-                font.family: Theme.fontFamily
+                numeric: true
                 font.pixelSize: Theme.indicatorCountFontSize
-                font.weight: Theme.fontWeight
-                font.features: ({
-                        tnum: 1
-                    })
             }
 
             MouseArea {

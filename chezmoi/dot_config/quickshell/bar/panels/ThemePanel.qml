@@ -8,26 +8,13 @@ import "../services"
 // The Theme state of the centre island: Light / Dark / Auto, then the matugen
 // schemes as a strip of cards. Left and Right move the selection, Enter or a
 // click applies it; the applied scheme carries a dot.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     readonly property int appliedIndex: Theming.schemes.findIndex(scheme => scheme.value === Theming.scheme)
 
     implicitWidth: Theme.panelWidths.theme
     implicitHeight: Theme.themePanelHeight
-
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
 
     onShownChanged: {
         if (!shown)
@@ -76,7 +63,7 @@ Item {
         y: Theme.panelPadding
         width: Theme.themeModeWidth
         label: "Theme mode"
-        fontSize: Theme.secondaryFontSize + 1
+        fontSize: Theme.themeModeFontSize
         interactive: !Theming.busy
         // Static disabled look while DMS works: nothing may animate under the
         // frozen frame of the screen crossfade.
@@ -152,15 +139,12 @@ Item {
                 width: parent.width
                 height: Theme.schemeCardHeight
                 radius: Theme.schemeCardRadius
-                color: pointer.containsMouse ? Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.12)) : Colors.surfaceContainerHigh
-                border.width: 2
+                color: pointer.containsMouse ? Colors.hoverSurface : Colors.surfaceContainerHigh
+                border.width: Theme.focusRingWidth
                 border.color: card.selected ? Colors.primary : "transparent"
 
                 Behavior on border.color {
-                    ColorAnimation {
-                        duration: Motion.crossfadeDuration
-                        easing.type: Motion.crossfadeEasing
-                    }
+                    ColorCrossfade {}
                 }
 
                 Row {
@@ -178,24 +162,20 @@ Item {
                             height: Theme.schemeDotSize
                             radius: width / 2
                             color: modelData
-                            border.width: 1
-                            border.color: Qt.alpha(Colors.foreground, 0.12)
+                            border.width: Theme.hairlineWidth
+                            border.color: Colors.dotOutline
                         }
                     }
                 }
 
-                Text {
+                Label {
                     x: Theme.schemeCardPadding
                     y: Theme.schemeCardPadding + Theme.schemeDotSize + Theme.schemeDotsGap
                     width: parent.width - 2 * Theme.schemeCardPadding
                     height: Theme.schemeLabelHeight
                     verticalAlignment: Text.AlignVCenter
                     text: card.modelData.label
-                    elide: Text.ElideRight
-                    color: Colors.foregroundVariant
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.secondaryFontSize
-                    font.weight: Theme.fontWeight
+                    secondary: true
                 }
 
                 Rectangle {
@@ -210,10 +190,7 @@ Item {
                     opacity: card.applied ? 1 : 0
 
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: Motion.crossfadeDuration
-                            easing.type: Motion.crossfadeEasing
-                        }
+                        Crossfade {}
                     }
                 }
             }

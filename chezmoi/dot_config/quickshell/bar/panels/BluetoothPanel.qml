@@ -12,10 +12,8 @@ import "../services"
 // and Forget. Discovery, the attempts and the errors live in `Bluetooth`; this
 // panel only holds which row is expanded. Pairing has no agent here, so a
 // button left of the settings button opens bluetoothctl for PINs and passkeys.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     property string expandedKey: ""
 
@@ -24,17 +22,6 @@ Item {
 
     implicitWidth: Theme.panelWidths.bluetooth
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + (Bluetooth.powered ? Theme.gap + list.implicitHeight : 0)
-
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
 
     // Errors stay until the next attempt; only the expansion resets.
     onShownChanged: {

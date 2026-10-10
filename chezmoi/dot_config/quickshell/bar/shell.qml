@@ -264,14 +264,14 @@ ShellRoot {
                     Behavior on hideShift {
                         id: hideBehavior
 
-                        IslandAnimation {
+                        MorphAnimation {
                             shrinking: hideBehavior.targetValue > 0
                         }
                     }
                     Behavior on centreShift {
                         id: centreBehavior
 
-                        IslandAnimation {
+                        MorphAnimation {
                             shrinking: centreBehavior.targetValue > 0
                         }
                     }

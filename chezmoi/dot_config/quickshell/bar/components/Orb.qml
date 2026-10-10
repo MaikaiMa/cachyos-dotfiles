@@ -20,7 +20,7 @@ Item {
     implicitHeight: implicitWidth
 
     Behavior on liveness {
-        IslandAnimation {
+        MorphAnimation {
             shrinking: orb.resting
         }
     }
@@ -66,6 +66,7 @@ Item {
 
                 anchors.fill: parent
                 thickness: width / 2
+                brightness: 1
                 visible: false
                 layer.enabled: true
             }
@@ -137,14 +138,16 @@ Item {
         }
 
         RimLight {
+            id: rim
+
             objectName: "orbRim"
             anchors.centerIn: parent
             width: Theme.orbSize
             height: Theme.orbSize
             thickness: Theme.orbRimWidth
             rotation: Cava.rimAngle
-            brightness: 0.85 + 0.5 * Cava.level
-            opacity: (0.6 + 0.4 * Cava.level) * orb.liveness
+            level: Cava.level
+            opacity: rim.levelOpacity * orb.liveness
             visible: opacity > 0
         }
     }

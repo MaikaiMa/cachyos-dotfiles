@@ -127,10 +127,8 @@ Island {
         }
     }
 
-    component FadeAnimation: NumberAnimation {
+    component FadeAnimation: Crossfade {
         target: island
-        duration: Motion.crossfadeDuration
-        easing.type: Motion.crossfadeEasing
     }
 
     Component.onCompleted: measureDetail()
@@ -146,7 +144,7 @@ Island {
     property real orbOffset: musicBar ? Theme.orbInset - Theme.orbHitPadding : -orbOutside
 
     Behavior on orbOffset {
-        IslandAnimation {
+        MorphAnimation {
             shrinking: !island.musicBar
         }
     }
@@ -174,20 +172,12 @@ Island {
     // Weather icon | clock | battery icon, in Detail a label under each. Everything
     // is placed from the centre line with fixed sizes: nothing lays out again while
     // the island animates, and the clock stays put.
-    Item {
+    Appear {
         id: pill
 
         width: island.width
         height: Theme.islandDetailHeight
-        opacity: island.showsPill ? 1 : 0
-        visible: opacity > 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
-        }
+        shown: island.showsPill
 
         WeatherIcon {
             x: island.centreX - island.iconOffset - width / 2
@@ -223,11 +213,13 @@ Island {
             height: Theme.islandDetailHeight - y
             opacity: island.labelOpacity
 
-            DetailLabel {
+            Label {
                 id: weatherLabel
 
                 x: island.centreX - island.iconOffset - width / 2
                 text: Weather.ready && !Weather.stale ? Math.round(Weather.temperature) + "°" : "–"
+                secondary: true
+                numeric: true
             }
 
             Clock {
@@ -235,15 +227,16 @@ Island {
 
                 x: island.onPixel(island.centreX - width / 2)
                 formatter: date => island.shortDate(date)
-                color: Colors.foregroundVariant
-                font.pixelSize: Theme.secondaryFontSize
+                secondary: true
             }
 
-            DetailLabel {
+            Label {
                 id: batteryLabel
 
                 x: island.centreX + island.iconOffset - width / 2
                 text: Battery.available ? Math.round(Battery.percentage) + "%" : "–"
+                secondary: true
+                numeric: true
             }
         }
 
@@ -302,14 +295,16 @@ Island {
         }
 
         RimLight {
+            id: barRimLight
+
             objectName: "musicBarRim"
             anchors.fill: parent
             radius: island.radius
             thickness: Theme.musicBarRimWidth
             angle: barRim.visible ? -Cava.barRimAngle : 0
             lift: Theme.musicBarRimLift
-            brightness: 0.85 + 0.5 * island.barLevel
-            opacity: 0.6 + 0.4 * island.barLevel
+            level: island.barLevel
+            opacity: barRimLight.levelOpacity
         }
     }
 
@@ -366,24 +361,19 @@ Island {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.musicArtistGap
 
-                Text {
+                Label {
                     id: musicTitle
 
                     text: Music.title
-                    color: Colors.foreground
-                    font.family: Theme.fontFamily
+                    strong: true
                     font.pixelSize: Theme.musicTitleFontSize
-                    font.weight: Font.DemiBold
                 }
 
-                Text {
+                Label {
                     anchors.baseline: musicTitle.baseline
                     text: Music.artist
                     visible: text !== ""
-                    color: Colors.foregroundVariant
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.secondaryFontSize
-                    font.weight: Theme.fontWeight
+                    secondary: true
                 }
             }
 
@@ -467,21 +457,21 @@ Island {
             MusicButton {
                 objectName: "musicPrevious"
                 iconName: "skip_previous"
-                label: "Previous"
+                accessibleName: "Previous"
                 onActivated: Music.previous()
             }
 
             MusicButton {
                 objectName: "musicToggle"
                 iconName: Music.playing ? "pause" : "play_arrow"
-                label: Music.playing ? "Pause" : "Play"
+                accessibleName: Music.playing ? "Pause" : "Play"
                 onActivated: Music.togglePlaying()
             }
 
             MusicButton {
                 objectName: "musicNext"
                 iconName: "skip_next"
-                label: "Next"
+                accessibleName: "Next"
                 onActivated: Music.next()
             }
         }
@@ -489,29 +479,23 @@ Island {
 
     // The Player carries the rim light as a quiet continuation: thinner, slower,
     // no glow, fading with the panel body.
-    Item {
+    Appear {
         id: playerRim
 
         anchors.fill: parent
-        opacity: island.centreState === "player" ? 1 : 0
-        visible: opacity > 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
-        }
+        shown: island.centreState === "player"
 
         RimLight {
+            id: playerRimLight
+
             objectName: "playerRim"
             anchors.fill: parent
             radius: island.radius
             thickness: Theme.playerRimWidth
             angle: playerRim.visible ? -Cava.playerRimAngle : 0
             lift: Theme.musicBarRimLift
-            brightness: 0.85 + 0.5 * island.playerLevel
-            opacity: 0.6 + 0.4 * island.playerLevel
+            level: island.playerLevel
+            opacity: playerRimLight.levelOpacity
         }
     }
 
@@ -630,57 +614,22 @@ Island {
         PauseAnimation {
             duration: island.musicBar ? Motion.musicContentDelay : 0
         }
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
+        Crossfade {}
     }
 
-    component MusicButton: Item {
-        id: button
-
-        property string iconName: ""
-        property string label: ""
-
-        signal activated
-
-        width: Theme.musicControlSize
-        height: Theme.musicControlSize
-
-        Accessible.role: Accessible.Button
-        Accessible.name: label
-        Accessible.onPressAction: button.activated()
-
-        Icon {
-            anchors.centerIn: parent
-            name: button.iconName
-            fill: 1
-            color: buttonPointer.containsMouse ? Colors.primary : Colors.foreground
-        }
-
-        MouseArea {
-            id: buttonPointer
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: button.activated()
-        }
+    // Pointer only: the music bar is a hover surface, outside the Tab order.
+    component MusicButton: IconButton {
+        size: Theme.musicControlSize
+        iconSize: Theme.iconSize
+        iconFill: 1
+        accent: true
+        background: false
+        focusable: false
     }
 
     component PillHairline: Hairline {
         y: (Theme.islandHeight - height) / 2
         opacity: island.hairlineOpacity
-    }
-
-    component DetailLabel: Text {
-        color: Colors.foregroundVariant
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.secondaryFontSize
-        font.weight: Theme.fontWeight
-        font.features: ({
-                tnum: 1
-            })
     }
 
     // Hover lives on a hit area that covers the collapsed pill and the Detail
@@ -747,6 +696,8 @@ Island {
             model: Theme.musicBarGlowRings
 
             RimLight {
+                id: glowRing
+
                 required property var modelData
 
                 objectName: "musicBarGlow"
@@ -758,8 +709,8 @@ Island {
                 thickness: Theme.musicBarGlowRingWidth
                 angle: barRim.visible ? -Cava.barRimAngle : 0
                 lift: Theme.musicBarRimLift
-                brightness: 0.85 + 0.5 * island.barLevel
-                opacity: modelData[1] * (0.6 + 0.4 * island.barLevel)
+                level: island.barLevel
+                opacity: glowRing.modelData[1] * glowRing.levelOpacity
             }
         }
     }
@@ -778,10 +729,7 @@ Island {
         visible: opacity > 0
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
 
         HoverHandler {
@@ -808,13 +756,13 @@ Island {
     property real privacyPillWidth: Theme.privacyDotSize + 2 * Theme.privacyPillPadding
 
     Behavior on privacyGlide {
-        IslandAnimation {}
+        MorphAnimation {}
     }
 
     Behavior on privacyPillOpacity {
         id: privacyPillFade
 
-        IslandAnimation {
+        MorphAnimation {
             shrinking: privacyPillFade.targetValue < 1
         }
     }
@@ -825,7 +773,7 @@ Island {
 
         enabled: island.privacyPillOpacity > 0
 
-        IslandAnimation {
+        MorphAnimation {
             shrinking: privacyPillResize.targetValue < island.privacyPillWidth
         }
     }
@@ -847,7 +795,7 @@ Island {
         width: island.privacyPillWidth
         height: Theme.privacyPillHeight
         radius: height / 2
-        color: Qt.alpha(Colors.surfaceContainer, Theme.islandOpacity)
+        color: Colors.islandSurface
         opacity: island.privacyPillOpacity
         visible: opacity > 0
     }

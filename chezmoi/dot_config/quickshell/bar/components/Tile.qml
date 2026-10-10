@@ -26,15 +26,6 @@ Item {
     // 1 wide, 0 small; it moves with the grid, so a tile that changes size
     // between the docked and the detached grid slides its icon along.
     property real wideBlend: wide ? 1 : 0
-
-    Behavior on wideBlend {
-        NumberAnimation {
-            duration: Motion.growDuration
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: Motion.growCurve
-        }
-    }
-
     readonly property bool chevronShown: hasPanel && wide
     // The toggle's part of the tile; the chevron zone takes the rest.
     readonly property real mainWidth: width - (chevronShown ? Theme.tileChevronZone : 0)
@@ -42,10 +33,14 @@ Item {
     readonly property bool hovered: pointer.containsMouse
     readonly property color contentColor: active ? Colors.primaryForeground : Colors.foreground
     readonly property color restColor: active ? Colors.primary : Colors.surfaceContainerHigh
-    readonly property color hoverColor: active ? Qt.tint(Colors.primary, Qt.alpha(Colors.primaryForeground, 0.10)) : Qt.tint(Colors.surfaceContainerHigh, Qt.alpha(Colors.primary, 0.16))
+    readonly property color hoverColor: Colors.hovered(restColor, active)
 
     implicitHeight: Theme.settingsTileHeight
     activeFocusOnTab: true
+
+    Behavior on wideBlend {
+        MorphAnimation {}
+    }
 
     Accessible.role: Accessible.Button
     Accessible.name: title
@@ -55,6 +50,8 @@ Item {
     Accessible.onPressAction: tile.activated()
 
     Keys.onPressed: event => {
+        if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))
+            return;
         if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             event.accepted = true;
             tile.activated();
@@ -73,57 +70,44 @@ Item {
         scale: pointer.pressed ? 0.98 : 1
 
         Behavior on color {
-            ColorAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            ColorCrossfade {}
         }
 
         Behavior on scale {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
+            Crossfade {}
+        }
+
+        // Hover tints only the zone under the pointer: the toggle's part here,
+        // the chevron zone's in ChevronZone, each from a clipped copy of the tile.
+        Item {
+            width: tile.mainWidth
+            height: parent.height
+            clip: true
+            opacity: tile.hovered && !tile.overChevron ? 1 : 0
+
+            Behavior on opacity {
+                Crossfade {}
+            }
+
+            Rectangle {
+                width: tile.width
+                height: parent.height
+                radius: Theme.tileRadius
+                color: tile.hoverColor
             }
         }
 
-        // Hover tints only the zone under the pointer: each zone clips a copy of
-        // the whole rounded tile, so the outer corners stay round and the inner
-        // edges stay straight.
-        HoverZone {
-            x: 0
-            width: tile.mainWidth
-            height: parent.height
-            tileWidth: tile.width
-            tint: tile.hoverColor
-            lit: tile.hovered && !tile.overChevron
-        }
-
-        HoverZone {
+        ChevronZone {
             x: tile.mainWidth
             width: tile.width - tile.mainWidth
             height: parent.height
-            tileWidth: tile.width
+            shapeWidth: tile.width
+            shapeRadius: Theme.tileRadius
             tint: tile.hoverColor
             lit: tile.hovered && tile.overChevron
-        }
-
-        Rectangle {
-            visible: opacity > 0
-            opacity: tile.chevronShown ? tile.wideBlend : 0
-            x: tile.mainWidth
-            width: 1
-            height: parent.height
-            color: tile.active ? Qt.alpha(Colors.primaryForeground, Theme.tileChevronHairlineOpacity) : Qt.alpha(Colors.foregroundVariant, Theme.tileChevronHairlineOpacity)
-        }
-
-        Icon {
-            visible: opacity > 0
-            opacity: tile.chevronShown ? tile.wideBlend : 0
-            x: tile.mainWidth + (Theme.tileChevronZone - width) / 2
-            anchors.verticalCenter: parent.verticalCenter
-            name: "chevron_right"
-            size: Theme.toggleIconSize
-            color: tile.contentColor
+            reveal: tile.chevronShown ? tile.wideBlend : 0
+            hairlineColor: Qt.alpha(tile.active ? Colors.primaryForeground : Colors.foregroundVariant, Theme.tileChevronHairlineOpacity)
+            iconColor: tile.contentColor
         }
 
         Rectangle {
@@ -131,12 +115,12 @@ Item {
 
             visible: opacity > 0
             opacity: tile.wideBlend
-            x: 12 + (1 - tile.wideBlend) * (surface.width / 2 - 12 - width / 2)
+            x: Theme.tileContentInset + (1 - tile.wideBlend) * (surface.width / 2 - Theme.tileContentInset - width / 2)
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.tileIconDisc
             height: width
             radius: width / 2
-            color: tile.active ? Qt.alpha(Colors.primaryForeground, 0.14) : Qt.alpha(Colors.foreground, 0.07)
+            color: tile.active ? Qt.alpha(Colors.primaryForeground, Theme.tileDiscOnAccentOpacity) : Colors.subtleFill
         }
 
         Icon {
@@ -151,40 +135,28 @@ Item {
             visible: opacity > 0
             opacity: tile.wideBlend
             anchors.left: disc.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.tileTextGap
             anchors.right: parent.right
-            anchors.rightMargin: 12 + tile.width - tile.mainWidth
+            anchors.rightMargin: Theme.tileContentInset + tile.width - tile.mainWidth
             anchors.verticalCenter: parent.verticalCenter
 
-            Text {
+            Label {
                 width: parent.width
                 text: tile.title
-                elide: Text.ElideRight
+                strong: true
                 color: tile.contentColor
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                font.weight: Font.DemiBold
             }
 
-            Text {
+            Label {
                 width: parent.width
                 text: tile.stateText
-                elide: Text.ElideRight
-                color: tile.active ? Qt.alpha(Colors.primaryForeground, 0.72) : Colors.foregroundVariant
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.secondaryFontSize
-                font.weight: Theme.fontWeight
+                secondary: true
+                color: tile.active ? Qt.alpha(Colors.primaryForeground, Theme.tileStateOnAccentOpacity) : Colors.foregroundVariant
             }
         }
 
-        // Keyboard focus only arrives through Tab, so the ring never shows on a click.
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -3
-            radius: Theme.tileRadius + 3
-            color: "transparent"
-            border.width: 2
-            border.color: Colors.primary
+        FocusRing {
+            radius: Theme.tileRadius + inset
             visible: tile.activeFocus
         }
     }
@@ -196,7 +168,7 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        pressAndHoldInterval: 500
+        pressAndHoldInterval: Motion.longPressInterval
         // A long press suppresses the click that would follow it.
         onPressAndHold: {
             if (tile.hasPanel)
@@ -209,32 +181,6 @@ Item {
                 tile.secondaryAction();
             else
                 tile.activated();
-        }
-    }
-
-    component HoverZone: Item {
-        id: zone
-
-        property bool lit: false
-        property real tileWidth: 0
-        property color tint: "transparent"
-
-        clip: true
-        opacity: lit ? 1 : 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
-        }
-
-        Rectangle {
-            x: -zone.x
-            width: zone.tileWidth
-            height: zone.height
-            radius: Theme.tileRadius
-            color: zone.tint
         }
     }
 }

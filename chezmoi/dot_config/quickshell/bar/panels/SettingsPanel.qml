@@ -9,10 +9,8 @@ import "../services"
 // when there are any, the notifications. implicitHeight is the settled height the
 // island grows to; it drops as soon as a row starts leaving, so the island shrinks
 // in one animation while the row collapses inside it.
-Item {
+Appear {
     id: panel
-
-    property bool shown: false
 
     readonly property real cellWidth: (width - 2 * Theme.panelPadding - (Theme.settingsColumns - 1) * Theme.tileGap) / Theme.settingsColumns
 
@@ -28,17 +26,6 @@ Item {
 
     implicitWidth: Theme.panelWidths.settings
     implicitHeight: 2 * Theme.panelPadding + Theme.settingsGridHeight + Theme.tileGap + Theme.settingsSlidersHeight + notificationsHeight
-
-    opacity: shown ? 1 : 0
-    visible: opacity > 0
-    enabled: shown
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
-    }
 
     // The notifications indicator opens Settings for the list: newest first, on top.
     // The rotation lock can change from a terminal, so it is read again too.
@@ -103,18 +90,14 @@ Item {
         clearTimer.restart();
     }
 
-    // The ListView keeps its delegates while items come and go: the model is
-    // patched instead of replaced, so a leaving row can finish its animation.
+    // The ListView keeps its delegates while items come and go, so a leaving
+    // row can finish its animation.
     function syncModel() {
         const items = Notifications.items;
         const ids = items.map(item => item.id);
-        for (let index = notificationModel.count - 1; index >= 0; index--) {
-            if (!ids.includes(notificationModel.get(index).notificationId))
-                notificationModel.remove(index);
-        }
-        items.forEach((item, index) => {
-            const entry = {
-                notificationId: item.id,
+        notificationModel.sync(ids, id => {
+            const item = items.find(candidate => candidate.id === id);
+            return {
                 appName: item.appName,
                 summary: item.summary,
                 body: item.body,
@@ -122,18 +105,6 @@ Item {
                 image: item.image,
                 desktopEntry: item.desktopEntry
             };
-            if (index < notificationModel.count && notificationModel.get(index).notificationId === item.id) {
-                notificationModel.set(index, entry);
-                return;
-            }
-            for (let from = index + 1; from < notificationModel.count; from++) {
-                if (notificationModel.get(from).notificationId === item.id) {
-                    notificationModel.move(from, index, 1);
-                    notificationModel.set(index, entry);
-                    return;
-                }
-            }
-            notificationModel.insert(index, entry);
         });
         const kept = leavingIds.filter(id => ids.includes(id));
         if (kept.length !== leavingIds.length)
@@ -152,14 +123,17 @@ Item {
 
     Component.onCompleted: syncModel()
 
-    ListModel {
+    KeyedListModel {
         id: notificationModel
+
+        keyRole: "notificationId"
+        refresh: true
     }
 
     Timer {
         id: clearTimer
 
-        interval: Motion.crossfadeDuration + 20
+        interval: Motion.crossfadeDuration + Motion.settleMargin
         onTriggered: {
             Notifications.clearAll();
             panel.clearing = false;
@@ -254,10 +228,10 @@ Item {
             onActivated: Tablet.toggleRotationLock()
 
             Behavior on opacity {
-                GridAnimation {}
+                MorphAnimation {}
             }
             Behavior on scale {
-                GridAnimation {}
+                MorphAnimation {}
             }
         }
 
@@ -276,18 +250,12 @@ Item {
     }
 
     // The tiles move with the island's grow curve when the grid changes layout.
-    component GridAnimation: NumberAnimation {
-        duration: Motion.growDuration
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: Motion.growCurve
-    }
-
     component GridTile: Tile {
         Behavior on x {
-            GridAnimation {}
+            MorphAnimation {}
         }
         Behavior on width {
-            GridAnimation {}
+            MorphAnimation {}
         }
     }
 
@@ -351,83 +319,37 @@ Item {
         height: Theme.notificationHeaderGap + Theme.notificationHeaderHeight + list.height
         visible: notificationModel.count > 0
 
-        Item {
+        SectionHeader {
             id: header
 
             x: Theme.panelPadding
             y: Theme.notificationHeaderGap
             width: parent.width - 2 * Theme.panelPadding
             height: Theme.notificationHeaderHeight
+            iconName: "notifications"
+            text: "Notifications · " + panel.settledCount
+            numeric: true
             opacity: panel.settledCount > 0 ? 1 : 0
 
             Behavior on opacity {
-                NumberAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
+                Crossfade {}
             }
 
-            Row {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
+            PillButton {
+                id: clearButton
 
-                Icon {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "notifications"
-                    size: 14
-                    color: Colors.foregroundVariant
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Notifications · " + panel.settledCount
-                    color: Colors.foregroundVariant
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.secondaryFontSize
-                    font.weight: Theme.fontWeight
-                    font.features: ({
-                            tnum: 1
-                        })
-                }
-            }
-
-            Rectangle {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: clearLabel.implicitWidth + 16
-                height: clearLabel.implicitHeight + 8
-                radius: 10
-                color: clearPointer.containsMouse ? Qt.alpha(Colors.foreground, 0.07) : "transparent"
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Motion.crossfadeDuration
-                    }
-                }
-
-                Text {
-                    id: clearLabel
-
-                    anchors.centerIn: parent
-                    text: "Clear all"
-                    color: Colors.primary
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.secondaryFontSize
-                    font.weight: Theme.fontWeight
-                }
-
-                MouseArea {
-                    id: clearPointer
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    enabled: !panel.clearing
-                    onClicked: panel.clearAll()
-                }
-
-                Accessible.role: Accessible.Button
-                Accessible.name: "Clear all notifications"
+                height: clearButton.label.implicitHeight + 2 * Theme.textButtonPaddingVertical
+                text: "Clear all"
+                accessibleName: "Clear all notifications"
+                tone: "accent"
+                fontSize: Theme.secondaryFontSize
+                horizontalPadding: Theme.textButtonPadding
+                baseColor: "transparent"
+                hoverColor: Colors.subtleFill
+                enabled: !panel.clearing
+                onActivated: panel.clearAll()
             }
         }
 
@@ -460,16 +382,8 @@ Item {
             }
         }
 
-        // A thin scroll hint while the list is longer than its window; outside
-        // the ListView, whose children scroll with the content.
-        Rectangle {
-            visible: list.contentHeight > list.height
-            x: list.x + list.width - width
-            y: list.y + list.visibleArea.yPosition * list.height
-            width: 4
-            height: list.visibleArea.heightRatio * list.height
-            radius: width / 2
-            color: Qt.alpha(Colors.foreground, 0.25)
+        ScrollHint {
+            view: list
         }
     }
 }

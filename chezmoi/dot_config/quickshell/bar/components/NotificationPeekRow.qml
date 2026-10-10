@@ -91,23 +91,17 @@ Item {
     // Rows come in with the island's grow and leave with its shrink, so the
     // rows below slide in step with the island; the actions use the tray timing.
     Behavior on implicitHeight {
-        NumberAnimation {
-            duration: row.actionMotion ? Motion.trayDuration : row.leaving ? Motion.shrinkDuration : Motion.growDuration
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: row.actionMotion || !row.leaving ? Motion.growCurve : Motion.shrinkCurve
+        MorphAnimation {
+            shrinking: row.leaving && !row.actionMotion
+            durationOverride: row.actionMotion ? Motion.trayDuration : -1
         }
     }
     Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
-        }
+        Crossfade {}
     }
     Behavior on revealProgress {
-        NumberAnimation {
-            duration: Motion.trayDuration
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: Motion.growCurve
+        MorphAnimation {
+            durationOverride: Motion.trayDuration
         }
     }
 
@@ -182,21 +176,17 @@ Item {
     ParallelAnimation {
         id: replaceFade
 
-        NumberAnimation {
+        Crossfade {
             target: ghost
             property: "opacity"
             from: 1
             to: 0
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
         }
-        NumberAnimation {
+        Crossfade {
             target: face
             property: "opacity"
             from: 0
             to: 1
-            duration: Motion.crossfadeDuration
-            easing.type: Motion.crossfadeEasing
         }
     }
 
@@ -268,7 +258,7 @@ Item {
         Repeater {
             model: row.actions
 
-            Text {
+            Label {
                 id: actionLabel
 
                 required property var modelData
@@ -276,11 +266,8 @@ Item {
                 height: Theme.notificationPeekActionHeight
                 verticalAlignment: Text.AlignVCenter
                 text: modelData.text
-                textFormat: Text.PlainText
                 color: modelData.primary ? Colors.primary : Colors.foreground
-                font.family: Theme.fontFamily
                 font.pixelSize: Theme.notificationPeekActionFontSize
-                font.weight: Theme.fontWeight
                 font.underline: actionPointer.containsMouse
 
                 MouseArea {
@@ -298,68 +285,27 @@ Item {
         }
     }
 
-    Item {
+    IconButton {
         id: dismissButton
 
         objectName: "dismiss"
         x: parent.width - Theme.notificationPeekDismissInset - (Theme.iconSize + Theme.notificationPeekDismissHit) / 2
         y: Theme.notificationPeekDismissInset - (Theme.notificationPeekDismissHit - Theme.iconSize) / 2
-        width: Theme.notificationPeekDismissHit
-        height: Theme.notificationPeekDismissHit
+        size: Theme.notificationPeekDismissHit
+        iconName: "close"
+        iconSize: Theme.iconSize
+        background: false
+        iconColor: dismissButton.hovered ? Colors.foreground : Colors.foregroundVariant
         opacity: row.dismissShown ? 1 : 0
         visible: opacity > 0
         enabled: row.dismissShown
-        activeFocusOnTab: row.dismissShown
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true;
-                row.dismiss();
-            }
-        }
+        focusable: row.dismissShown
+        accessibleName: "Dismiss " + row.summaryText
+        onActivated: row.dismiss()
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
-
-        Icon {
-            anchors.centerIn: parent
-            name: "close"
-            color: dismissPointer.containsMouse ? Colors.foreground : Colors.foregroundVariant
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Motion.crossfadeDuration
-                    easing.type: Motion.crossfadeEasing
-                }
-            }
-        }
-
-        MouseArea {
-            id: dismissPointer
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: row.dismiss()
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -3
-            radius: height / 2
-            color: "transparent"
-            border.width: 2
-            border.color: Colors.primary
-            visible: dismissButton.activeFocus
-        }
-
-        Accessible.role: Accessible.Button
-        Accessible.name: "Dismiss " + row.summaryText
-        Accessible.onPressAction: row.dismiss()
     }
 
     Rectangle {
@@ -371,10 +317,7 @@ Item {
         opacity: row.lastRow ? 0 : 1
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.crossfadeDuration
-                easing.type: Motion.crossfadeEasing
-            }
+            Crossfade {}
         }
     }
 
@@ -394,37 +337,13 @@ Item {
         width: row.width
         height: Theme.notificationPeekRowHeight
 
-        Rectangle {
+        AppIconDisc {
             id: discItem
 
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.notificationPeekDisc
-            height: Theme.notificationPeekDisc
-            radius: width / 2
-            color: Qt.alpha(Colors.foreground, Theme.notificationPeekDiscOpacity)
+            source: faceItem.iconUrl
             // The blob carries the icon on from here.
             visible: !row.toBlob
-
-            Image {
-                id: appImage
-
-                anchors.centerIn: parent
-                width: Theme.iconSize
-                height: Theme.iconSize
-                sourceSize.width: Theme.iconSize * 2
-                sourceSize.height: Theme.iconSize * 2
-                source: faceItem.iconUrl
-                fillMode: Image.PreserveAspectFit
-                asynchronous: true
-                visible: status === Image.Ready
-            }
-
-            Icon {
-                anchors.centerIn: parent
-                visible: !appImage.visible
-                name: "notifications"
-                color: Colors.foregroundVariant
-            }
         }
 
         Column {
@@ -433,31 +352,23 @@ Item {
             width: Math.max(0, parent.width - x - Theme.notificationPeekDismissReserve)
             spacing: Theme.notificationPeekLineGap
 
-            PeekText {
+            Label {
+                width: parent.width
+                maximumLineCount: 1
                 text: faceItem.summary
                 color: faceItem.critical ? Colors.error : Colors.foreground
-                font.pixelSize: Theme.fontSize
-                font.weight: Theme.fontWeight
-                lineHeight: Theme.notificationPeekSummaryLineHeight
+                lineHeightPx: Theme.notificationPeekSummaryLineHeight
             }
 
-            PeekText {
+            Label {
+                width: parent.width
+                maximumLineCount: 1
                 visible: faceItem.body !== ""
                 text: faceItem.body
-                color: Colors.foregroundVariant
-                font.pixelSize: Theme.secondaryFontSize
+                secondary: true
                 font.weight: Font.Normal
-                lineHeight: Theme.notificationPeekBodyLineHeight
+                lineHeightPx: Theme.notificationPeekBodyLineHeight
             }
         }
-    }
-
-    component PeekText: Text {
-        width: parent.width
-        maximumLineCount: 1
-        elide: Text.ElideRight
-        textFormat: Text.PlainText
-        lineHeightMode: Text.FixedHeight
-        font.family: Theme.fontFamily
     }
 }
