@@ -49,7 +49,7 @@ packages/                 official, AUR, and Flatpak package manifests
 docs/adr/                 architecture decision records
 docs/maintenance.md       shared change and verification workflow
 docs/dms.md               DMS shell: service layer and fallback bar, the look, matugen, idle/lock
-docs/shell.md             own Quickshell bar: layout, switching bars, colours, widgets (ADR-0027)
+docs/shell.md             own Quickshell bar: layout, switching bars, colours, widgets (ADR-0027, ADR-0029)
 docs/shell-design.md      design contract for the own bar: islands, states, tokens, motion; interactive prototype in docs/design/
 docs/greeter.md           login screen: greetd running the DMS greeter
 docs/pictures.md          ~/Pictures layout, wallpaper favourites, screenshots, viewers
