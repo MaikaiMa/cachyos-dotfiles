@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import qs
 
 // The surface every island is drawn on. The owner sets targetWidth, targetHeight,
@@ -115,13 +116,22 @@ Rectangle {
         to: 1
     }
 
-    // Reminder: the layer and its shadow pass run even while shadowStrength is
-    // 0, and the music bar's rim redraws the centre island on every Cava tick.
-    // Measure with Frames (`quickshell ipc -c bar call bardebug frames 5` while
-    // music plays) before choosing a RectangularShadow sibling from
-    // QtQuick.Effects or `layer.enabled: shadowStrength > 0`.
-    layer.enabled: true
-    layer.effect: IslandShadow {
-        shadowOpacity: island.shadowStrength
+    // A sibling behind the island, not a layer effect: through a layer every
+    // change inside an expanded island re-rendered the whole panel and its
+    // shadow blur. Just under the island and above what an owner puts half a
+    // step under it, as the shadow was when it belonged to the island's layer.
+    RectangularShadow {
+        parent: island.parent
+        x: island.x
+        y: island.y
+        z: island.z - 0.25
+        width: island.width
+        height: island.height
+        radius: island.radius
+        offset: Qt.vector2d(0, Theme.shadowOffsetY)
+        blur: Theme.shadowBlur
+        color: Qt.alpha(Colors.shadow, Theme.shadowOpacity)
+        opacity: island.shadowStrength
+        visible: island.visible && island.shadowStrength > 0
     }
 }

@@ -728,7 +728,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     AppVolumeRow.qml                    Sound: one application's icon, name and volume capsule
   components/                           shared pieces, service-free except Clock and BatteryIcon
     Island.qml                          island surface: colour, radius, shadow, size animation
-    IslandShadow.qml                    the islands' drop shadow as a layer effect (islands, blobs)
+    IslandShadow.qml                    the blobs' drop shadow as a layer effect (islands use RectangularShadow)
     MorphAnimation.qml                  grow or shrink animation from the Motion tokens, with duration and curve overrides
     Crossfade.qml                       NumberAnimation with the crossfade tokens
     ColorCrossfade.qml                  ColorAnimation with the crossfade tokens
@@ -1830,15 +1830,30 @@ same 600 ms.
   the saving is GPU and compositor time. Check a new binding to `Cava`,
   `Music.position` or any other value that changes while music plays
   against this.
-- **Open: two measurements.** `Island` renders through a layer with a
-  `MultiEffect` shadow at all times, also while `shadowStrength` is 0, and
-  the music bar's rim redraws the centre island on every Cava tick. If
-  `bardebug frames 5` with music playing shows the bar window paying for
-  it, draw the shadow as a `RectangularShadow` sibling (QtQuick.Effects,
-  Qt 6.11 is installed) or gate it with `layer.enabled: shadowStrength >
-  0`. `TopWave`'s `Canvas` paints on the GUI thread;
-  `renderStrategy: Canvas.Threaded` may take that off it, kept only if
-  the same measurement shows a gain. Both are reminders in the code.
+- **Island shadow: a `RectangularShadow` sibling, no layer.** `Island`
+  rendered through a layer with a `MultiEffect` shadow, so every change
+  inside an expanded island (a meter glide in Home, the Player's rim on
+  every audio tick) re-rendered the whole panel to a texture plus the
+  24 px shadow blur each frame; `QSG_VISUALIZE=changes` flashed the whole
+  panel as one block on 2026-10-10. `Island` now creates an analytic
+  `RectangularShadow` (QtQuick.Effects) in its own parent, just under
+  itself, following its geometry and `shadowStrength`. The shadow stays
+  out of the blur region and input mask, which follow the island itself.
+  `NotificationBlobs` keeps the layer effect. Measured on the charger on
+  2026-10-10 (`scripts/bar-power-sample.sh`, 30 s): with the Player open
+  the layer had made the bar window present two frames per audio tick (62
+  per second at 30 ticks, 32 at 15); without it one (31 per second), bar
+  GPU 2.6 to 1.1 %, Niri GPU 7.7 to 5.3 %. Home open (meters gliding at
+  about 50 frames per second): bar GPU 1.4 to 0.9 %, Niri GPU 4.6 to
+  3.4 %. The bar's CPU did not fall (Home 2.3 to 3.2 %, Player 10.6 to
+  18.9 %, the Player figure varies between runs) and the package draw
+  stayed within the run-to-run noise of about 0.5 W (Home 14.3 to 14.6,
+  Player 20.3 to 20.3 W): the saving is GPU and compositor time, not
+  watts on the charger.
+- **Open: one measurement.** `TopWave`'s `Canvas` paints on the GUI
+  thread; `renderStrategy: Canvas.Threaded` may take that off it, kept
+  only if `bardebug frames 5` with music playing shows a gain. It is a
+  reminder in the code.
 
 The services are linted with the rest of the bar:
 
