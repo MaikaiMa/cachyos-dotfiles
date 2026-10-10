@@ -167,7 +167,7 @@ esac
 
 pending_state=$test_dir/pending-state
 output=$(
-	FAKE_REPO=$(printf '%s\n' 'linux-cachyos 7.2.8-1 -> 7.2.9-1' 'fish 4.1.0-1 -> 4.1.1-1') \
+	FAKE_REPO=$(printf '%s\n' 'linux-cachyos 7.2.8-1 -> 7.2.9-1' 'fish 4.1.0-1 -> 4.1.1-1' 'quickshell 0.3.0-1 -> 0.3.1-1' 'mesa 26.1.0-1 -> 26.1.1-1') \
 	FAKE_AUR=$(printf '%s\n' 'greetd-dms-greeter-bin 1.6.1-1 -> 1.6.2-1' 'some-tool 1.0-1 -> 1.1-1 [ignored]') \
 	FAKE_FLATPAK_INSTALLED=$(printf 'co.hyprlab.Hylki\t1.41.0\norg.freedesktop.Platform.codecs-extra\n') \
 	FAKE_FLATPAK_UPDATES=$(printf 'co.hyprlab.Hylki\t1.42.0\norg.freedesktop.Platform.codecs-extra\n') \
@@ -175,12 +175,14 @@ output=$(
 		run_update --pending
 ) || fail '--pending must exit 0.'
 expected=$(
-	printf 'repo\tlinux-cachyos\t7.2.8-1\t7.2.9-1\t1\n'
-	printf 'repo\tfish\t4.1.0-1\t4.1.1-1\t0\n'
-	printf 'aur\tgreetd-dms-greeter-bin\t1.6.1-1\t1.6.2-1\t1\n'
-	printf 'aur\tsome-tool\t1.0-1\t1.1-1\t0\n'
-	printf 'flatpak\tco.hyprlab.Hylki\t1.41.0\t1.42.0\t0\n'
-	printf 'flatpak\torg.freedesktop.Platform.codecs-extra\t-\t-\t0\n'
+	printf 'repo\tlinux-cachyos\t7.2.8-1\t7.2.9-1\t1\tkernel: reboot needed\n'
+	printf 'repo\tfish\t4.1.0-1\t4.1.1-1\t0\t-\n'
+	printf 'repo\tquickshell\t0.3.0-1\t0.3.1-1\t1\tshell: restarts the bar\n'
+	printf 'repo\tmesa\t26.1.0-1\t26.1.1-1\t1\tneeds a reboot\n'
+	printf 'aur\tgreetd-dms-greeter-bin\t1.6.1-1\t1.6.2-1\t1\tgreeter: re-sync needed\n'
+	printf 'aur\tsome-tool\t1.0-1\t1.1-1\t0\t-\n'
+	printf 'flatpak\tco.hyprlab.Hylki\t1.41.0\t1.42.0\t0\t-\n'
+	printf 'flatpak\torg.freedesktop.Platform.codecs-extra\t-\t-\t0\t-\n'
 )
 [ "$output" = "$expected" ] || fail "--pending printed the wrong lines: $output"
 case $(cat "$calls") in

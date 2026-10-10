@@ -21,6 +21,9 @@ Singleton {
     // 0..100; Quickshell reports 0..1.
     readonly property int strength: activeNetwork ? Math.round(activeNetwork.signalStrength * 100) : 0
     readonly property bool weak: wifiConnected && strength < 40
+    // The one glyph for the Wi-Fi state, so the tile, the island and the panel
+    // row show the same bars.
+    readonly property string statusIcon: !wifiEnabled ? "wifi_off" : activeNetwork ? signalIcon(activeNetwork) : "signal_wifi_0_bar"
 
     // The Wi-Fi panel's list: one network per SSID (the connected one, else a known
     // one, else the strongest), hidden networks left out; connected first, then
@@ -194,9 +197,11 @@ Singleton {
             wifiDevice.scannerEnabled = value;
     }
 
-    // One watcher per listed network, whichever screen shows the panel.
+    // One watcher per network the device knows, hidden and duplicate SSIDs
+    // included, on its stable model: the derived list rebuilds on every
+    // strength change and would drop a failure emitted meanwhile.
     Instantiator {
-        model: root.networks
+        model: root.wifiDevice ? root.wifiDevice.networks : null
 
         delegate: Connections {
             id: watcher

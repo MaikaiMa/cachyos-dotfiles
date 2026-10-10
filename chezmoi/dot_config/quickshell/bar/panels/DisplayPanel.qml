@@ -33,12 +33,11 @@ Item {
         }
     }
 
-    // Brightness keys and the DMS settings change these behind the bar's back.
+    // The DMS settings change these behind the bar's back; Brightness reads
+    // itself when the panel opens.
     onShownChanged: {
-        if (shown) {
-            Brightness.refresh();
+        if (shown)
             Dms.refresh();
-        }
     }
 
     PanelControlRow {

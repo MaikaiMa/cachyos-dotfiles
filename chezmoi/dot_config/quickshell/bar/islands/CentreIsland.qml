@@ -20,6 +20,10 @@ Island {
     readonly property bool osd: Shell.osdVisible && Shell.screenName === screenName
     readonly property bool showsPill: (centreState === "collapsed" || detail) && !osd
     readonly property bool musicBar: centreState === "musicbar"
+    // A hover rest opens Detail or the music bar only from this screen's pill,
+    // judged per screen: a pointer resting here takes the centre over from a
+    // panel on another screen, as a click here would.
+    readonly property bool hoverMayOpen: showsPill
     // The orb lives in a small surface of its own (orbParent), so its 30 Hz rim
     // does not make the bar window present frames. The owner places that surface
     // over orbTravelLeft..orbTravelRight from the island's centre line and gives
@@ -188,7 +192,7 @@ Island {
         WeatherIcon {
             x: island.centreX - island.iconOffset - width / 2
             y: (Theme.islandHeight - height) / 2
-            condition: Weather.ready ? Weather.iconName : ""
+            condition: Weather.ready && !Weather.stale ? Weather.iconName : ""
         }
 
         PillHairline {
@@ -223,7 +227,7 @@ Island {
                 id: weatherLabel
 
                 x: island.centreX - island.iconOffset - width / 2
-                text: Weather.ready ? Math.round(Weather.temperature) + "°" : "–"
+                text: Weather.ready && !Weather.stale ? Math.round(Weather.temperature) + "°" : "–"
             }
 
             Clock {
@@ -708,7 +712,7 @@ Island {
 
         interval: Motion.hoverRestDelay
         onTriggered: {
-            if (Shell.centreState === "collapsed" && !island.osd)
+            if (island.hoverMayOpen && !island.detail)
                 Shell.open("detail", island.screenName);
         }
     }
@@ -899,7 +903,7 @@ Island {
 
         interval: Motion.orbHoverDelay
         onTriggered: {
-            if ((island.centreState === "collapsed" || island.detail) && !island.osd && orbHover.hovered)
+            if (island.hoverMayOpen && orbHover.hovered)
                 Shell.open("musicbar", island.screenName);
         }
     }

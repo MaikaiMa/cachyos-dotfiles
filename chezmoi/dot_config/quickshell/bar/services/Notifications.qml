@@ -265,14 +265,25 @@ Singleton {
     }
 
     // A sender's replaces_id arrives as changed properties on the same object.
+    // Only a new summary or urgency alerts again; progress senders rewrite the
+    // body every second and keep their place, time and seen mark.
     function refresh(serverId: int) {
         const id = keyByServerId[serverId];
         const notification = id === undefined ? null : liveObject(id);
         if (!notification)
             return;
-        if (entryFor(id)) {
-            entries = [entryFrom(notification, id)].concat(entries.filter(entry => entry.id !== id));
-            scheduleSave();
+        const current = entryFor(id);
+        if (current) {
+            const next = entryFrom(notification, id);
+            if (next.summary !== current.summary || next.urgency !== current.urgency) {
+                entries = [next].concat(entries.filter(entry => entry.id !== id));
+                scheduleSave();
+            } else if (next.body !== current.body || next.appIcon !== current.appIcon || next.image !== current.image) {
+                next.timestamp = current.timestamp;
+                next.seen = current.seen;
+                entries = entries.map(entry => entry.id === id ? next : entry);
+                scheduleSave();
+            }
         }
         replaced(id);
     }
@@ -292,18 +303,18 @@ Singleton {
         removePeek(id);
     }
 
+    // A transient that does not peek now never will, so it ends here; after
+    // the server has taken it, not inside its own arrival.
     function offerPeek(id: string, notification: var) {
-        if (!Theme.notificationPeek)
-            return;
-        if (doNotDisturb && notification.urgency !== NotificationUrgency.Critical)
-            return;
-        if (peekDeferred) {
-            if (!notification.transient)
-                backlogIds = backlogIds.concat([id]);
+        const wanted = Theme.notificationPeek && (!doNotDisturb || notification.urgency === NotificationUrgency.Critical);
+        if (wanted && !peekDeferred && !peekBlocked) {
+            pushPeek(id);
             return;
         }
-        if (!peekBlocked)
-            pushPeek(id);
+        if (notification.transient)
+            Qt.callLater(() => root.retireTransient(id));
+        else if (wanted && peekDeferred)
+            backlogIds = backlogIds.concat([id]);
     }
 
     // A fourth row pushes the bottom one out early, as a blob.
@@ -674,7 +685,7 @@ Singleton {
     Timer {
         interval: 30000
         repeat: true
-        running: true
+        running: root.alerts.length > 0
         onTriggered: root.now = Date.now()
     }
 

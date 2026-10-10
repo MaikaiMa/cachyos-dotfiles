@@ -210,11 +210,30 @@ Item {
             height: 22
             radius: 11
             color: dismissPointer.containsMouse ? Qt.alpha(Colors.foreground, 0.07) : "transparent"
+            activeFocusOnTab: !row.leaving
+
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    event.accepted = true;
+                    row.dismissClicked();
+                }
+            }
 
             Behavior on color {
                 ColorAnimation {
                     duration: Motion.crossfadeDuration
+                    easing.type: Motion.crossfadeEasing
                 }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -3
+                radius: height / 2
+                color: "transparent"
+                border.width: 2
+                border.color: Colors.primary
+                visible: dismiss.activeFocus
             }
 
             Icon {
@@ -236,6 +255,7 @@ Item {
 
             Accessible.role: Accessible.Button
             Accessible.name: "Dismiss"
+            Accessible.onPressAction: row.dismissClicked()
         }
 
         Flow {

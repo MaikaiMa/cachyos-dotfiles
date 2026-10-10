@@ -122,10 +122,18 @@ Item {
                 image: item.image,
                 desktopEntry: item.desktopEntry
             };
-            if (index < notificationModel.count && notificationModel.get(index).notificationId === item.id)
+            if (index < notificationModel.count && notificationModel.get(index).notificationId === item.id) {
                 notificationModel.set(index, entry);
-            else
-                notificationModel.insert(index, entry);
+                return;
+            }
+            for (let from = index + 1; from < notificationModel.count; from++) {
+                if (notificationModel.get(from).notificationId === item.id) {
+                    notificationModel.move(from, index, 1);
+                    notificationModel.set(index, entry);
+                    return;
+                }
+            }
+            notificationModel.insert(index, entry);
         });
         const kept = leavingIds.filter(id => ids.includes(id));
         if (kept.length !== leavingIds.length)
@@ -179,19 +187,7 @@ Item {
             wide: true
             title: "Wi-Fi"
             active: Network.wifiEnabled
-            iconName: {
-                if (!Network.wifiEnabled)
-                    return "wifi_off";
-                if (!Network.wifiConnected)
-                    return "signal_wifi_0_bar";
-                if (Network.strength >= 75)
-                    return "signal_wifi_4_bar";
-                if (Network.strength >= 50)
-                    return "network_wifi_3_bar";
-                if (Network.strength >= 25)
-                    return "network_wifi_2_bar";
-                return "network_wifi_1_bar";
-            }
+            iconName: Network.statusIcon
             stateText: !Network.wifiEnabled ? "Off" : !Network.wifiConnected ? "Disconnected" : Network.weak ? "Weak · " + Network.ssid : Network.ssid
             hasPanel: true
             onActivated: Network.toggleWifi()

@@ -16,7 +16,7 @@ usage() {
 	printf '%s\n' 'Run paru -Syu (with unread Arch news) and flatpak update, then list .pacnew files and packages that need a reboot.'
 	printf '%s\n' 'Asks before upgrading fragile packages when run in a terminal; --yes skips that question.'
 	printf '%s\n' 'Writes last-report.md to SYSTEM_UPDATE_STATE_DIR (default: the system-update directory under XDG_STATE_HOME).'
-	printf '%s\n' '--pending only lists pending updates, one tab-separated line each: source, name, old, new, fragile (0 or 1).'
+	printf '%s\n' '--pending only lists pending updates, one tab-separated line each: source, name, old, new, fragile (0 or 1), reason (- unless fragile).'
 }
 
 assume_yes=false
@@ -52,14 +52,23 @@ done
 # Read-only: for the bar. No news check, no question, no upgrade, no report.
 # checkupdates and paru -Qua print "name old -> new" (paru may append
 # "[ignored]"); flatpak remote-ls knows only the new version, so the old one
-# comes from flatpak list.
+# comes from flatpak list. The reason is the bar's one-line text for a
+# fragile package; keep it in step with reboot_pattern.
 print_pending() {
 	{
 		"$checkupdates_command" | sed 's/^/repo /' || true
 		"$paru_command" -Qua | sed 's/^/aur /' || true
-	} | awk -v pattern="$reboot_pattern" -v greeter="$greeter_package" '$4 == "->" && NF >= 5 {
-		printf "%s\t%s\t%s\t%s\t%d\n", $1, $2, $3, $5, ($2 ~ pattern || $2 == greeter) ? 1 : 0
-	}'
+	} | awk -v pattern="$reboot_pattern" -v greeter="$greeter_package" '
+		function reason(name) {
+			if (name ~ /^linux-/) return "kernel: reboot needed"
+			if (name == "quickshell" || name ~ /^dms-shell/) return "shell: restarts the bar"
+			if (name == greeter || name ~ /^greetd/) return "greeter: re-sync needed"
+			return "needs a reboot"
+		}
+		$4 == "->" && NF >= 5 {
+			fragile = ($2 ~ pattern || $2 == greeter)
+			printf "%s\t%s\t%s\t%s\t%d\t%s\n", $1, $2, $3, $5, fragile ? 1 : 0, fragile ? reason($2) : "-"
+		}'
 	if command -v "$flatpak_command" >/dev/null 2>&1; then
 		installed=$("$flatpak_command" list --columns=application,version || true)
 		"$flatpak_command" remote-ls --updates --columns=application,version | FLATPAK_INSTALLED=$installed awk -F '\t' '
@@ -71,7 +80,7 @@ print_pending() {
 				}
 			}
 			$1 != "" {
-				printf "flatpak\t%s\t%s\t%s\t0\n", $1, (old[$1] == "" ? "-" : old[$1]), ($2 == "" ? "-" : $2)
+				printf "flatpak\t%s\t%s\t%s\t0\t-\n", $1, (old[$1] == "" ? "-" : old[$1]), ($2 == "" ? "-" : $2)
 			}' || true
 	fi
 }

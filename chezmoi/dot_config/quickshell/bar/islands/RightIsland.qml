@@ -531,7 +531,7 @@ Island {
             objectName: "wifi"
             shown: island.shownFlags[2]
             gap: island.gapBefore(2)
-            iconName: !Network.wifiEnabled ? "wifi_off" : Network.strength >= 25 ? "network_wifi_2_bar" : "network_wifi_1_bar"
+            iconName: Network.statusIcon
             label: Network.wifiEnabled ? "Wi-Fi weak, open Settings" : "Wi-Fi off, open Settings"
             onActivated: Shell.open("settings", island.screenName)
         }

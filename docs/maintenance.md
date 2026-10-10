@@ -98,7 +98,8 @@ Enter continues, anything else cancels before anything is installed.
 without a terminal. On a normal day the list is empty and nothing is asked.
 The own Quickshell bar reads the pending packages through
 `system-update --pending`, which only prints one tab-separated line per
-package (source, name, old and new version, fragile) and changes nothing.
+package (source, name, old and new version, fragile, and the reason shown
+for a fragile package or `-`) and changes nothing.
 Its Updates panel runs the full helper with "Update all" in DMS's terminal
 (`terminalOverride`, else `xdg-terminal-exec`, else `ghostty -e`), which
 waits for Enter at the end like DMS's own updater; see

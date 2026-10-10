@@ -34,6 +34,8 @@ Rectangle {
         width: parent.width - 2 * Theme.homeTilePadding
         height: Theme.weatherNowHeight
         spacing: Theme.homeSectionGap
+        // An old reading stays readable, dimmed.
+        opacity: Weather.stale ? Theme.busyOpacity : 1
 
         WeatherIcon {
             anchors.verticalCenter: parent.verticalCenter
@@ -68,7 +70,7 @@ Rectangle {
 
             Text {
                 objectName: "weatherFeelsLike"
-                text: Weather.ready ? "Voelt als " + tile.degrees(Weather.apparent) + (Weather.place !== "" ? " · " + Weather.place : "") : ""
+                text: Weather.ready ? "Feels like " + tile.degrees(Weather.apparent) : ""
                 color: Colors.foregroundVariant
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.secondaryFontSize
@@ -99,6 +101,7 @@ Rectangle {
         y: now.y + now.height + 2 * Theme.homeSectionGap + Theme.segmentedHeight
         width: parent.width - 2 * Theme.homeTilePadding
         height: Theme.weatherCardHeight
+        opacity: Weather.stale ? Theme.busyOpacity : 1
 
         CardRow {
             objectName: "hourlyCards"

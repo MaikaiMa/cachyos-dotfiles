@@ -16,6 +16,14 @@ Rectangle {
     implicitHeight: Theme.notificationActionHeight
     radius: height / 2
     color: pointer.containsMouse ? Qt.tint(baseColor, Qt.alpha(Colors.primary, 0.16)) : baseColor
+    activeFocusOnTab: true
+
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            event.accepted = true;
+            pill.activated();
+        }
+    }
 
     Behavior on color {
         ColorAnimation {
@@ -38,6 +46,16 @@ Rectangle {
         font.weight: Theme.fontWeight
     }
 
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -3
+        radius: height / 2
+        color: "transparent"
+        border.width: 2
+        border.color: Colors.primary
+        visible: pill.activeFocus
+    }
+
     MouseArea {
         id: pointer
 
@@ -49,4 +67,5 @@ Rectangle {
 
     Accessible.role: Accessible.Button
     Accessible.name: pill.label
+    Accessible.onPressAction: pill.activated()
 }

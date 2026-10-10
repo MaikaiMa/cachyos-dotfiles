@@ -238,19 +238,16 @@ Singleton {
         ports = next;
     }
 
+    // Ports belong to sinks and sources; application streams come and go
+    // without touching them, so only a change in the device set re-reads.
+    readonly property string deviceNames: sinks.concat(sources).map(node => node.name).sort().join("\n")
+
     Component.onCompleted: readPorts()
     onPanelOpenChanged: {
         if (panelOpen)
             readPorts();
     }
-
-    Connections {
-        target: Pipewire.nodes
-
-        function onValuesChanged() {
-            root.readPorts();
-        }
-    }
+    onDeviceNamesChanged: portDebounce.restart()
 
     // Both lists in one run, separated by a line pactl never prints.
     Process {

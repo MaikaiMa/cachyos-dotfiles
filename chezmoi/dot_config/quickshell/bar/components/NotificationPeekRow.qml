@@ -299,6 +299,8 @@ Item {
     }
 
     Item {
+        id: dismissButton
+
         objectName: "dismiss"
         x: parent.width - Theme.notificationPeekDismissInset - (Theme.iconSize + Theme.notificationPeekDismissHit) / 2
         y: Theme.notificationPeekDismissInset - (Theme.notificationPeekDismissHit - Theme.iconSize) / 2
@@ -307,6 +309,14 @@ Item {
         opacity: row.dismissShown ? 1 : 0
         visible: opacity > 0
         enabled: row.dismissShown
+        activeFocusOnTab: row.dismissShown
+
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                event.accepted = true;
+                row.dismiss();
+            }
+        }
 
         Behavior on opacity {
             NumberAnimation {
@@ -337,8 +347,19 @@ Item {
             onClicked: row.dismiss()
         }
 
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: height / 2
+            color: "transparent"
+            border.width: 2
+            border.color: Colors.primary
+            visible: dismissButton.activeFocus
+        }
+
         Accessible.role: Accessible.Button
         Accessible.name: "Dismiss " + row.summaryText
+        Accessible.onPressAction: row.dismiss()
     }
 
     Rectangle {

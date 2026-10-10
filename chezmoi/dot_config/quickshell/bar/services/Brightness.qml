@@ -14,6 +14,13 @@ Singleton {
     property int percentage: -1
     property string device: ""
     readonly property bool available: percentage >= 0
+    // Only the Settings and Display panels show the level; the keys go through set().
+    readonly property bool panelShown: Shell.centreState === "settings" || Shell.centreState === "display"
+
+    onPanelShownChanged: {
+        if (panelShown)
+            refresh();
+    }
 
     function refresh() {
         reader.running = true;
@@ -80,11 +87,11 @@ Singleton {
         }
     }
 
-    // Brightness keys and DMS change it behind our back.
+    // DMS and other tools change it behind our back.
     Timer {
         interval: 5000
         repeat: true
-        running: true
+        running: root.panelShown
         onTriggered: root.refresh()
     }
 }

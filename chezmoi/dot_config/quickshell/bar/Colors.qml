@@ -104,16 +104,25 @@ Singleton {
 
     // The last parsed file; it holds a colour set for both modes.
     property var file: ({})
+    // The mode DMS last applied, from the file; unlike `dark` no preview moves it.
+    readonly property string mode: file.mode === "light" ? "light" : "dark"
 
+    // A read can catch DMS mid-write; a palette once loaded stays until the
+    // next good read, the fallbacks are only for a file that never parsed.
     function parse(text: string) {
+        let parsed;
         try {
-            file = JSON.parse(text);
-            select(file.mode === "light" ? "light" : "dark");
+            parsed = JSON.parse(text);
+            if (!parsed || typeof parsed !== "object")
+                throw new Error("not an object");
         } catch (error) {
             console.warn("Colors: cannot parse " + colorsFile.path + ": " + error);
-            file = ({});
-            scheme = ({});
+            if (!file.colors)
+                scheme = ({});
+            return;
         }
+        file = parsed;
+        select(file.mode === "light" ? "light" : "dark");
     }
 
     function select(mode: string) {

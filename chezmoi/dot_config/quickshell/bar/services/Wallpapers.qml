@@ -21,12 +21,20 @@ Singleton {
     property string current: ""
     property bool loading: false
 
+    // The folder is known only once the cache has answered; that answer starts
+    // the lister.
     function refresh(screen: string) {
+        loading = true;
         cache.reload();
+        readCurrent(screen);
+    }
+
+    // Only for a refresh; the cache's own first load at start lists nothing.
+    function list() {
+        if (!loading)
+            return;
         lister.running = false;
         lister.running = true;
-        loading = true;
-        readCurrent(screen);
     }
 
     function readCurrent(screen: string) {
@@ -61,8 +69,12 @@ Singleton {
             } catch (error) {
                 root.folder = root.fallbackFolder;
             }
+            root.list();
         }
-        onLoadFailed: root.folder = root.fallbackFolder
+        onLoadFailed: {
+            root.folder = root.fallbackFolder;
+            root.list();
+        }
     }
 
     // The same filter as DMS's picker: one level, symlinks followed, image types only.

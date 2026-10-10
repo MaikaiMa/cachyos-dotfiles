@@ -57,17 +57,6 @@ Item {
         return hours < 24 ? hours + " h ago" : Math.floor(hours / 24) + " d ago";
     }
 
-    // Matches the patterns system-update marks fragile.
-    function reason(name: string): string {
-        if (name.startsWith("linux-"))
-            return "kernel: reboot needed";
-        if (name === "quickshell" || name.startsWith("dms-shell"))
-            return "shell: restarts the bar";
-        if (name.startsWith("greetd"))
-            return "greeter: re-sync needed";
-        return "needs a reboot";
-    }
-
     Timer {
         interval: 30000
         repeat: true
@@ -113,7 +102,7 @@ Item {
                 height: Theme.updatesFragileRowHeight
                 item: modelData
                 fragile: true
-                reason: panel.reason(modelData.name)
+                reason: modelData.reason
             }
         }
     }

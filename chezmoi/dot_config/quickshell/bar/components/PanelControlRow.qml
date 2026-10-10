@@ -199,6 +199,7 @@ Item {
             Behavior on color {
                 ColorAnimation {
                     duration: Motion.crossfadeDuration
+                    easing.type: Motion.crossfadeEasing
                 }
             }
 

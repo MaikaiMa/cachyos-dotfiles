@@ -17,31 +17,28 @@ Singleton {
 
     property real latitude: NaN
     property real longitude: NaN
-    // geoclue, cache or default.
-    property string locationSource: ""
-    // where-am-i only names its source (for instance "GeoIP"), not a place, so this stays empty
-    // until a reverse geocoder is added.
-    property string place: ""
 
     property bool ready: false
+    // The last fetch failed; the previous reading, if any, stays.
+    property bool failed: false
     property date updated
+    // The reading is more than staleAfter old, after a night offline for instance.
+    readonly property real staleAfter: 60 * 60 * 1000
+    readonly property bool stale: ready && internal.now - updated.getTime() > staleAfter
     property real temperature: 0
     property real apparent: 0
     property int code: -1
     property bool isDay: true
     readonly property string conditionText: describe(code)
     readonly property string iconName: iconFor(code, isDay)
-    property real todayMax: 0
-    property real todayMin: 0
-    // Local time strings, "2026-10-04T07:41".
-    property string sunrise: ""
-    property string sunset: ""
-    // Next 5 hours: {time ("15:00"), temperature, code, iconName, precipitationProbability}.
+    // Next 5 hours: {time ("15:00"), temperature, iconName}.
     property var hourly: []
-    // Next 5 days after today: {date ("2026-10-05"), max, min, code, iconName, precipitationProbability, sunrise, sunset}.
+    // Next 5 days after today: {date ("2026-10-05"), max, min, iconName}.
     property var daily: []
 
-    property int refreshCount: 0
+    readonly property int fetchInterval: 15 * 60 * 1000
+    readonly property int retryFirst: 60 * 1000
+    readonly property int requestTimeout: 20 * 1000
 
     // WMO weather interpretation codes, as Open-Meteo documents them.
     function describe(value: int): string {
@@ -118,7 +115,7 @@ Singleton {
     function useLocation(lat: real, lon: real, source: string) {
         latitude = lat;
         longitude = lon;
-        locationSource = source;
+        internal.locationSource = source;
     }
 
     function lastNumber(text: string, label: string): real {
@@ -157,7 +154,7 @@ Singleton {
     }
 
     function parseCache(text: string) {
-        if (locationSource === "geoclue")
+        if (internal.locationSource === "geoclue")
             return;
         try {
             const cached = JSON.parse(text);
@@ -170,34 +167,55 @@ Singleton {
         }
     }
 
+    // A newer fetch replaces one still running; only the current request may
+    // report, so an aborted one cannot count as a failure.
     function fetch() {
         if (isNaN(latitude))
             return;
-        const url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude.toFixed(2) + "&longitude=" + longitude.toFixed(2) + "&current=temperature_2m,apparent_temperature,weather_code,is_day" + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" + "&timezone=auto&forecast_days=6&forecast_hours=8";
+        const url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude.toFixed(2) + "&longitude=" + longitude.toFixed(2) + "&current=temperature_2m,apparent_temperature,weather_code,is_day" + "&hourly=temperature_2m,weather_code,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min" + "&timezone=auto&forecast_days=6&forecast_hours=8";
         const request = new XMLHttpRequest();
+        const previous = internal.request;
+        internal.request = request;
+        if (previous)
+            previous.abort();
         request.onreadystatechange = () => {
-            if (request.readyState !== XMLHttpRequest.DONE)
+            if (request.readyState !== XMLHttpRequest.DONE || internal.request !== request)
                 return;
+            internal.request = null;
+            timeout.stop();
             if (request.status !== 200) {
-                console.warn("Weather: Open-Meteo answered " + request.status);
+                fetchFailed("Open-Meteo answered " + request.status);
                 return;
             }
             try {
                 apply(JSON.parse(request.responseText));
             } catch (error) {
-                console.warn("Weather: cannot read the Open-Meteo answer: " + error);
+                fetchFailed("cannot read the Open-Meteo answer: " + error);
+                return;
             }
+            failed = false;
+            internal.retryDelay = retryFirst;
+            retry.stop();
         };
         request.open("GET", url);
         request.send();
+        timeout.restart();
     }
 
+    // Retries after a minute, doubling up to the regular interval.
+    function fetchFailed(reason: string) {
+        console.warn("Weather: " + reason + "; retrying in " + Math.round(internal.retryDelay / 1000) + " s");
+        failed = true;
+        retry.interval = internal.retryDelay;
+        retry.restart();
+        internal.retryDelay = Math.min(fetchInterval, internal.retryDelay * 2);
+    }
+
+    // Everything is read first, so a malformed answer changes nothing.
     function apply(data: var) {
         const current = data.current;
-        temperature = current.temperature_2m;
-        apparent = current.apparent_temperature;
-        code = current.weather_code;
-        isDay = current.is_day === 1;
+        if (typeof current.temperature_2m !== "number")
+            throw new Error("no current temperature");
 
         const hours = data.hourly;
         const nextHours = [];
@@ -207,47 +225,97 @@ Singleton {
             nextHours.push({
                 time: hours.time[i].slice(11, 16),
                 temperature: hours.temperature_2m[i],
-                code: hours.weather_code[i],
-                iconName: iconFor(hours.weather_code[i], hours.is_day[i] === 1),
-                precipitationProbability: hours.precipitation_probability[i] ?? 0
+                iconName: iconFor(hours.weather_code[i], hours.is_day[i] === 1)
             });
         }
-        hourly = nextHours;
 
         const days = data.daily;
-        todayMax = days.temperature_2m_max[0];
-        todayMin = days.temperature_2m_min[0];
-        sunrise = days.sunrise[0];
-        sunset = days.sunset[0];
         const nextDays = [];
         for (let i = 1; i < days.time.length && nextDays.length < 5; i++)
             nextDays.push({
                 date: days.time[i],
                 max: days.temperature_2m_max[i],
                 min: days.temperature_2m_min[i],
-                code: days.weather_code[i],
-                iconName: iconFor(days.weather_code[i], true),
-                precipitationProbability: days.precipitation_probability_max[i] ?? 0,
-                sunrise: days.sunrise[i],
-                sunset: days.sunset[i]
+                iconName: iconFor(days.weather_code[i], true)
             });
+
+        temperature = current.temperature_2m;
+        apparent = current.apparent_temperature;
+        code = current.weather_code;
+        isDay = current.is_day === 1;
+        hourly = nextHours;
         daily = nextDays;
         updated = new Date();
+        internal.now = Date.now();
         ready = true;
     }
 
     Component.onCompleted: locate()
 
-    // Every 15 minutes; the location is looked up again every hour.
+    QtObject {
+        id: internal
+
+        // geoclue, cache or default.
+        property string locationSource: ""
+        property var request: null
+        property int retryDelay: root.retryFirst
+        property real now: Date.now()
+    }
+
     Timer {
-        interval: 15 * 60 * 1000
+        interval: root.fetchInterval
+        repeat: true
+        running: true
+        onTriggered: root.fetch()
+    }
+
+    Timer {
+        interval: 60 * 60 * 1000
+        repeat: true
+        running: true
+        onTriggered: root.locate()
+    }
+
+    Timer {
+        id: retry
+
+        onTriggered: root.fetch()
+    }
+
+    Timer {
+        id: timeout
+
+        interval: root.requestTimeout
+        onTriggered: {
+            const request = internal.request;
+            internal.request = null;
+            root.fetchFailed("no answer from Open-Meteo in " + Math.round(root.requestTimeout / 1000) + " s");
+            if (request)
+                request.abort();
+        }
+    }
+
+    // A minute clock for `stale`; timers stand still during suspend, so a jump
+    // in wall-clock time is a resume and fetches at once.
+    Timer {
+        interval: 60 * 1000
         repeat: true
         running: true
         onTriggered: {
-            root.refreshCount++;
-            if (root.refreshCount % 4 === 0)
-                root.locate();
-            root.fetch();
+            const now = Date.now();
+            const resumed = now - internal.now > 3 * interval;
+            internal.now = now;
+            if (resumed)
+                root.fetch();
+        }
+    }
+
+    Connections {
+        target: Network
+
+        function onConnectedChanged() {
+            if (Network.connected && (root.failed || root.stale || !root.ready))
+                root.fetch();
         }
     }
 

@@ -60,7 +60,7 @@ contract records since 2026-10-08.
 
 Step 4 made Home real, 560 px wide and 436 px tall: a narrow and a wide
 column on the 12 px tile grid. Time (hours over minutes, "zo 04 okt") and
-Weather (current conditions, "Voelt als", an Hourly / Daily segmented
+Weather (current conditions, "Feels like", an Hourly / Daily segmented
 control that cross-fades five forecast cards) on top; Performance (CPU
 load, CPU temperature on a 30 to 95 °C scale, memory as thin vertical bars)
 and Power (percentage, state, a read-only charge capsule that turns red
@@ -272,8 +272,9 @@ pieces, and moved the shortcuts (built 2026-10-05).
   the wallpaper), the mode `dms/look.json` records: it sets the key to true
   and re-renders by setting the current wallpaper again. The calls run one
   after another, each after the previous one has exited; the control slides
-  to the choice at once and follows DMS again once it has settled (polls at
-  300 ms, 1 s and 2.5 s after the last call). Light and Dark get one
+  to the choice at once and follows DMS again once it has settled (2.5 s
+  after the last call; then the mode comes from `dms-colors.json` and smart
+  mode and the scheme are read once). Light and Dark get one
   screen-wide crossfade: 300 ms after the click (`Theme.themeCrossfadeLead`),
   once the control has slid and the bar has recoloured, the bar makes the
   theme call; DMS freezes the screen through Niri with a 0 ms delay, which
@@ -506,7 +507,7 @@ Also on 2026-10-07 the three Settings capsules got panels of their own.
 The `dms ipc` calls that remain are the ones DMS owns: `lock lock` (Lock
 button, `Mod+Alt+L`), `settings openWith` (the settings button of the
 Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
-`theme getMode` and `settings get|set` for `matugenScheme` and
+`settings get|set` for `matugenScheme` and
 `matugenSmartMode` (Theme panel), `wallpaper get|set|getFor|setFor`
 (Wallpaper panel and the scheme re-render), `inhibit status|toggle` and
 `night status|toggle|getDayTemp|getSchedule|setTargetTemp` (Display panel); plus the fallbacks of the media keys (see "Shortcuts") and
@@ -722,12 +723,16 @@ with a `FileView`, watches it for changes, and exposes the colours of the
 active mode (`primary`, `primaryForeground`, `primaryContainer`, `secondary`,
 `tertiary`, `surface`,
 `surfaceContainer`, `surfaceContainerHigh`, `foreground`, `foregroundVariant`,
-`outline`, `error`) and `dark`. The colours are assigned, not bound, so a new
+`outline`, `error`), `dark` (the shown palette, which `preview` moves) and
+`mode` (the file's own mode, which `Theming.mode` follows). The colours are
+assigned, not bound, so a new
 palette glides in over `Motion.paletteDuration` (300 ms, 0 under reduce
 motion) instead of cutting. Every colour falls back to a Material dark
 default when the file or the key is missing, and a missing file is retried
 every five seconds, so the bar renders on a fresh machine and picks up the
-palette once DMS has written it.
+palette once DMS has written it. A read that does not parse (DMS caught
+mid-write) only warns and keeps the loaded palette; the fallbacks apply
+only while nothing has loaded yet.
 
 The font is Inter Variable from the `inter-font` package, the same family
 DMS uses.
@@ -1150,7 +1155,7 @@ owns.
 | Workspaces, windows, focus | Niri's own socket (`$NIRI_SOCKET`) through `Quickshell.Io.Socket`, event stream | No `niri msg` subprocess. App icons through `DesktopEntries` with an override map for web apps without a desktop file. |
 | Battery, health, capacity, time to empty, power profile | `Quickshell.Services.UPower` | Health and capacity are exposed directly. |
 | Volume, microphone, mute | `Quickshell.Services.Pipewire` | |
-| Outputs, inputs, per-app volume, mic level | `Quickshell.Services.Pipewire` (`preferredDefaultAudioSink/Source`, `PwObjectTracker`, `PwNodePeakMonitor`), port names from `pactl -f json list sinks` and `sources` | Quickshell exposes no ports: the friendly name ("Speakers", "Headphones", "Internal Microphone") is the active port's description, read at start, on every node change, when the Sound panel opens and, while it is open, on `pactl subscribe` sink, source or card events (a jack plug moves the port without a node change). Without pactl: Bluetooth by device name, HDMI as "HDMI / DisplayPort", the analog card as "Speakers" or "Microphone". `pactl` is `libpulse`, a dependency of `cava`. Playback streams are bound with `PwObjectTracker` only while the panel is open; the level monitor runs only then too, and its stream flags itself `stream.monitor`, so it is no microphone use for `Privacy`. |
+| Outputs, inputs, per-app volume, mic level | `Quickshell.Services.Pipewire` (`preferredDefaultAudioSink/Source`, `PwObjectTracker`, `PwNodePeakMonitor`), port names from `pactl -f json list sinks` and `sources` | Quickshell exposes no ports: the friendly name ("Speakers", "Headphones", "Internal Microphone") is the active port's description, read at start, when the set of sinks and sources changes (300 ms debounce; application streams do not count), when the Sound panel opens and, while it is open, on `pactl subscribe` sink, source or card events (a jack plug moves the port without a node change). Without pactl: Bluetooth by device name, HDMI as "HDMI / DisplayPort", the analog card as "Speakers" or "Microphone". `pactl` is `libpulse`, a dependency of `cava`. Playback streams are bound with `PwObjectTracker` only while the panel is open; the level monitor runs only then too, and its stream flags itself `stream.monitor`, so it is no microphone use for `Privacy`. |
 | Brightness | `brightnessctl` | No ambient light sensor on the Z13, so the icon cycles 25, 50, 75, 100. |
 | Night temperature and schedule | `dms ipc call night status`, `getDayTemp`, `getSchedule`, `setTargetTemp` | DMS 1.6.2 accepts 1000 to 6000 K, rounds to 500 K and refuses a value above the day temperature (read in its shipped `DisplayService.qml`); the schedule has no IPC setter, only the settings tab `display_gamma`. Read when the Display panel opens and after each write. |
 | Keyboard backlight | `brightnessctl -d asus::kbd_backlight` | 0 to 3; read when the Display panel opens and after a write. |
@@ -1214,9 +1219,11 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   (PipeWire's configured default), `appGroup(key)`, `groupVolume(group)`
   (the loudest member), `groupMuted(group)`, `setGroupVolume(group, v)`
   and `toggleGroupMute(group)` (every member), `readPorts()`.
-- `Brightness`: `percentage` (-1 until read), `device`, `available`;
+- `Brightness`: `percentage` (-1 until read), `device`, `available`,
+  `panelShown` (`Shell.centreState` is `settings` or `display`);
   `set(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
-  backlight class every 5 s and after each write. While a write runs, only
+  backlight class at start, when the Settings or Display panel opens, every
+  5 s while one of them is open, and after each write. While a write runs, only
   the newest `set` waits and follows it, so a slider drag never loses its
   last value. `set` moves `percentage` at once, so key repeats step from
   the new value and the OSD shows it.
@@ -1230,14 +1237,17 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `refresh()` (run when the panel opens). Night light on and off stay in
   `Dms`.
 - `Network`: `wifiEnabled`, `connected` (any device), `wifiConnected`,
-  `ssid`, `strength`, `weak` (under 40), `networks` (Quickshell
+  `ssid`, `strength`, `weak` (under 40), `statusIcon` (the one Wi-Fi glyph
+  for the Settings tile and the right island: `wifi_off`, the 0-bar glyph
+  when disconnected, else `signalIcon` of the active network), `networks` (Quickshell
   `WifiNetwork`s, one per SSID, ordered for the panel), `scannerWanted`
   (`Shell.centreState` is `wifi`, Wi-Fi is on and a device exists; drives
   the module's `scannerEnabled`), `scanning` (its first 4 s), `errors` (per
   SSID), `wrongPassword`, `lastAttempt`; signal `failed(ssid, kind)`;
   `toggleWifi()`, `attemptConnect(network)`, `attemptPassword(network,
   password)`, `attemptForget(network)`, `reportFailure(network, reason)`
-  (an `Instantiator` watches every listed network), `setError(ssid, text)`,
+  (an `Instantiator` watches every network of the Wi-Fi device, hidden and
+  duplicate SSIDs included), `setError(ssid, text)`,
   the raw `setScanning(value)`, `connectTo`, `connectWithPassword`,
   `disconnectFrom`, `forget`, and the row helpers `signalIcon`, `secured`,
   `needsPassword`, `detailText`, `failureText`.
@@ -1260,15 +1270,16 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   (a tab id from `dms ipc call settings tabs`; it runs
   `~/.local/bin/dms-settings`, which nudges DMS when its settings window
   does not map, see docs/dms.md Known limits), `refresh()`.
-- `Theming`: the theme state DMS owns. `mode` (`dark` or `light`, polled
-  every 10 s), `smartMode` (`matugenSmartMode`, shown as Auto) and `scheme`
+- `Theming`: the theme state DMS owns. `mode` (`dark` or `light`: bound to
+  `Colors.mode` while not busy, the optimistic choice while busy; no poll),
+  `smartMode` (`matugenSmartMode`, shown as Auto) and `scheme`
   (`matugenScheme`), read at start, when the Theme panel opens and after
   each action; `schemes` (value and label of every scheme DMS accepts);
   `gtkThemeLight`, `gtkThemeDark` (the theme names written on a switch);
   `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued and run
   one step at a time; see the Theme panel above), `busy` (true while a
-  queued action runs or its follow-up polls at 300 ms, 1 s and 2.5 s are
-  pending; `settleDuration` is the last of them), `pendingMode`, the
+  queued action runs and for 2.5 s after the last call, while DMS renders;
+  then `refresh()` runs once), `pendingMode`, the
   `reported` signal (a poll answered while nothing is pending; the panel
   then drops its optimistic choice) and `refresh()`. Light and Dark also
   start the Niri screen transition, see the Theme panel above. The colours
@@ -1303,8 +1314,14 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `plainText(text)`, `oneLine(text)`. While `focusedAlertIds` is not empty
   and stays the same for `Motion.alertClearDelay`, they are marked seen. A
   sender's `replaces_id` arrives as changed properties on the same
-  Quickshell object; the entry is rewritten (new timestamp, unseen) and
-  `replaced` fires, but no new peek starts. A notification the sender
+  Quickshell object. A new summary or urgency rewrites the entry as new
+  (new timestamp, unseen, back on top); a change of only the body, image
+  or actions, as progress senders make every second, updates the entry in
+  place and keeps its timestamp and seen mark. Either way `replaced`
+  fires, but no new peek starts. A transient notification that does not
+  peek on arrival (peeks off, do not disturb, bar hidden or locked, a
+  panel open or a fullscreen window) is expired at once. The `now` clock
+  that ages alerts out ticks every 30 s only while alerts exist. A notification the sender
   closes stays in the list as history; one that falls out of the 200
   entries or 7 days expires. After a config reload the server keeps its
   notifications (`keepOnReload`) and they find their entries again by
@@ -1321,7 +1338,8 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `raise()` (MPRIS Raise when the player can, else Niri focus on the window
   whose app id is the player's desktop entry or identity, case-insensitive;
   false when neither works). playerctld's mirror player is left out of
-  `players`.
+  `players`. `position` is asked from the player every second only while
+  something plays and the Player panel is open.
 - `Settings`: the bar's own runtime switches, kept in
   `$XDG_STATE_HOME/dotfiles-bar/settings.json` (defaults when the file is
   missing or unreadable): `waveEnabled`; `setWaveEnabled(enabled)`.
@@ -1336,18 +1354,24 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   its config to `$XDG_RUNTIME_DIR/dotfiles-bar/cava.conf`.
 - `Tray`: `items`, `count`; `activate(item)`, `menuFor(item)` (a handle for
   `QsMenuOpener`).
-- `Weather`: `ready`, `temperature`, `apparent`, `code`, `conditionText`,
+- `Weather`: `ready`, `failed` (the last fetch failed; the previous
+  reading stays), `stale` (the reading is older than an hour), `updated`,
+  `temperature`, `apparent`, `code`, `conditionText`,
   `iconName` (`clear-day`, `clear-night`, `partly-cloudy-day`,
   `partly-cloudy-night`, `cloudy`, `fog`, `drizzle`, `rain`, `snow`,
-  `thunderstorm`), `todayMax`, `todayMin`, `sunrise`, `sunset`, `hourly`
-  (next 5 hours), `daily` (the 5 days after today), `place`,
-  `locationSource`, `updated`; `refresh()`. Fetches every 15 minutes with
-  XMLHttpRequest and looks up the location every hour. The location comes
+  `thunderstorm`), `hourly` (next 5 hours: `time`, `temperature`,
+  `iconName`), `daily` (the 5 days after today: `date`, `max`, `min`,
+  `iconName`); `refresh()`. Fetches every 15 minutes with XMLHttpRequest
+  (aborted after 20 s) and looks up the location every hour. A failed
+  fetch is retried after 60 s, doubling up to 15 minutes; a fetch also
+  runs when a network connection returns while the reading is failed or
+  stale, and after a resume (a jump in wall-clock time). An answer is read
+  completely before anything is assigned, so a malformed one changes
+  nothing. A stale reading shows "–" in the pill and Detail and is dimmed
+  (`Theme.busyOpacity`) in the Home tile. The location comes
   from `where-am-i -t 10`, else the last fix in
   `$XDG_STATE_HOME/dotfiles-bar/weather-location.json`, else Nijmegen
-  (51.84, 5.86) with a warning. `place` stays empty: where-am-i names its
-  source (GeoIP, Wi-Fi), not a place, and Open-Meteo has no reverse
-  geocoding.
+  (51.84, 5.86) with a warning.
 - `System`: `active` (bound by `Shell` to the `home` state), `cpu`, `temp` (°C, NaN
   without k10temp), `memory`, `memoryUsedGiB`, `memoryTotalGiB`. Samples
   every 2 s only while `active` is true.
@@ -1355,7 +1379,9 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `poweroff`: closes the panel, then runs the command once the island has
   shrunk. `locked`: logind's `LockedHint` on the user's display session,
   read once and then followed by one `gdbus monitor` process (restarted
-  after 5 s when it exits).
+  after 5 s when it exits). An exit resets `locked` to false, so a dead
+  watcher cannot hold peeks back; three quick exits in a row are warned
+  about once.
 - `Tablet`: `detached` (from `tablet-mode watch`), `keyboardVisible` (from
   `osk watch`, which runs only while detached), `rotationLocked` (the state
   file, watched and read again when Settings opens); `toggleKeyboard()`
@@ -1364,7 +1390,8 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   plugin did. A helper that exits is started again after 5 s.
 - `Wallpapers`: `folder`, `files` (absolute paths, at most 200, sorted by
   name), `current`, `loading`; `refresh(screen)` (called when the Wallpaper
-  panel opens), `apply(path, screen)`, `fileName(path)`.
+  panel opens; it reloads DMS's `cache.json` and lists the folder that
+  answer names), `apply(path, screen)`, `fileName(path)`.
 - `Privacy`: `micApps`, `cameraApps`, `shareApps` (deduplicated display
   names: `application.name`, else `media.name`, the node description or
   name; for direct camera holders the process name), `micActive`,
@@ -1376,7 +1403,8 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   its stream open (a paused link) still counts. Holders owned by another user
   (root) are not readable and do not count.
 - `Updates`: `items` (fragile first: `source`, `name`, `oldVersion`,
-  `newVersion`, `fragile`), `count`, `fragileCount`, `checking`, `ready`,
+  `newVersion`, `fragile`, `reason`: the helper's one-line text for a
+  fragile package, empty otherwise), `count`, `fragileCount`, `checking`, `ready`,
   `lastChecked`, `upgrading`, `reportPath`, `reportAvailable`; `refresh()`,
   `upgradeAll()` (the full helper in a terminal, see step 5 above),
   `openReport()`. Runs `~/.local/bin/system-update --pending` every 30

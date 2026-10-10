@@ -12,7 +12,7 @@ import ".."
 Singleton {
     id: root
 
-    // dark or light.
+    // dark or light: the mode in dms-colors.json, the optimistic choice while busy.
     property string mode: "dark"
     // matugenSmartMode: matugen picks light or dark from the wallpaper. The Theme
     // panel shows it as Auto; DMS turns it off on every manual light/dark switch.
@@ -63,12 +63,9 @@ Singleton {
             label: "Smart"
         }
     ]
-    // A theme or scheme change is running or still settling (re-polls at
-    // 300 ms, 1 s and 2.5 s after it); the Theme panel keeps its own choice
-    // shown until then.
+    // A theme or scheme change is running or DMS is still rendering it (2.5 s
+    // after the last call); the Theme panel keeps its own choice shown until then.
     property bool busy: false
-    // How long busy lasts after the last call has exited.
-    readonly property int settleDuration: settle.delays[settle.delays.length - 1]
     // Waiting actions, each a list of steps run in order: a `dms ipc call`
     // argument list, a `gsettings` command, "rerender", "transition" (the Niri
     // screen transition) or "wait" (a pause of Theme.themeNudgeDuration).
@@ -110,10 +107,10 @@ Singleton {
             console.info("Theming: " + wanted + " is already pending, ignored");
             return;
         }
+        busy = true;
         pendingMode = wanted;
         mode = wanted;
         smartMode = false;
-        busy = true;
         settle.stop();
         lead.wanted = wanted;
         lead.restart();
@@ -149,14 +146,13 @@ Singleton {
         queue = queue.concat([steps]);
         busy = true;
         settle.stop();
-        settle.step = settle.delays.length;
         if (!runner.running)
             runNext();
     }
 
     function runNext() {
         if (queue.length === 0) {
-            settle.begin();
+            settle.restart();
             return;
         }
         const steps = queue[0];
@@ -179,20 +175,22 @@ Singleton {
         runner.running = true;
     }
 
-    // The mode every 10 s; smart mode and the scheme when the Theme panel opens.
+    // Smart mode and the scheme; the mode needs no poll, Colors reads it from
+    // the file DMS rewrites on every switch.
     function refresh() {
         schemeStatus.running = true;
         smartStatus.running = true;
-        modeStatus.running = true;
     }
 
     Component.onCompleted: refresh()
 
-    Timer {
-        interval: 10000
-        repeat: true
-        running: true
-        onTriggered: modeStatus.running = true
+    // RestoreNone: going busy must keep the optimistic mode setMode assigns.
+    Binding {
+        target: root
+        property: "mode"
+        value: Colors.mode
+        when: !root.busy
+        restoreMode: Binding.RestoreNone
     }
 
     // The call waits until the control has slid and the bar has recoloured
@@ -249,34 +247,15 @@ Singleton {
         }
     }
 
-    // After an action DMS renders for a few seconds; poll at these delays
-    // instead of waiting for the 10 s poll.
+    // After an action DMS renders for a few seconds; until then it may still
+    // report the old state, so the optimistic values stay and nothing is polled.
     Timer {
         id: settle
 
-        readonly property var delays: [300, 1000, 2500]
-        property int step: delays.length
-        property int elapsed: 0
-
-        function begin() {
-            step = 0;
-            elapsed = 0;
-            interval = delays[0];
-            restart();
-        }
-
-        // Only the last poll's answers are adopted: until then DMS may still
-        // report the old mode, and the optimistic values stay.
+        interval: 2500
         onTriggered: {
-            elapsed = delays[step];
-            step = step + 1;
-            if (step < delays.length) {
-                interval = delays[step] - elapsed;
-                restart();
-            } else {
-                root.busy = false;
-                root.pendingMode = "";
-            }
+            root.busy = false;
+            root.pendingMode = "";
             root.refresh();
         }
     }
@@ -311,23 +290,6 @@ Singleton {
                 if (root.busy)
                     return;
                 root.smartMode = text.trim() === "true";
-                root.reported();
-            }
-        }
-    }
-
-    // "dark" or "light".
-    Process {
-        id: modeStatus
-
-        command: ["dms", "ipc", "call", "theme", "getMode"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (root.busy)
-                    return;
-                const answer = text.trim();
-                if (answer === "dark" || answer === "light")
-                    root.mode = answer;
                 root.reported();
             }
         }

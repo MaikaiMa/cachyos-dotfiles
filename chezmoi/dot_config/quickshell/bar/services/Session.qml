@@ -48,8 +48,15 @@ Singleton {
             locked = match[1] === "true";
     }
 
+    // Without a watcher nothing would ever clear `locked`, and a stale true
+    // holds every peek back. A watcher that keeps dying at once (no Display
+    // session, a TTY login) is reported once, then retried quietly.
     Process {
         id: lockWatch
+
+        property real startedAt: 0
+        property int quickExits: 0
+        property bool warned: false
 
         command: ["sh", "-c", root.lockWatchScript]
         running: true
@@ -57,8 +64,17 @@ Singleton {
             onRead: data => root.readLockLine(data)
         }
         onRunningChanged: {
-            if (!running)
-                lockRetry.start();
+            if (running) {
+                startedAt = Date.now();
+                return;
+            }
+            root.locked = false;
+            quickExits = Date.now() - startedAt < 2 * lockRetry.interval ? quickExits + 1 : 0;
+            if (quickExits >= 3 && !warned) {
+                warned = true;
+                console.warn("Session: the logind lock watcher keeps exiting; the lock state is unknown, peeks are not held back");
+            }
+            lockRetry.start();
         }
     }
 

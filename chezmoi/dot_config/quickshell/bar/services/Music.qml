@@ -192,11 +192,13 @@ Singleton {
         rescaleSize: 64
     }
 
-    // MPRIS does not stream the position; ask for it while something plays.
+    // MPRIS does not stream the position; ask for it while something plays and
+    // the player panel, its only reader, is open.
     Timer {
         interval: 1000
         repeat: true
-        running: root.playing
+        triggeredOnStart: true
+        running: root.playing && Shell.centreState === "player"
         onTriggered: root.player.positionChanged()
     }
 }

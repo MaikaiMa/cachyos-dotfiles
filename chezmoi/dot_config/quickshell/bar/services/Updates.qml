@@ -51,19 +51,21 @@ Singleton {
         Quickshell.execDetached(["xdg-open", reportPath]);
     }
 
-    // One line per package: source<TAB>name<TAB>old<TAB>new<TAB>fragile (0 or 1).
+    // One line per package: source<TAB>name<TAB>old<TAB>new<TAB>fragile (0 or
+    // 1)<TAB>reason ("-" unless fragile). An older helper prints no reason.
     function parse(text: string) {
         const parsed = [];
         for (const line of text.split("\n")) {
             const fields = line.split("\t");
-            if (fields.length !== 5)
+            if (fields.length !== 5 && fields.length !== 6)
                 continue;
             parsed.push({
                 source: fields[0],
                 name: fields[1],
                 oldVersion: fields[2],
                 newVersion: fields[3],
-                fragile: fields[4] === "1"
+                fragile: fields[4] === "1",
+                reason: fields.length === 6 && fields[5] !== "-" ? fields[5] : ""
             });
         }
         items = parsed.filter(item => item.fragile).concat(parsed.filter(item => !item.fragile));
