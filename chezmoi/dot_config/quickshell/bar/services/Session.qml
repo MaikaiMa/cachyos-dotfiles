@@ -19,7 +19,6 @@ Singleton {
     property bool locked: false
     readonly property string lockWatchScript: "session=$(busctl --system get-property org.freedesktop.login1 /org/freedesktop/login1/user/self org.freedesktop.login1.User Display | cut -d'\"' -f4) && [ -n \"$session\" ] && busctl --system get-property org.freedesktop.login1 \"$session\" org.freedesktop.login1.Session LockedHint && exec gdbus monitor --system --dest org.freedesktop.login1 --object-path \"$session\""
 
-    readonly property var actions: ["lock", "suspend", "logout", "reboot", "poweroff"]
     readonly property var commands: ({
             lock: ["dms", "ipc", "call", "lock", "lock"],
             suspend: ["systemctl", "suspend"],

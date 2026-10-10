@@ -1,21 +1,21 @@
 .pragma library
 
-// The actions an expanded Wi-Fi or Bluetooth row offers, as NetworkRow takes
-// them: a key the panel acts on, the label, and accent or danger.
+// The actions an expanded Wi-Fi or Bluetooth row offers, as ListRow takes
+// them: an id the panel acts on, the text, and the tone (accent or danger).
 
 function forget() {
     return {
-        key: "forget",
-        label: "Forget",
-        danger: true
+        id: "forget",
+        text: "Forget",
+        tone: "danger"
     };
 }
 
 function connected() {
     return [
         {
-            key: "disconnect",
-            label: "Disconnect"
+            id: "disconnect",
+            text: "Disconnect"
         },
         forget()
     ];
@@ -24,9 +24,9 @@ function connected() {
 function saved() {
     return [
         {
-            key: "connect",
-            label: "Connect",
-            accent: true
+            id: "connect",
+            text: "Connect",
+            tone: "accent"
         },
         forget()
     ];
@@ -35,9 +35,9 @@ function saved() {
 function discovered() {
     return [
         {
-            key: "pair",
-            label: "Pair",
-            accent: true
+            id: "pair",
+            text: "Pair",
+            tone: "accent"
         }
     ];
 }

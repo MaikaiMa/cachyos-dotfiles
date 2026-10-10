@@ -30,7 +30,7 @@ Panel {
         width: panel.contentWidth
         switchName: "Night light"
         checked: Display.nightLight
-        stateText: Display.nightLight ? "On" + (Display.nightTemperature > 0 ? " · " + Display.nightTemperature + " K" : "") : "Off"
+        text: Display.nightLight ? "On" + (Display.nightTemperature > 0 ? " · " + Display.nightTemperature + " K" : "") : "Off"
         actionLabel: "Open night light settings"
         // The schedule can only be changed there.
         settingsTab: "display_gamma"
@@ -55,7 +55,7 @@ Panel {
 
                 objectName: "nightSlider"
                 width: parent.width
-                label: "Night light temperature"
+                accessibleName: "Night light temperature"
                 available: Display.nightTemperature > 0
                 muted: !Display.nightLight
                 value: Display.nightFraction(Display.nightTemperature)
@@ -81,12 +81,12 @@ Panel {
         CapsuleSlider {
             objectName: "displayBrightnessSlider"
             width: parent.width
-            label: "Brightness"
+            accessibleName: "Brightness"
             available: Brightness.available
             minimum: 1
             value: Math.max(0, Brightness.percentage)
             iconName: "light_mode"
-            onMoved: target => Brightness.set(target)
+            onMoved: target => Brightness.setPercentage(target)
             onIconClicked: Brightness.cycle()
         }
 
@@ -163,7 +163,7 @@ Panel {
             x: Theme.displayLabelWidth
             y: (Theme.sliderHeight - height) / 2
             width: levelRow.width - x
-            label: levelRow.title
+            accessibleName: levelRow.title
             trackColor: Colors.surfaceContainerHigh
             model: panel.levelLabels
             currentIndex: levelRow.level

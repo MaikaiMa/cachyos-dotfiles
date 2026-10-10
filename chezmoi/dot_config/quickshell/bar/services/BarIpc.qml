@@ -16,7 +16,7 @@ Scope {
 
     function stepBrightness(step: int) {
         if (Brightness.available)
-            Brightness.set(Brightness.percentage + step);
+            Brightness.setPercentage(Brightness.percentage + step);
         Shell.showOsd(Shell.ipcScreen(), "brightness");
     }
 

@@ -33,3 +33,9 @@
 .config/quickshell/bar/components/IslandAnimation.qml
 .config/quickshell/bar/components/NotificationActionPill.qml
 .config/quickshell/bar/services/Theming.qml
+
+# Renamed in the structure cleanup's naming pass (docs/shell.md): the island's
+# NotificationStack became islands/PeekStack.qml next to the new
+# services/NotificationStack.qml, NetworkRow became components/ListRow.qml.
+.config/quickshell/bar/islands/NotificationStack.qml
+.config/quickshell/bar/components/NetworkRow.qml

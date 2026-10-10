@@ -12,32 +12,31 @@ Item {
     property alias model: strip.model
     property alias delegate: strip.delegate
     property alias count: strip.count
-    property int selectedIndex: -1
+    // The carousel's own selection, unlike SegmentedControl's: keys, clicks
+    // and settling write it; the owner sets it through centreOn.
+    property int currentIndex: -1
     property bool adoptOnSettle: false
-    property real edgeMargin: Theme.panelPadding
-    property string label: ""
+    property string accessibleName: ""
 
     signal activated(int index)
-
-    readonly property alias strip: strip
 
     activeFocusOnTab: true
 
     Accessible.role: Accessible.List
-    Accessible.name: label
+    Accessible.name: accessibleName
 
     // The panel opens on the given card, already centred.
-    function open(index: int) {
+    function centreOn(index: int) {
         glide.stop();
-        selectedIndex = Math.max(-1, Math.min(count - 1, index));
-        reveal(selectedIndex, false);
+        currentIndex = Math.max(-1, Math.min(count - 1, index));
+        reveal(currentIndex, false);
     }
 
     function select(index: int) {
         if (count === 0)
             return;
-        selectedIndex = Math.max(0, Math.min(count - 1, index));
-        reveal(selectedIndex, true);
+        currentIndex = Math.max(0, Math.min(count - 1, index));
+        reveal(currentIndex, true);
     }
 
     function minX(): real {
@@ -77,27 +76,27 @@ Item {
             if (index >= 0)
                 return index;
         }
-        return selectedIndex;
+        return currentIndex;
     }
 
     function settle() {
         if (adoptOnSettle && count > 0)
-            selectedIndex = nearestToCentre();
+            currentIndex = nearestToCentre();
     }
 
     Keys.onPressed: event => {
         if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))
             return;
         if (event.key === Qt.Key_Left)
-            select(selectedIndex - 1);
+            select(currentIndex - 1);
         else if (event.key === Qt.Key_Right)
-            select(selectedIndex + 1);
+            select(currentIndex + 1);
         else if (event.key === Qt.Key_Home)
             select(0);
         else if (event.key === Qt.Key_End)
             select(count - 1);
-        else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) && selectedIndex >= 0)
-            activated(selectedIndex);
+        else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) && currentIndex >= 0)
+            activated(currentIndex);
         else
             return;
         event.accepted = true;
@@ -109,15 +108,15 @@ Item {
         anchors.fill: parent
         orientation: ListView.Horizontal
         spacing: Theme.carouselGap
-        leftMargin: carousel.edgeMargin
-        rightMargin: carousel.edgeMargin
+        leftMargin: Theme.panelPadding
+        rightMargin: Theme.panelPadding
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         cacheBuffer: Theme.carouselCacheBuffer
         onMovementEnded: carousel.settle()
         onCountChanged: {
-            if (carousel.selectedIndex >= 0)
-                carousel.reveal(carousel.selectedIndex, false);
+            if (carousel.currentIndex >= 0)
+                carousel.reveal(carousel.currentIndex, false);
         }
     }
 

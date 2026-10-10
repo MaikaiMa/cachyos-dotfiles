@@ -104,7 +104,7 @@ Panel {
         y: Theme.panelPadding
         width: panel.contentWidth
         hasSwitch: false
-        stateText: Audio.sink ? Audio.nodeLabel(Audio.sink) + " · " + (Audio.muted ? "muted" : Math.round(Audio.volume * 100) + "%") : "No output"
+        text: Audio.sink ? Audio.nodeLabel(Audio.sink) + " · " + (Audio.muted ? "muted" : Math.round(Audio.volume * 100) + "%") : "No output"
         actionLabel: "Open audio settings"
         settingsTab: "audio"
     }
@@ -133,7 +133,7 @@ Panel {
                 iconName: "speaker"
                 title: "Output"
 
-                delegate: NetworkRow {
+                delegate: ListRow {
                     required property string rowKey
                     readonly property var node: panel.nodeFor(Audio.sinks, rowKey)
 
@@ -151,7 +151,7 @@ Panel {
                 iconName: "mic"
                 title: "Input"
 
-                delegate: NetworkRow {
+                delegate: ListRow {
                     required property string rowKey
                     readonly property var node: panel.nodeFor(Audio.sources, rowKey)
 

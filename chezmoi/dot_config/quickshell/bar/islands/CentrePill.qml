@@ -61,8 +61,7 @@ Appear {
 
     // "Zo 04-10": Dutch short weekday with a capital, then day and month.
     function shortDate(date: date): string {
-        const day = Qt.locale("nl_NL").dayName(date.getDay(), Locale.ShortFormat);
-        return day.charAt(0).toUpperCase() + day.slice(1) + " " + Qt.formatDate(date, "dd-MM");
+        return Time.shortDay(date, true) + " " + Qt.formatDate(date, "dd-MM");
     }
 
     height: Theme.islandDetailHeight

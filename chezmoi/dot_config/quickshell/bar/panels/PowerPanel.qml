@@ -17,27 +17,27 @@ Panel {
         {
             action: "lock",
             icon: "lock",
-            label: "Lock"
+            text: "Lock"
         },
         {
             action: "suspend",
             icon: "bedtime",
-            label: "Suspend"
+            text: "Suspend"
         },
         {
             action: "logout",
             icon: "logout",
-            label: "Log out"
+            text: "Log out"
         },
         {
             action: "reboot",
             icon: "restart_alt",
-            label: "Reboot"
+            text: "Reboot"
         },
         {
             action: "poweroff",
             icon: "power_settings_new",
-            label: "Power off"
+            text: "Power off"
         }
     ]
     property int focusIndex: 0
@@ -78,7 +78,7 @@ Panel {
                 objectName: "power_" + modelData.action
                 width: Theme.powerButtonSize
                 height: Theme.powerButtonSize
-                accessibleName: modelData.label
+                accessibleName: modelData.text
 
                 onActiveFocusChanged: {
                     if (activeFocus)
@@ -127,7 +127,7 @@ Panel {
 
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: button.modelData.label
+                            text: button.modelData.text
                             secondary: true
                             color: button.current ? Colors.primaryForeground : Colors.foreground
                         }

@@ -71,12 +71,12 @@ Panel {
         y: Theme.panelPadding
         width: panel.contentWidth
         switchName: "Bluetooth"
-        checked: Bluetooth.btEnabled
+        checked: Bluetooth.bluetoothEnabled
         switchEnabled: Bluetooth.available
-        stateText: {
+        text: {
             if (!Bluetooth.available)
                 return "Unavailable";
-            if (!Bluetooth.btEnabled)
+            if (!Bluetooth.bluetoothEnabled)
                 return "Off";
             if (Bluetooth.scanning)
                 return "Scanning…";
@@ -91,7 +91,7 @@ Panel {
         actionLabel: "Open network settings"
         onToggled: Bluetooth.toggleBluetooth()
         settingsTab: "network"
-        onExtraClicked: {
+        onExtraActivated: {
             Bluetooth.openTerminal();
             Shell.close();
         }
@@ -110,14 +110,14 @@ Panel {
         errors: Bluetooth.errors
         emptyText: Bluetooth.discovering ? "Looking for devices" : "No devices"
 
-        delegate: NetworkRow {
+        delegate: ListRow {
             required property string rowKey
             readonly property var device: Bluetooth.deviceFor(rowKey)
 
             width: ListView.view.width
             iconName: device ? Bluetooth.deviceIcon(device) : "bluetooth"
             title: device ? device.name : rowKey
-            detail: device ? Bluetooth.detailText(device) : ""
+            subtitle: device ? Bluetooth.detailText(device) : ""
             highlighted: device ? device.connected : false
             expanded: list.expandedKey === rowKey
             actions: device ? panel.actionsFor(device) : []
@@ -126,11 +126,11 @@ Panel {
                 if (device)
                     panel.activate(device);
             }
-            onSecondaryClicked: {
+            onSecondaryActivated: {
                 if (device)
                     panel.activateSecondary(device);
             }
-            onActionTriggered: action => {
+            onActionActivated: action => {
                 if (device)
                     panel.act(device, action);
             }

@@ -16,7 +16,7 @@ Item {
     property string iconName: ""
     property int count: 0
     property color tint: Colors.foreground
-    property string label: ""
+    property string accessibleName: ""
     property bool takesWheel: false
 
     signal pressed
@@ -100,7 +100,7 @@ Item {
         }
 
         Accessible.role: Accessible.Button
-        Accessible.name: indicator.label
+        Accessible.name: indicator.accessibleName
     }
 
     component IndicatorAnimation: MorphAnimation {

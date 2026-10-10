@@ -14,12 +14,12 @@ Item {
 
     readonly property bool resting: Music.hasPlayer && !Music.playing
     // 1 playing, 0 resting; carries the core's size and the rim and bloom.
-    property real liveness: resting ? 0 : 1
+    property real playingBlend: resting ? 0 : 1
 
     implicitWidth: Theme.orbHitSize
     implicitHeight: implicitWidth
 
-    Behavior on liveness {
+    Behavior on playingBlend {
         MorphAnimation {
             shrinking: orb.resting
         }
@@ -36,7 +36,7 @@ Item {
         // A thin ring in a dark album colour vanishes on a light palette.
         border.color: Colors.dark ? Music.artColor : Colors.primary
         scale: 1 + (Theme.orbRingBreathDiameter / Theme.orbRingDiameter - 1) * Cava.ringSwell
-        opacity: (1 - orb.liveness) * Cava.ringBreath
+        opacity: (1 - orb.playingBlend) * Cava.ringBreath
         visible: opacity > 0
     }
 
@@ -46,7 +46,7 @@ Item {
         anchors.centerIn: parent
         width: Theme.orbSize
         height: Theme.orbSize
-        scale: (Theme.orbRestingSize + (Theme.orbSize - Theme.orbRestingSize) * orb.liveness) / Theme.orbSize
+        scale: (Theme.orbRestingSize + (Theme.orbSize - Theme.orbRestingSize) * orb.playingBlend) / Theme.orbSize
 
         // The bloom: a lit disc reaching orbBloom beyond the rim, faded out by a
         // radial mask. Only the item turns, so the masked layers are drawn once per
@@ -58,7 +58,7 @@ Item {
             width: Theme.orbSize + 2 * Theme.orbBloom
             height: width
             rotation: Cava.rimAngle
-            opacity: Cava.bloom * orb.liveness
+            opacity: Cava.bloom * orb.playingBlend
             visible: opacity > 0
 
             RimLight {
@@ -147,7 +147,7 @@ Item {
             thickness: Theme.orbRimWidth
             rotation: Cava.rimAngle
             level: Cava.level
-            opacity: rim.levelOpacity * orb.liveness
+            opacity: rim.levelOpacity * orb.playingBlend
             visible: opacity > 0
         }
     }

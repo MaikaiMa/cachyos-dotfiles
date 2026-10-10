@@ -12,7 +12,7 @@ Rectangle {
     radius: Theme.tileRadius
     color: Colors.surfaceContainerHigh
 
-    readonly property string stateText: {
+    readonly property string subtitle: {
         if (!Battery.available)
             return "No battery";
         switch (Battery.state) {
@@ -64,7 +64,7 @@ Rectangle {
             Label {
                 objectName: "batteryState"
                 anchors.verticalCenter: parent.verticalCenter
-                text: tile.stateText
+                text: tile.subtitle
                 color: Colors.foregroundVariant
             }
         }
@@ -118,7 +118,7 @@ Rectangle {
         SegmentedControl {
             objectName: "profileTabs"
             width: parent.width
-            label: "Power profile"
+            accessibleName: "Power profile"
             model: Battery.profiles.map(name => Battery.profileLabel(name))
             currentIndex: Battery.profiles.indexOf(Battery.profile)
             onSelected: index => Battery.setProfile(Battery.profiles[index])

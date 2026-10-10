@@ -9,19 +9,19 @@ Item {
     id: tile
 
     property string title: ""
-    property string stateText: ""
+    property string subtitle: ""
     property string iconName: ""
     property bool active: false
     property bool wide: false
     // False for a tile that only opens something.
     property bool checkable: true
-    // Has a panel: the chevron zone while wide, and the secondary action.
+    // Has a panel: the chevron zone while wide, and panelRequested.
     property bool hasPanel: false
 
     signal activated
     // The chevron zone, right click, long press, Right or the menu key; only tiles
     // with a panel have one.
-    signal secondaryAction
+    signal panelRequested
 
     // 1 wide, 0 small; it moves with the grid, so a tile that changes size
     // between the docked and the detached grid slides its icon along.
@@ -44,7 +44,7 @@ Item {
 
     Accessible.role: Accessible.Button
     Accessible.name: title
-    Accessible.description: stateText
+    Accessible.description: subtitle
     Accessible.checkable: checkable
     Accessible.checked: active
     Accessible.onPressAction: tile.activated()
@@ -57,7 +57,7 @@ Item {
             tile.activated();
         } else if (tile.hasPanel && (event.key === Qt.Key_Menu || event.key === Qt.Key_Right)) {
             event.accepted = true;
-            tile.secondaryAction();
+            tile.panelRequested();
         }
     }
 
@@ -149,7 +149,7 @@ Item {
 
             Label {
                 width: parent.width
-                text: tile.stateText
+                text: tile.subtitle
                 secondary: true
                 color: tile.active ? Qt.alpha(Colors.primaryForeground, Theme.tileStateOnAccentOpacity) : Colors.foregroundVariant
             }
@@ -172,13 +172,13 @@ Item {
         // A long press suppresses the click that would follow it.
         onPressAndHold: {
             if (tile.hasPanel)
-                tile.secondaryAction();
+                tile.panelRequested();
         }
         onClicked: mouse => {
             if (!tile.hasPanel && mouse.button === Qt.RightButton)
                 return;
             if (mouse.button === Qt.RightButton || (tile.chevronShown && mouse.x >= tile.mainWidth))
-                tile.secondaryAction();
+                tile.panelRequested();
             else
                 tile.activated();
         }

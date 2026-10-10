@@ -24,53 +24,53 @@ Rectangle {
             objectName: "cpuMeter"
             width: tile.columnWidth
             height: tile.meterHeight
-            label: Math.round(System.cpu * 100) + "%"
+            text: Math.round(System.cpu * 100) + "%"
             level: System.cpu
             iconName: "memory"
-            description: "CPU load"
+            accessibleName: "CPU load"
         }
 
         Meter {
             objectName: "tempMeter"
             width: tile.columnWidth
             height: tile.meterHeight
-            label: isNaN(System.temperature) ? "–" : Math.round(System.temperature) + "°"
+            text: isNaN(System.temperature) ? "–" : Math.round(System.temperature) + "°"
             level: System.temperatureLevel
             iconName: "device_thermostat"
-            description: "CPU temperature"
+            accessibleName: "CPU temperature"
         }
 
         Meter {
             objectName: "memoryMeter"
             width: tile.columnWidth
             height: tile.meterHeight
-            label: Math.round(System.memory * 100) + "%"
+            text: Math.round(System.memory * 100) + "%"
             level: System.memory
             iconName: "memory_alt"
-            description: "Memory"
+            accessibleName: "Memory"
         }
     }
 
     component Meter: Column {
         id: meter
 
-        property string label: ""
+        property string text: ""
         property real level: 0
         property string iconName: ""
-        property string description: ""
+        property string accessibleName: ""
 
         spacing: Theme.meterGap
 
         Accessible.role: Accessible.ProgressBar
-        Accessible.name: description
-        Accessible.description: label
+        Accessible.name: accessibleName
+        Accessible.description: text
 
         Label {
             id: value
 
             objectName: "meterLabel"
             anchors.horizontalCenter: parent.horizontalCenter
-            text: meter.label
+            text: meter.text
             secondary: true
             numeric: true
         }

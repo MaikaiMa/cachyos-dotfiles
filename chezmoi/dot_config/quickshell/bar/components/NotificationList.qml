@@ -75,10 +75,7 @@ Item {
             return {
                 appName: item.appName,
                 summary: item.summary,
-                body: item.body,
-                appIcon: item.appIcon,
-                image: item.image,
-                desktopEntry: item.desktopEntry
+                body: item.body
             };
         });
         const kept = leavingIds.filter(id => ids.includes(id));
@@ -174,7 +171,7 @@ Item {
             width: ListView.view.width
             leaving: list.clearing || list.leavingIds.includes(notificationId)
             expanded: list.expandedId === notificationId
-            onToggled: list.toggleExpanded(notificationId)
+            onExpandRequested: list.toggleExpanded(notificationId)
             onExpansionExtraChanged: list.noteExtra(notificationId, expansionExtra)
             onActionInvoked: identifier => list.invokeAction(notificationId, identifier)
             onReplySent: text => list.sendReply(notificationId, text)

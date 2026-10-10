@@ -16,24 +16,20 @@ Item {
     required property string appName
     required property string summary
     required property string body
-    required property string appIcon
-    required property string image
-    required property string desktopEntry
     property bool leaving: false
     property bool expanded: false
 
     signal dismissClicked
-    signal toggled
+    signal expandRequested
     signal actionInvoked(string identifier)
     signal replySent(string text)
     signal gone
 
     readonly property var notification: Notifications.liveIds.includes(notificationId) ? Notifications.liveObject(notificationId) : null
-    readonly property string iconSource: Notifications.iconSource(appIcon, desktopEntry, image)
-    // A live image may be raw data the history cannot keep; the icon may already
-    // be the image, then it is not shown twice.
+    readonly property string iconSource: Notifications.iconFor(notificationId)
+    // The icon may already be the image, then it is not shown twice.
     readonly property string fullImage: {
-        const source = notification ? Notifications.storedImage(notification.image ?? "") || (notification.image ?? "") : image;
+        const source = Notifications.imageFor(notificationId);
         return source === iconSource ? "" : source;
     }
     readonly property var actions: expanded ? Notifications.pillActions(notification) : []
@@ -89,7 +85,7 @@ Item {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             enabled: !row.leaving
-            onClicked: row.toggled()
+            onClicked: row.expandRequested()
         }
 
         AppIconDisc {
@@ -200,12 +196,12 @@ Item {
                     required property var modelData
 
                     text: modelData.text
-                    tone: modelData.primary ? "accent" : "neutral"
+                    tone: modelData.tone
                     fontSize: Theme.notificationActionFontSize
                     horizontalPadding: Theme.notificationActionPadding
                     maxWidth: Theme.notificationActionMaxWidth
                     baseColor: Colors.surfaceContainer
-                    onActivated: row.actionInvoked(modelData.identifier)
+                    onActivated: row.actionInvoked(modelData.id)
                 }
             }
         }

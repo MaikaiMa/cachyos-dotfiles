@@ -82,6 +82,8 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Dms.qml \
 	chezmoi/dot_config/quickshell/bar/services/Appearance.qml \
 	chezmoi/dot_config/quickshell/bar/services/Notifications.qml \
+	chezmoi/dot_config/quickshell/bar/services/NotificationStack.qml \
+	chezmoi/dot_config/quickshell/bar/services/Time.qml \
 	chezmoi/dot_config/quickshell/bar/services/Music.qml \
 	chezmoi/dot_config/quickshell/bar/services/Cava.qml \
 	chezmoi/dot_config/quickshell/bar/services/Tray.qml \
@@ -111,7 +113,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/islands/PrivacyDock.qml \
 	chezmoi/dot_config/quickshell/bar/islands/RightIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/TrayMenu.qml \
-	chezmoi/dot_config/quickshell/bar/islands/NotificationStack.qml \
+	chezmoi/dot_config/quickshell/bar/islands/PeekStack.qml \
 	chezmoi/dot_config/quickshell/bar/islands/NotificationBlobs.qml \
 	chezmoi/dot_config/quickshell/bar/islands/qmldir \
 	chezmoi/dot_config/quickshell/bar/panels/SettingsPanel.qml \
@@ -150,7 +152,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/NotificationRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/PanelControlRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/RowList.qml \
-	chezmoi/dot_config/quickshell/bar/components/NetworkRow.qml \
+	chezmoi/dot_config/quickshell/bar/components/ListRow.qml \
 	chezmoi/dot_config/quickshell/bar/components/WeatherIcon.qml \
 	chezmoi/dot_config/quickshell/bar/components/BatteryIcon.qml \
 	chezmoi/dot_config/quickshell/bar/components/SegmentedControl.qml \

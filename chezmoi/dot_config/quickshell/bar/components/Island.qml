@@ -26,86 +26,90 @@ Rectangle {
     // shrink when the area gets smaller.
     readonly property alias shrinking: morph.shrinking
 
-    // Before completion the targets settle without animation.
-    property bool ready: false
-    // The animation runs from span.start to span.end; progress is its only animated value.
-    property var span: ({
-            start: targets(),
-            end: targets()
-        })
-    property real progress: 1
-
-    function targets(): var {
-        return {
-            width: targetWidth,
-            height: targetHeight,
-            radius: targetRadius,
-            shadow: targetShadow,
-            opacity: targetOpacity,
-            blend: targetBlend
-        };
-    }
-
-    function between(key: string): real {
-        return span.start[key] + (span.end[key] - span.start[key]) * progress;
-    }
-
-    // Owners change several targets in one state change; Qt.callLater folds them
-    // into one retarget, so width and height never start at different moments.
-    function retarget() {
-        if (!ready)
-            return;
-        const next = targets();
-        if (Object.keys(next).every(key => next[key] === span.end[key]))
-            return;
-        const current = {
-            width: width,
-            height: height,
-            radius: radius,
-            shadow: shadowStrength,
-            opacity: backgroundOpacity,
-            blend: blend
-        };
-        morph.stop();
-        morph.shrinking = next.width * next.height < current.width * current.height;
-        progress = 0;
-        span = {
-            start: current,
-            end: next
-        };
-        morph.start();
-    }
-
     Component.onCompleted: {
-        span = {
-            start: targets(),
-            end: targets()
+        internal.span = {
+            start: internal.targets(),
+            end: internal.targets()
         };
-        ready = true;
+        internal.ready = true;
     }
 
-    onTargetWidthChanged: Qt.callLater(retarget)
-    onTargetHeightChanged: Qt.callLater(retarget)
-    onTargetRadiusChanged: Qt.callLater(retarget)
-    onTargetOpacityChanged: Qt.callLater(retarget)
-    onTargetBlendChanged: Qt.callLater(retarget)
+    onTargetWidthChanged: Qt.callLater(internal.retarget)
+    onTargetHeightChanged: Qt.callLater(internal.retarget)
+    onTargetRadiusChanged: Qt.callLater(internal.retarget)
+    onTargetOpacityChanged: Qt.callLater(internal.retarget)
+    onTargetBlendChanged: Qt.callLater(internal.retarget)
 
-    width: between("width")
-    height: between("height")
-    radius: between("radius")
-    readonly property real shadowStrength: between("shadow")
-    readonly property real backgroundOpacity: between("opacity")
-    readonly property real blend: between("blend")
+    width: internal.between("width")
+    height: internal.between("height")
+    radius: internal.between("radius")
+    readonly property real shadowStrength: internal.between("shadow")
+    readonly property real backgroundOpacity: internal.between("opacity")
+    readonly property real blend: internal.between("blend")
 
     color: Qt.alpha(Colors.surfaceContainer, backgroundOpacity)
     clip: true
+
+    QtObject {
+        id: internal
+
+        // Before completion the targets settle without animation.
+        property bool ready: false
+        // The animation runs from span.start to span.end; progress is its only animated value.
+        property var span: ({
+                start: targets(),
+                end: targets()
+            })
+        property real progress: 1
+
+        function targets(): var {
+            return {
+                width: island.targetWidth,
+                height: island.targetHeight,
+                radius: island.targetRadius,
+                shadow: island.targetShadow,
+                opacity: island.targetOpacity,
+                blend: island.targetBlend
+            };
+        }
+
+        function between(key: string): real {
+            return span.start[key] + (span.end[key] - span.start[key]) * progress;
+        }
+
+        // Owners change several targets in one state change; Qt.callLater folds them
+        // into one retarget, so width and height never start at different moments.
+        function retarget() {
+            if (!ready)
+                return;
+            const next = targets();
+            if (Object.keys(next).every(key => next[key] === span.end[key]))
+                return;
+            const current = {
+                width: island.width,
+                height: island.height,
+                radius: island.radius,
+                shadow: island.shadowStrength,
+                opacity: island.backgroundOpacity,
+                blend: island.blend
+            };
+            morph.stop();
+            morph.shrinking = next.width * next.height < current.width * current.height;
+            progress = 0;
+            span = {
+                start: current,
+                end: next
+            };
+            morph.start();
+        }
+    }
 
     MorphAnimation {
         id: morph
 
         durationOverride: island.morphDuration
         curveOverride: island.morphCurve
-        target: island
+        target: internal
         property: "progress"
         from: 0
         to: 1

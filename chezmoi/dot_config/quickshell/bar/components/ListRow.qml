@@ -3,32 +3,32 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import ".."
 
-// A row of the Wi-Fi, Bluetooth and Sound lists: an icon, the name with a
-// detail line or a live level bar, a lock when secured. Expanded, it shows a
+// A row of the Wi-Fi, Bluetooth and Sound lists: an icon, the title with a
+// subtitle or a live level bar, a lock when secured. Expanded, it shows a
 // password field with Connect, or a line of buttons; an error adds a line in
-// `error`. The panel owns which row is expanded and the errors, so it knows
-// the settled height before the row grows.
+// `errorText`. The panel owns which row is expanded and the errors, so it
+// knows the settled height before the row grows. A right click or the Menu
+// key is the row's context action, secondaryActivated.
 Pressable {
     id: row
 
     property string iconName: ""
     property string title: ""
-    property string detail: ""
+    property string subtitle: ""
     property bool secured: false
     // The connected network or device, tinted with the accent.
     property bool highlighted: false
     property bool expanded: false
     // "password" or "actions".
     property string mode: "actions"
-    // [{ key, label, accent, danger }]
+    // [{ id, text, tone }]; the "accent" one is the filled main action.
     property var actions: []
     property string errorText: ""
     // 0..1 drawn as a thin bar under the name (the Sound panel's default input); -1 for none.
     property real level: -1
 
     signal clicked
-    signal secondaryClicked
-    signal actionTriggered(string key)
+    signal actionActivated(string id)
     signal passwordSubmitted(string password)
 
     readonly property real targetHeight: Theme.listRowHeight + (expanded ? Theme.listRowExpansion : 0) + (errorText !== "" ? Theme.listRowErrorHeight : 0)
@@ -50,10 +50,9 @@ Pressable {
         }
     }
 
-    Accessible.description: detail
+    Accessible.description: subtitle
 
     onActivated: row.clicked()
-    onSecondaryActivated: row.secondaryClicked()
 
     // The password field takes the keyboard as soon as it shows; collapsing with
     // the keyboard inside hands it back to the row, so Escape still reaches the
@@ -121,7 +120,7 @@ Pressable {
         Label {
             width: parent.width
             visible: text !== ""
-            text: row.detail
+            text: row.subtitle
             secondary: true
             numeric: true
         }
@@ -203,13 +202,13 @@ Pressable {
 
                     width: (expansion.width - (row.actions.length - 1) * Theme.gap) / row.actions.length
                     height: Theme.fieldHeight
-                    text: modelData.label
-                    filled: modelData.accent ?? false
-                    tone: modelData.danger ? "danger" : "neutral"
+                    text: modelData.text
+                    tone: modelData.tone ?? "neutral"
+                    filled: tone === "accent"
                     strong: true
                     baseColor: Colors.surfaceContainer
                     focusable: row.expanded
-                    onActivated: row.actionTriggered(modelData.key)
+                    onActivated: row.actionActivated(modelData.id)
                 }
             }
         }

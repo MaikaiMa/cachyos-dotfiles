@@ -14,7 +14,7 @@ Item {
     property string switchName: ""
     property bool checked: false
     property bool switchEnabled: true
-    property string stateText: ""
+    property string text: ""
     property string actionIcon: "open_in_new"
     property string actionLabel: ""
     // The DMS settings tab the right button opens.
@@ -26,7 +26,7 @@ Item {
 
     signal toggled
     // The second button; the panel decides where it goes and closes itself.
-    signal extraClicked
+    signal extraActivated
 
     // The settings window needs the keyboard, which the open panel holds.
     function openSettings() {
@@ -114,29 +114,29 @@ Item {
         objectName: "stateLabel"
         anchors.left: row.hasSwitch ? toggle.right : backButton.right
         anchors.leftMargin: row.hasSwitch ? Theme.controlLabelGap : Theme.gap
-        anchors.right: extraButton.visible ? extraButton.left : settingsButton.left
+        anchors.right: extraButton.visible ? extraButton.left : actionButton.left
         anchors.rightMargin: Theme.gap
         anchors.verticalCenter: parent.verticalCenter
-        text: row.stateText
+        text: row.text
         color: Colors.foregroundVariant
     }
 
-    // Declared before the settings button: Tab reaches it first.
+    // Declared before the action button: Tab reaches it first.
     IconButton {
         id: extraButton
 
         objectName: "extraButton"
-        anchors.right: settingsButton.left
+        anchors.right: actionButton.left
         anchors.rightMargin: Theme.gap
         anchors.verticalCenter: parent.verticalCenter
         visible: row.extraIcon !== ""
         iconName: row.extraIcon
         accessibleName: row.extraLabel
-        onActivated: row.extraClicked()
+        onActivated: row.extraActivated()
     }
 
     IconButton {
-        id: settingsButton
+        id: actionButton
 
         objectName: "settingsButton"
         anchors.right: parent.right

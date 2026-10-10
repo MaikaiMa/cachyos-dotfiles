@@ -36,43 +36,43 @@ Singleton {
     readonly property var schemes: [
         {
             value: "scheme-tonal-spot",
-            label: "Tonal spot"
+            text: "Tonal spot"
         },
         {
             value: "scheme-vibrant",
-            label: "Vibrant"
+            text: "Vibrant"
         },
         {
             value: "scheme-content",
-            label: "Content"
+            text: "Content"
         },
         {
             value: "scheme-expressive",
-            label: "Expressive"
+            text: "Expressive"
         },
         {
             value: "scheme-fidelity",
-            label: "Fidelity"
+            text: "Fidelity"
         },
         {
             value: "scheme-fruit-salad",
-            label: "Fruit salad"
+            text: "Fruit salad"
         },
         {
             value: "scheme-monochrome",
-            label: "Monochrome"
+            text: "Monochrome"
         },
         {
             value: "scheme-neutral",
-            label: "Neutral"
+            text: "Neutral"
         },
         {
             value: "scheme-rainbow",
-            label: "Rainbow"
+            text: "Rainbow"
         },
         {
             value: "scheme-smart",
-            label: "Smart"
+            text: "Smart"
         }
     ]
     // A theme or scheme change is running or DMS is still rendering it (2.5 s

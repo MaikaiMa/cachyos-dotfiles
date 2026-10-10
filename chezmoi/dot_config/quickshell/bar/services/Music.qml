@@ -101,8 +101,8 @@ Singleton {
     }
 
     // Brings the player's app to the front: MPRIS Raise when the player offers
-    // it, else the Niri window whose app id is the player's desktop entry or
-    // identity. Returns false when neither works.
+    // it, else the Niri window that matches the player's desktop entry or
+    // identity (Niri.windowForApp). Returns false when neither works.
     function raise(): bool {
         if (!player)
             return false;
@@ -110,8 +110,7 @@ Singleton {
             player.raise();
             return true;
         }
-        const keys = [player.desktopEntry, player.identity].filter(key => key).map(key => key.toLowerCase());
-        const window = Niri.windows.find(candidate => keys.includes((candidate.appId || "").toLowerCase()));
+        const window = Niri.windowForApp([player.desktopEntry ?? "", player.identity ?? ""]);
         if (!window)
             return false;
         Niri.focusWindow(window.id);

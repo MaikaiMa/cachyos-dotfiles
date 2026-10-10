@@ -22,8 +22,7 @@ Rectangle {
     function weekday(isoDate: string): string {
         const parts = isoDate.split("-").map(Number);
         const date = new Date(parts[0], parts[1] - 1, parts[2]);
-        const day = Qt.locale("nl_NL").dayName(date.getDay(), Locale.ShortFormat).replace(/\.$/, "");
-        return day.charAt(0).toUpperCase() + day.slice(1);
+        return Time.shortDay(date, true);
     }
 
     Row {
@@ -75,7 +74,7 @@ Rectangle {
         x: Theme.homeTilePadding
         y: now.y + now.height + Theme.homeSectionGap
         width: Theme.weatherTabsWidth
-        label: "Forecast"
+        accessibleName: "Forecast"
         model: ["Hourly", "Daily"]
         currentIndex: tile.tab === "daily" ? 1 : 0
         onSelected: index => tile.tab = index === 1 ? "daily" : "hourly"
@@ -104,7 +103,7 @@ Rectangle {
 
                     readonly property var hour: Weather.hourly[index] ?? null
 
-                    label: hour ? hour.time : "–"
+                    text: hour ? hour.time : "–"
                     condition: hour ? hour.iconName : ""
                     high: hour ? tile.degrees(hour.temperature) : "–"
                 }
@@ -124,7 +123,7 @@ Rectangle {
 
                     readonly property var day: Weather.daily[index] ?? null
 
-                    label: day ? tile.weekday(day.date) : "–"
+                    text: day ? tile.weekday(day.date) : "–"
                     condition: day ? day.iconName : ""
                     high: day ? tile.degrees(day.max) : "–"
                     low: day ? tile.degrees(day.min) : ""
@@ -149,7 +148,7 @@ Rectangle {
     component WeatherCard: Rectangle {
         id: card
 
-        property string label: ""
+        property string text: ""
         property string condition: ""
         property string high: ""
         property string low: ""
@@ -160,7 +159,7 @@ Rectangle {
         color: Colors.surfaceContainer
 
         Accessible.role: Accessible.StaticText
-        Accessible.name: label + " " + high + (low !== "" ? " " + low : "")
+        Accessible.name: text + " " + high + (low !== "" ? " " + low : "")
 
         Column {
             anchors.centerIn: parent
@@ -169,7 +168,7 @@ Rectangle {
             Label {
                 objectName: "cardLabel"
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: card.label
+                text: card.text
                 secondary: true
                 numeric: true
             }

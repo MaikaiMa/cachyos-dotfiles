@@ -14,8 +14,8 @@ import "../services"
 Item {
     id: row
 
-    // Roles of the island's model: an entry id from Notifications.peekIds or
-    // Notifications.backlogRow, and whether the row is collapsing out.
+    // Roles of the island's model: an entry id from NotificationStack.peekIds
+    // or NotificationStack.backlogRow, and whether the row is collapsing out.
     required property string rowId
     required property bool leaving
     property int backlogCount: 0
@@ -28,56 +28,42 @@ Item {
     signal settingsRequested
     signal gone
 
-    readonly property bool combined: rowId === Notifications.backlogRow
-    readonly property var notification: !combined && Notifications.liveIds.includes(rowId) ? Notifications.liveObject(rowId) : null
+    readonly property bool isBacklogRow: rowId === NotificationStack.backlogRow
+    readonly property var notification: !isBacklogRow && Notifications.liveIds.includes(rowId) ? Notifications.liveObject(rowId) : null
     readonly property bool critical: !!notification && notification.urgency === NotificationUrgency.Critical
     readonly property var actions: Notifications.pillActions(notification).slice(0, Theme.notificationPeekActions)
 
-    // Copied, not bound: a replace cross-fades from the old text to the new.
-    property string summaryText: ""
-    property string bodyText: ""
-    property string iconUrl: ""
-
-    property bool pointerHeld: false
-    property bool hoverRested: false
-    property bool pressRevealed: false
-    readonly property bool dismissShown: (hoverRested || pressRevealed) && !leaving
+    readonly property bool dismissShown: (internal.hoverRested || internal.pressRevealed) && !leaving
     readonly property bool revealed: actions.length > 0 && dismissShown
     property real revealProgress: revealed ? 1 : 0
-    // Set as the row starts leaving: its disc goes on as a blob under the island.
-    property bool toBlob: false
-    // Which timing the next height change uses: the island's, or the tray's for the actions.
-    property bool actionMotion: false
 
     readonly property real contentHeight: revealed ? Theme.notificationPeekRowOpenHeight : Theme.notificationPeekRowHeight
-    readonly property real settledHeight: entered && !leaving ? contentHeight : 0
+    readonly property real settledHeight: internal.entered && !leaving ? contentHeight : 0
     readonly property Item disc: face.disc
     readonly property real textX: Theme.notificationPeekDisc + Theme.notificationPeekTextGap
 
-    readonly property int holdInterval: Notifications.holdFor(rowId)
-    readonly property bool holdActive: holding && !leaving && holdInterval > 0 && !pointerHeld && !pressRevealed
+    readonly property int holdInterval: NotificationStack.holdFor(rowId)
+    readonly property bool holdActive: holding && !leaving && holdInterval > 0 && !internal.pointerHeld && !internal.pressRevealed
 
-    property bool entered: false
-
-    function adopt() {
-        if (combined) {
-            summaryText = backlogCount === 1 ? "1 new notification" : backlogCount + " new notifications";
-            bodyText = "";
-            iconUrl = "";
+    function copyContent() {
+        if (isBacklogRow) {
+            internal.summaryText = backlogCount === 1 ? "1 new notification" : backlogCount + " new notifications";
+            internal.bodyText = "";
+            internal.iconUrl = "";
             return;
         }
         // A re-peeked blob may outlive its sender's notification: its entry stands in.
         const source = notification ?? Notifications.entryFor(rowId);
         if (!source)
             return;
-        summaryText = Notifications.oneLine(source.summary ?? "");
-        bodyText = Notifications.oneLine(source.body ?? "");
-        iconUrl = Notifications.iconSource(source.appIcon ?? "", source.desktopEntry ?? "", source.image ?? "");
+        internal.summaryText = Notifications.oneLine(source.summary ?? "");
+        internal.bodyText = Notifications.oneLine(source.body ?? "");
+        internal.iconUrl = Notifications.iconFor(rowId);
     }
 
     function dismiss() {
-        if (combined)
-            Notifications.endPeek(rowId);
+        if (isBacklogRow)
+            NotificationStack.endPeek(rowId);
         else
             Notifications.dismiss(rowId);
     }
@@ -85,15 +71,15 @@ Item {
     // The gap below the row is part of it, so the rows below follow its height.
     implicitHeight: settledHeight > 0 ? settledHeight + Theme.notificationPeekRowGap : 0
     height: implicitHeight
-    opacity: entered && !leaving ? 1 : 0
+    opacity: internal.entered && !leaving ? 1 : 0
     clip: true
 
     // Rows come in with the island's grow and leave with its shrink, so the
     // rows below slide in step with the island; the actions use the tray timing.
     Behavior on implicitHeight {
         MorphAnimation {
-            shrinking: row.leaving && !row.actionMotion
-            durationOverride: row.actionMotion ? Motion.trayDuration : -1
+            shrinking: row.leaving && !internal.useActionTiming
+            durationOverride: internal.useActionTiming ? Motion.trayDuration : -1
         }
     }
     Behavior on opacity {
@@ -106,18 +92,18 @@ Item {
     }
 
     Component.onCompleted: {
-        adopt();
-        entered = true;
+        copyContent();
+        internal.entered = true;
     }
     onNotificationChanged: {
-        if (summaryText === "")
-            adopt();
+        if (internal.summaryText === "")
+            copyContent();
     }
     onBacklogCountChanged: {
-        if (combined)
-            adopt();
+        if (isBacklogRow)
+            copyContent();
     }
-    onRevealedChanged: actionMotion = !leaving
+    onRevealedChanged: internal.useActionTiming = !leaving
     onHeightChanged: {
         if (leaving && height === 0)
             gone();
@@ -125,10 +111,28 @@ Item {
     onLeavingChanged: {
         if (!leaving)
             return;
-        actionMotion = false;
-        toBlob = Notifications.blobIds.includes(rowId);
+        internal.useActionTiming = false;
+        internal.leavesAsBlob = NotificationStack.blobIds.includes(rowId);
         if (height === 0)
             gone();
+    }
+
+    QtObject {
+        id: internal
+
+        // Copied, not bound: a replace cross-fades from the old text to the new.
+        property string summaryText: ""
+        property string bodyText: ""
+        property string iconUrl: ""
+
+        property bool pointerHeld: false
+        property bool hoverRested: false
+        property bool pressRevealed: false
+        // Set as the row starts leaving: its disc goes on as a blob under the island.
+        property bool leavesAsBlob: false
+        // Which timing the next height change uses: the island's, or the tray's for the actions.
+        property bool useActionTiming: false
+        property bool entered: false
     }
 
     Connections {
@@ -137,11 +141,11 @@ Item {
         function onReplaced(id: string) {
             if (id !== row.rowId || row.leaving)
                 return;
-            ghost.summary = row.summaryText;
-            ghost.body = row.bodyText;
-            ghost.iconUrl = row.iconUrl;
+            ghost.summary = internal.summaryText;
+            ghost.body = internal.bodyText;
+            ghost.iconUrl = internal.iconUrl;
             ghost.critical = row.critical;
-            row.adopt();
+            row.copyContent();
             replaceFade.restart();
             hold.restart();
         }
@@ -159,7 +163,7 @@ Item {
         id: rest
 
         interval: Motion.hoverRestDelay
-        onTriggered: row.hoverRested = true
+        onTriggered: internal.hoverRested = true
     }
 
     // Leaving folds the actions and restarts the hold after the grace.
@@ -168,8 +172,8 @@ Item {
 
         interval: Motion.hoverLeaveGrace
         onTriggered: {
-            row.hoverRested = false;
-            row.pointerHeld = false;
+            internal.hoverRested = false;
+            internal.pointerHeld = false;
         }
     }
 
@@ -194,7 +198,7 @@ Item {
         onHoveredChanged: {
             if (hovered) {
                 grace.stop();
-                row.pointerHeld = true;
+                internal.pointerHeld = true;
                 rest.restart();
             } else {
                 rest.stop();
@@ -213,19 +217,19 @@ Item {
         pressAndHoldInterval: Motion.longPressInterval
         onPressAndHold: mouse => {
             if (mouse.button === Qt.LeftButton)
-                row.pressRevealed = true;
+                internal.pressRevealed = true;
         }
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton) {
                 row.settingsRequested();
             } else if (mouse.button === Qt.MiddleButton) {
                 row.dismiss();
-            } else if (row.pressRevealed) {
-                row.pressRevealed = false;
-            } else if (row.combined) {
+            } else if (internal.pressRevealed) {
+                internal.pressRevealed = false;
+            } else if (row.isBacklogRow) {
                 row.settingsRequested();
             } else {
-                Notifications.open(row.rowId);
+                NotificationStack.open(row.rowId);
             }
         }
     }
@@ -240,13 +244,12 @@ Item {
     Face {
         id: face
 
-        summary: row.summaryText
-        body: row.bodyText
-        iconUrl: row.iconUrl
+        summary: internal.summaryText
+        body: internal.bodyText
+        iconUrl: internal.iconUrl
         critical: row.critical
     }
 
-    // Plain text in the text column, under the body; the default action first.
     Row {
         x: row.textX
         y: Theme.notificationPeekRowHeight + (1 - row.revealProgress) * Theme.notificationPeekActionRise
@@ -266,7 +269,7 @@ Item {
                 height: Theme.notificationPeekActionHeight
                 verticalAlignment: Text.AlignVCenter
                 text: modelData.text
-                color: modelData.primary ? Colors.primary : Colors.foreground
+                color: modelData.tone === "accent" ? Colors.primary : Colors.foreground
                 font.pixelSize: Theme.notificationPeekActionFontSize
                 font.underline: actionPointer.containsMouse
 
@@ -276,7 +279,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Notifications.activate(row.rowId, actionLabel.modelData.identifier)
+                    onClicked: NotificationStack.activate(row.rowId, actionLabel.modelData.id)
                 }
 
                 Accessible.role: Accessible.Button
@@ -300,7 +303,7 @@ Item {
         visible: opacity > 0
         enabled: row.dismissShown
         focusable: row.dismissShown
-        accessibleName: "Dismiss " + row.summaryText
+        accessibleName: "Dismiss " + internal.summaryText
         onActivated: row.dismiss()
 
         Behavior on opacity {
@@ -322,9 +325,9 @@ Item {
     }
 
     Accessible.role: Accessible.Button
-    Accessible.name: row.summaryText + (row.bodyText !== "" ? ", " + row.bodyText : "")
+    Accessible.name: internal.summaryText + (internal.bodyText !== "" ? ", " + internal.bodyText : "")
 
-    // Disc and two lines in the top 48 px; the combined row has one line.
+    // Disc and two lines in the top 48 px; the backlog row has one line.
     component Face: Item {
         id: faceItem
 
@@ -343,7 +346,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             source: faceItem.iconUrl
             // The blob carries the icon on from here.
-            visible: !row.toBlob
+            visible: !internal.leavesAsBlob
         }
 
         Column {

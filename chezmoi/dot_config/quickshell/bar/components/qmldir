@@ -36,7 +36,7 @@ TopWave 1.0 TopWave.qml
 Carousel 1.0 Carousel.qml
 Osd 1.0 Osd.qml
 PanelControlRow 1.0 PanelControlRow.qml
-NetworkRow 1.0 NetworkRow.qml
+ListRow 1.0 ListRow.qml
 RowList 1.0 RowList.qml
 FrameCounter 1.0 FrameCounter.qml
 NotificationPeekRow 1.0 NotificationPeekRow.qml

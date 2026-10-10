@@ -1,5 +1,6 @@
 import QtQuick
 import ".."
+import "../services"
 
 // Home: hours over minutes, the Dutch date under them, centred in the tile.
 Rectangle {
@@ -7,14 +8,6 @@ Rectangle {
 
     radius: Theme.tileRadius
     color: Colors.surfaceContainerHigh
-
-    // "zo 04 okt": Qt's Dutch short month carries a full stop ("okt."), the design does not.
-    function dutchDate(date: date): string {
-        const locale = Qt.locale("nl_NL");
-        const day = locale.dayName(date.getDay(), Locale.ShortFormat).replace(/\.$/, "");
-        const month = locale.monthName(date.getMonth(), Locale.ShortFormat).replace(/\.$/, "");
-        return day + " " + Qt.formatDate(date, "dd") + " " + month;
-    }
 
     Column {
         anchors.centerIn: parent
@@ -33,7 +26,8 @@ Rectangle {
         Clock {
             objectName: "homeDate"
             anchors.horizontalCenter: parent.horizontalCenter
-            formatter: date => tile.dutchDate(date)
+            // "zo 04 okt"
+            formatter: date => Time.shortDay(date, false) + " " + Qt.formatDate(date, "dd") + " " + Time.shortMonth(date)
             color: Colors.foregroundVariant
             font.pixelSize: Theme.homeDetailFontSize
         }

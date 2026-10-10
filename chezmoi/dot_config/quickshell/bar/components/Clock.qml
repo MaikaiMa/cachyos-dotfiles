@@ -1,5 +1,5 @@
 import QtQuick
-import Quickshell
+import "../services"
 
 Label {
     property string format: "HH:mm"
@@ -7,11 +7,5 @@ Label {
     property var formatter: null
 
     numeric: true
-    text: formatter ? formatter(clock.date) : Qt.formatDateTime(clock.date, format)
-
-    SystemClock {
-        id: clock
-
-        precision: SystemClock.Minutes
-    }
+    text: formatter ? formatter(Time.date) : Qt.formatDateTime(Time.date, format)
 }

@@ -14,7 +14,7 @@ Singleton {
 
     readonly property var adapter: Bluez.Bluetooth.defaultAdapter // qmllint disable unresolved-type
     readonly property bool available: adapter !== null
-    readonly property bool btEnabled: adapter ? adapter.enabled : false
+    readonly property bool bluetoothEnabled: adapter ? adapter.enabled : false
     // Powered and ready: `enabled` turns true on the write, before BlueZ can
     // start a discovery.
     readonly property bool powered: adapter ? adapter.state === Bluez.BluetoothAdapterState.Enabled : false // qmllint disable unresolved-type

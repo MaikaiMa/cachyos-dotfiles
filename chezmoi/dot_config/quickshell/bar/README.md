@@ -18,7 +18,8 @@ windows/         BarWindow (islands, blobs, glow, privacy dock, mask, blur, keyb
                  WaveSurface (the top-edge wave's strip)
 services/        singletons that own state or data; Shell.qml is the centre island state machine
                  and sets every service's `active`; BarIpc.qml holds the IPC targets `bar` and
-                 `notifications`; Notifications.qml is the notification daemon (ADR-0028);
+                 `notifications`; Notifications.qml is the notification daemon (ADR-0028),
+                 NotificationStack.qml its peek stack; Time.qml the one minute clock;
                  Appearance.qml the Light / Dark / Auto and scheme switching through DMS,
                  Dms.qml the rest of `dms ipc`; Settings.qml the bar's runtime switches,
                  Paths.qml the XDG paths; the types Command, CommandReader, CommandWriter and
@@ -26,7 +27,7 @@ services/        singletons that own state or data; Shell.qml is the centre isla
 islands/         LeftIsland (workspaces, apps); CentreIsland with CentrePill (weather, clock,
                  battery, Detail), MusicBar, MusicGlow and MusicFade, CentrePanels (the eleven
                  panels) and PrivacyDock beside it; RightIsland (tray, attention indicators,
-                 or the notification stack in their place) with TrayMenu and NotificationStack;
+                 or the notification stack in their place) with TrayMenu and PeekStack;
                  NotificationBlobs (disc blobs below it)
 panels/          Panel (the base) and the centre panel bodies: HomePanel, SettingsPanel,
                  UpdatesPanel, PlayerPanel, PowerPanel, ThemePanel, WallpaperPanel, WifiPanel,
@@ -39,7 +40,7 @@ components/      primitives every widget is built from: Island, IslandShadow and
                  then feature pieces: Tile, CapsuleSlider, NotificationRow and
                  NotificationList for Settings; NotificationPeekRow for the stack;
                  StatusIndicator for the right island; PanelControlRow, RowList,
-                 RowActions.js, NetworkRow and AppVolumeRow for Wi-Fi, Bluetooth and Sound;
+                 RowActions.js, ListRow and AppVolumeRow for Wi-Fi, Bluetooth and Sound;
                  TimeTile, WeatherTile, PerformanceTile and PowerTile for Home; Orb,
                  RimLight and TopWave for music; Carousel for Theme and Wallpaper; Osd;
                  PrivacyDots

@@ -18,7 +18,7 @@ Item {
     property bool available: true
     property bool muted: false
     property string iconName: ""
-    property string label: ""
+    property string accessibleName: ""
     // The chevron zone at the right end and the panel signal.
     property bool hasPanel: false
     // What the value zone shows; the owner may map shownValue to its own unit.
@@ -38,12 +38,7 @@ Item {
     // The chevron zone, a right click, Enter or the menu key; only with hasPanel.
     signal panelRequested
 
-    // What the owner asked for last, shown until the service reports it back, so
-    // the fill does not jump back while the write is under way.
-    property real requestedValue: 0
-    property bool holding: false
-    property bool dragging: false
-    readonly property real shownTarget: holding ? requestedValue : Math.max(0, Math.min(100, value))
+    readonly property real shownTarget: internal.awaitingService ? internal.requestedValue : Math.max(0, Math.min(100, value))
     property real shownValue: shownTarget
     // The value runs over the capsule minus the chevron zone.
     readonly property real trackWidth: width - (hasPanel ? Theme.tileChevronZone : 0)
@@ -54,36 +49,46 @@ Item {
     activeFocusOnTab: true
 
     Accessible.role: Accessible.Slider
-    Accessible.name: label
+    Accessible.name: accessibleName
     Accessible.description: available ? valueText : ""
 
     // Dragging follows the pointer; everything else glides.
     Behavior on shownValue {
-        enabled: !slider.dragging
+        enabled: !internal.dragging
 
         MorphAnimation {}
     }
 
     onValueChanged: {
-        if (holding && Math.abs(value - requestedValue) < 0.5)
-            holding = false;
+        if (internal.awaitingService && Math.abs(value - internal.requestedValue) < 0.5)
+            internal.awaitingService = false;
     }
 
     function request(target: real) {
-        requestedValue = Math.max(minimum, Math.min(100, Math.round(target / snap) * snap));
-        holding = true;
+        internal.requestedValue = Math.max(minimum, Math.min(100, Math.round(target / snap) * snap));
+        internal.awaitingService = true;
         holdTimer.restart();
-        moved(requestedValue);
+        moved(internal.requestedValue);
     }
 
     // Keys and the wheel move from what is shown as the target, so quick
     // repeats add up instead of starting from a stale service value.
     function step(units: real) {
-        request((holding ? requestedValue : value) + units);
+        request((internal.awaitingService ? internal.requestedValue : value) + units);
     }
 
     function valueAt(pointerX: real): real {
         return Math.max(0, Math.min(100, pointerX / trackWidth * 100));
+    }
+
+    QtObject {
+        id: internal
+
+        // What the owner asked for last, shown until the service reports it back, so
+        // the fill does not jump back while the write is under way.
+        property real requestedValue: 0
+        property bool awaitingService: false
+        property bool dragging: false
     }
 
     // A value the service never reports exactly (rounding, a refused write)
@@ -92,7 +97,7 @@ Item {
         id: holdTimer
 
         interval: Motion.sliderHoldFallback
-        onTriggered: slider.holding = false
+        onTriggered: internal.awaitingService = false
     }
 
     // Right keeps stepping: the panel opens with Enter or the menu key. Space is
@@ -232,7 +237,7 @@ Item {
             if (!travelled && Math.hypot(mouse.x - startX, mouse.y - startY) < Theme.sliderDragThreshold)
                 return;
             travelled = true;
-            slider.dragging = true;
+            internal.dragging = true;
             slider.request(slider.valueAt(mouse.x));
         }
         onReleased: mouse => {
@@ -246,7 +251,7 @@ Item {
                 return;
             }
             if (travelled) {
-                slider.dragging = false;
+                internal.dragging = false;
                 return;
             }
             if (!slider.available)
@@ -256,7 +261,7 @@ Item {
             else
                 slider.request(slider.valueAt(mouse.x));
         }
-        onCanceled: slider.dragging = false
+        onCanceled: internal.dragging = false
         onWheel: wheel => {
             if (!slider.available) {
                 wheel.accepted = true;

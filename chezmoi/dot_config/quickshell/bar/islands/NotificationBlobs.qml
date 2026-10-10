@@ -31,7 +31,7 @@ Item {
     // The centre of a stack row's icon disc in this item, or null once the row is gone.
     property var discOrigin: id => null
 
-    readonly property var serviceIds: Notifications.blobIdsOn(screenName)
+    readonly property var serviceIds: NotificationStack.blobIdsOn(screenName)
     readonly property int step: Theme.notificationBlobSize + Theme.notificationBlobGap
     // Blobs that are not sliding into the bell or rising into the island; past
     // the maximum they make "+N".
@@ -65,7 +65,7 @@ Item {
     // that leaves for a row of its own rises into the island; the others sink
     // into the bell.
     function sync() {
-        const rows = Notifications.peekIdsOn(screenName);
+        const rows = NotificationStack.peekIdsOn(screenName);
         blobModel.sync(serviceIds, id => {
             const origin = discOrigin(id);
             return {
@@ -144,7 +144,7 @@ Item {
 
         Accessible.name: "Clear the notification stack"
 
-        onActivated: Notifications.clearStack()
+        onActivated: NotificationStack.clearStack()
     }
 
     // A disc in the island background and shadow. A middle click on any of
@@ -179,7 +179,7 @@ Item {
             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
             onClicked: mouse => {
                 if (mouse.button === Qt.MiddleButton)
-                    Notifications.clearStack();
+                    NotificationStack.clearStack();
                 else
                     surface.activated();
             }
@@ -260,7 +260,7 @@ Item {
         Component.onCompleted: {
             const entry = Notifications.entryFor(blobId);
             if (entry) {
-                iconUrl = Notifications.iconSource(entry.appIcon, entry.desktopEntry, entry.image);
+                iconUrl = Notifications.iconFor(blobId);
                 summary = Notifications.oneLine(entry.summary);
             }
             if (fromDisc)
@@ -278,7 +278,7 @@ Item {
                 riseIn.start();
             }
         }
-        onActivated: Notifications.repeek(blobId)
+        onActivated: NotificationStack.repeek(blobId)
 
         MorphAnimation {
             id: travelIn

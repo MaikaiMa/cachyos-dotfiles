@@ -31,7 +31,6 @@ Singleton {
     }
     readonly property var focusedWorkspace: workspaces.find(workspace => workspace.isFocused) ?? null
     readonly property string focusedOutput: focusedWorkspace ? focusedWorkspace.output : ""
-    property bool overviewOpen: false
     // Screencasts as Niri reports them: {stream_id, session_id, kind, target,
     // is_dynamic_target, is_active, pid, pw_node_id}; pid and pw_node_id may be null.
     property var casts: []
@@ -53,6 +52,30 @@ Singleton {
 
     function windowsOn(workspaceId: int): var {
         return windows.filter(window => window.workspaceId === workspaceId);
+    }
+
+    // Ported from the DMS plugins' NotificationMatcher: notifications and
+    // players name an app ("Claude", "com.anthropic.Claude.desktop") and
+    // windows an app_id ("com.anthropic.Claude"), so both reduce to the whole
+    // name and its last dotted part, lower case, letters and digits only.
+    function appKeys(value: string): var {
+        let name = value.toLowerCase().trim();
+        if (name.endsWith(".desktop"))
+            name = name.slice(0, -8);
+        const full = name.replace(/[^a-z0-9]/g, "");
+        const tail = name.slice(name.lastIndexOf(".") + 1).replace(/[^a-z0-9]/g, "");
+        const keys = full ? [full] : [];
+        if (tail && tail !== full)
+            keys.push(tail);
+        return keys;
+    }
+
+    // The first window whose app_id shares a key with one of the names, or null.
+    function windowForApp(names: list<string>): var {
+        const keys = [];
+        for (const name of names)
+            keys.push(...appKeys(name));
+        return windows.find(window => appKeys(window.appId ?? "").some(key => keys.includes(key))) ?? null;
     }
 
     function iconFor(appId: string): string {
@@ -289,8 +312,6 @@ Singleton {
                     isUrgent: event.WindowUrgencyChanged.urgent === true
                 });
             publishWindows();
-        } else if (event.OverviewOpenedOrClosed) {
-            overviewOpen = event.OverviewOpenedOrClosed.is_open === true;
         } else if (event.CastsChanged) {
             const next = {};
             for (const cast of event.CastsChanged.casts ?? [])

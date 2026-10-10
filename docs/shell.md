@@ -136,8 +136,8 @@ Step 5 made the side islands and the Updates panel real.
   The bell counts the list items that are neither peeking nor a disc
   blob (`bellCount`), so a notification joins the count when the stack
   morphs back into the bell.
-- **Notification peek** (ADR-0028, `NotificationPeekRow`,
-  `NotificationBlobs`). A notification replaces the right island of the
+- **Notification peek** (ADR-0028, the `NotificationStack` service,
+  `PeekStack`, `NotificationPeekRow` and `NotificationBlobs`). A notification replaces the right island of the
   screen that had Niri's focus: a fanned tray folds first (200 ms) or an
   open tray menu closes first (220 ms), then the island morphs into the
   stack keeping its right edge (280 ms grow, the status content fades out
@@ -168,14 +168,14 @@ Step 5 made the side islands and the Updates panel real.
   both close the notification with reason "dismissed by user" unless it
   is resident. The glyph and a middle click on a row dismiss that row,
   right click opens Settings. A row whose hold ends, or that a fourth row pushes out, while
-  other rows stay breaks out as a disc blob (`Notifications.blobIds`): its
+  other rows stay breaks out as a disc blob (`NotificationStack.blobIds`): its
   icon disc travels down through the island's bottom edge, grows from 26
   to 30 px and settles 8 px below the island (220 ms, shrink curve), a
   circle in the island background and shadow, right-aligned with the
   island, newest on the right, 8 px apart, at most six and then a "+N"
   blob on the far left. Blobs follow the island's bottom edge, shift left
   with the shrink timing and never climb back into the stack on their
-  own. A click on a blob re-peeks it (`Notifications.repeek`): it rises
+  own. A click on a blob re-peeks it (`NotificationStack.repeek`): it rises
   into the island onto the top row's disc while that row grows in place
   (280 ms grow), with its actions, dismiss glyph and a fresh hold; with
   three rows already shown the bottom one breaks out as a blob. A click
@@ -185,7 +185,7 @@ Step 5 made the side islands and the Updates panel real.
   "+N" or alone when there are no blobs: the blob size, a 16 px `close`
   glyph in `on_surface_variant`, `on_surface` on hover. Its
   click, and a middle click on a blob or on the stack outside its rows,
-  dismisses every row and blob (`Notifications.clearStack`) and the
+  dismisses every row and blob (`NotificationStack.clearStack`) and the
   island morphs back with nothing of them counted. A row that is
   dismissed, runs an action, or is the last one leaves without a blob. When the last row
   leaves, the island morphs back (220 ms shrink, the status content fades
@@ -417,7 +417,7 @@ Also on 2026-10-07 the three Settings capsules got panels of their own.
   which closes the panel. Then up to three sections in one area that
   scrolls inside 360 px (`Theme.soundListMaxHeight`), each with a small
   header in the notification header's language and only while it has rows:
-  *Output* and *Input* as 44 px `NetworkRow`s (glyph `speaker`,
+  *Output* and *Input* as 44 px `ListRow`s (glyph `speaker`,
   `headphones`, `bluetooth_audio` or `tv`; `mic` or `headset_mic`), the
   default tinted `primary`, a click makes a row the default through
   `Pipewire.preferredDefaultAudioSink/Source`. The default input carries a
@@ -460,7 +460,7 @@ Also on 2026-10-07 the three Settings capsules got panels of their own.
   the terminal Update all uses (DMS's `terminalOverride`, else
   `xdg-terminal-exec`, else Ghostty). Both close the panel; Tab goes back,
   switch, terminal, settings. Under it a `RowList` of 44 px
-  `NetworkRow`s that scrolls inside 240 px; a row expands by 42 px (and an
+  `ListRow`s that scrolls inside 240 px; a row expands by 42 px (and an
   error by 16 px) with the grow or shrink curve, and the island follows
   because the panel's height is computed from the settled rows. One row is
   expanded at a time, and while one is the list keeps its order (rows hold
@@ -672,8 +672,10 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     CommandWriter.qml                   type: a command that writes a value, newest value wins
     LineWatcher.qml                     type: a long-running line-per-state command, restarted after it exits
     maps.js                             withKey and withoutKey for copy-on-write map properties
-    Session.qml                         Power panel actions: lock, suspend, log out, reboot, power off; logind lock state
-    Notifications.qml                   the notification daemon: history, do not disturb, peek stack
+    Session.qml                         Power panel commands: lock, suspend, log out, reboot, power off; logind lock state
+    Notifications.qml                   the notification daemon: history, do not disturb, alerts; signals for the stack
+    NotificationStack.qml               the peek stack: rows, blobs, backlog, holds; follows Notifications' signals
+    Time.qml                            the one minute clock and the Dutch short day and month names
     Tablet.qml                          keyboard cover detached, on-screen keyboard, rotation lock
     Display.qml                         night light, its temperature and schedule, keyboard backlight, rear light
     Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
@@ -694,7 +696,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     PrivacyDock.qml                     privacy dots right of the centre island, docked in a mini island while hidden
     RightIsland.qml                     tray stack and fan, attention indicators, or the notification stack in their place
     TrayMenu.qml                        a tray item's menu, flattened one level, measured on open
-    NotificationStack.qml               the notification stack's rows and their settled height
+    PeekStack.qml                       the notification stack's rows and their settled height
     NotificationBlobs.qml               disc blobs of rows that left the stack, below the right island
   panels/                               centre panel bodies
     Panel.qml                           base: name, shown with the cross-fade, opened and closed, content geometry, focusWhenShown
@@ -730,7 +732,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     ChevronZone.qml                     panel zone at the right end of a tile or capsule: hover tint, hairline, chevron
     RoundedImage.qml                    image cropped and rounded through its own or a shared mask
     Hairline.qml                        1 x 14 px separator
-    Clock.qml                           SystemClock text in a given format or formatter
+    Clock.qml                           Time's clock as text in a given format or formatter
     Icon.qml                            Material Symbols glyph by name, placeholder without the font
     WeatherIcon.qml                     Icon for a Weather service icon name
     BatteryIcon.qml                     Icon for the battery charge and state, red when low
@@ -748,7 +750,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height and the one expanded row
     RowActions.js                       Wi-Fi and Bluetooth: the actions an expanded row offers
     AppVolumeRow.qml                    Sound: one application's icon, name and volume capsule
-    NetworkRow.qml                      Wi-Fi, Bluetooth and Sound row: icon, name, detail or level, expands in place
+    ListRow.qml                         Wi-Fi, Bluetooth and Sound row: icon, title, subtitle or level, expands in place
     Orb.qml                             music orb: album-colour sphere, rim light, bloom
     PrivacyDots.qml                     microphone, camera and share dots right of the centre island
     RimLight.qml                        conic-gradient ring inside a rounded rectangle (orb, music bar)
@@ -1218,7 +1220,12 @@ surface.
    behaviour then is the same everywhere: Tab reaches every control, Space,
    Return and Enter activate it, and keys with Alt, Ctrl or Meta go on to
    the window. When a primitive lacks an option, extend the primitive
-   instead of copying it.
+   instead of copying it. Name its API as the others do: visible text is
+   `text`, a two-line row has `title` and `subtitle`, the accessible name
+   is `accessibleName`; the signal that opens an item's own panel is
+   `panelRequested`; an action object is `{ id, text, tone }` (tone
+   `neutral`, `accent` or `danger`, as `PillButton` takes it); state an
+   owner must not write goes into a `QtObject { id: internal }`.
 3. Add `<Name> 1.0 <Name>.qml` (or `singleton <Name> 1.0 <Name>.qml`) to
    that directory's `qmldir`. A hand-written `qmldir` stops Quickshell from
    synthesising one, so a type that is not listed is not found.
@@ -1288,7 +1295,10 @@ owns.
 Every data source above is one `pragma Singleton` under `services/`, with
 no UI; widgets import `"../services"` and bind to the properties. Quickshell
 creates a singleton on first use, so a service that no widget references
-does not run. Percentages are 0..100 and levels 0..1 unless noted.
+does not run. Percentages are 0..100 and levels 0..1 unless noted. The
+entries below list what other files read or call, and what the IPC targets
+and debugging rely on; members a service only uses itself are not part of
+its contract and are not listed.
 
 Three shapes hold for every service:
 
@@ -1322,14 +1332,19 @@ Three shapes hold for every service:
   `output`, `isActive`, `isFocused`, `isUrgent`, `activeWindowId`),
   `windows` (`id`, `title`, `appId`, `workspaceId`, `isFocused`,
   `isFloating`, `isUrgent`, `column`, `row`), `focusedWindowId`,
-  `focusedWorkspace`, `focusedOutput`, `overviewOpen`, `connected`,
+  `focusedWorkspace`, `focusedOutput`, `connected` (the event stream is
+  up; for debugging),
   `focusedFullscreen` (the focused window is as large as its output's
   logical size: Niri 26.04 reports no fullscreen flag, and a fullscreen
   window is drawn over the bar; windows carry `width` and `height` from
   `layout.window_size`);
   `windowsOn(id)`, `focusWorkspace(id)`, `focusWindow(id)`,
-  `toggleOverview()`, `request(message, callback)`, `iconFor(appId)` with
-  `iconOverrides`, and `casts` (Niri's screencasts as it reports them:
+  `toggleOverview()`, `iconFor(appId)` with `iconOverrides` (the table to
+  extend for web apps), `appKeys(name)` (an app name or app_id reduced to
+  its whole name and last dotted part, lower case, letters and digits;
+  ported from the DMS plugins' NotificationMatcher) and
+  `windowForApp(names)` (the first window sharing a key with one of the
+  names, or null; `Music.raise` and `Notifications.open` use it), and `casts` (Niri's screencasts as it reports them:
   `stream_id`, `session_id`, `kind`, `target`, `is_dynamic_target`,
   `is_active`, `pid`, `pw_node_id`). One connection reads the event stream and reconnects
   with a backoff of 1 s doubling to 30 s; each request opens its own.
@@ -1342,9 +1357,8 @@ Three shapes hold for every service:
   the Home power tile).
 - `Audio`: `volume`, `muted`, `micVolume`, `micMuted`, `ready`, `sink`
   and `source` (the defaults), `sinks` and `sources` (hardware and virtual
-  outputs and inputs, no streams, sorted by label), `ports` (node name to
-  active port label and type, from pactl), `active` (the Sound panel is
-  open), `playbackStreams`, `appStreams` (`key`, `name`, `icon`,
+  outputs and inputs, no streams, sorted by label), `active` (the Sound
+  panel is open), `appStreams` (`key`, `name`, `icon`,
   `nodes`, grouped by `application.name`, else `media.name`, else node
   name; capture and monitor streams, the bar's cava among them, are never
   in it), `micLevel` (0..1, only while active);
@@ -1353,29 +1367,30 @@ Three shapes hold for every service:
   `deviceIcon(node)`, `setDefaultSink(node)`, `setDefaultSource(node)`
   (PipeWire's configured default), `appGroup(key)`, `groupVolume(group)`
   (the loudest member), `groupMuted(group)`, `setGroupVolume(group, v)`
-  and `toggleGroupMute(group)` (every member), `readPorts()`. The two
+  and `toggleGroupMute(group)` (every member). Port labels come from the
+  two
   `pactl -f json list` reads are `CommandReader`s; `pactl subscribe` is a
   `LineWatcher` while active, so a PipeWire restart does not end it.
 - `Brightness`: `percentage` (-1 until read and without a backlight),
-  `device`, `available`, `active` (the Settings or Display panel is open);
-  `set(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
+  `available`, `active` (the Settings or Display panel is open);
+  `setPercentage(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
   backlight class at start, when it becomes active, every 5 s
   (`pollInterval`) while active, and after each write. Writes go through a
-  `CommandWriter`, so a slider drag never loses its last value. `set`
-  moves `percentage` at once, so key repeats step from the new value and
+  `CommandWriter`, so a slider drag never loses its last value.
+  `setPercentage` moves `percentage` at once, so key repeats step from the new value and
   the OSD shows it. An empty read (no backlight, an external monitor only)
   is warned about once and leaves `percentage` at -1.
 - `Display`: `active` (the Display panel is open), `nightLight`,
   `nightTemperature` (K, -1 until read), `nightMinimum`, `nightCeiling`
   (6000), `nightMaximum` (the ceiling, or lower under a lower day
-  temperature), `nightStep`, `schedule` (DMS's text), `scheduleText`,
+  temperature), `nightStep`, `scheduleText`,
   `keyboardLevel` and `keyboardAvailable`, `rearLevel`, `rearColor`
   (RRGGBB), `rearTint` (it as a colour, transparent without one) and `rearAvailable`; `nightFraction(kelvin)` and
   `nightKelvin(fraction)` (the capsule's 0..100), `toggleNightLight()`,
   `setNightTemperature(kelvin)`, `setKeyboardLevel(level)` and
   `setRearLevel(level)` (each a `CommandWriter`: only the newest waits
-  while a write runs, and the value moves at once), `refresh()` (run when
-  it becomes active). Night status, day temperature and schedule are three
+  while a write runs, and the value moves at once). Everything is read
+  again when it becomes active. Night status, day temperature and schedule are three
   `CommandReader`s; after a toggle they are read again once `Dms.settled`.
 - `Network`: `wifiEnabled`, `connected` (any device), `wifiConnected`,
   `ssid`, `strength`, `weak` (under 40), `statusIcon` (the one Wi-Fi glyph
@@ -1386,31 +1401,28 @@ Three shapes hold for every service:
   exists; drives the module's `scannerEnabled`), `scanning` (its first
   `firstScanTime`, 4 s), `attemptWindow` (20 s: a client failure this soon
   after a connect on a saved network suggests a stale password), `errors`
-  (per SSID), `wrongPassword`, `lastAttempt`; signal `failed(ssid, kind)`;
+  (per SSID), `wrongPassword`; signal `failed(ssid, kind)`;
   `primaryAction(network)` (what a click does: `manage` the connected one,
   `connect`, ask for a `password`, or `login` for one only the settings
   window can join), `requestLogin(network)` (that row's error), `toggleWifi()`, `attemptConnect(network)`, `attemptPassword(network,
   password)`, `attemptForget(network)`, `reportFailure(network, reason)`
   (an `Instantiator` watches every network of the Wi-Fi device, hidden and
-  duplicate SSIDs included), `setError(ssid, text)`,
-  the raw `setScanning(value)`, `connectTo`, `connectWithPassword`,
-  `disconnectFrom`, `forget`, and the row helpers `signalIcon`, `secured`,
+  duplicate SSIDs included), `disconnectFrom(network)`, and the row
+  helpers `signalIcon`, `secured`,
   `needsPassword`, `detailText`, `failureText`.
-- `Bluetooth`: `btEnabled`, `powered` (the adapter state is Enabled),
+- `Bluetooth`: `bluetoothEnabled`, `powered` (the adapter state is Enabled),
   `connectedDevices`, `available`, `discovering`,
   `devices` (connected, paired, then named discovered devices), `active`
   (the Bluetooth panel is open), `discoveryWanted` (active and the adapter
   is powered; drives discovery, capped at `discoveryTime`, 30 s),
-  `scanning` (its first `firstScanTime`, 4 s), `errors` (per address),
-  `pendingPairs`, `pendingConnects`, `pendingSettle` (2 s) and
-  `pendingTimeout` (20 s); `toggleBluetooth()`, `startConnect(device)`,
-  `startPair(device)` (then trust and connect), `setError(address, text)`,
-  `deviceFor(address)`, `openTerminal()` (`bluetoothctl` through
-  `Session.openInTerminal`), the raw `setDiscovering(value)`,
-  `connectDevice`, `disconnectDevice` and `forget` (both clear the
-  device's error first, as an attempt does), `pair`, `trustAndConnect`,
-  and the row helpers `deviceIcon`, `batteryText`, `detailText`,
-  `connectSettled`. Everything is native: the module has
+  `scanning` (its first `firstScanTime`, 4 s), `errors` (per address);
+  `toggleBluetooth()`, `startConnect(device)`, `startPair(device)` (then
+  trust and connect; an attempt settles after 2 s, `pendingSettle`, and
+  times out after 20 s, `pendingTimeout`), `deviceFor(address)`,
+  `openTerminal()` (`bluetoothctl` through `Session.openInTerminal`),
+  `disconnectDevice` and `forget` (both clear the device's error first, as
+  an attempt does), and the row helpers `deviceIcon`, `batteryText`,
+  `detailText`. Everything is native: the module has
   discovery, pairing and battery levels, but no pairing agent. An attempt
   in flight is checked again when its device's pairing or connection state
   changes (`pendingStates`), and one single-shot timer wakes it at the next
@@ -1453,60 +1465,81 @@ Three shapes hold for every service:
 - `Notifications`: the notification daemon (ADR-0028). `items` (newest
   first: `id`, `serverId`, `appName`, `summary`, `body`, `timestamp` in ms,
   `appIcon`, `image`, `urgency`, `desktopEntry`, `seen`, and `live`: the
-  sender's notification still exists), `count` (the list length),
-  `bellCount` (items neither peeking nor a blob), `alerts` (items from the last ten
+  sender's notification still exists), `alerts` (items from the last ten
   minutes not yet seen), `recentAppKeys` (name keys of their apps),
-  `seenIds`, `focusedAlertIds` (alerts of the apps on
-  `Niri.focusedWorkspace`), `liveIds`, `liveNotifications`,
-  `doNotDisturb`; `peekIds` (the peek stack, newest first, at most three;
-  `backlogRow` is the combined row), `blobIds` (rows that left the stack
-  while others stayed, newest first, cleared when the stack ends),
-  `peekScreen`, `peekIdsOn(screen)` and `blobIdsOn(screen)` (the stack as
-  one screen sees it, like `Shell.stateOn`), `backlogCount`,
-  `peekDeferred` (bar hidden or session locked), `peekBlocked` (a panel
-  open or a fullscreen focused window); signal `replaced(id)`.
-  `dismiss(id)` (closes a live one with reason "dismissed by user", drops
-  the entry), `markSeen(ids)`, `clearAll()` (every entry, row and blob:
-  the list, the stack and the count empty), `clearStack()` (only the
-  stack's rows and blobs; the combined row just ends and what it stands
-  for stays listed), `repeek(id)` (a blob back as the top row with a fresh
-  hold), `invoke(id, identifier)`,
-  `reply(id, text)`, `activate(id, identifier)` and `open(id)` (the peek's
-  verbs: they close unless resident), `isResident(id)`,
-  `hasDefaultAction(id)`, `pillActions(notification)`, `holdFor(id)`,
-  `expirePeek(id)` (a row's hold ended: a blob when other rows stay),
-  `endPeek(id)` (a row leaves without a blob), `liveObject(id)`, `entryFor(id)`, `setDoNotDisturb(on)`,
-  `toggleDoNotDisturb()`, `appKeys(name)`, `hasRecentFor(appId)`,
-  `iconSource(appIcon, desktopEntry, image)`, `storedImage(image)`,
-  `plainText(text)`, `oneLine(text)`. While `focusedAlertIds` is not empty
-  and stays the same for `alertClearDelay` (3 s), they are marked seen. A
-  sender's `replaces_id` arrives as changed properties on the same
-  Quickshell object. A new summary or urgency rewrites the entry as new
-  (new timestamp, unseen, back on top); a change of only the body, image
-  or actions, as progress senders make every second, updates the entry in
-  place and keeps its timestamp and seen mark. Either way `replaced`
-  fires, but no new peek starts. A transient notification that does not
-  peek on arrival (`Settings.notificationPeek` off, do not disturb, bar hidden or locked, a
-  panel open or a fullscreen window) is expired at once. The `now` clock
-  that ages alerts out ticks every 30 s only while alerts exist. A notification the sender
-  closes stays in the list as history; one that falls out of the 200
-  entries or 7 days expires. After a config reload the server keeps its
-  notifications (`keepOnReload`) and they find their entries again by
-  server id and text. A missing or unreadable state file is an empty
-  history.
+  `focusedAlertIds` (alerts of the apps on `Niri.focusedWorkspace`; these
+  three stay public for debugging the workspace pills), `liveIds`,
+  `doNotDisturb`; signals `arrived(id, notification)` (a new one, transient
+  ones included, once the server tracks it), `gone(id)` (the sender's
+  notification closed; the entry stays as history), `removed(ids)`
+  (dismissed by the user), `cleared` (`clearAll`) and `replaced(id)`.
+  `dismiss(id)` and `dismissAll(ids)` (close live ones with reason
+  "dismissed by user", drop the entries), `markSeen(ids)`, `clearAll()`
+  (every entry and live notification: the list, the stack and the count
+  empty), `expireTransient(id)` (a transient one whose peek is over),
+  `invoke(id, identifier)` (`NotificationAction.invoke()` itself closes a
+  notification that is not resident), `reply(id, text)`,
+  `activate(id, identifier)` and `open(id)` (the peek's verbs; `finish(id)`
+  then drops the entry unless the notification is resident),
+  `isResident(id)`, `hasDefaultAction(id)`, `pillActions(notification)`
+  (`{ id, text, tone }`, the default action first with tone `accent`),
+  `liveObject(id)`, `entryFor(id)`, `toggleDoNotDisturb()`,
+  `hasRecentFor(appId)`, `iconFor(id)` and `imageFor(id)` (the live
+  notification first, raw image data included, else the entry; the list
+  row, the peek row and the blobs bind to them), `iconSource(appIcon,
+  desktopEntry, image)`, `storedImage(image)`, `plainText(text)`,
+  `oneLine(text)`. App names are matched with `Niri.appKeys`. While
+  `focusedAlertIds` is not empty and stays the same for `alertClearDelay`
+  (3 s), they are marked seen. A sender's `replaces_id` arrives as changed
+  properties on the same Quickshell object (`updateEntry(serverId)`). A
+  new summary or urgency rewrites the entry as new (new timestamp, unseen,
+  back on top); a change of only the body, image or actions, as progress
+  senders make every second, updates the entry in place and keeps its
+  timestamp and seen mark. Either way `replaced` fires, but no new peek
+  starts. The `now` clock that ages alerts out ticks every 30 s only while
+  alerts exist. A notification the sender closes stays in the list as
+  history; one that falls out of the 200 entries or 7 days expires. After
+  a config reload the server keeps its notifications (`keepOnReload`); the
+  server-id to entry-id map survives the reload in `PersistentProperties`
+  (as JSON: a JS object would belong to the old generation's engine), so
+  they find their entries again by key, and a transient one, whose peek
+  the reload ended, expires. Only a missing state file is an empty
+  history. Any other read failure is warned about once and nothing is
+  saved until the bar restarts, so the file is not overwritten; a file
+  that does not parse is copied to `notifications.json.bad` before the
+  next save replaces it. The history stays a plain `FileView` with
+  `normalise()`: a `JsonAdapter` would only type the top level, not the
+  entries.
+- `NotificationStack`: the peek stack, one for all screens, shown on the
+  screen that had focus when it started; it follows the signals of
+  `Notifications`, which does not know it. `peekIds` (newest first, at
+  most three; `backlogRow` is the combined row), `blobIds` (rows that left
+  the stack while others stayed, newest first, cleared when the stack
+  ends), `peekScreen`, `peekIdsOn(screen)` and `blobIdsOn(screen)` (the
+  stack as one screen sees it, like `Shell.stateOn`), `backlogCount`,
+  `bellCount` (items neither peeking nor a blob), `peekDeferred` (bar
+  hidden or session locked), `peekBlocked` (a panel open or a fullscreen
+  focused window); `holdFor(id)`, `expirePeek(id)` (a row's hold ended: a
+  blob when other rows stay), `endPeek(id)` (a row leaves without a blob),
+  `activate(id, identifier)` and `open(id)` (the notification's verb, then
+  the row ends), `repeek(id)` (a blob back as the top row with a fresh
+  hold), `clearStack()` (only the stack's rows and blobs; the combined row
+  just ends and what it stands for stays listed). A transient notification
+  that does not peek on arrival (`Settings.notificationPeek` off, do not
+  disturb, bar hidden or locked, a panel open or a fullscreen window) is
+  expired at once.
 - `Music`: `hasPlayer`, `title`, `artist`, `album`, `artUrl`, `playing`,
-  `position`, `length` (seconds), `canSeek`, `artColors` (the quantiser's
-  buckets), `artColorRaw` (the most frequent bucket colour,
-  `Colors.primaryContainer` without art; it follows the art of every new
-  track), `artColor` (`artColorRaw` lifted to at least 0.35 HSL lightness,
-  hue and saturation kept, so a near-black cover still reads), `artLight` and `artWarm` (a lighter and a warmer cut of it for the
+  `position`, `length` (seconds), `canSeek`, `artColor` (the most frequent
+  bucket colour of the art's quantiser, `Colors.primaryContainer` without
+  art, lifted to at least 0.35 HSL lightness with hue and saturation kept,
+  so a near-black cover still reads; it follows the art of every new
+  track), `artLight` and `artWarm` (a lighter and a warmer cut of it for the
   rim light and the wave, lifted the same way); `lifted(color)`; `play()`, `pause()`, `togglePlaying()`, `next()`,
   `previous()`, `seek(seconds)` (absolute, when the player can seek),
   `formatTime(seconds)` ("3:07", or "1:02:09" past an hour),
-  `raise()` (MPRIS Raise when the player can, else Niri focus on the window
-  whose app id is the player's desktop entry or identity, case-insensitive;
-  false when neither works). playerctld's mirror player is left out of
-  `players`. `position` is asked from the player every second only while
+  `raise()` (MPRIS Raise when the player can, else Niri focus on
+  `Niri.windowForApp` of the player's desktop entry and identity; false
+  when neither works). playerctld's mirror player is left out. `position` is asked from the player every second only while
   something plays and `active` (the Player panel is open).
 - `Settings`: the bar's own runtime switches, kept in
   `$XDG_STATE_HOME/dotfiles-bar/settings.json` through a `FileView` with a
@@ -1521,13 +1554,14 @@ Three shapes hold for every service:
   `setNowPlayingPeek`, `setCrossfade`. `wave` and `reduceMotion` are also
   on the `bar` IPC target (see "Shortcuts").
 - `Cava`: `running` (cava runs only while a player plays, never under
-  reduce motion), `bands` (24 raw levels), `smoothBands`, `level`, `low`
+  reduce motion), `smoothBands` (the 24 levels), `level`, `low`
   (mean of the first four bands; all three smoothed with 80 ms attack and
   250 ms release), `rimAngle`, `barRimAngle` and `playerRimAngle` (degrees),
-  `rimRate`, `barRimRate` and `playerRimRate` (turns per second), `spin` (0 paused to 1 playing, eased
-  over 600 ms), `bloom`, `ringSwell` (0 to 1 and back on a 5 s
+  `rimRate`, `barRimRate` and `playerRimRate` (turns per second; the rims
+  ease to a stop over 600 ms on pause), `bloom`, `ringSwell` (0 to 1 and back on a 5 s
   cosine, the resting orb's ring breath), `ringBreath` (its opacity, 0.2 to
-  0.8), `waveOn`, `waveOpacity`, `animating`; signal `tick(dt)`. Writes
+  0.8), `waveOpacity` (the wave fades in while it is enabled, a player
+  plays and motion is not reduced), `animating`; signal `tick(dt)`. Writes
   its config to `$XDG_RUNTIME_DIR/dotfiles-bar/cava.conf` with a
   `FileView` once `Paths` has created the directory; cava itself is a
   `LineWatcher`, so it starts again 5 s after a PipeWire restart ends it.

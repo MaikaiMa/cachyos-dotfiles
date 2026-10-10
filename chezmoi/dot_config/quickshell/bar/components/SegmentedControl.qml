@@ -10,7 +10,7 @@ Item {
 
     property var model: []
     property int currentIndex: 0
-    property string label: ""
+    property string accessibleName: ""
     property int fontSize: Theme.secondaryFontSize
     // Off: clicks and keys do nothing; the control looks the same.
     property bool interactive: true
@@ -26,7 +26,7 @@ Item {
     activeFocusOnTab: true
 
     Accessible.role: Accessible.PageTabList
-    Accessible.name: label
+    Accessible.name: accessibleName
     Accessible.description: model[currentIndex] ?? ""
 
     // Only a click or a key calls this: an owner changing currentIndex (a

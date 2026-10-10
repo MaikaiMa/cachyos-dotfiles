@@ -54,10 +54,10 @@ Panel {
             title: "Wi-Fi"
             active: Network.wifiEnabled
             iconName: Network.statusIcon
-            stateText: !Network.wifiEnabled ? "Off" : !Network.wifiConnected ? "Disconnected" : Network.weak ? "Weak · " + Network.ssid : Network.ssid
+            subtitle: !Network.wifiEnabled ? "Off" : !Network.wifiConnected ? "Disconnected" : Network.weak ? "Weak · " + Network.ssid : Network.ssid
             hasPanel: true
             onActivated: Network.toggleWifi()
-            onSecondaryAction: Shell.open("wifi", Shell.screenName)
+            onPanelRequested: Shell.open("wifi", Shell.screenName)
         }
 
         GridTile {
@@ -89,19 +89,19 @@ Panel {
             width: panel.spanWidth(Tablet.detached ? 1 : 2)
             wide: !Tablet.detached
             title: "Bluetooth"
-            active: Bluetooth.btEnabled
-            iconName: !Bluetooth.btEnabled ? "bluetooth_disabled" : Bluetooth.connectedDevices > 0 ? "bluetooth_connected" : "bluetooth"
-            stateText: {
+            active: Bluetooth.bluetoothEnabled
+            iconName: !Bluetooth.bluetoothEnabled ? "bluetooth_disabled" : Bluetooth.connectedDevices > 0 ? "bluetooth_connected" : "bluetooth"
+            subtitle: {
                 if (!Bluetooth.available)
                     return "Unavailable";
-                if (!Bluetooth.btEnabled)
+                if (!Bluetooth.bluetoothEnabled)
                     return "Off";
                 const devices = Bluetooth.connectedDevices;
                 return devices === 0 ? "On" : devices === 1 ? "1 device" : devices + " devices";
             }
             hasPanel: true
             onActivated: Bluetooth.toggleBluetooth()
-            onSecondaryAction: Shell.open("bluetooth", Shell.screenName)
+            onPanelRequested: Shell.open("bluetooth", Shell.screenName)
         }
 
         // Grows out of the cell Bluetooth frees; Tab skips it while docked.
@@ -136,7 +136,7 @@ Panel {
             title: "Power profile"
             active: Battery.profile !== "balanced"
             iconName: Battery.profileIcon(Battery.profile)
-            stateText: Battery.profileLabel(Battery.profile)
+            subtitle: Battery.profileLabel(Battery.profile)
             onActivated: Battery.cycleProfile()
         }
     }
@@ -162,7 +162,7 @@ Panel {
         CapsuleSlider {
             objectName: "volumeSlider"
             width: parent.width
-            label: "Volume"
+            accessibleName: "Volume"
             available: Audio.ready
             value: Audio.volume * 100
             muted: Audio.muted
@@ -176,7 +176,7 @@ Panel {
         CapsuleSlider {
             objectName: "micSlider"
             width: parent.width
-            label: "Microphone"
+            accessibleName: "Microphone"
             available: Audio.source !== null
             value: Audio.micVolume * 100
             muted: Audio.micMuted
@@ -190,12 +190,12 @@ Panel {
         CapsuleSlider {
             objectName: "brightnessSlider"
             width: parent.width
-            label: "Brightness"
+            accessibleName: "Brightness"
             available: Brightness.available
             minimum: 1
             value: Math.max(0, Brightness.percentage)
             iconName: "light_mode"
-            onMoved: target => Brightness.set(target)
+            onMoved: target => Brightness.setPercentage(target)
             onIconClicked: Brightness.cycle()
             hasPanel: true
             onPanelRequested: Shell.open("display", Shell.screenName)

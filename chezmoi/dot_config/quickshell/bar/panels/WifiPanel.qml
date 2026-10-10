@@ -62,12 +62,16 @@ Panel {
             activate(network);
     }
 
+    // The kinds: connected, saved, suspect, and password, which shows the
+    // field instead of actions.
     function actionsFor(kind: string): var {
         if (kind === "connected")
             return RowActions.connected();
         if (kind === "saved")
             return RowActions.saved();
-        return RowActions.suspect();
+        if (kind === "suspect")
+            return RowActions.suspect();
+        return [];
     }
 
     function submitPassword(network: var, password: string) {
@@ -93,7 +97,7 @@ Panel {
         width: panel.contentWidth
         switchName: "Wi-Fi"
         checked: Network.wifiEnabled
-        stateText: {
+        text: {
             if (!Network.wifiEnabled)
                 return "Off";
             if (Network.scanning)
@@ -118,14 +122,14 @@ Panel {
         errors: Network.errors
         emptyText: Network.scanning ? "Looking for networks" : "No networks in range"
 
-        delegate: NetworkRow {
+        delegate: ListRow {
             required property string rowKey
             readonly property var network: panel.networkFor(rowKey)
 
             width: ListView.view.width
             iconName: network ? Network.signalIcon(network) : "signal_wifi_0_bar"
             title: rowKey
-            detail: network ? Network.detailText(network) : ""
+            subtitle: network ? Network.detailText(network) : ""
             secured: network ? Network.secured(network) : false
             highlighted: network ? network.connected : false
             expanded: list.expandedKey === rowKey
@@ -136,11 +140,11 @@ Panel {
                 if (network)
                     panel.activate(network);
             }
-            onSecondaryClicked: {
+            onSecondaryActivated: {
                 if (network)
                     panel.activateSecondary(network);
             }
-            onActionTriggered: action => {
+            onActionActivated: action => {
                 if (network)
                     panel.act(network, action);
             }

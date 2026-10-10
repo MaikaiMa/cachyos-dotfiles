@@ -33,7 +33,7 @@ Panel {
     function centreOnCurrent() {
         if (centredOnCurrent || !shown)
             return;
-        walls.open(Math.max(0, currentIndex));
+        walls.centreOn(Math.max(0, currentIndex));
         centredOnCurrent = currentIndex >= 0;
     }
 
@@ -61,7 +61,7 @@ Panel {
         y: Theme.panelPadding
         width: panel.width
         height: panel.height - 2 * Theme.panelPadding
-        label: "Wallpapers"
+        accessibleName: "Wallpapers"
         adoptOnSettle: true
         model: Wallpapers.files
         onActivated: index => Wallpapers.set(Wallpapers.files[index], Shell.screenName)
@@ -72,7 +72,7 @@ Panel {
             required property string modelData
             required property int index
 
-            readonly property bool selected: index === walls.selectedIndex
+            readonly property bool selected: index === walls.currentIndex
             readonly property bool applied: modelData === Wallpapers.current
 
             objectName: "wallpaperThumb"

@@ -68,7 +68,7 @@ Item {
         valueZone: Theme.appSliderValueZone
         iconSize: Theme.smallIconSize
         trackColor: Colors.surfaceContainer
-        label: row.name + " volume"
+        accessibleName: row.name + " volume"
         available: row.group !== null && row.group.nodes.some(node => node.audio !== null)
         value: Audio.groupVolume(row.group) * 100
         muted: row.groupMuted

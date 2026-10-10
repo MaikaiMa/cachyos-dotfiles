@@ -16,15 +16,15 @@ Panel {
     readonly property int appliedIndex: Appearance.schemes.findIndex(scheme => scheme.value === Appearance.scheme)
     readonly property var modes: [
         {
-            label: "Light",
+            text: "Light",
             mode: "light"
         },
         {
-            label: "Dark",
+            text: "Dark",
             mode: "dark"
         },
         {
-            label: "Auto",
+            text: "Auto",
             mode: "auto"
         }
     ]
@@ -33,7 +33,7 @@ Panel {
 
     onOpened: {
         Appearance.refresh();
-        schemes.open(Math.max(0, appliedIndex));
+        schemes.centreOn(Math.max(0, appliedIndex));
         focusWhenShown(schemes);
     }
 
@@ -44,13 +44,13 @@ Panel {
         x: (panel.width - width) / 2
         y: Theme.panelPadding
         width: Theme.themeModeWidth
-        label: "Theme mode"
+        accessibleName: "Theme mode"
         fontSize: Theme.themeModeFontSize
         interactive: !Appearance.busy
         // Static disabled look while DMS works: nothing may animate under the
         // frozen frame of the screen crossfade.
         opacity: Appearance.busy ? Theme.busyOpacity : 1
-        model: panel.modes.map(entry => entry.label)
+        model: panel.modes.map(entry => entry.text)
         // A change of currentIndex never emits selected: only a click or a key does.
         currentIndex: panel.modes.findIndex(entry => entry.mode === Appearance.displayedMode)
         onSelected: index => Appearance.requestMode(panel.modes[index].mode)
@@ -64,7 +64,7 @@ Panel {
         y: mode.y + mode.height + Theme.tileGap
         width: panel.width
         height: Theme.schemeCardHeight + 2 * Theme.carouselPadding
-        label: "Colour schemes"
+        accessibleName: "Colour schemes"
         model: Appearance.schemes
         onActivated: index => {
             if (!Appearance.busy)
@@ -77,7 +77,7 @@ Panel {
             required property var modelData
             required property int index
 
-            readonly property bool selected: index === schemes.selectedIndex
+            readonly property bool selected: index === schemes.currentIndex
             readonly property bool applied: index === panel.appliedIndex
 
             objectName: "schemeCard"
@@ -85,7 +85,7 @@ Panel {
             height: schemes.height
 
             Accessible.role: Accessible.ListItem
-            Accessible.name: modelData.label + (applied ? ", applied" : "")
+            Accessible.name: modelData.text + (applied ? ", applied" : "")
             Accessible.selected: selected
 
             Rectangle {
@@ -128,7 +128,7 @@ Panel {
                     width: parent.width - 2 * Theme.schemeCardPadding
                     height: Theme.schemeLabelHeight
                     verticalAlignment: Text.AlignVCenter
-                    text: card.modelData.label
+                    text: card.modelData.text
                     secondary: true
                 }
 

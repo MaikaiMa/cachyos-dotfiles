@@ -90,7 +90,7 @@ Column {
             backlogCount: stack.backlogCount
             holding: stack.ids.includes(rowId)
             lastRow: rowId === internal.lastId
-            onHoldEnded: Notifications.expirePeek(rowId)
+            onHoldEnded: NotificationStack.expirePeek(rowId)
             onSettingsRequested: stack.settingsRequested()
             onGone: rows.finish(rowId)
             onRevealedChanged: {

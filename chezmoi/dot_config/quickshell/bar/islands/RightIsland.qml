@@ -62,10 +62,9 @@ Island {
     // screen. Before it opens, a tray menu closes and a fanned tray folds; while
     // it is open nothing else is drawn. It closes as the last row starts to
     // leave, and the island morphs back with the bell held until it has settled.
-    readonly property var servicePeekIds: Notifications.peekIdsOn(screenName)
+    readonly property var servicePeekIds: NotificationStack.peekIdsOn(screenName)
     readonly property bool peekWanted: servicePeekIds.length > 0
     property bool peekOpen: false
-    readonly property var shownPeekIds: peekOpen ? servicePeekIds : []
     property bool bellHeld: false
     readonly property real peekWidth: Math.min(Theme.notificationPeekWidth, peekMaxWidth)
     // From the island's right edge: the bell, where the blobs go on the morph
@@ -131,6 +130,13 @@ Island {
             fanned = false;
     }
 
+    // Not a binding on peekOpen: the stack's emptied, from inside sync, closes
+    // peekOpen, and a binding would re-enter itself.
+    function syncStack() {
+        morphKind = "peek";
+        stack.sync(peekOpen ? servicePeekIds : []);
+    }
+
     function noteIndicatorResize() {
         morphKind = peekOpen || bellHeld ? "peek" : "indicator";
     }
@@ -138,9 +144,9 @@ Island {
     onFannedChanged: morphKind = "tray"
     onTrayCountChanged: morphKind = "tray"
     onMenuOpenChanged: morphKind = "menu"
-    onShownPeekIdsChanged: {
-        morphKind = "peek";
-        stack.sync(shownPeekIds);
+    onServicePeekIdsChanged: {
+        if (peekOpen)
+            syncStack();
     }
     onPeekWantedChanged: {
         if (!peekWanted)
@@ -154,6 +160,7 @@ Island {
             bellRelease.stop();
             bellHeld = true;
             fanned = false;
+            syncStack();
         } else {
             bellRelease.restart();
         }
@@ -209,7 +216,7 @@ Island {
         onClicked: mouse => {
             if (mouse.button === Qt.MiddleButton) {
                 if (island.peekOpen)
-                    Notifications.clearStack();
+                    NotificationStack.clearStack();
                 return;
             }
             island.fanned = false;
@@ -221,14 +228,14 @@ Island {
     }
 
     // At the island's right edge; the island clips the rest.
-    NotificationStack {
+    PeekStack {
         id: stack
 
         anchors.right: parent.right
         anchors.rightMargin: Theme.notificationPeekPaddingHorizontal
         y: Theme.notificationPeekPaddingVertical
         width: island.peekWidth - 2 * Theme.notificationPeekPaddingHorizontal
-        backlogCount: Notifications.backlogCount
+        backlogCount: NotificationStack.backlogCount
         onEmptied: island.peekOpen = false
         onActionsToggled: island.morphKind = "actions"
         onSettingsRequested: Shell.open("settings", island.screenName)
@@ -414,7 +421,7 @@ Island {
             shown: Dms.caffeine
             gap: island.gapBefore(caffeineIndicator)
             iconName: "coffee"
-            label: "Caffeine on, turn it off"
+            accessibleName: "Caffeine on, turn it off"
             onActivated: Dms.toggleCaffeine()
         }
 
@@ -425,7 +432,7 @@ Island {
             shown: Audio.muted
             gap: island.gapBefore(mutedIndicator)
             iconName: "volume_off"
-            label: "Muted, unmute"
+            accessibleName: "Muted, unmute"
             takesWheel: true
             onActivated: Audio.toggleMute()
             onScrolled: delta => Audio.setVolume(Audio.volume + (delta > 0 ? 1 : -1) * Theme.sliderStep / 100)
@@ -438,7 +445,7 @@ Island {
             shown: !Network.wifiEnabled || Network.weak
             gap: island.gapBefore(wifiIndicator)
             iconName: Network.statusIcon
-            label: Network.wifiEnabled ? "Wi-Fi weak, open Settings" : "Wi-Fi off, open Settings"
+            accessibleName: Network.wifiEnabled ? "Wi-Fi weak, open Settings" : "Wi-Fi off, open Settings"
             onActivated: Shell.open("settings", island.screenName)
         }
 
@@ -451,7 +458,7 @@ Island {
             gap: island.gapBefore(keyboardIndicator)
             iconName: Tablet.keyboardVisible ? "keyboard_hide" : "keyboard"
             tint: Tablet.keyboardVisible ? Colors.primary : Colors.foreground
-            label: Tablet.keyboardVisible ? "Hide the on-screen keyboard" : "Show the on-screen keyboard"
+            accessibleName: Tablet.keyboardVisible ? "Hide the on-screen keyboard" : "Show the on-screen keyboard"
             onActivated: Tablet.toggleKeyboard()
         }
 
@@ -464,7 +471,7 @@ Island {
             iconName: "download"
             count: Updates.count
             tint: Updates.fragileCount > 0 ? Colors.error : Colors.foreground
-            label: Updates.count + " updates, open Updates"
+            accessibleName: Updates.count + " updates, open Updates"
             onActivated: Shell.toggle("updates", island.screenName)
         }
 
@@ -473,12 +480,12 @@ Island {
             id: notificationsIndicator
 
             objectName: "notifications"
-            shown: Notifications.bellCount > 0 || Notifications.doNotDisturb
+            shown: NotificationStack.bellCount > 0 || Notifications.doNotDisturb
             held: island.bellHeld
             gap: island.gapBefore(notificationsIndicator)
             iconName: Notifications.doNotDisturb ? "notifications_off" : "notifications"
-            count: Notifications.bellCount
-            label: Notifications.bellCount + " notifications" + (Notifications.doNotDisturb ? ", do not disturb on" : "") + ", open Settings"
+            count: NotificationStack.bellCount
+            accessibleName: NotificationStack.bellCount + " notifications" + (Notifications.doNotDisturb ? ", do not disturb on" : "") + ", open Settings"
             onActivated: Shell.open("settings", island.screenName)
             onMiddleClicked: Notifications.clearAll()
             onRightClicked: Notifications.toggleDoNotDisturb()
