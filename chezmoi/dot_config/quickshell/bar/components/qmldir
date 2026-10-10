@@ -40,3 +40,8 @@ NetworkRow 1.0 NetworkRow.qml
 RowList 1.0 RowList.qml
 FrameCounter 1.0 FrameCounter.qml
 NotificationPeekRow 1.0 NotificationPeekRow.qml
+Marquee 1.0 Marquee.qml
+IslandShadow 1.0 IslandShadow.qml
+StatusIndicator 1.0 StatusIndicator.qml
+NotificationList 1.0 NotificationList.qml
+AppVolumeRow 1.0 AppVolumeRow.qml

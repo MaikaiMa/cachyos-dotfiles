@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import ".."
 
 // The one state machine of the centre island, shared by every screen.
@@ -27,10 +26,12 @@ Singleton {
     // The music bar is open by a now-playing peek, not by hover; its timer closes it.
     property bool peeking: false
     readonly property bool panelOpen: panelStates.includes(centreState)
+    // Backspace, Alt+Left or a panel's back button returns to Settings.
+    readonly property bool canGoBack: settingsChildren.includes(centreState)
     // Niri's focus when the open panel opened or morphed: a move away from it
     // closes the panel.
     property int panelFocusWindow: -1
-    property var panelFocusWorkspace: null
+    property int panelFocusWorkspace: -1
 
     // Recorded on every open and morph, so a morph keeps the panel open.
     // panelOpen may not have followed centreState yet here.
@@ -39,12 +40,20 @@ Singleton {
         console.info("Shell: centre " + centreState);
         if (panelStates.includes(centreState)) {
             panelFocusWindow = Niri.focusedWindowId;
-            panelFocusWorkspace = Niri.focusedWorkspace ? Niri.focusedWorkspace.id : null;
+            panelFocusWorkspace = Niri.focusedWorkspace ? Niri.focusedWorkspace.id : -1;
         }
     }
 
     function stateOn(name: string): string {
         return name === screenName ? centreState : "collapsed";
+    }
+
+    function panelOpenOn(name: string): bool {
+        return panelOpen && name === screenName;
+    }
+
+    function osdOn(name: string): bool {
+        return osdVisible && name === screenName;
     }
 
     function resolveScreen(name: string): string {
@@ -82,7 +91,7 @@ Singleton {
 
     // Backspace, Alt+Left or the back button in a panel opened from Settings.
     function back() {
-        if (settingsChildren.includes(centreState))
+        if (canGoBack)
             open("settings", screenName);
     }
 
@@ -134,17 +143,6 @@ Singleton {
         return Niri.focusedOutput;
     }
 
-    function stepVolume(step: int) {
-        Audio.setVolume((Math.round(Audio.volume * 100) + step) / 100);
-        showOsd(ipcScreen(), "volume");
-    }
-
-    function stepBrightness(step: int) {
-        if (Brightness.available)
-            Brightness.set(Brightness.percentage + step);
-        showOsd(ipcScreen(), "brightness");
-    }
-
     // A screen that goes away takes its island along: whatever it showed closes,
     // so the services made active below (scanner, discovery, sampling) stop
     // with it.
@@ -170,7 +168,7 @@ Singleton {
 
         function onFocusedWindowIdChanged() {
             const id = Niri.focusedWindowId;
-            if (root.panelOpen && id !== null && id >= 0 && id !== root.panelFocusWindow)
+            if (root.panelOpen && id >= 0 && id !== root.panelFocusWindow)
                 root.close();
         }
 
@@ -255,124 +253,5 @@ Singleton {
 
         interval: 1500
         onTriggered: root.osdVisible = false
-    }
-
-    // The Niri shortcuts: quickshell ipc -c bar call bar toggle home
-    IpcHandler {
-        target: "bar"
-
-        function open(state: string): void {
-            if (state === "hidden")
-                root.setHidden(true);
-            else
-                root.open(state, root.ipcScreen());
-        }
-
-        // "hidden" hides or shows the whole bar.
-        function toggle(state: string): void {
-            if (state === "hidden")
-                root.setHidden(!root.hidden);
-            else
-                root.toggle(state, root.ipcScreen());
-        }
-
-        function close(): void {
-            root.close();
-        }
-
-        function osd(): void {
-            root.showOsd(root.ipcScreen(), "volume");
-        }
-
-        // up, down (5 % steps), mute, micmute.
-        function volume(action: string): void {
-            if (action === "up" || action === "down") {
-                root.stepVolume(action === "up" ? Theme.sliderStep : -Theme.sliderStep);
-            } else if (action === "mute") {
-                Audio.toggleMute();
-                root.showOsd(root.ipcScreen(), "volume");
-            } else if (action === "micmute") {
-                Audio.toggleMicMute();
-                root.showOsd(root.ipcScreen(), "mic");
-            } else {
-                console.warn("Shell: unknown volume action " + action);
-            }
-        }
-
-        // up or down, 5 % steps.
-        function brightness(action: string): void {
-            if (action === "up" || action === "down")
-                root.stepBrightness(action === "up" ? Theme.sliderStep : -Theme.sliderStep);
-            else
-                console.warn("Shell: unknown brightness action " + action);
-        }
-
-        // next, prev, playpause, play, pause.
-        function media(action: string): void {
-            if (action === "next")
-                Music.next();
-            else if (action === "prev")
-                Music.previous();
-            else if (action === "playpause")
-                Music.togglePlaying();
-            else if (action === "play")
-                Music.play();
-            else if (action === "pause")
-                Music.pause();
-            else
-                console.warn("Shell: unknown media action " + action);
-        }
-
-        function state(): string {
-            return root.centreState + " on " + root.screenName;
-        }
-
-        // on, off or toggle the top-edge wave; kept across restarts. Returns the new state.
-        function wave(action: string): string {
-            if (action === "on" || action === "off")
-                Settings.setWaveEnabled(action === "on");
-            else if (action === "toggle")
-                Settings.setWaveEnabled(!Settings.waveEnabled);
-            else
-                console.warn("Shell: unknown wave action " + action);
-            return Settings.waveEnabled ? "on" : "off";
-        }
-
-        // on, off or toggle reduce motion: every duration 0, no music motion,
-        // no peeks of the playing track; kept across restarts. Returns the new state.
-        function reduceMotion(action: string): string {
-            if (action === "on" || action === "off")
-                Settings.setReduceMotion(action === "on");
-            else if (action === "toggle")
-                Settings.setReduceMotion(!Settings.reduceMotion);
-            else
-                console.warn("Shell: unknown reduceMotion action " + action);
-            return Settings.reduceMotion ? "on" : "off";
-        }
-    }
-
-    // The notification binds: quickshell ipc -c bar call notifications openList
-    IpcHandler {
-        target: "notifications"
-
-        // Settings scrolled to the list, as the bell's click; also while the stack shows.
-        function openList(): void {
-            root.toggle("settings", root.ipcScreen());
-        }
-
-        // The list, the rows and the blobs, nothing left counted.
-        function clearAll(): void {
-            Notifications.clearAll();
-        }
-
-        // Returns the new state, on or off.
-        function toggleDnd(): string {
-            Notifications.toggleDoNotDisturb();
-            return Notifications.doNotDisturb ? "on" : "off";
-        }
-
-        function dnd(): string {
-            return Notifications.doNotDisturb ? "on" : "off";
-        }
     }
 }

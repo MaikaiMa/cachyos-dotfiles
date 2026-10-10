@@ -52,6 +52,8 @@ Singleton {
     property int rearLevel: -1
     // RRGGBB, the theme colour sync-z13-window-color sets.
     property string rearColor: ""
+    // The rear light's theme colour, transparent while there is none.
+    readonly property color rearTint: rearColor !== "" ? "#" + rearColor : "transparent"
     readonly property bool rearAvailable: rearLevel >= 0
 
     // 0..100 on the capsule and back, in whole 500 K steps.

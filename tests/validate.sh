@@ -62,11 +62,16 @@ require_files \
 	chezmoi/dot_config/systemd/user/ollama.service \
 	chezmoi/dot_config/systemd/user/quickshell-bar.service \
 	chezmoi/dot_config/quickshell/bar/shell.qml \
+	chezmoi/dot_config/quickshell/bar/windows/BarWindow.qml \
+	chezmoi/dot_config/quickshell/bar/windows/OrbSurface.qml \
+	chezmoi/dot_config/quickshell/bar/windows/WaveSurface.qml \
+	chezmoi/dot_config/quickshell/bar/windows/qmldir \
 	chezmoi/dot_config/quickshell/bar/Colors.qml \
 	chezmoi/dot_config/quickshell/bar/Theme.qml \
 	chezmoi/dot_config/quickshell/bar/Motion.qml \
 	chezmoi/dot_config/quickshell/bar/qmldir \
 	chezmoi/dot_config/quickshell/bar/services/Shell.qml \
+	chezmoi/dot_config/quickshell/bar/services/BarIpc.qml \
 	chezmoi/dot_config/quickshell/bar/services/Niri.qml \
 	chezmoi/dot_config/quickshell/bar/services/Battery.qml \
 	chezmoi/dot_config/quickshell/bar/services/Audio.qml \
@@ -98,9 +103,19 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/qmldir \
 	chezmoi/dot_config/quickshell/bar/islands/LeftIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/CentreIsland.qml \
+	chezmoi/dot_config/quickshell/bar/islands/CentrePill.qml \
+	chezmoi/dot_config/quickshell/bar/islands/MusicBar.qml \
+	chezmoi/dot_config/quickshell/bar/islands/MusicGlow.qml \
+	chezmoi/dot_config/quickshell/bar/islands/MusicFade.qml \
+	chezmoi/dot_config/quickshell/bar/islands/CentrePanels.qml \
+	chezmoi/dot_config/quickshell/bar/islands/PrivacyDock.qml \
 	chezmoi/dot_config/quickshell/bar/islands/RightIsland.qml \
+	chezmoi/dot_config/quickshell/bar/islands/TrayMenu.qml \
+	chezmoi/dot_config/quickshell/bar/islands/NotificationStack.qml \
+	chezmoi/dot_config/quickshell/bar/islands/NotificationBlobs.qml \
 	chezmoi/dot_config/quickshell/bar/islands/qmldir \
 	chezmoi/dot_config/quickshell/bar/panels/SettingsPanel.qml \
+	chezmoi/dot_config/quickshell/bar/panels/Panel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/HomePanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/UpdatesPanel.qml \
 	chezmoi/dot_config/quickshell/bar/panels/PlayerPanel.qml \
@@ -120,6 +135,12 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/PrivacyDots.qml \
 	chezmoi/dot_config/quickshell/bar/panels/qmldir \
 	chezmoi/dot_config/quickshell/bar/components/Island.qml \
+	chezmoi/dot_config/quickshell/bar/components/IslandShadow.qml \
+	chezmoi/dot_config/quickshell/bar/components/Marquee.qml \
+	chezmoi/dot_config/quickshell/bar/components/StatusIndicator.qml \
+	chezmoi/dot_config/quickshell/bar/components/NotificationList.qml \
+	chezmoi/dot_config/quickshell/bar/components/AppVolumeRow.qml \
+	chezmoi/dot_config/quickshell/bar/components/RowActions.js \
 	chezmoi/dot_config/quickshell/bar/components/MorphAnimation.qml \
 	chezmoi/dot_config/quickshell/bar/components/Hairline.qml \
 	chezmoi/dot_config/quickshell/bar/components/Clock.qml \

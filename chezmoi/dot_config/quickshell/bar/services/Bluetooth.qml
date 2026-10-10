@@ -209,7 +209,9 @@ Singleton {
         device.connect();
     }
 
+    // Errors stay until the next attempt, and this is one.
     function disconnectDevice(device: var) {
+        setError(device.address, "");
         device.disconnect();
     }
 
@@ -224,6 +226,7 @@ Singleton {
     }
 
     function forget(device: var) {
+        setError(device.address, "");
         device.forget();
     }
 

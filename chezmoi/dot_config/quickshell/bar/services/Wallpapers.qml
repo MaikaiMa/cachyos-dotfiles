@@ -52,6 +52,17 @@ Singleton {
         return path.slice(path.lastIndexOf("/") + 1);
     }
 
+    // The file name without its extension.
+    function displayName(path: string): string {
+        const name = fileName(path);
+        const dot = name.lastIndexOf(".");
+        return dot > 0 ? name.slice(0, dot) : name;
+    }
+
+    function urlFor(path: string): string {
+        return "file://" + path.split("/").map(encodeURIComponent).join("/");
+    }
+
     // While a set runs only the newest choice waits, so the last click wins.
     function set(path: string, screen: string) {
         current = path;

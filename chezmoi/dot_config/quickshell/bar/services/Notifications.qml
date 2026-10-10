@@ -117,6 +117,15 @@ Singleton {
     // ("Claude", "com.anthropic.Claude.desktop") and windows an app_id
     // ("com.anthropic.Claude"), so both reduce to the whole name and its last
     // dotted part, lower case, letters and digits only.
+    // The stack's rows and blobs as one screen sees them, like Shell.stateOn.
+    function peekIdsOn(screen: string): var {
+        return peekScreen === screen ? peekIds : [];
+    }
+
+    function blobIdsOn(screen: string): var {
+        return peekScreen === screen ? blobIds : [];
+    }
+
     function appKeys(value: string): var {
         let name = value.toLowerCase().trim();
         if (name.endsWith(".desktop"))

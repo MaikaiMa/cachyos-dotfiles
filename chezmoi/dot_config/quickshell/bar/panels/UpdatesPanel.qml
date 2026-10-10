@@ -7,8 +7,10 @@ import "../services"
 
 // The Updates state of the centre island: a count line, the fragile packages
 // with a reason, the rest in a scrolling list, and Update all, Refresh, Report.
-Appear {
+Panel {
     id: panel
+
+    name: "updates"
 
     // Ticks while the panel is open so "checked 3 min ago" stays true.
     property real now: Date.now()
@@ -17,7 +19,7 @@ Appear {
     readonly property var otherItems: Updates.items.filter(item => !item.fragile)
     readonly property real fragileHeight: fragileItems.length > 0 ? Theme.updatesSectionGap + fragileItems.length * Theme.updatesFragileRowHeight + (fragileItems.length - 1) * Theme.updatesFragileRowGap : 0
     readonly property real listHeight: Math.min(Theme.updatesListMaxHeight, otherItems.length * Theme.updatesRowHeight + Math.max(0, otherItems.length - 1) * Theme.updatesRowGap)
-    readonly property real actionWidth: (width - 2 * Theme.panelPadding - 2 * Theme.gap) / 3
+    readonly property real actionWidth: (contentWidth - 2 * Theme.gap) / 3
     readonly property real listSectionHeight: otherItems.length > 0 ? Theme.updatesSectionGap + listHeight : 0
 
     readonly property string headline: {
@@ -26,26 +28,14 @@ Appear {
         if (!Updates.ready)
             return Updates.error !== "" ? Updates.error : "Not checked yet";
         const count = Updates.count === 0 ? "Up to date" : Updates.count === 1 ? "1 update" : Updates.count + " updates";
-        return count + " · checked " + relativeTime(Updates.lastChecked, now) + (Updates.error !== "" ? " · last check failed" : "");
+        return count + " · " + Updates.checkedText(now) + (Updates.error !== "" ? " · last check failed" : "");
     }
 
-    implicitWidth: Theme.panelWidths.updates
     implicitHeight: 2 * Theme.panelPadding + Theme.updatesHeadHeight + fragileHeight + listSectionHeight + Theme.updatesActionsGap + Theme.updatesButtonHeight
 
-    onShownChanged: {
+    onOpened: {
         now = Date.now();
-        if (shown)
-            list.positionViewAtBeginning();
-    }
-
-    function relativeTime(then: date, reference: real): string {
-        const minutes = Math.floor((reference - then.getTime()) / 60000);
-        if (minutes < 1)
-            return "just now";
-        if (minutes < 60)
-            return minutes + " min ago";
-        const hours = Math.floor(minutes / 60);
-        return hours < 24 ? hours + " h ago" : Math.floor(hours / 24) + " d ago";
+        list.positionViewAtBeginning();
     }
 
     Timer {
@@ -70,9 +60,9 @@ Appear {
     Column {
         id: fragile
 
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding + Theme.updatesHeadHeight + Theme.updatesSectionGap
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         spacing: Theme.updatesFragileRowGap
         visible: panel.fragileItems.length > 0
 
@@ -96,9 +86,9 @@ Appear {
         id: list
 
         objectName: "updatesList"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding + Theme.updatesHeadHeight + panel.fragileHeight + Theme.updatesSectionGap
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         height: panel.listHeight
         visible: panel.otherItems.length > 0
         clip: true
@@ -121,9 +111,9 @@ Appear {
     }
 
     Row {
-        x: Theme.panelPadding
+        x: panel.contentX
         y: panel.implicitHeight - Theme.panelPadding - Theme.updatesButtonHeight
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         spacing: Theme.gap
 
         PillButton {
@@ -167,7 +157,7 @@ Appear {
     component UpdateRow: Rectangle {
         id: row
 
-        property var item: ({})
+        required property var item
         property bool fragile: false
         property string reason: ""
 
@@ -188,7 +178,7 @@ Appear {
 
             Label {
                 anchors.centerIn: parent
-                text: row.item.source ?? ""
+                text: row.item.source
                 color: row.fragile ? Colors.error : Colors.foregroundVariant
                 font.pixelSize: Theme.updatesChipFontSize
             }
@@ -203,7 +193,7 @@ Appear {
 
             Label {
                 width: parent.width
-                text: row.item.name ?? ""
+                text: row.item.name
             }
 
             Label {
@@ -222,7 +212,7 @@ Appear {
             anchors.rightMargin: Theme.paddingHorizontal
             anchors.verticalCenter: parent.verticalCenter
             width: Math.min(implicitWidth, row.width / 2)
-            text: (row.item.oldVersion ?? "") + " → " + (row.item.newVersion ?? "")
+            text: row.item.oldVersion + " → " + row.item.newVersion
             elide: Text.ElideMiddle
             secondary: true
             numeric: true

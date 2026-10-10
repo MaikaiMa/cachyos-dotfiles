@@ -80,7 +80,7 @@ own panels.
 Step 5 made the side islands and the Updates panel real.
 
 - **Left island.** One dot per workspace of the island's own screen:
-  `shell.qml` passes the screen name and the island filters
+  `windows/BarWindow.qml` passes the screen name and the island filters
   `Niri.workspaces` by `output`, because `Niri.focusedOutput` names only
   the one focused output. Dots are 8 px in 3 px padded slots; the active
   one is 22 px and a separate `primary` pill slides over the row to it in
@@ -144,7 +144,7 @@ Step 5 made the side islands and the Updates panel real.
   in 140 ms) and nothing else is drawn in it: no tray, no indicators, no
   bell. On an empty day the island appears as the stack. The stack is
   360 px wide, capped 8 px clear of the centre island (`peekMaxWidth`
-  from `shell.qml`, truncating the text), radius 20 px, padding 10 px
+  from `windows/BarWindow.qml`, truncating the text), radius 20 px, padding 10 px
   horizontal and 8 px vertical. Rows are bare, 48 px, 12 px apart, with a
   full-width 1 px `outline` hairline at 12 % centred in each gap and none
   under the last row; up to three, newest on top, each new one growing
@@ -194,7 +194,8 @@ Step 5 made the side islands and the Updates panel real.
   nothing to show the island shrinks away. The blobs live in their own
   item beside the island (the island clips its content), and the bar
   window's input and blur regions have one ellipse per blob slot, "+N"
-  and the clear-all blob included (`NotificationBlobs.area`), so blobs take clicks and get blur while the
+  and the clear-all blob included (`NotificationBlobs.area`, generated
+  from `NotificationBlobs.slots`), so blobs take clicks and get blur while the
   rest of the window stays click-through. No peek, only the count, while
   do not disturb is on (critical ones still peek), a centre panel is open
   (opening one moves every peeking row and blob into the count), or the
@@ -518,8 +519,9 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
 
 ### Window architecture
 
-- **One window per screen, as tall as the screen.** `shell.qml` creates a
-  single `PanelWindow` anchored top, left and right and as tall as its
+- **One window per screen, as tall as the screen.** `shell.qml` creates,
+  per screen, a `windows/BarWindow.qml`: a single `PanelWindow` anchored
+  top, left and right and as tall as its
   screen, on the `Top` layer with namespace `dotfiles-bar`. Its exclusive
   zone is set explicitly to `Theme.barHeight` (36 px), so windows tile below
   the bar and not below the panels; 0 while the bar is hidden. The islands
@@ -542,9 +544,9 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
 
   | Surface | Namespace | Layer | Size and place | Input |
   |---|---|---|---|---|
-  | Bar window | `dotfiles-bar` | Top | the screen's height, full width, exclusive zone 36 px | the islands (see below) |
-  | Wave strip | `dotfiles-bar-wave` | Bottom | `Theme.waveHeight` (48 px), full width, exclusion ignored | none (`mask: Region {}`) |
-  | Orb box | `dotfiles-bar-orb` | Top | about 81 x 36 px at the top edge, ending at the collapsed pill's left edge | the orb's 32 px ellipse |
+  | Bar window (`windows/BarWindow.qml`) | `dotfiles-bar` | Top | the screen's height, full width, exclusive zone 36 px | the islands (see below) |
+  | Wave strip (`windows/WaveSurface.qml`) | `dotfiles-bar-wave` | Bottom | `Theme.waveHeight` (48 px), full width, exclusion ignored | none (`mask: Region {}`) |
+  | Orb box (`windows/OrbSurface.qml`) | `dotfiles-bar-orb` | Top | about 81 x 36 px at the top edge, ending at the collapsed pill's left edge | the orb's 32 px ellipse |
 
   The wave strip is mapped only while the wave shows (playing or fading
   out, and `Settings.waveEnabled`), so it costs nothing otherwise. On the
@@ -564,7 +566,14 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
   pointer never has to cross surfaces while it rests on the orb, so hover,
   the rest delay and the click work as before. Niri stacks the surfaces of
   one layer in the order they map, so the box maps only after the bar
-  window has presented its first frame. When a panel opens the orb fades
+  window has presented its first frame (`BarWindow.presented`). Each window
+  owns what it draws: the orb is created in the orb box, placed from the
+  geometry the centre island exposes (`centreLine`, `orbOffset`,
+  `orbTravelLeft`, `orbTravelRight`, `panelOpen`), and hands its hover back
+  as the island's `orbHovered`; the music bar's outer glow (`MusicGlow`)
+  and the privacy dock (`PrivacyDock`) are siblings of the island in the
+  bar window, under and over it, not children reparented out of it. When a
+  panel opens the orb fades
   out at the box's left edge instead of travelling further out with the
   island. Both small surfaces ignore exclusive zones and so sit at the very
   top of the screen; while another surface reserves the top edge (the DMS
@@ -585,7 +594,8 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
   covering the whole window. A separate region of the three islands is the
   blur region (`BackgroundEffect.blurRegion`) in both states, so Niri blurs
   only behind the islands; the orb floats unblurred in its own surface. Both regions
-  are flat lists of direct children and share no `Region` object.
+  are flat lists (`regions:`) of their own island regions and their own
+  generated blob slots, and share no `Region` object.
 - **Keyboard focus.** `None` while no panel is open, `Exclusive` on the
   screen with an open panel. `OnDemand` is not enough: panels also open from
   shortcuts (`quickshell ipc` from the Niri binds) without a click, and Niri
@@ -613,7 +623,10 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
   `updates`, `wifi`, `bluetooth`, `sound`, `display`, `musicbar`), the screen it applies to, `osdVisible`, `osdKind`
   (`volume`, `mic`, `brightness`) and `hidden`, with `open(state, screen)`,
   `close()`, `toggle(state, screen)`, `back()` (from `wifi`, `bluetooth`,
-  `sound` or `display` to `settings`), `showOsd(screen, kind)` and `setHidden(value)`. One state at a time, so opening another panel morphs
+  `sound` or `display` to `settings`, while `canGoBack`), `showOsd(screen, kind)` and `setHidden(value)`;
+  `stateOn(screen)`, `panelOpenOn(screen)` and `osdOn(screen)` project the
+  one state onto a screen, so the islands compare no state names but their
+  own `detail`, `musicBar` and `player`. One state at a time, so opening another panel morphs
   the island into it; the OSD closes any panel first, and opening a panel
   shows a hidden bar. On every open and morph into a panel, `Shell` records
   `Niri.focusedWindowId` and the focused workspace's id
@@ -621,14 +634,18 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
   then reports a focused window (id 0 or higher) or a focused workspace other
   than the recorded one. A change to no window (-1) is ignored, because Niri
   may report that for the panel's own Exclusive keyboard grab; the pill
-  states, Detail, the music bar and the OSD do not react. IPC target `bar`: `open`, `toggle` and `close` (the
+  states, Detail, the music bar and the OSD do not react. IPC target `bar`
+  (`services/BarIpc.qml`, a `Scope` that `shell.qml` creates once): `open`, `toggle` and `close` (the
   state `hidden` toggles the hide; `toggle wifi|bluetooth|sound|display` opens those panels), `osd`, `volume up|down|mute|micmute`,
   `brightness up|down`, `media next|prev|playpause|play|pause` and `state`.
   IPC calls act on the screen Niri reports as focused (`Niri.focusedOutput`),
   else the last used screen, else the first one.
 - **Morphing.** `components/Island.qml` animates width, height, radius and
   the shadow with the Motion tokens (280 ms grow or morph, 220 ms shrink);
-  panel bodies cross-fade in 140 ms. The centre island is centred on the
+  panel bodies cross-fade in 140 ms. Every panel is a `panels/Panel.qml`
+  with a `name` (its Shell state and its `Theme.panelWidths` key);
+  `islands/CentrePanels.qml` holds the eleven and exposes `current`, whose
+  `implicitWidth` and `implicitHeight` are the island's target size. The centre island is centred on the
   window and its top is fixed, so it grows symmetrically and downward and the
   clock keeps its place in Detail.
 
@@ -636,14 +653,15 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
 
 ```text
 chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
-  shell.qml                             entry point: per screen the bar window (mask, close area), the wave strip and the orb box
+  shell.qml                             entry point: the IPC targets, and per screen the three windows below
   Colors.qml                            singleton: DMS palette, watched; the fixed privacy dot colours
   Theme.qml                             singleton: sizes, radii, fonts, opacities, panel widths; slider and seek steps
   Motion.qml                            singleton: durations, curves; reduce motion follows Settings
   qmldir                                registers the token singletons
   README.md                             short directory guide
   services/                             singletons that own state or data
-    Shell.qml                           centre island state machine and IPC target `bar`
+    Shell.qml                           centre island state machine, every service's `active`
+    BarIpc.qml                          type: the IPC targets `bar` and `notifications`, created once by shell.qml
     Niri.qml ... Updates.qml            data services, see "Services"
     Paths.qml                           XDG roots with fallbacks, the bar's state and runtime directories (created once)
     Settings.qml                        the bar's runtime switches in settings.json (FileView with JsonAdapter)
@@ -661,14 +679,27 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
     Privacy.qml                         microphone, camera and screen share in use, with app names
     Frames.qml                          frames presented per window, IPC target `bardebug`
-  islands/                              the three islands
+  windows/                              the three surfaces per screen
+    BarWindow.qml                       the tall bar window: islands, blobs, glow, privacy dock, mask, blur, keys, close area
+    OrbSurface.qml                      the orb's own box left of the centre island, its input region the orb
+    WaveSurface.qml                     the top-edge wave's strip on the Bottom layer
+  islands/                              the three islands and their parts
     LeftIsland.qml                      workspace dots of its screen, the active workspace's app icons
-    CentreIsland.qml                    weather, clock and battery pill, Detail, orb, privacy dots, music bar, OSD and the eleven panels
-    RightIsland.qml                     tray stack, fan and menu, attention indicators, or the notification stack in their place
+    CentreIsland.qml                    state-to-size mapping and composition: pill, OSD, music bar, panels; music hover
+    CentrePill.qml                      weather, clock and battery pill, Detail labels and measurement, Detail hover
+    MusicBar.qml                        music bar: marquee, controls, rim; the Player's rim
+    MusicGlow.qml                       the music bar rim's outer glow, under the centre island
+    MusicFade.qml                       the music bar's delayed cross-fade
+    CentrePanels.qml                    the eleven panels; `current` gives the island its size
+    PrivacyDock.qml                     privacy dots right of the centre island, docked in a mini island while hidden
+    RightIsland.qml                     tray stack and fan, attention indicators, or the notification stack in their place
+    TrayMenu.qml                        a tray item's menu, flattened one level, measured on open
+    NotificationStack.qml               the notification stack's rows and their settled height
     NotificationBlobs.qml               disc blobs of rows that left the stack, below the right island
   panels/                               centre panel bodies
+    Panel.qml                           base: name, shown with the cross-fade, opened and closed, content geometry, focusWhenShown
     HomePanel.qml                       Time, Weather, Performance and Power tiles, actions row
-    SettingsPanel.qml                   toggle grid, three sliders, notification list
+    SettingsPanel.qml                   toggle grid, three sliders, the notification list
     UpdatesPanel.qml                    pending packages, Update all, Refresh, Report
     PlayerPanel.qml                     cover, track, seekable progress, controls, output chips
     PowerPanel.qml                      Lock, Suspend, Log out, Reboot, Power off
@@ -680,6 +711,7 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     DisplayPanel.qml                    night light, brightness, keyboard backlight, rear light
   components/                           shared primitives, then feature pieces built on them
     Island.qml                          island surface: colour, radius, shadow, size animation
+    IslandShadow.qml                    the islands' drop shadow as a layer effect (islands, blobs)
     MorphAnimation.qml                  grow or shrink animation from the Motion tokens, with duration and curve overrides
     Crossfade.qml                       NumberAnimation with the crossfade tokens
     ColorCrossfade.qml                  ColorAnimation with the crossfade tokens
@@ -710,9 +742,12 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Tile.qml                            Settings grid toggle, wide with state or small icon-only, chevron zone for a panel
     CapsuleSlider.qml                   thumbless capsule slider with the clipped accent layer, optional chevron zone
     NotificationRow.qml                 one notification with dismiss, expands in place, collapses when it leaves
+    NotificationList.qml                Settings: the notification history under its header, with its settled height
     NotificationPeekRow.qml             one bare row of the notification stack: hold, dismiss glyph, text actions, replace cross-fade
     PanelControlRow.qml                 panels from Settings: back, optional switch with state, DMS settings button
-    RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height
+    RowList.qml                         Wi-Fi and Bluetooth: keyed list with its settled height and the one expanded row
+    RowActions.js                       Wi-Fi and Bluetooth: the actions an expanded row offers
+    AppVolumeRow.qml                    Sound: one application's icon, name and volume capsule
     NetworkRow.qml                      Wi-Fi, Bluetooth and Sound row: icon, name, detail or level, expands in place
     Orb.qml                             music orb: album-colour sphere, rim light, bloom
     PrivacyDots.qml                     microphone, camera and share dots right of the centre island
@@ -721,6 +756,8 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     FrameCounter.qml                    counts a window's presented frames into Frames
     Carousel.qml                        sideways strip for Theme and Wallpaper: wheel, drag, arrows
     Osd.qml                             OSD body: icon, fill track, value
+    Marquee.qml                         a strong and a secondary line as one run that glides when too long
+    StatusIndicator.qml                 one attention indicator pill of the right island, with an optional count
 chezmoi/dot_config/systemd/user/quickshell-bar.service
 chezmoi/dot_local/bin/executable_bar-notifications   release/claim hooks and name owner (~/.local/bin/bar-notifications)
 scripts/bar-switch.sh                   switches between the DMS and the own bar
@@ -1201,6 +1238,12 @@ surface.
    `PanelWindow is not creatable` one.
 6. Where the widget opens something the own bar has no panel for yet, call
    the matching `dms ipc` function, as ADR-0027 describes.
+7. A new centre panel is a `Panel` (`panels/Panel.qml`) with a `name`; it
+   needs that name in `Shell.panelStates`, a `Theme.panelWidths` entry and
+   one instance in `islands/CentrePanels.qml` (with its id in `panels`).
+   It gives only its `implicitHeight`, the settled height the island grows
+   to, and reacts to `opened` and `closed`; `focusWhenShown(item)` hands an
+   item the keys once the window has taken them back.
 
 ## Data sources
 
@@ -1294,7 +1337,9 @@ Three shapes hold for every service:
   `unknown`), `onBattery`, `timeToEmpty`, `timeToFull` (seconds),
   `healthPercentage`, `energyCapacity` (Wh), `isLow` (20 or below), `available`;
   `profile`, `profiles` (`power-saver`, `balanced`, `performance`),
-  `setProfile(name)`.
+  `setProfile(name)`, `cycleProfile()` (the next in `profiles`),
+  `profileLabel(name)` and `profileIcon(name)` (for the Settings tile and
+  the Home power tile).
 - `Audio`: `volume`, `muted`, `micVolume`, `micMuted`, `ready`, `sink`
   and `source` (the defaults), `sinks` and `sources` (hardware and virtual
   outputs and inputs, no streams, sorted by label), `ports` (node name to
@@ -1304,7 +1349,7 @@ Three shapes hold for every service:
   name; capture and monitor streams, the bar's cava among them, are never
   in it), `micLevel` (0..1, only while active);
   `setVolume(v)`, `toggleMute()`, `setMicVolume(v)`, `toggleMicMute()`,
-  `sinkLabel(node)` (the friendly name, also for the Player's output chips),
+  `nodeLabel(node)` (the friendly name of an output or input, also for the Player's output chips),
   `deviceIcon(node)`, `setDefaultSink(node)`, `setDefaultSource(node)`
   (PipeWire's configured default), `appGroup(key)`, `groupVolume(group)`
   (the loudest member), `groupMuted(group)`, `setGroupVolume(group, v)`
@@ -1325,7 +1370,7 @@ Three shapes hold for every service:
   (6000), `nightMaximum` (the ceiling, or lower under a lower day
   temperature), `nightStep`, `schedule` (DMS's text), `scheduleText`,
   `keyboardLevel` and `keyboardAvailable`, `rearLevel`, `rearColor`
-  (RRGGBB) and `rearAvailable`; `nightFraction(kelvin)` and
+  (RRGGBB), `rearTint` (it as a colour, transparent without one) and `rearAvailable`; `nightFraction(kelvin)` and
   `nightKelvin(fraction)` (the capsule's 0..100), `toggleNightLight()`,
   `setNightTemperature(kelvin)`, `setKeyboardLevel(level)` and
   `setRearLevel(level)` (each a `CommandWriter`: only the newest waits
@@ -1342,7 +1387,9 @@ Three shapes hold for every service:
   `firstScanTime`, 4 s), `attemptWindow` (20 s: a client failure this soon
   after a connect on a saved network suggests a stale password), `errors`
   (per SSID), `wrongPassword`, `lastAttempt`; signal `failed(ssid, kind)`;
-  `toggleWifi()`, `attemptConnect(network)`, `attemptPassword(network,
+  `primaryAction(network)` (what a click does: `manage` the connected one,
+  `connect`, ask for a `password`, or `login` for one only the settings
+  window can join), `requestLogin(network)` (that row's error), `toggleWifi()`, `attemptConnect(network)`, `attemptPassword(network,
   password)`, `attemptForget(network)`, `reportFailure(network, reason)`
   (an `Instantiator` watches every network of the Wi-Fi device, hidden and
   duplicate SSIDs included), `setError(ssid, text)`,
@@ -1360,7 +1407,8 @@ Three shapes hold for every service:
   `startPair(device)` (then trust and connect), `setError(address, text)`,
   `deviceFor(address)`, `openTerminal()` (`bluetoothctl` through
   `Session.openInTerminal`), the raw `setDiscovering(value)`,
-  `connectDevice`, `disconnectDevice`, `pair`, `trustAndConnect`, `forget`,
+  `connectDevice`, `disconnectDevice` and `forget` (both clear the
+  device's error first, as an attempt does), `pair`, `trustAndConnect`,
   and the row helpers `deviceIcon`, `batteryText`, `detailText`,
   `connectSettled`. Everything is native: the module has
   discovery, pairing and battery levels, but no pairing agent. An attempt
@@ -1386,13 +1434,19 @@ Three shapes hold for every service:
   `gtkThemeLight`, `gtkThemeDark` (the theme names written on a switch);
   `crossfadeLead` (300 ms), `crossfadeDelay` (1400 ms), `nudgeDuration`
   (400 ms), `settleDuration` (2.5 s), calibrated against DMS, not design
-  tokens; `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued
+  tokens; `requestMode(mode)` (the Theme panel's `light`, `dark` or
+  `auto`: previews Light and Dark through `Colors.preview` and keeps the
+  choice in `chosenMode`), `displayedMode` (`chosenMode` until DMS has
+  settled and answered, then DMS's own `auto`, `light` or `dark`),
+  `previewPalette(value)` (the six dots of a scheme card, from the live
+  palette, `schemeLeanings` and `previewLightness`), `setLight()`,
+  `setDark()`, `setAuto()`, `setScheme(name)` (queued
   and run one step at a time; see the Theme panel above; the re-render step
   is `Wallpapers.rerender`), `busy` (true while a queued action runs and
   for `settleDuration` after the last call, while DMS renders; then
   `refresh()` runs once), `pendingMode`, the
-  `reported` signal (a poll answered while nothing is pending; the panel
-  then drops its optimistic choice) and `refresh()`. Light and Dark also
+  `reported` signal (a poll answered while nothing is pending; `chosenMode`
+  is then dropped) and `refresh()`. Light and Dark also
   start the Niri screen transition unless reduce motion or `crossfade:
   false` in `Settings`, see the Theme panel above. The colours themselves
   come through `Colors`.
@@ -1407,7 +1461,8 @@ Three shapes hold for every service:
   `doNotDisturb`; `peekIds` (the peek stack, newest first, at most three;
   `backlogRow` is the combined row), `blobIds` (rows that left the stack
   while others stayed, newest first, cleared when the stack ends),
-  `peekScreen`, `backlogCount`,
+  `peekScreen`, `peekIdsOn(screen)` and `blobIdsOn(screen)` (the stack as
+  one screen sees it, like `Shell.stateOn`), `backlogCount`,
   `peekDeferred` (bar hidden or session locked), `peekBlocked` (a panel
   open or a fullscreen focused window); signal `replaced(id)`.
   `dismiss(id)` (closes a live one with reason "dismissed by user", drops
@@ -1447,6 +1502,7 @@ Three shapes hold for every service:
   hue and saturation kept, so a near-black cover still reads), `artLight` and `artWarm` (a lighter and a warmer cut of it for the
   rim light and the wave, lifted the same way); `lifted(color)`; `play()`, `pause()`, `togglePlaying()`, `next()`,
   `previous()`, `seek(seconds)` (absolute, when the player can seek),
+  `formatTime(seconds)` ("3:07", or "1:02:09" past an hour),
   `raise()` (MPRIS Raise when the player can, else Niri focus on the window
   whose app id is the player's desktop entry or identity, case-insensitive;
   false when neither works). playerctld's mirror player is left out of
@@ -1522,7 +1578,8 @@ Three shapes hold for every service:
   answer names), `set(path, screen)` (while a set runs only the newest
   waits), `rerender(screen)` (sets the current wallpaper again, which makes
   DMS render the theme anew; signal `rerendered` when done or given up),
-  `fileName(path)`. Every call falls back to `getFor` and `setFor` with the
+  `fileName(path)`, `displayName(path)` (without the extension) and
+  `urlFor(path)` (a `file://` URL, each segment encoded). Every call falls back to `getFor` and `setFor` with the
   screen in DMS's per-monitor mode.
 - `Privacy`: `micApps`, `cameraApps`, `shareApps` (deduplicated display
   names: `application.name`, else `media.name`, the node description or
@@ -1542,7 +1599,8 @@ Three shapes hold for every service:
   fragile package, empty otherwise), `count`, `fragileCount`, `checking`, `ready`,
   `lastChecked`, `error` (why the last check failed, empty after a good
   one; the Updates panel's head line shows it), `upgrading`, `reportPath`,
-  `reportAvailable`; `refresh()`, `upgradeAll()` (the full helper in a
+  `reportAvailable`; `checkedText(now)` ("checked 3 min ago", against a
+  time the caller ticks), `refresh()`, `upgradeAll()` (the full helper in a
   terminal through `Session.terminalCommand`, see step 5 above),
   `openReport()`. Runs `~/.local/bin/system-update --pending` every 30
   minutes, on `refresh()` and after the update terminal closes.
@@ -1586,7 +1644,8 @@ same 600 ms.
   No `qsb` is installed, so there is no custom shader; MultiEffect's blur
   spreads a 16 px disc by barely 3 px, which is why the bloom is a masked
   disc and not a blur.
-- **Music bar.** The orb lives in its own small surface (Window
+- **Music bar** (`islands/MusicBar.qml`, the run in `components/Marquee.qml`,
+  the glow in `islands/MusicGlow.qml`). The orb lives in its own small surface (Window
   architecture), not in the clipped island, and moves with the island's own
   curve between 6 px left of the pill and 7 px inside the bar. Resting on it for 80 ms opens `musicbar`;
   leaving both the orb and the island for 120 ms closes it. The bar is

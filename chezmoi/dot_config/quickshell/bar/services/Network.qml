@@ -127,6 +127,23 @@ Singleton {
         return "Could not connect";
     }
 
+    // What a click on a network does: "manage" the connected one (Disconnect,
+    // Forget), "connect" an open or saved one, ask for a "password", or
+    // "login" for one the bar cannot join (enterprise). A saved profile whose
+    // password was just refused asks for a new one.
+    function primaryAction(network: var): string {
+        if (network.connected)
+            return "manage";
+        const refused = wrongPassword.includes(network.name);
+        if (!secured(network) || (network.known && !refused))
+            return "connect";
+        return needsPassword(network) ? "password" : "login";
+    }
+
+    function requestLogin(network: var) {
+        setError(network.name, "Needs a login: open settings");
+    }
+
     function setError(ssid: string, text: string) {
         errors = text === "" ? Maps.withoutKey(errors, ssid) : Maps.withKey(errors, ssid, text);
     }

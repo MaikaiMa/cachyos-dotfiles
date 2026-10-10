@@ -7,34 +7,42 @@ chezmoi deploys this directory to `~/.config/quickshell/bar/`;
 [docs/shell.md](../../../../docs/shell.md).
 
 ```text
-shell.qml        entry point: per screen the bar window (islands, mask, blur,
-                 keyboard focus, and the close area while a panel is open)
+shell.qml        entry point: the IPC targets (services/BarIpc.qml) and, per screen,
+                 the three windows in windows/
 Colors.qml       singleton: DMS palette from dms-colors.json, with dark fallbacks; privacy dot colours
 Theme.qml        singleton: bar, island and panel sizes, radii, fonts, opacities; slider and seek steps
 Motion.qml       singleton: durations and curves; reduce motion follows Settings
 qmldir           registers the token singletons
-services/        singletons that own state or data; Shell.qml is the centre island state machine,
-                 sets every service's `active` and holds the IPC targets `bar` and `notifications`;
-                 Notifications.qml is the notification daemon (ADR-0028); Appearance.qml the
-                 Light / Dark / Auto and scheme switching through DMS, Dms.qml the rest of `dms ipc`;
-                 Settings.qml the bar's runtime switches, Paths.qml the XDG paths; the types
-                 Command, CommandReader, CommandWriter and LineWatcher wrap external commands
-islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, battery,
-                 Detail, music orb and bar, privacy dots), RightIsland (tray, attention indicators,
-                 or the notification stack in their place), NotificationBlobs (disc blobs below it)
-panels/          centre panel bodies: HomePanel, SettingsPanel, UpdatesPanel, PlayerPanel,
-                 PowerPanel, ThemePanel, WallpaperPanel, WifiPanel, BluetoothPanel,
-                 SoundPanel, DisplayPanel
-components/      primitives every widget is built from: Island and MorphAnimation, Crossfade,
-                 ColorCrossfade, Appear, Label, FocusRing, Pressable, IconButton,
+windows/         BarWindow (islands, blobs, glow, privacy dock, mask, blur, keyboard focus,
+                 and the close area while a panel is open), OrbSurface (the orb's own box),
+                 WaveSurface (the top-edge wave's strip)
+services/        singletons that own state or data; Shell.qml is the centre island state machine
+                 and sets every service's `active`; BarIpc.qml holds the IPC targets `bar` and
+                 `notifications`; Notifications.qml is the notification daemon (ADR-0028);
+                 Appearance.qml the Light / Dark / Auto and scheme switching through DMS,
+                 Dms.qml the rest of `dms ipc`; Settings.qml the bar's runtime switches,
+                 Paths.qml the XDG paths; the types Command, CommandReader, CommandWriter and
+                 LineWatcher wrap external commands
+islands/         LeftIsland (workspaces, apps); CentreIsland with CentrePill (weather, clock,
+                 battery, Detail), MusicBar, MusicGlow and MusicFade, CentrePanels (the eleven
+                 panels) and PrivacyDock beside it; RightIsland (tray, attention indicators,
+                 or the notification stack in their place) with TrayMenu and NotificationStack;
+                 NotificationBlobs (disc blobs below it)
+panels/          Panel (the base) and the centre panel bodies: HomePanel, SettingsPanel,
+                 UpdatesPanel, PlayerPanel, PowerPanel, ThemePanel, WallpaperPanel, WifiPanel,
+                 BluetoothPanel, SoundPanel, DisplayPanel
+components/      primitives every widget is built from: Island, IslandShadow and MorphAnimation,
+                 Crossfade, ColorCrossfade, Appear, Label, FocusRing, Pressable, IconButton,
                  PillButton, InlineField, KeyedListModel, ScrollHint, SectionHeader,
-                 AppIconDisc, FillTrack, ChevronZone, RoundedImage, Hairline, Clock,
+                 AppIconDisc, FillTrack, ChevronZone, RoundedImage, Marquee, Hairline, Clock,
                  Icon (Material Symbols), WeatherIcon, BatteryIcon, SegmentedControl;
-                 then feature pieces: Tile, CapsuleSlider and NotificationRow for the
-                 Settings list; NotificationPeekRow for the stack; PanelControlRow,
-                 RowList and NetworkRow for Wi-Fi, Bluetooth and Sound; TimeTile,
-                 WeatherTile, PerformanceTile and PowerTile for Home; Orb, RimLight and
-                 TopWave for music; Carousel for Theme and Wallpaper; Osd; PrivacyDots
+                 then feature pieces: Tile, CapsuleSlider, NotificationRow and
+                 NotificationList for Settings; NotificationPeekRow for the stack;
+                 StatusIndicator for the right island; PanelControlRow, RowList,
+                 RowActions.js, NetworkRow and AppVolumeRow for Wi-Fi, Bluetooth and Sound;
+                 TimeTile, WeatherTile, PerformanceTile and PowerTile for Home; Orb,
+                 RimLight and TopWave for music; Carousel for Theme and Wallpaper; Osd;
+                 PrivacyDots
 ```
 
 Every directory with types has its own `qmldir` that lists all of them.

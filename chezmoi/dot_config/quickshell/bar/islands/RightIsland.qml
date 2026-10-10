@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell
 import Quickshell.Widgets
 import ".."
 import "../components"
@@ -22,13 +21,31 @@ Island {
     property bool menuOpen: false
     // Kept until the island has shrunk back, so the entries do not vanish first.
     property var menuItem: null
-    // Which Motion token the next size change uses: indicator, tray or menu.
-    property string motion: "indicator"
-    // The open menu's top-level entries; a plain property so it can be fed directly.
-    property var menuEntries: menuOpener.children
-    // Measured when the menu opens and when its entries arrive, not on every
-    // text change, so a status line updating inside the menu does not resize it.
-    property real menuWidth: Theme.trayMenuWidth
+    // Which change the next resize belongs to; morphTokens gives its timing.
+    property string morphKind: "indicator"
+    // A menu or the stack grows and shrinks with the island's own timing (-1, []).
+    readonly property var morphTokens: ({
+            indicator: {
+                duration: Motion.indicatorDuration,
+                curve: Motion.indicatorCurve
+            },
+            tray: {
+                duration: Motion.trayDuration,
+                curve: Motion.growCurve
+            },
+            actions: {
+                duration: Motion.trayDuration,
+                curve: Motion.growCurve
+            },
+            menu: {
+                duration: -1,
+                curve: []
+            },
+            peek: {
+                duration: -1,
+                curve: []
+            }
+        })
 
     readonly property int trayCount: Tray.count
     readonly property int stackCount: Math.min(trayCount, Theme.trayStack)
@@ -45,30 +62,23 @@ Island {
     // screen. Before it opens, a tray menu closes and a fanned tray folds; while
     // it is open nothing else is drawn. It closes as the last row starts to
     // leave, and the island morphs back with the bell held until it has settled.
-    readonly property var servicePeekIds: Notifications.peekScreen === screenName ? Notifications.peekIds : []
+    readonly property var servicePeekIds: Notifications.peekIdsOn(screenName)
     readonly property bool peekWanted: servicePeekIds.length > 0
     property bool peekOpen: false
     readonly property var shownPeekIds: peekOpen ? servicePeekIds : []
     property bool bellHeld: false
-    // The rows that stay, without the gap under the last; set by measurePeek.
-    property real peekRowsHeight: 0
-    property string lastPeekId: ""
     readonly property real peekWidth: Math.min(Theme.notificationPeekWidth, peekMaxWidth)
-    // For the blobs' clear-all: the pointer on the stack, or a row's controls
-    // revealed by a long press.
-    // From the island's right edge, where the blobs go on the morph back.
+    // From the island's right edge: the bell, where the blobs go on the morph
+    // back, and the top row's disc, where a re-peeked blob rises to.
     readonly property real bellCentreOffset: Theme.rightEndInset + notificationsIndicator.pillWidth / 2
+    readonly property real riseOffset: peekWidth - Theme.notificationPeekPaddingHorizontal - Theme.notificationPeekDisc / 2
 
-    readonly property bool wifiShown: !Network.wifiEnabled || Network.weak
     // Left to right, the reverse of the design's reading order from the right edge.
-    // Do not disturb has no indicator of its own: the bell crosses out and stays.
-    readonly property bool notificationsShown: Notifications.bellCount > 0 || Notifications.doNotDisturb
-    // The keyboard button only while the cover is detached (docs/tablet.md).
-    readonly property var shownFlags: [Dms.caffeine, Audio.muted, wifiShown, Tablet.detached, Updates.count > 0, notificationsShown]
-    readonly property bool anyIndicator: shownFlags.includes(true)
+    readonly property list<StatusIndicator> indicators: [caffeineIndicator, mutedIndicator, wifiIndicator, keyboardIndicator, updatesIndicator, notificationsIndicator]
+    readonly property bool anyIndicator: indicators.some(indicator => indicator.shown)
     readonly property bool separatorShown: trayCount > 0 && anyIndicator
     readonly property int separatorWidth: 2 * Theme.gap + Theme.hairlineWidth
-    readonly property real indicatorsWidth: caffeineIndicator.targetWidth + mutedIndicator.targetWidth + wifiIndicator.targetWidth + keyboardIndicator.targetWidth + updatesIndicator.targetWidth + notificationsIndicator.targetWidth
+    readonly property real indicatorsWidth: indicators.reduce((total, indicator) => total + indicator.targetWidth, 0)
     readonly property real contentWidth: trayWidth + (separatorShown ? separatorWidth : 0) + indicatorsWidth
     readonly property real collapsedWidth: contentWidth > 0 ? contentWidth + 2 * Theme.rightEndInset : 0
 
@@ -81,8 +91,14 @@ Island {
         return index < stackCount ? slot * stackStep : stackLeft;
     }
 
-    function gapBefore(index: int): bool {
-        return shownFlags[index] && shownFlags.slice(0, index).includes(true);
+    // An indicator keeps a gap to a shown one before it.
+    function gapBefore(indicator: StatusIndicator): bool {
+        return indicator.shown && indicators.slice(0, indicators.indexOf(indicator)).some(before => before.shown);
+    }
+
+    // Where a stack row's icon disc is, for the blob that starts from it.
+    function discFor(id: string): Item {
+        return stack.discFor(id);
     }
 
     function openMenu(item: var) {
@@ -91,62 +107,6 @@ Island {
         menuClear.stop();
         menuItem = item;
         menuOpen = true;
-    }
-
-    // DBusMenu marks mnemonics with one underscore and escapes a literal one as two.
-    function menuLabel(text: string): string {
-        return text.replace(/__|_/g, match => match === "__" ? "_" : "");
-    }
-
-    function measureMenu() {
-        let widest = 0;
-        for (const group of menuColumn.children) {
-            for (const row of group.children) {
-                // Not row.visible: the menu is still transparent, so invisible, on open.
-                if (row.objectName === "menuRow" && row.listed)
-                    widest = Math.max(widest, row.naturalWidth);
-            }
-        }
-        menuWidth = Math.max(Theme.trayMenuWidth, Math.min(Theme.trayMenuMaxWidth, Math.ceil(widest)));
-    }
-
-    // Rows that leave stay until their collapse is done (peekModel.finish).
-    function syncPeek() {
-        peekModel.sync(shownPeekIds);
-        motion = "peek";
-        measurePeek();
-        // The last row starts leaving: the island morphs back with it.
-        if (peekModel.settledCount === 0)
-            peekOpen = false;
-    }
-
-    // The island is as tall as the rows that stay; the last one has no hairline.
-    function measurePeek() {
-        let height = 0;
-        let settled = 0;
-        let last = "";
-        for (let index = 0; index < peekRepeater.count; index++) {
-            const row = peekRepeater.itemAt(index) as NotificationPeekRow;
-            if (!row || row.leaving)
-                continue;
-            height += row.settledHeight;
-            settled++;
-            last = row.rowId;
-        }
-        if (settled === 0)
-            return;
-        peekRowsHeight = height + (settled - 1) * Theme.notificationPeekRowGap;
-        lastPeekId = last;
-    }
-
-    // Where a row's icon disc is, for the blob that starts from it.
-    function peekDisc(id: string): Item {
-        for (let index = 0; index < peekRepeater.count; index++) {
-            const row = peekRepeater.itemAt(index) as NotificationPeekRow;
-            if (row && row.rowId === id)
-                return row.disc;
-        }
-        return null;
     }
 
     // A tray menu closes and a fanned tray folds before the stack opens.
@@ -171,15 +131,17 @@ Island {
             fanned = false;
     }
 
-    onFannedChanged: motion = "tray"
-    onTrayCountChanged: motion = "tray"
-    onMenuOpenChanged: {
-        motion = "menu";
-        if (menuOpen)
-            Qt.callLater(measureMenu);
+    function noteIndicatorResize() {
+        morphKind = peekOpen || bellHeld ? "peek" : "indicator";
     }
-    onShownFlagsChanged: motion = peekOpen || bellHeld ? "peek" : "indicator"
-    onShownPeekIdsChanged: syncPeek()
+
+    onFannedChanged: morphKind = "tray"
+    onTrayCountChanged: morphKind = "tray"
+    onMenuOpenChanged: morphKind = "menu"
+    onShownPeekIdsChanged: {
+        morphKind = "peek";
+        stack.sync(shownPeekIds);
+    }
     onPeekWantedChanged: {
         if (!peekWanted)
             peekPrepareTimer.stop();
@@ -187,7 +149,7 @@ Island {
             preparePeek();
     }
     onPeekOpenChanged: {
-        motion = "peek";
+        morphKind = "peek";
         if (peekOpen) {
             bellRelease.stop();
             bellHeld = true;
@@ -197,11 +159,11 @@ Island {
         }
     }
 
-    targetWidth: peekOpen ? peekWidth : menuOpen ? Math.max(collapsedWidth, menuWidth + 2 * Theme.paddingHorizontal) : collapsedWidth
-    targetHeight: peekOpen ? peekRowsHeight + 2 * Theme.notificationPeekPaddingVertical : menuOpen ? Theme.islandHeight + menuColumn.implicitHeight + Theme.trayMenuInset : Theme.islandHeight
+    targetWidth: peekOpen ? peekWidth : menuOpen ? Math.max(collapsedWidth, trayMenu.menuWidth + 2 * Theme.paddingHorizontal) : collapsedWidth
+    targetHeight: peekOpen ? stack.rowsHeight + 2 * Theme.notificationPeekPaddingVertical : menuOpen ? Theme.islandHeight + trayMenu.contentHeight + Theme.trayMenuInset : Theme.islandHeight
     expanded: menuOpen || peekOpen
-    morphDuration: motion === "menu" || motion === "peek" ? -1 : motion === "tray" || motion === "actions" ? Motion.trayDuration : Motion.indicatorDuration
-    morphCurve: motion === "menu" || motion === "peek" ? [] : motion === "tray" || motion === "actions" ? Motion.growCurve : Motion.indicatorCurve
+    morphDuration: morphTokens[morphKind].duration
+    morphCurve: morphTokens[morphKind].curve
     visible: width > 0
 
     Timer {
@@ -219,13 +181,6 @@ Island {
 
         interval: Motion.shrinkDuration
         onTriggered: island.bellHeld = false
-    }
-
-    KeyedListModel {
-        id: peekModel
-
-        keyRole: "rowId"
-        leavingRoles: ["leaving"]
     }
 
     Timer {
@@ -265,36 +220,18 @@ Island {
         }
     }
 
-    // Newest on top, at the island's right edge with a fixed width, so the text
-    // does not reflow while the island morphs; the island clips the rest.
-    Column {
-        objectName: "peek"
+    // At the island's right edge; the island clips the rest.
+    NotificationStack {
+        id: stack
+
         anchors.right: parent.right
         anchors.rightMargin: Theme.notificationPeekPaddingHorizontal
         y: Theme.notificationPeekPaddingVertical
         width: island.peekWidth - 2 * Theme.notificationPeekPaddingHorizontal
-        visible: peekModel.count > 0
-
-        Repeater {
-            id: peekRepeater
-
-            model: peekModel
-
-            NotificationPeekRow {
-                width: parent.width
-                backlogCount: Notifications.backlogCount
-                holding: island.peekOpen && island.servicePeekIds.includes(rowId)
-                lastRow: rowId === island.lastPeekId
-                onHoldEnded: Notifications.expirePeek(rowId)
-                onSettingsRequested: Shell.open("settings", island.screenName)
-                onGone: peekModel.finish(rowId)
-                onRevealedChanged: {
-                    if (!leaving)
-                        island.motion = "actions";
-                }
-                onSettledHeightChanged: Qt.callLater(island.measurePeek)
-            }
-        }
+        backlogCount: Notifications.backlogCount
+        onEmptied: island.peekOpen = false
+        onActionsToggled: island.morphKind = "actions"
+        onSettingsRequested: Shell.open("settings", island.screenName)
     }
 
     // The status content; while the stack shows it is faded out and not drawn.
@@ -362,7 +299,7 @@ Island {
                             TrayAnimation {}
                         }
 
-                        // The ring sits outside the 24 px disc, in the island colour.
+                        // The ring sits just outside the disc, in the island colour.
                         Rectangle {
                             anchors.centerIn: parent
                             width: parent.width + 2
@@ -474,8 +411,8 @@ Island {
             id: caffeineIndicator
 
             objectName: "caffeine"
-            shown: island.shownFlags[0]
-            gap: island.gapBefore(0)
+            shown: Dms.caffeine
+            gap: island.gapBefore(caffeineIndicator)
             iconName: "coffee"
             label: "Caffeine on, turn it off"
             onActivated: Dms.toggleCaffeine()
@@ -485,8 +422,8 @@ Island {
             id: mutedIndicator
 
             objectName: "muted"
-            shown: island.shownFlags[1]
-            gap: island.gapBefore(1)
+            shown: Audio.muted
+            gap: island.gapBefore(mutedIndicator)
             iconName: "volume_off"
             label: "Muted, unmute"
             takesWheel: true
@@ -498,19 +435,20 @@ Island {
             id: wifiIndicator
 
             objectName: "wifi"
-            shown: island.shownFlags[2]
-            gap: island.gapBefore(2)
+            shown: !Network.wifiEnabled || Network.weak
+            gap: island.gapBefore(wifiIndicator)
             iconName: Network.statusIcon
             label: Network.wifiEnabled ? "Wi-Fi weak, open Settings" : "Wi-Fi off, open Settings"
             onActivated: Shell.open("settings", island.screenName)
         }
 
+        // Only while the cover is detached (docs/tablet.md).
         Indicator {
             id: keyboardIndicator
 
             objectName: "keyboard"
-            shown: island.shownFlags[3]
-            gap: island.gapBefore(3)
+            shown: Tablet.detached
+            gap: island.gapBefore(keyboardIndicator)
             iconName: Tablet.keyboardVisible ? "keyboard_hide" : "keyboard"
             tint: Tablet.keyboardVisible ? Colors.primary : Colors.foreground
             label: Tablet.keyboardVisible ? "Hide the on-screen keyboard" : "Show the on-screen keyboard"
@@ -521,8 +459,8 @@ Island {
             id: updatesIndicator
 
             objectName: "updates"
-            shown: island.shownFlags[4]
-            gap: island.gapBefore(4)
+            shown: Updates.count > 0
+            gap: island.gapBefore(updatesIndicator)
             iconName: "download"
             count: Updates.count
             tint: Updates.fragileCount > 0 ? Colors.error : Colors.foreground
@@ -530,13 +468,14 @@ Island {
             onActivated: Shell.toggle("updates", island.screenName)
         }
 
+        // Do not disturb has no indicator of its own: the bell crosses out and stays.
         Indicator {
             id: notificationsIndicator
 
             objectName: "notifications"
-            shown: island.shownFlags[5]
+            shown: Notifications.bellCount > 0 || Notifications.doNotDisturb
             held: island.bellHeld
-            gap: island.gapBefore(5)
+            gap: island.gapBefore(notificationsIndicator)
             iconName: Notifications.doNotDisturb ? "notifications_off" : "notifications"
             count: Notifications.bellCount
             label: Notifications.bellCount + " notifications" + (Notifications.doNotDisturb ? ", do not disturb on" : "") + ", open Settings"
@@ -547,63 +486,20 @@ Island {
     }
 
     // Hangs from the island's left padding whichever disc was clicked.
-    Appear {
-        objectName: "trayMenu"
+    TrayMenu {
+        id: trayMenu
+
         x: Theme.paddingHorizontal
         y: Theme.islandHeight
-        width: island.menuWidth
-        height: menuColumn.implicitHeight
-        shown: island.menuOpen
+        menu: island.menuItem ? Tray.menuFor(island.menuItem) : null
+        open: island.menuOpen
+        onEntryTriggered: island.closeMenu()
+    }
 
-        QsMenuOpener {
-            id: menuOpener
-
-            menu: island.menuItem ? Tray.menuFor(island.menuItem) : null
-        }
-
-        Column {
-            id: menuColumn
-
-            width: parent.width
-
-            Repeater {
-                model: island.menuEntries
-                onCountChanged: Qt.callLater(island.measureMenu)
-
-                // Submenus are flattened one level: the parent becomes a header
-                // over its indented entries; deeper levels are only marked.
-                Column {
-                    id: topEntry
-
-                    required property var modelData
-
-                    width: island.menuWidth
-
-                    MenuRow {
-                        entry: topEntry.modelData
-                        depth: 0
-                    }
-
-                    QsMenuOpener {
-                        id: submenuOpener
-
-                        menu: topEntry.modelData.hasChildren ? topEntry.modelData : null
-                    }
-
-                    Repeater {
-                        model: submenuOpener.children
-                        onCountChanged: Qt.callLater(island.measureMenu)
-
-                        MenuRow {
-                            required property var modelData
-
-                            entry: modelData
-                            depth: 1
-                        }
-                    }
-                }
-            }
-        }
+    // A click on an indicator folds a fanned tray; its width change uses the indicator timing.
+    component Indicator: StatusIndicator {
+        onPressed: island.fanned = false
+        onTargetWidthChanged: island.noteIndicatorResize()
     }
 
     component TrayAnimation: MorphAnimation {
@@ -613,203 +509,5 @@ Island {
     component IndicatorAnimation: MorphAnimation {
         durationOverride: Motion.indicatorDuration
         curveOverride: Motion.indicatorCurve
-    }
-
-    // Some apps put multi-line status text in an entry: the row wraps it to
-    // at most three lines and grows with it, never under 32 px.
-    component MenuRow: Item {
-        id: row
-
-        // A QsMenuEntry, or any object with its text, enabled, isSeparator,
-        // hasChildren and triggered().
-        property var entry: null
-        property int depth: 0
-
-        readonly property bool present: !!entry
-        readonly property bool separator: present && entry.isSeparator
-        readonly property bool header: present && entry.hasChildren && depth === 0
-        readonly property bool nested: present && entry.hasChildren && depth > 0
-        readonly property bool clickable: present && entry.enabled && !separator && !entry.hasChildren
-        readonly property string label: present && !separator ? island.menuLabel(entry.text ?? "") : ""
-        readonly property real textX: Theme.paddingHorizontal + depth * Theme.trayMenuSubmenuIndent
-        readonly property real trailing: Theme.paddingHorizontal + (nested ? Theme.trayChevronSize + Theme.indicatorCountGap : 0)
-        // The unwrapped width of the widest line, for the menu width.
-        readonly property real naturalWidth: textX + singleLine.implicitWidth + trailing
-        readonly property bool listed: present && (separator || label !== "")
-
-        objectName: "menuRow"
-        width: island.menuWidth
-        height: separator ? Theme.trayMenuSeparatorHeight : Math.max(Theme.trayMenuRowHeight, Math.ceil(labelText.implicitHeight) + Theme.trayMenuRowPadding)
-        visible: listed
-
-        Rectangle {
-            visible: row.separator
-            x: Theme.paddingHorizontal
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - 2 * Theme.paddingHorizontal
-            height: Theme.hairlineWidth
-            color: Qt.alpha(Colors.outline, Theme.hairlineOpacity)
-        }
-
-        Rectangle {
-            visible: !row.separator
-            anchors.fill: parent
-            radius: Theme.paddingHorizontal
-            color: rowPointer.containsMouse && row.clickable ? Colors.hoverSurface : "transparent"
-
-            Behavior on color {
-                ColorCrossfade {}
-            }
-        }
-
-        Label {
-            id: labelText
-
-            objectName: "menuLabel"
-            visible: !row.separator
-            x: row.textX
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - x - row.trailing
-            text: row.label
-            wrapMode: Text.Wrap
-            maximumLineCount: Theme.trayMenuMaxLines
-            color: row.header ? Colors.foregroundVariant : Colors.foreground
-            opacity: row.present && !row.entry.enabled ? Theme.disabledOpacity : 1
-        }
-
-        Label {
-            id: singleLine
-
-            visible: false
-            text: row.label
-        }
-
-        Icon {
-            visible: row.nested
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.paddingHorizontal
-            anchors.verticalCenter: parent.verticalCenter
-            name: "chevron_right"
-            size: Theme.trayChevronSize
-            color: Colors.foregroundVariant
-        }
-
-        MouseArea {
-            id: rowPointer
-
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: row.clickable
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                row.entry.triggered();
-                island.closeMenu();
-            }
-        }
-
-        Accessible.role: row.separator ? Accessible.Separator : Accessible.MenuItem
-        Accessible.name: row.label
-    }
-
-    // A permanent 24 px pill hit area; hover only tints it. The width and
-    // opacity carry the appear and disappear, the gap rides inside the width.
-    component Indicator: Item {
-        id: indicator
-
-        property bool shown: false
-        // Keeps its place but is not drawn: the bell while the stack shows and
-        // the island morphs back; then it fades in.
-        property bool held: false
-        property bool gap: false
-        property string iconName: ""
-        property int count: 0
-        property color tint: Colors.foreground
-        property string label: ""
-        property bool takesWheel: false
-
-        signal activated
-        signal middleClicked
-        signal rightClicked
-        signal scrolled(real delta)
-
-        readonly property real pillWidth: 2 * Theme.gap + Theme.iconSize + (count > 0 ? Theme.indicatorCountGap + Math.ceil(countText.implicitWidth) : 0)
-        readonly property real targetWidth: shown ? (gap ? Theme.indicatorGap : 0) + pillWidth : 0
-
-        width: targetWidth
-        height: Theme.islandHeight
-        opacity: shown && !held ? 1 : 0
-        enabled: shown && !held
-        clip: true
-
-        Behavior on width {
-            enabled: !indicator.held
-
-            IndicatorAnimation {}
-        }
-        Behavior on opacity {
-            IndicatorAnimation {}
-        }
-
-        Rectangle {
-            id: pill
-
-            x: indicator.gap ? Theme.indicatorGap : 0
-            y: (Theme.islandHeight - height) / 2
-            width: indicator.pillWidth
-            height: Theme.indicatorPill
-            radius: height / 2
-            color: pointer.containsMouse ? Colors.hoverSurface : "transparent"
-
-            Behavior on color {
-                ColorCrossfade {}
-            }
-
-            Icon {
-                x: Theme.gap
-                anchors.verticalCenter: parent.verticalCenter
-                name: indicator.iconName
-                color: indicator.tint
-            }
-
-            Label {
-                id: countText
-
-                visible: indicator.count > 0
-                x: Theme.gap + Theme.iconSize + Theme.indicatorCountGap
-                anchors.verticalCenter: parent.verticalCenter
-                text: indicator.count
-                color: indicator.tint
-                numeric: true
-                font.pixelSize: Theme.indicatorCountFontSize
-            }
-
-            MouseArea {
-                id: pointer
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                onClicked: mouse => {
-                    island.fanned = false;
-                    if (mouse.button === Qt.MiddleButton)
-                        indicator.middleClicked();
-                    else if (mouse.button === Qt.RightButton)
-                        indicator.rightClicked();
-                    else
-                        indicator.activated();
-                }
-                onWheel: wheel => {
-                    if (!indicator.takesWheel) {
-                        wheel.accepted = false;
-                        return;
-                    }
-                    indicator.scrolled(wheel.angleDelta.y);
-                }
-            }
-
-            Accessible.role: Accessible.Button
-            Accessible.name: indicator.label
-        }
     }
 }

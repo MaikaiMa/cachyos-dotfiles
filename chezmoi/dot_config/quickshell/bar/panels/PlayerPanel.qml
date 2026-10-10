@@ -9,11 +9,12 @@ import "../services"
 // The Player state of the centre island: cover beside title, artist and album,
 // a thin seekable progress track with times, previous / play / next, and the
 // audio outputs as chips when there is more than one.
-Appear {
+Panel {
     id: panel
 
-    // Undefined for a moment while a reload brings Audio up.
-    readonly property bool showsOutputs: (Audio.sinks ?? []).length > 1
+    name: "player"
+
+    readonly property bool showsOutputs: Audio.sinks.length > 1
     readonly property real progressY: Theme.panelPadding + Theme.playerCoverSize + Theme.playerProgressGap
     readonly property real timesY: progressY + Theme.playerTrackHeight + Theme.playerTimesGap
     readonly property real controlsY: timesY + Theme.playerTimesHeight + Theme.playerControlsGap
@@ -27,7 +28,6 @@ Appear {
     readonly property real position: visible ? Music.position : 0
     readonly property real fraction: seeking ? seekFraction : Music.length > 0 ? Math.max(0, Math.min(1, position / Music.length)) : 0
 
-    implicitWidth: Theme.panelWidths.player
     implicitHeight: (showsOutputs ? outputsY + Theme.outputChipHeight : controlsY + Theme.playerPlaySize) + Theme.panelPadding
 
     // The cover leads to the app that plays: raised, then the panel closes.
@@ -36,20 +36,12 @@ Appear {
             Shell.close();
     }
 
-    function formatTime(seconds: real): string {
-        const total = Math.max(0, Math.floor(seconds));
-        const hours = Math.floor(total / 3600);
-        const minutes = Math.floor(total % 3600 / 60);
-        const rest = String(total % 60).padStart(2, "0");
-        return hours > 0 ? hours + ":" + String(minutes).padStart(2, "0") + ":" + rest : minutes + ":" + rest;
-    }
-
     // The overlay is its focus mark.
     Pressable {
         id: cover
 
         objectName: "cover"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding
         width: Theme.playerCoverSize
         height: Theme.playerCoverSize
@@ -130,15 +122,15 @@ Appear {
         id: progress
 
         objectName: "progress"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: panel.progressY + (Theme.playerTrackHeight - height) / 2
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         height: Theme.playerTrackHitHeight
         activeFocusOnTab: Music.canSeek
 
         Accessible.role: Accessible.Slider
         Accessible.name: "Position"
-        Accessible.description: panel.formatTime(panel.position)
+        Accessible.description: Music.formatTime(panel.position)
 
         Keys.onLeftPressed: Music.seek(Music.position - Theme.playerSeekStep)
         Keys.onRightPressed: Music.seek(Music.position + Theme.playerSeekStep)
@@ -191,20 +183,20 @@ Appear {
     }
 
     Item {
-        x: Theme.panelPadding
+        x: panel.contentX
         y: panel.timesY
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         height: Theme.playerTimesHeight
 
         Label {
-            text: panel.formatTime(panel.fraction * Music.length)
+            text: Music.formatTime(panel.fraction * Music.length)
             secondary: true
             numeric: true
         }
 
         Label {
             anchors.right: parent.right
-            text: Music.length > 0 ? panel.formatTime(Music.length) : "–"
+            text: Music.length > 0 ? Music.formatTime(Music.length) : "–"
             secondary: true
             numeric: true
         }
@@ -253,12 +245,11 @@ Appear {
         }
     }
 
-    // Centred when the chips fit, scrolls sideways when they do not.
     Flickable {
         objectName: "outputs"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: panel.outputsY
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         height: Theme.outputChipHeight
         visible: panel.showsOutputs
         contentWidth: chips.width
@@ -282,7 +273,7 @@ Appear {
                     required property PwNode modelData
 
                     height: Theme.outputChipHeight
-                    text: Audio.sinkLabel(chip.modelData)
+                    text: Audio.nodeLabel(chip.modelData)
                     checked: chip.modelData === Audio.sink
                     textColor: chip.checked ? Colors.foreground : Colors.foregroundVariant
                     fontSize: Theme.secondaryFontSize

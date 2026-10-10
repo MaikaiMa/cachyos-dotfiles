@@ -4,41 +4,34 @@ import QtQuick
 import ".."
 import "../components"
 import "../services"
+import "../components/RowActions.js" as RowActions
 
-// The Bluetooth state of the centre island, opened from the Settings tile: the
-// control row, then connected, paired and discovered devices. A click connects
-// a paired device; on a connected one it expands into Disconnect and Forget, on
-// a discovered one into Pair. A right click on a paired device offers Connect
-// and Forget. Discovery, the attempts and the errors live in `Bluetooth`; this
-// panel only holds which row is expanded. Pairing has no agent here, so a
-// button left of the settings button opens bluetoothctl for PINs and passkeys.
-Appear {
+// The Bluetooth state of the centre island, opened from the Settings tile;
+// what a click does is in docs/shell.md, "Wi-Fi and Bluetooth panels".
+// Discovery, the attempts and the errors live in `Bluetooth`; the list
+// holds which row is expanded.
+Panel {
     id: panel
 
-    property string expandedKey: ""
+    name: "bluetooth"
 
     readonly property var devices: Bluetooth.devices
     readonly property var keys: devices.map(device => device.address)
 
-    implicitWidth: Theme.panelWidths.bluetooth
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + (Bluetooth.powered ? Theme.gap + list.implicitHeight : 0)
 
     // Errors stay until the next attempt; only the expansion resets.
-    onShownChanged: {
-        expandedKey = "";
-        if (shown)
-            list.positionAtBeginning();
+    onOpened: {
+        list.collapse();
+        list.positionAtBeginning();
     }
-
-    function toggleExpanded(key: string) {
-        expandedKey = expandedKey === key ? "" : key;
-    }
+    onClosed: list.collapse()
 
     function activate(device: var) {
         if (device.connected || !device.paired) {
-            toggleExpanded(device.address);
+            list.toggle(device.address, "");
         } else {
-            expandedKey = "";
+            list.collapse();
             Bluetooth.startConnect(device);
         }
     }
@@ -46,32 +39,37 @@ Appear {
     // Paired devices get Connect and Forget; the rest behave like a click.
     function activateSecondary(device: var) {
         if (device.paired && !device.connected)
-            toggleExpanded(device.address);
+            list.toggle(device.address, "");
         else
             activate(device);
     }
 
+    function actionsFor(device: var): var {
+        if (device.connected)
+            return RowActions.connected();
+        if (device.paired)
+            return RowActions.saved();
+        return RowActions.discovered();
+    }
+
     function act(device: var, action: string) {
-        expandedKey = "";
-        if (action === "connect") {
+        list.collapse();
+        if (action === "connect")
             Bluetooth.startConnect(device);
-        } else if (action === "pair") {
+        else if (action === "pair")
             Bluetooth.startPair(device);
-        } else {
-            Bluetooth.setError(device.address, "");
-            if (action === "disconnect")
-                Bluetooth.disconnectDevice(device);
-            else if (action === "forget")
-                Bluetooth.forget(device);
-        }
+        else if (action === "disconnect")
+            Bluetooth.disconnectDevice(device);
+        else if (action === "forget")
+            Bluetooth.forget(device);
     }
 
     PanelControlRow {
         id: controls
 
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         switchName: "Bluetooth"
         checked: Bluetooth.btEnabled
         switchEnabled: Bluetooth.available
@@ -92,13 +90,9 @@ Appear {
         extraLabel: "Open bluetoothctl in a terminal"
         actionLabel: "Open network settings"
         onToggled: Bluetooth.toggleBluetooth()
+        settingsTab: "network"
         onExtraClicked: {
             Bluetooth.openTerminal();
-            Shell.close();
-        }
-        // The settings window needs the keyboard, which the open panel holds.
-        onActionTriggered: {
-            Dms.openSettingsTab("network");
             Shell.close();
         }
     }
@@ -107,13 +101,12 @@ Appear {
         id: list
 
         objectName: "deviceList"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: controls.y + controls.height + Theme.gap
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         height: implicitHeight
         visible: Bluetooth.powered
         keys: panel.keys
-        expandedKey: panel.expandedKey
         errors: Bluetooth.errors
         emptyText: Bluetooth.discovering ? "Looking for devices" : "No devices"
 
@@ -126,40 +119,8 @@ Appear {
             title: device ? device.name : rowKey
             detail: device ? Bluetooth.detailText(device) : ""
             highlighted: device ? device.connected : false
-            expanded: panel.expandedKey === rowKey
-            actions: {
-                if (!device)
-                    return [];
-                const forget = {
-                    key: "forget",
-                    label: "Forget",
-                    danger: true
-                };
-                if (device.connected)
-                    return [
-                        {
-                            key: "disconnect",
-                            label: "Disconnect"
-                        },
-                        forget
-                    ];
-                if (device.paired)
-                    return [
-                        {
-                            key: "connect",
-                            label: "Connect",
-                            accent: true
-                        },
-                        forget
-                    ];
-                return [
-                    {
-                        key: "pair",
-                        label: "Pair",
-                        accent: true
-                    }
-                ];
-            }
+            expanded: list.expandedKey === rowKey
+            actions: device ? panel.actionsFor(device) : []
             errorText: Bluetooth.errors[rowKey] ?? ""
             onClicked: {
                 if (device)

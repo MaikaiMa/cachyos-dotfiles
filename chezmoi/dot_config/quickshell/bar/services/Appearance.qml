@@ -92,9 +92,60 @@ Singleton {
     property var queue: []
     // light, dark or auto while that choice is queued or settling.
     property string pendingMode: ""
+    // What the Theme panel shows: a choice at once, so the accent slides; DMS
+    // reports the new mode only after it has rendered, so its own value takes
+    // over again once the action has settled and DMS has answered.
+    property string chosenMode: ""
+    readonly property string displayedMode: chosenMode !== "" ? chosenMode : smartMode ? "auto" : mode
+
+    // Six representative dots per scheme for the Theme panel, drawn from the
+    // live palette: running matugen per card is too expensive. Accents
+    // (primary, secondary, tertiary), then surface, container and text,
+    // shifted in hue and saturation the way each scheme leans: [hue shift,
+    // saturation share] for the three accents. Smart shows the live palette.
+    readonly property var schemeLeanings: ({
+            "scheme-tonal-spot": [[0, 0.6], [0, 0.25], [1 / 6, 0.4]],
+            "scheme-vibrant": [[0, 1], [0.07, 0.9], [0.14, 0.85]],
+            "scheme-content": [[0, 0.85], [0, 0.45], [0.08, 0.55]],
+            "scheme-expressive": [[0.66, 0.55], [0.92, 0.6], [0, 0.5]],
+            "scheme-fidelity": [[0, 0.95], [0, 0.5], [0.11, 0.6]],
+            "scheme-fruit-salad": [[-0.14, 0.75], [0, 0.55], [0.11, 0.7]],
+            "scheme-monochrome": [[0, 0], [0, 0], [0, 0]],
+            "scheme-neutral": [[0, 0.18], [0, 0.1], [0.1, 0.14]],
+            "scheme-rainbow": [[0, 0.6], [1 / 3, 0.5], [2 / 3, 0.5]]
+        })
+    // The six dots' lightness in each mode, in the order above.
+    readonly property var previewLightness: ({
+            dark: [0.75, 0.7, 0.75, 0.08, 0.3, 0.9],
+            light: [0.4, 0.45, 0.42, 0.96, 0.85, 0.12]
+        })
 
     // A poll answered while no action is pending.
     signal reported
+
+    // The Theme panel's choice: light, dark or auto. The bar recolours from
+    // the preview at once; Auto waits for matugen.
+    function requestMode(wanted: string) {
+        chosenMode = wanted;
+        if (wanted === "auto") {
+            setAuto();
+        } else {
+            Colors.preview(wanted);
+            setMode(wanted);
+        }
+    }
+
+    function previewPalette(value: string): var {
+        const lean = schemeLeanings[value];
+        if (!lean)
+            return [Colors.primary, Colors.secondary, Colors.tertiary, Colors.surface, Colors.primaryContainer, Colors.foreground];
+        const hue = Math.max(0, Colors.primary.hslHue);
+        const saturation = Math.max(0.35, Colors.primary.hslSaturation);
+        const lightness = previewLightness[Colors.dark ? "dark" : "light"];
+        const shade = (shift, amount, level) => Qt.hsla((hue + shift + 1) % 1, Math.min(1, saturation * amount), level, 1);
+        const neutral = value === "scheme-monochrome" ? 0 : 0.15;
+        return [shade(lean[0][0], lean[0][1], lightness[0]), shade(lean[1][0], lean[1][1], lightness[1]), shade(lean[2][0], lean[2][1], lightness[2]), shade(0, neutral, lightness[3]), shade(lean[0][0], lean[0][1] * 0.6, lightness[4]), shade(0, neutral * 0.6, lightness[5])];
+    }
 
     // Through the IPC, not the portal, with a second screen transition: why,
     // see the Theme panel in docs/shell.md.
@@ -191,6 +242,8 @@ Singleton {
     }
 
     Component.onCompleted: refresh()
+    // Once DMS has settled and answered, its value is adopted once.
+    onReported: chosenMode = ""
 
     // RestoreNone: going busy must keep the optimistic mode setMode assigns.
     Binding {

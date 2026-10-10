@@ -8,8 +8,10 @@ import "../services"
 // The Power state of the centre island: one row of five square buttons. The
 // first takes the keyboard on open, Left and Right move it, Enter or Space
 // activate; the focused button is drawn in the accent.
-Appear {
+Panel {
     id: panel
+
+    name: "power"
 
     readonly property var buttons: [
         {
@@ -40,15 +42,12 @@ Appear {
     ]
     property int focusIndex: 0
 
-    implicitWidth: Theme.panelWidths.power
     implicitHeight: Theme.powerPanelHeight
 
     // After the window has taken the keys back on the state change.
-    onShownChanged: {
-        if (shown) {
-            focusIndex = 0;
-            Qt.callLater(panel.focusButton, 0);
-        }
+    onOpened: {
+        focusIndex = 0;
+        Qt.callLater(panel.focusButton, 0);
     }
 
     function focusButton(index: int) {

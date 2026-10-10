@@ -26,6 +26,17 @@ Singleton {
     // Why the last check failed; empty after a successful one.
     property string error: ""
 
+    // "checked 3 min ago", against now, which the caller ticks while it shows.
+    function checkedText(now: real): string {
+        const minutes = Math.floor((now - lastChecked.getTime()) / 60000);
+        if (minutes < 1)
+            return "checked just now";
+        if (minutes < 60)
+            return "checked " + minutes + " min ago";
+        const hours = Math.floor(minutes / 60);
+        return "checked " + (hours < 24 ? hours + " h ago" : Math.floor(hours / 24) + " d ago");
+    }
+
     function refresh() {
         pending.run();
         report.reload();

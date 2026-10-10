@@ -16,7 +16,7 @@ Item {
     // 1 playing, 0 resting; carries the core's size and the rim and bloom.
     property real liveness: resting ? 0 : 1
 
-    implicitWidth: Theme.orbSize + 2 * Theme.orbHitPadding
+    implicitWidth: Theme.orbHitSize
     implicitHeight: implicitWidth
 
     Behavior on liveness {

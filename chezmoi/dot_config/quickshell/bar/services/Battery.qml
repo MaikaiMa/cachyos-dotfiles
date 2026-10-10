@@ -59,6 +59,19 @@ Singleton {
         }
     }
 
+    function profileLabel(name: string): string {
+        return name === "power-saver" ? "Power saver" : name === "performance" ? "Performance" : "Balanced";
+    }
+
+    function profileIcon(name: string): string {
+        return name === "power-saver" ? "battery_saver" : name === "performance" ? "bolt" : "balance";
+    }
+
+    // The next profile in the list, round to the first.
+    function cycleProfile() {
+        setProfile(profiles[(profiles.indexOf(profile) + 1) % profiles.length]);
+    }
+
     function setProfile(name: string) {
         if (!profiles.includes(name)) {
             console.warn("Battery: unknown power profile " + name);

@@ -9,3 +9,4 @@ WifiPanel 1.0 WifiPanel.qml
 BluetoothPanel 1.0 BluetoothPanel.qml
 SoundPanel 1.0 SoundPanel.qml
 DisplayPanel 1.0 DisplayPanel.qml
+Panel 1.0 Panel.qml

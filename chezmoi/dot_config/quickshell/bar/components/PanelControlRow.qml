@@ -4,8 +4,8 @@ import "../services"
 
 // The top row of the panels opened from Settings: back to Settings, the on/off
 // switch with a short state (Sound has no switch, only the state), and on the
-// right a button that leaves the bar for a fuller tool (the DMS settings
-// window), with an optional second one left of it (a terminal).
+// right a button that opens settingsTab in the DMS settings window and closes
+// the panel, with an optional second one left of it (a terminal).
 Item {
     id: row
 
@@ -17,15 +17,22 @@ Item {
     property string stateText: ""
     property string actionIcon: "open_in_new"
     property string actionLabel: ""
+    // The DMS settings tab the right button opens.
+    property string settingsTab: ""
 
     // Empty: no second button.
     property string extraIcon: ""
     property string extraLabel: ""
 
     signal toggled
-    // The buttons on the right; the panel decides where they go and closes itself.
-    signal actionTriggered
+    // The second button; the panel decides where it goes and closes itself.
     signal extraClicked
+
+    // The settings window needs the keyboard, which the open panel holds.
+    function openSettings() {
+        Dms.openSettingsTab(settingsTab);
+        Shell.close();
+    }
 
     implicitHeight: Theme.controlRowHeight
 
@@ -136,6 +143,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         iconName: row.actionIcon
         accessibleName: row.actionLabel
-        onActivated: row.actionTriggered()
+        onActivated: row.openSettings()
     }
 }

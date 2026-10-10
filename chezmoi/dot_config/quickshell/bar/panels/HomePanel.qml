@@ -10,8 +10,10 @@ import "../services"
 // icon-only tiles that morph Home into the other panels, so each is reachable
 // by touch. The height is fixed by the Theme tokens, so the island grows to it
 // in one animation.
-Appear {
+Panel {
     id: panel
+
+    name: "home"
 
     readonly property real wideColumnX: Theme.panelPadding + Theme.homeTimeColumnWidth + Theme.tileGap
     readonly property real wideColumnWidth: width - wideColumnX - Theme.panelPadding
@@ -53,12 +55,11 @@ Appear {
     readonly property var shownActions: actions.filter(action => action.state !== "player" || Music.hasPlayer)
     readonly property real actionWidth: (width - 2 * Theme.panelPadding - (shownActions.length - 1) * Theme.tileGap) / shownActions.length
 
-    implicitWidth: Theme.panelWidths.home
     implicitHeight: Theme.homeHeight
 
     TimeTile {
         objectName: "timeTile"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding
         width: Theme.homeTimeColumnWidth
         height: Theme.homeTopRowHeight
@@ -75,7 +76,7 @@ Appear {
 
     PerformanceTile {
         objectName: "performanceTile"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: panel.bottomRowY
         width: Theme.homeTimeColumnWidth
         height: Theme.homeBottomRowHeight

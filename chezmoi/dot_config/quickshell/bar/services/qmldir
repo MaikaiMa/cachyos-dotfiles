@@ -26,3 +26,4 @@ Command 1.0 Command.qml
 CommandReader 1.0 CommandReader.qml
 CommandWriter 1.0 CommandWriter.qml
 LineWatcher 1.0 LineWatcher.qml
+BarIpc 1.0 BarIpc.qml

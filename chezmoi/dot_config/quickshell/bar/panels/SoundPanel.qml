@@ -11,8 +11,10 @@ import "../services"
 // the default input shows its live level; each application gets one row whose
 // compact capsule moves all of its streams. Everything lives in `Audio`; the
 // level and the app streams run only while this panel is open.
-Appear {
+Panel {
     id: panel
+
+    name: "sound"
 
     readonly property var outputKeys: Audio.sinks.map(node => String(node.id))
     readonly property var inputKeys: Audio.sources.map(node => String(node.id))
@@ -31,13 +33,9 @@ Appear {
     }
     readonly property real listHeight: contentHeight > 0 ? Math.min(Theme.soundListMaxHeight, contentHeight) : Theme.listRowHeight
 
-    implicitWidth: Theme.panelWidths.sound
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + Theme.gap + listHeight
 
-    onShownChanged: {
-        if (shown)
-            list.contentY = 0;
-    }
+    onOpened: list.contentY = 0
 
     // Patched by key, not replaced: a row keeps its delegate, so a capsule being
     // dragged is never rebuilt under the pointer.
@@ -59,13 +57,32 @@ Appear {
         return nodes.find(node => String(node.id) === key) ?? null;
     }
 
-    // Tab can land on a row below the visible part.
     function reveal(item: Item) {
         const top = item.mapToItem(sections, 0, 0).y;
         if (top < list.contentY)
             list.contentY = top;
         else if (top + item.height > list.contentY + list.height)
             list.contentY = top + item.height - list.height;
+    }
+
+    // The row of a section that holds item, or null.
+    function rowOf(item: Item): Item {
+        let row = item;
+        while (row && row.parent && row.parent.parent !== sections)
+            row = row.parent;
+        return row && row.parent && row.parent.parent === sections ? row : null;
+    }
+
+    // Tab can land on a row below the visible part.
+    Connections {
+        target: panel.Window.window
+        enabled: panel.shown
+
+        function onActiveFocusItemChanged() {
+            const row = panel.rowOf(panel.Window.activeFocusItem);
+            if (row)
+                panel.reveal(row);
+        }
     }
 
     KeyedListModel {
@@ -83,26 +100,22 @@ Appear {
     PanelControlRow {
         id: controls
 
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         hasSwitch: false
-        stateText: Audio.sink ? Audio.sinkLabel(Audio.sink) + " · " + (Audio.muted ? "muted" : Math.round(Audio.volume * 100) + "%") : "No output"
+        stateText: Audio.sink ? Audio.nodeLabel(Audio.sink) + " · " + (Audio.muted ? "muted" : Math.round(Audio.volume * 100) + "%") : "No output"
         actionLabel: "Open audio settings"
-        // The settings window needs the keyboard, which the open panel holds.
-        onActionTriggered: {
-            Dms.openSettingsTab("audio");
-            Shell.close();
-        }
+        settingsTab: "audio"
     }
 
     Flickable {
         id: list
 
         objectName: "soundList"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: controls.y + controls.height + Theme.gap
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         height: panel.listHeight
         contentHeight: sections.height
         clip: true
@@ -114,160 +127,54 @@ Appear {
             width: list.width
             spacing: Theme.sectionGap
 
-            Column {
+            SoundSection {
                 objectName: "outputSection"
-                width: parent.width
-                visible: outputModel.count > 0
-                spacing: Theme.listRowGap
+                rows: outputModel
+                iconName: "speaker"
+                title: "Output"
 
-                SoundSectionHeader {
-                    iconName: "speaker"
-                    text: "Output"
-                }
+                delegate: NetworkRow {
+                    required property string rowKey
+                    readonly property var node: panel.nodeFor(Audio.sinks, rowKey)
 
-                Repeater {
-                    model: outputModel
-
-                    NetworkRow {
-                        id: outputRow
-
-                        required property string rowKey
-                        readonly property var node: panel.nodeFor(Audio.sinks, rowKey)
-
-                        width: sections.width
-                        iconName: node ? Audio.deviceIcon(node) : "speaker"
-                        title: node ? Audio.sinkLabel(node) : ""
-                        highlighted: node !== null && node === Audio.sink
-                        onClicked: Audio.setDefaultSink(node)
-                        onActiveFocusChanged: {
-                            if (activeFocus)
-                                panel.reveal(outputRow);
-                        }
-                    }
+                    width: sections.width
+                    iconName: node ? Audio.deviceIcon(node) : "speaker"
+                    title: node ? Audio.nodeLabel(node) : ""
+                    highlighted: node !== null && node === Audio.sink
+                    onClicked: Audio.setDefaultSink(node)
                 }
             }
 
-            Column {
+            SoundSection {
                 objectName: "inputSection"
-                width: parent.width
-                visible: inputModel.count > 0
-                spacing: Theme.listRowGap
+                rows: inputModel
+                iconName: "mic"
+                title: "Input"
 
-                SoundSectionHeader {
-                    iconName: "mic"
-                    text: "Input"
-                }
+                delegate: NetworkRow {
+                    required property string rowKey
+                    readonly property var node: panel.nodeFor(Audio.sources, rowKey)
 
-                Repeater {
-                    model: inputModel
-
-                    NetworkRow {
-                        id: inputRow
-
-                        required property string rowKey
-                        readonly property var node: panel.nodeFor(Audio.sources, rowKey)
-
-                        width: sections.width
-                        iconName: node ? Audio.deviceIcon(node) : "mic"
-                        title: node ? Audio.sinkLabel(node) : ""
-                        highlighted: node !== null && node === Audio.source
-                        level: highlighted ? (Audio.micMuted ? 0 : Audio.micLevel) : -1
-                        onClicked: Audio.setDefaultSource(node)
-                        onActiveFocusChanged: {
-                            if (activeFocus)
-                                panel.reveal(inputRow);
-                        }
-                    }
+                    width: sections.width
+                    iconName: node ? Audio.deviceIcon(node) : "mic"
+                    title: node ? Audio.nodeLabel(node) : ""
+                    highlighted: node !== null && node === Audio.source
+                    level: highlighted ? (Audio.micMuted ? 0 : Audio.micLevel) : -1
+                    onClicked: Audio.setDefaultSource(node)
                 }
             }
 
-            Column {
+            SoundSection {
                 objectName: "appSection"
-                width: parent.width
-                visible: appModel.count > 0
-                spacing: Theme.listRowGap
+                rows: appModel
+                iconName: "apps"
+                title: "Apps"
 
-                SoundSectionHeader {
-                    iconName: "apps"
-                    text: "Apps"
-                }
+                delegate: AppVolumeRow {
+                    required property string rowKey
 
-                Repeater {
-                    model: appModel
-
-                    Item {
-                        id: appRow
-
-                        required property string rowKey
-                        readonly property var group: Audio.appGroup(rowKey)
-                        readonly property bool groupMuted: Audio.groupMuted(group)
-
-                        objectName: "appRow"
-                        width: sections.width
-                        height: Theme.listRowHeight
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Theme.listRowRadius
-                            color: Colors.surfaceContainerHigh
-                        }
-
-                        Image {
-                            id: appImage
-
-                            x: Theme.listRowPadding - 1
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Theme.appIconSize
-                            height: Theme.appIconSize
-                            visible: source.toString() !== "" && status === Image.Ready
-                            source: appRow.group ? appRow.group.icon : ""
-                            sourceSize.width: 2 * width
-                            sourceSize.height: 2 * height
-                            asynchronous: true
-                            smooth: true
-                        }
-
-                        Icon {
-                            x: Theme.listRowPadding
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: !appImage.visible
-                            name: "graphic_eq"
-                            size: Theme.toggleIconSize
-                            color: Colors.foregroundVariant
-                        }
-
-                        Label {
-                            x: Theme.listRowPadding + Theme.toggleIconSize + Theme.listRowPadding
-                            width: appSlider.x - Theme.gap - x
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: appRow.group ? appRow.group.name : appRow.rowKey
-                        }
-
-                        CapsuleSlider {
-                            id: appSlider
-
-                            objectName: "appSlider"
-                            x: parent.width - (Theme.listRowHeight - Theme.appSliderHeight) / 2 - width
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Theme.appSliderWidth
-                            implicitHeight: Theme.appSliderHeight
-                            iconZone: Theme.appSliderIconZone
-                            valueZone: Theme.appSliderValueZone
-                            iconSize: Theme.smallIconSize
-                            trackColor: Colors.surfaceContainer
-                            label: (appRow.group ? appRow.group.name : appRow.rowKey) + " volume"
-                            available: appRow.group !== null && appRow.group.nodes.some(node => node.audio !== null)
-                            value: Audio.groupVolume(appRow.group) * 100
-                            muted: appRow.groupMuted
-                            iconName: appRow.groupMuted ? "volume_off" : "volume_up"
-                            onMoved: target => Audio.setGroupVolume(appRow.group, target / 100)
-                            onIconClicked: Audio.toggleGroupMute(appRow.group)
-                            onActiveFocusChanged: {
-                                if (activeFocus)
-                                    panel.reveal(appRow);
-                            }
-                        }
-                    }
+                    width: sections.width
+                    key: rowKey
                 }
             }
         }
@@ -290,9 +197,31 @@ Appear {
         font.pixelSize: Theme.fontSizeDetail
     }
 
-    // The column's row gap follows the header; together they make the header token.
-    component SoundSectionHeader: SectionHeader {
+    // A header over its rows, only while it has any. The column's row gap
+    // follows the header; together they make the header token.
+    component SoundSection: Column {
+        id: section
+
+        required property KeyedListModel rows
+        property string iconName: ""
+        property string title: ""
+        property alias delegate: repeater.delegate
+
         width: parent ? parent.width : 0
-        height: Theme.sectionHeaderHeight - Theme.listRowGap
+        visible: rows.count > 0
+        spacing: Theme.listRowGap
+
+        SectionHeader {
+            width: section.width
+            height: Theme.sectionHeaderHeight - Theme.listRowGap
+            iconName: section.iconName
+            text: section.title
+        }
+
+        Repeater {
+            id: repeater
+
+            model: section.rows
+        }
     }
 }

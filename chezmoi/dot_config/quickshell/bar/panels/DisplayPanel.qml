@@ -11,69 +11,71 @@ import "../services"
 // the cover is attached) and the rear window light with the theme colour it
 // follows. Values live in `Display` and `Brightness`; both read themselves
 // while the panel is open.
-Appear {
+Panel {
     id: panel
+
+    name: "display"
 
     readonly property bool keyboardShown: Display.keyboardAvailable && !Tablet.detached
     readonly property bool rearShown: Display.rearAvailable
     readonly property var levelLabels: ["Off", "Low", "Medium", "High"]
 
-    implicitWidth: Theme.panelWidths.display
-    implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + Theme.gap + Theme.sliderHeight + Theme.scheduleLineHeight + Theme.sliderGap + Theme.sliderHeight + (keyboardShown ? Theme.sliderGap + Theme.sliderHeight : 0) + (rearShown ? Theme.sliderGap + Theme.sliderHeight : 0)
+    implicitHeight: rows.y + rows.implicitHeight + Theme.panelPadding
 
     PanelControlRow {
         id: controls
 
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         switchName: "Night light"
         checked: Display.nightLight
         stateText: Display.nightLight ? "On" + (Display.nightTemperature > 0 ? " · " + Display.nightTemperature + " K" : "") : "Off"
         actionLabel: "Open night light settings"
+        // The schedule can only be changed there.
+        settingsTab: "display_gamma"
         onToggled: Display.toggleNightLight()
-        // The schedule can only be changed there; the window needs the keyboard.
-        onActionTriggered: {
-            Dms.openSettingsTab("display_gamma");
-            Shell.close();
-        }
     }
 
+    // A hidden row takes no room: the Column skips it with its gap.
     Column {
-        x: Theme.panelPadding
+        id: rows
+
+        x: panel.contentX
         y: controls.y + controls.height + Theme.gap
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
+        spacing: Theme.sliderGap
 
-        CapsuleSlider {
-            id: nightSlider
-
-            objectName: "nightSlider"
+        // The schedule line sits right under the slider it describes.
+        Column {
             width: parent.width
-            label: "Night light temperature"
-            available: Display.nightTemperature > 0
-            muted: !Display.nightLight
-            value: Display.nightFraction(Display.nightTemperature)
-            snap: 100 * Display.nightStep / (Display.nightMaximum - Display.nightMinimum)
-            stepSize: snap
-            valueText: Display.nightKelvin(nightSlider.shownValue) + " K"
-            iconName: "nightlight"
-            onMoved: target => Display.setNightTemperature(Display.nightKelvin(target))
-            onIconClicked: Display.toggleNightLight()
-        }
 
-        Label {
-            objectName: "scheduleLine"
-            width: parent.width
-            height: Theme.scheduleLineHeight
-            leftPadding: Theme.sliderIconZone
-            verticalAlignment: Text.AlignVCenter
-            text: Display.scheduleText
-            secondary: true
-        }
+            CapsuleSlider {
+                id: nightSlider
 
-        Item {
-            width: 1
-            height: Theme.sliderGap
+                objectName: "nightSlider"
+                width: parent.width
+                label: "Night light temperature"
+                available: Display.nightTemperature > 0
+                muted: !Display.nightLight
+                value: Display.nightFraction(Display.nightTemperature)
+                snap: 100 * Display.nightStep / (Display.nightMaximum - Display.nightMinimum)
+                stepSize: snap
+                valueText: Display.nightKelvin(nightSlider.shownValue) + " K"
+                iconName: "nightlight"
+                onMoved: target => Display.setNightTemperature(Display.nightKelvin(target))
+                onIconClicked: Display.toggleNightLight()
+            }
+
+            Label {
+                objectName: "scheduleLine"
+                width: parent.width
+                height: Theme.scheduleLineHeight
+                leftPadding: Theme.sliderIconZone
+                verticalAlignment: Text.AlignVCenter
+                text: Display.scheduleText
+                secondary: true
+            }
         }
 
         CapsuleSlider {
@@ -102,13 +104,12 @@ Appear {
             shown: panel.rearShown
             iconName: "wb_iridescent"
             title: "Rear light"
-            dotColor: Display.rearColor !== "" ? "#" + Display.rearColor : "transparent"
+            dotColor: Display.rearTint
             level: Display.rearLevel
             onChosen: level => Display.setRearLevel(level)
         }
     }
 
-    // An icon, a label and Off / Low / Medium / High, in a capsule's height.
     component LevelRow: Item {
         id: levelRow
 
@@ -122,19 +123,18 @@ Appear {
         signal chosen(int level)
 
         width: parent ? parent.width : 0
-        height: shown ? Theme.sliderGap + Theme.sliderHeight : 0
+        height: Theme.sliderHeight
         visible: shown
 
         Icon {
             x: (Theme.sliderIconZone - width) / 2
-            y: Theme.sliderGap + (Theme.sliderHeight - height) / 2
+            y: (Theme.sliderHeight - height) / 2
             name: levelRow.iconName
             color: Colors.foreground
         }
 
         Row {
             x: Theme.sliderIconZone
-            y: Theme.sliderGap
             height: Theme.sliderHeight
             spacing: Theme.gap
 
@@ -161,7 +161,7 @@ Appear {
 
         SegmentedControl {
             x: Theme.displayLabelWidth
-            y: Theme.sliderGap + (Theme.sliderHeight - height) / 2
+            y: (Theme.sliderHeight - height) / 2
             width: levelRow.width - x
             label: levelRow.title
             trackColor: Colors.surfaceContainerHigh

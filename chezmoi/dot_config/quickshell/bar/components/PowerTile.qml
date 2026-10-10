@@ -12,12 +12,6 @@ Rectangle {
     radius: Theme.tileRadius
     color: Colors.surfaceContainerHigh
 
-    readonly property var profileLabels: ({
-            "power-saver": "Power saver",
-            "balanced": "Balanced",
-            "performance": "Performance"
-        })
-
     readonly property string stateText: {
         if (!Battery.available)
             return "No battery";
@@ -125,7 +119,7 @@ Rectangle {
             objectName: "profileTabs"
             width: parent.width
             label: "Power profile"
-            model: Battery.profiles.map(name => tile.profileLabels[name])
+            model: Battery.profiles.map(name => Battery.profileLabel(name))
             currentIndex: Battery.profiles.indexOf(Battery.profile)
             onSelected: index => Battery.setProfile(Battery.profiles[index])
         }

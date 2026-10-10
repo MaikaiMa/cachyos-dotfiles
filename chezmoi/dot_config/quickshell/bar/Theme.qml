@@ -349,6 +349,8 @@ Singleton {
     readonly property real orbRingMin: 0.2
     readonly property real orbRingMax: 0.8
     readonly property int orbHitPadding: orbBloom
+    // The orb item, its hit area: the sphere with orbHitPadding on every side.
+    readonly property int orbHitSize: orbSize + 2 * orbHitPadding
     // The prototype's 280 px bar, padding included: orb, gap, text, three controls.
     readonly property int musicBarWidth: 280
     readonly property real musicBarRimWidth: 2.5

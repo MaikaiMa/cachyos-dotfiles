@@ -4,40 +4,35 @@ import QtQuick
 import ".."
 import "../components"
 import "../services"
+import "../components/RowActions.js" as RowActions
 
-// The Wi-Fi state of the centre island, opened from the Settings tile: the
-// control row, then the networks. A click connects to a saved or open network;
-// an unknown secured one expands into a password field, the connected one into
-// Disconnect and Forget, and a right click on a saved one into Connect and
-// Forget. One row is expanded at a time. The scanner, the errors and the
-// attempts live in `Network`; this panel only holds which row is expanded.
-Appear {
+// The Wi-Fi state of the centre island, opened from the Settings tile; what
+// a click does is in docs/shell.md, "Wi-Fi and Bluetooth panels". The
+// scanner, the errors and the attempts live in `Network`; the list holds
+// which row is expanded.
+Panel {
     id: panel
 
-    property string expandedKey: ""
-    // What the expanded row shows: "password", "connected" (Disconnect, Forget),
-    // "saved" (Connect, Forget) or "suspect" (Forget, after a client failure
-    // that may be a stale password).
-    property string expandedKind: ""
+    name: "wifi"
 
     readonly property var networks: Network.networks
     readonly property var keys: networks.map(network => network.name)
 
-    implicitWidth: Theme.panelWidths.wifi
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + (Network.wifiEnabled ? Theme.gap + list.implicitHeight : 0)
 
     // Errors stay until the next attempt; only the expansion resets.
-    onShownChanged: {
-        collapse();
-        if (shown)
-            list.positionAtBeginning();
+    onOpened: {
+        list.collapse();
+        list.positionAtBeginning();
     }
+    onClosed: list.collapse()
 
+    // The expansion kind is the failure kind: password or suspect.
     Connections {
         target: Network
 
         function onFailed(ssid: string, kind: string) {
-            panel.expand(ssid, kind);
+            list.expand(ssid, kind);
         }
     }
 
@@ -45,81 +40,43 @@ Appear {
         return networks.find(network => network.name === key) ?? null;
     }
 
-    function expand(key: string, kind: string) {
-        expandedKind = kind;
-        expandedKey = key;
-    }
-
-    function collapse() {
-        expandedKey = "";
-        expandedKind = "";
-    }
-
-    function toggle(key: string, kind: string) {
-        if (expandedKey === key && expandedKind === kind)
-            collapse();
-        else
-            expand(key, kind);
-    }
-
     function activate(network: var) {
-        const key = network.name;
-        if (network.connected) {
-            toggle(key, "connected");
-            return;
-        }
-        // A saved profile whose password was just refused asks for a new one.
-        const refused = Network.wrongPassword.includes(key);
-        if (!Network.secured(network) || (network.known && !refused)) {
-            collapse();
+        const action = Network.primaryAction(network);
+        if (action === "manage") {
+            list.toggle(network.name, "connected");
+        } else if (action === "connect") {
+            list.collapse();
             Network.attemptConnect(network);
-        } else if (Network.needsPassword(network)) {
-            toggle(key, "password");
+        } else if (action === "password") {
+            list.toggle(network.name, "password");
         } else {
-            Network.setError(key, "Needs a login: open settings");
+            Network.requestLogin(network);
         }
     }
 
+    // A saved network gets Connect and Forget; the rest behave like a click.
     function activateSecondary(network: var) {
         if (network.known && !network.connected)
-            toggle(network.name, "saved");
+            list.toggle(network.name, "saved");
         else
             activate(network);
     }
 
     function actionsFor(kind: string): var {
-        const forget = {
-            key: "forget",
-            label: "Forget",
-            danger: true
-        };
         if (kind === "connected")
-            return [
-                {
-                    key: "disconnect",
-                    label: "Disconnect"
-                },
-                forget
-            ];
+            return RowActions.connected();
         if (kind === "saved")
-            return [
-                {
-                    key: "connect",
-                    label: "Connect",
-                    accent: true
-                },
-                forget
-            ];
-        return [forget];
+            return RowActions.saved();
+        return RowActions.suspect();
     }
 
     function submitPassword(network: var, password: string) {
-        collapse();
+        list.collapse();
         Network.attemptPassword(network, password);
     }
 
     function act(network: var, action: string) {
-        collapse();
+        list.collapse();
         if (action === "connect")
             Network.attemptConnect(network);
         else if (action === "disconnect")
@@ -131,9 +88,9 @@ Appear {
     PanelControlRow {
         id: controls
 
-        x: Theme.panelPadding
+        x: panel.contentX
         y: Theme.panelPadding
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         switchName: "Wi-Fi"
         checked: Network.wifiEnabled
         stateText: {
@@ -144,25 +101,20 @@ Appear {
             return Network.wifiConnected ? "On · " + Network.ssid : "On · not connected";
         }
         actionLabel: "Open Wi-Fi settings"
+        settingsTab: "network_wifi"
         onToggled: Network.toggleWifi()
-        // The settings window needs the keyboard, which the open panel holds.
-        onActionTriggered: {
-            Dms.openSettingsTab("network_wifi");
-            Shell.close();
-        }
     }
 
     RowList {
         id: list
 
         objectName: "networkList"
-        x: Theme.panelPadding
+        x: panel.contentX
         y: controls.y + controls.height + Theme.gap
-        width: panel.width - 2 * Theme.panelPadding
+        width: panel.contentWidth
         height: implicitHeight
         visible: Network.wifiEnabled
         keys: panel.keys
-        expandedKey: panel.expandedKey
         errors: Network.errors
         emptyText: Network.scanning ? "Looking for networks" : "No networks in range"
 
@@ -176,9 +128,9 @@ Appear {
             detail: network ? Network.detailText(network) : ""
             secured: network ? Network.secured(network) : false
             highlighted: network ? network.connected : false
-            expanded: panel.expandedKey === rowKey
-            mode: expanded && panel.expandedKind === "password" ? "password" : "actions"
-            actions: expanded ? panel.actionsFor(panel.expandedKind) : []
+            expanded: list.expandedKey === rowKey
+            mode: expanded && list.expandedKind === "password" ? "password" : "actions"
+            actions: expanded ? panel.actionsFor(list.expandedKind) : []
             errorText: Network.errors[rowKey] ?? ""
             onClicked: {
                 if (network)

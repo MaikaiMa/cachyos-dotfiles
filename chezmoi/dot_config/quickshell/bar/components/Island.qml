@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import ".."
 
 // The surface every island is drawn on. The owner sets targetWidth, targetHeight,
@@ -113,12 +112,7 @@ Rectangle {
     }
 
     layer.enabled: true
-    layer.effect: MultiEffect {
-        shadowEnabled: true
-        shadowColor: Qt.alpha(Colors.shadow, Theme.shadowOpacity)
+    layer.effect: IslandShadow {
         shadowOpacity: island.shadowStrength
-        shadowVerticalOffset: Theme.shadowOffsetY
-        blurMax: Theme.shadowBlur
-        shadowBlur: 1
     }
 }

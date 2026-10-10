@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import ".."
 import "../components"
 import "../services"
@@ -14,15 +13,25 @@ import "../services"
 // the island onto its new top row's disc. A clear-all blob sits on the far
 // left as long as the stack shows. The island clips its
 // content, so they live here, beside it; the owner puts this item's right edge
-// and top on the island's and adds area(slot) to the window's input and blur
-// regions.
+// and top on the island's, gives the places below in this item's coordinates
+// and adds area(slot) to the window's input and blur regions.
 Item {
     id: strip
 
     required property string screenName
-    required property RightIsland island
+    property real islandWidth: 0
+    property real islandBottom: 0
+    // The bell, where blobs sink to, and the top row's disc, where a re-peeked
+    // blob rises to.
+    property real bellX: 0
+    property real riseX: 0
+    // Always there while the stack shows: a hover-only reveal was too easy to
+    // lose on the trackpad.
+    property bool clearShown: false
+    // The centre of a stack row's icon disc in this item, or null once the row is gone.
+    property var discOrigin: id => null
 
-    readonly property var serviceIds: Notifications.peekScreen === screenName ? Notifications.blobIds : []
+    readonly property var serviceIds: Notifications.blobIdsOn(screenName)
     readonly property int step: Theme.notificationBlobSize + Theme.notificationBlobGap
     // Blobs that are not sliding into the bell or rising into the island; past
     // the maximum they make "+N".
@@ -33,16 +42,14 @@ Item {
     readonly property int extra: Math.max(0, settledCount - Theme.notificationBlobMax)
     // Kept while "+N" fades out.
     property int moreCount: 0
-    readonly property real bellX: width - island.bellCentreOffset
     readonly property real bellY: Theme.islandHeight / 2
-    readonly property real restY: island.height + Theme.notificationBlobGap + Theme.notificationBlobSize / 2
-    // The top row's disc, where a re-peeked blob rises to.
-    readonly property real riseX: width - island.peekWidth + Theme.notificationPeekPaddingHorizontal + Theme.notificationPeekDisc / 2
+    readonly property real restY: islandBottom + Theme.notificationBlobGap + Theme.notificationBlobSize / 2
     readonly property real riseY: Theme.notificationPeekPaddingVertical + Theme.notificationPeekRowHeight / 2
 
-    // Always there while the stack shows: a hover-only reveal was too easy to
-    // lose on the trackpad.
-    readonly property bool clearShown: island.peekOpen
+    // Every slot area() answers for, for the owner's regions.
+    readonly property var slots: Array.from({
+        length: Theme.notificationBlobMax + 2
+    }, (_, slot) => slot)
 
     // The slots 0 to notificationBlobMax - 1 are blobs from the right, the slot
     // notificationBlobMax is "+N" and the one after it the clear-all blob; in
@@ -58,14 +65,13 @@ Item {
     // that leaves for a row of its own rises into the island; the others sink
     // into the bell.
     function sync() {
-        const rows = Notifications.peekScreen === screenName ? Notifications.peekIds : [];
+        const rows = Notifications.peekIdsOn(screenName);
         blobModel.sync(serviceIds, id => {
-            const disc = island.peekDisc(id);
-            const origin = disc ? disc.mapToItem(strip, disc.width / 2, disc.height / 2) : Qt.point(0, 0);
+            const origin = discOrigin(id);
             return {
-                fromDisc: !!disc,
-                originX: origin.x,
-                originY: origin.y
+                fromDisc: !!origin,
+                originX: origin ? origin.x : 0,
+                originY: origin ? origin.y : 0
             };
         }, id => rows.includes(id) ? "rising" : "sinking");
     }
@@ -74,8 +80,8 @@ Item {
         Shell.open("settings", screenName);
     }
 
-    width: Math.max(island.width, (Theme.notificationBlobMax + 2) * step)
-    height: island.height + Theme.notificationBlobGap + Theme.notificationBlobSize
+    width: Math.max(islandWidth, (Theme.notificationBlobMax + 2) * step)
+    height: islandBottom + Theme.notificationBlobGap + Theme.notificationBlobSize
     visible: blobModel.count > 0 || more.opacity > 0 || clear.opacity > 0
 
     onServiceIdsChanged: sync()
@@ -100,19 +106,11 @@ Item {
         Blob {}
     }
 
-    BlobSurface {
+    RestingBlob {
         id: more
 
+        slot: Theme.notificationBlobMax
         interactive: strip.extra > 0
-        x: strip.width - Theme.notificationBlobSize - Theme.notificationBlobMax * strip.step
-        y: strip.restY - height / 2
-        width: Theme.notificationBlobSize
-        height: Theme.notificationBlobSize
-        opacity: interactive ? 1 : 0
-
-        Behavior on opacity {
-            Crossfade {}
-        }
 
         Label {
             anchors.centerIn: parent
@@ -128,26 +126,11 @@ Item {
     }
 
     // Left of "+N" when it is there, else left of the last blob, or alone.
-    BlobSurface {
+    RestingBlob {
         id: clear
 
-        property real slot: strip.extra > 0 ? Theme.notificationBlobMax + 1 : strip.occupiedSlots
-
+        slot: strip.extra > 0 ? Theme.notificationBlobMax + 1 : strip.occupiedSlots
         interactive: strip.clearShown
-        x: strip.width - Theme.notificationBlobSize - slot * strip.step
-        y: strip.restY - height / 2
-        width: Theme.notificationBlobSize
-        height: Theme.notificationBlobSize
-        opacity: interactive ? 1 : 0
-
-        Behavior on slot {
-            MorphAnimation {
-                shrinking: true
-            }
-        }
-        Behavior on opacity {
-            Crossfade {}
-        }
 
         Icon {
             anchors.centerIn: parent
@@ -184,13 +167,7 @@ Item {
         }
 
         layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.alpha(Colors.shadow, Theme.shadowOpacity)
-            shadowVerticalOffset: Theme.shadowOffsetY
-            blurMax: Theme.shadowBlur
-            shadowBlur: 1
-        }
+        layer.effect: IslandShadow {}
 
         MouseArea {
             id: pointer
@@ -209,6 +186,26 @@ Item {
         }
 
         Accessible.role: Accessible.Button
+    }
+
+    // A blob at rest in a slot from the right, shown while it takes clicks.
+    component RestingBlob: BlobSurface {
+        property real slot: 0
+
+        x: strip.width - Theme.notificationBlobSize - slot * strip.step
+        y: strip.restY - height / 2
+        width: Theme.notificationBlobSize
+        height: Theme.notificationBlobSize
+        opacity: interactive ? 1 : 0
+
+        Behavior on slot {
+            MorphAnimation {
+                shrinking: true
+            }
+        }
+        Behavior on opacity {
+            Crossfade {}
+        }
     }
 
     // Positions mix centres: from the row's disc to the slot (travel), then

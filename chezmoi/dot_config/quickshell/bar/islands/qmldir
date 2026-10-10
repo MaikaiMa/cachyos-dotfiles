@@ -2,3 +2,11 @@ LeftIsland 1.0 LeftIsland.qml
 CentreIsland 1.0 CentreIsland.qml
 RightIsland 1.0 RightIsland.qml
 NotificationBlobs 1.0 NotificationBlobs.qml
+CentrePill 1.0 CentrePill.qml
+MusicBar 1.0 MusicBar.qml
+CentrePanels 1.0 CentrePanels.qml
+PrivacyDock 1.0 PrivacyDock.qml
+TrayMenu 1.0 TrayMenu.qml
+NotificationStack 1.0 NotificationStack.qml
+MusicGlow 1.0 MusicGlow.qml
+MusicFade 1.0 MusicFade.qml

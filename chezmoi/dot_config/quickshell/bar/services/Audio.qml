@@ -79,13 +79,13 @@ Singleton {
     }
 
     function byLabel(a: PwNode, b: PwNode): int {
-        return sinkLabel(a).localeCompare(sinkLabel(b)) || a.name.localeCompare(b.name);
+        return nodeLabel(a).localeCompare(nodeLabel(b)) || a.name.localeCompare(b.name);
     }
 
     // The active port's name when pactl knows the node; otherwise the device for
     // Bluetooth, a generic name for HDMI and the internal card, else PipeWire's
     // description.
-    function sinkLabel(node: PwNode): string {
+    function nodeLabel(node: PwNode): string {
         if (!node)
             return "";
         const name = node.name ?? "";
