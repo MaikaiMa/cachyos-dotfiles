@@ -27,11 +27,12 @@ jq --indent 2 '.barConfigs[0].enabled = true | .osdVolumeEnabled = true | .osdMi
 # The stub keeps both units' enabled and active state and the owner of the
 # notification name as marker files. Names are claimed first come, first served,
 # like on the session bus: a unit that starts while the other owns the name gets none.
-# The dms.service drop-in has PartOf=quickshell-bar.service, so a stop or restart
-# of the bar also stops or restarts DMS; the stub models that and records it in
-# the propagated file. It does not model Before= ordering beyond what the
-# sequence needs: on a bar restart DMS goes down first and comes up after the bar
-# holds the name. A crash restart (Restart=on-failure) is not modelled.
+# The bar's start hooks (bar-notifications release and claim) stop DMS before
+# the bar starts and start it again once the bar holds the name; the stub models
+# that for a bar restart and records it in the hooked file. Stopping the bar
+# leaves DMS running and DMS re-registers the name by itself. A crash restart
+# (Restart=on-failure) and the lock and loop guards are not modelled here;
+# tests/bar-notifications.sh covers the helper.
 cat >"$fake_bin/systemctl" <<'STUB'
 #!/bin/sh
 printf '%s\n' "$*" >>"$SYSTEMCTL_STUB_CALLS"
@@ -66,7 +67,7 @@ case "$*" in
 	if [ -n "$dms_was_active" ]; then
 		rm -f "$s/dms-active"
 		release dms
-		echo restart >>"$s/propagated"
+		echo restart >>"$s/hooked"
 	fi
 	release quickshell
 	touch "$s/active"
@@ -80,23 +81,8 @@ case "$*" in
 	rm -f "$s/enabled" "$s/active"
 	release quickshell
 	if [ -e "$s/dms-active" ]; then
-		rm -f "$s/dms-active"
-		release dms
-		echo stop >>"$s/propagated"
+		claim dms
 	fi
-	;;
-'--user stop dms.service')
-	rm -f "$s/dms-active"
-	release dms
-	;;
-'--user start dms.service')
-	touch "$s/dms-active"
-	claim dms
-	;;
-'--user restart dms.service')
-	release dms
-	touch "$s/dms-active"
-	claim dms
 	;;
 *) exit 1 ;;
 esac
@@ -178,7 +164,7 @@ echo dms >"$state/owner"
 cp "$look" "$test_root/before.json"
 dry_run=$(run_switch --dry-run own)
 case $dry_run in
-*'would set barConfigs[0].enabled and the DMS volume, microphone and brightness OSDs to false'*'would enable quickshell-bar.service, stop dms.service, restart quickshell-bar.service, then start dms.service'*) ;;
+*'would set barConfigs[0].enabled and the DMS volume, microphone and brightness OSDs to false'*'would enable and restart quickshell-bar.service (its start hooks stop and restart dms.service)'*) ;;
 *) fail "dry-run own did not preview the switch: $dry_run" ;;
 esac
 cmp -s "$look" "$test_root/before.json" || fail 'dry-run own changed look.json.'
@@ -193,9 +179,7 @@ run_switch own >/dev/null
 [ "$(cat "$apply_look_calls")" = 'dms-apply-look ' ] || fail 'own did not run dms-apply-look once without arguments.'
 expect_calls '--user daemon-reload' \
 	'--user enable quickshell-bar.service' \
-	'--user stop dms.service' \
-	'--user restart quickshell-bar.service' \
-	'--user start dms.service'
+	'--user restart quickshell-bar.service'
 [ "$(owner)" = quickshell ] || fail "own left the notification name with $(owner)."
 [ -e "$state/dms-active" ] || fail 'own left DMS stopped.'
 jq --indent 2 . "$look" | cmp -s - "$look" || fail 'own did not keep the two-space indentation of look.json.'
@@ -228,45 +212,34 @@ reset_calls
 run_switch own >/dev/null
 expect_calls '--user daemon-reload' \
 	'--user enable quickshell-bar.service' \
-	'--user stop dms.service' \
-	'--user restart quickshell-bar.service' \
-	'--user start dms.service'
+	'--user restart quickshell-bar.service'
 [ "$(owner)" = quickshell ] || fail "own did not take the name back from DMS, owner is $(owner)."
 
-# DMS stopped while the bar owns the name: the sequence also brings DMS back.
+# DMS stopped while the bar owns the name: own still restarts only the bar.
 rm -f "$state/dms-active"
 reset_calls
 run_switch own >/dev/null
 expect_calls '--user daemon-reload' \
 	'--user enable quickshell-bar.service' \
-	'--user stop dms.service' \
-	'--user restart quickshell-bar.service' \
-	'--user start dms.service'
-[ -e "$state/dms-active" ] || fail 'own did not start DMS.'
+	'--user restart quickshell-bar.service'
 
-# A plain bar restart restarts DMS with it and the name stays with the bar.
-reset_calls
-rm -f "$state/propagated"
-SYSTEMCTL_STUB_CALLS="$systemctl_calls" SYSTEMCTL_STUB_STATE="$state" "$fake_bin/systemctl" --user restart quickshell-bar.service
-[ "$(cat "$state/propagated")" = restart ] || fail 'a bar restart did not restart DMS (PartOf=).'
-[ "$(owner)" = quickshell ] || fail "a bar restart left the name with $(owner)."
+touch "$state/dms-active"
+echo quickshell >"$state/owner"
 
 reset_calls
 dry_dms=$(run_switch --dry-run dms)
 case $dry_dms in
-*'would disable and stop quickshell-bar.service, then restart dms.service'*) ;;
+*'would disable and stop quickshell-bar.service; DMS keeps running and takes the name'*) ;;
 *) fail "dry-run dms did not preview the switch: $dry_dms" ;;
 esac
 [ -z "$(changing_calls)" ] || fail 'dry-run dms changed a unit.'
 
 reset_calls
-rm -f "$state/propagated"
 run_switch dms >/dev/null
-[ "$(cat "$state/propagated" 2>/dev/null)" = stop ] || fail 'dms did not stop DMS with the bar (PartOf=).'
+[ -e "$state/dms-active" ] || fail 'dms stopped DMS.'
 [ "$(bar_flag)" = true ] || fail 'dms did not set barConfigs[0].enabled to true.'
 [ "$(osd_flags)" = '[true,true,true]' ] || fail 'dms did not turn the DMS volume, microphone and brightness OSDs back on.'
-expect_calls '--user disable --now quickshell-bar.service' \
-	'--user restart dms.service'
+expect_calls '--user disable --now quickshell-bar.service'
 [ "$(owner)" = dms ] || fail "dms left the notification name with $(owner)."
 
 status=$(run_switch status)

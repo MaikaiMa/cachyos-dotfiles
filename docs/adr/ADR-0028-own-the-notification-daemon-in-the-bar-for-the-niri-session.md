@@ -99,12 +99,22 @@ the bar.
    `systemd-analyze --user verify` on 2026-10-08) and only `Type=dbus`
    waits for the name anyway. With the wait step and the ordering, systemd
    does not fork DMS before the bar holds the name (or thirty seconds have
-   passed), so a normal login is deterministic. The drop-in also sets
-   `PartOf=quickshell-bar.service` (added 2026-10-10): a stop or restart
-   of the bar propagates to DMS, and with `Before=` DMS stops before the
-   bar stops and starts again after the bar holds the name, so
-   `systemctl --user restart quickshell-bar.service` keeps the name with
-   the bar. If the bar cannot register (a QML
+   passed), so a normal login is deterministic. Amended 2026-10-10: a bar
+   that starts while DMS runs never gets the name, so the bar's own start
+   hooks make room for it, replacing the `PartOf=quickshell-bar.service`
+   line the drop-in briefly carried. `ExecStartPre=-%h/.local/bin/bar-notifications
+   release` stops `dms.service` and leaves a marker in `$XDG_RUNTIME_DIR`;
+   `ExecStartPost=-%h/.local/bin/bar-notifications claim`, placed after the
+   wait, starts DMS again with `--no-block` (DMS is ordered after the bar,
+   which is not active until `ExecStartPost` returns, so a blocking start
+   would deadlock) and removes the marker. One mechanism serves login,
+   manual restart and crash restart. Two guards keep `release` from ever
+   hurting: while the session is locked (logind `LockedHint`, the read the
+   bar's `Session.qml` uses) DMS is left alone, because stopping it would
+   take down the DMS lock; and with more than two automatic restarts of the
+   bar (`NRestarts`) DMS is left alone, so a restart loop cannot make DMS
+   blink forever. Both hooks always exit 0.
+   If the bar cannot register (a QML
    error, DMS already holding the name after an unusual restart order),
    the leading `-` ignores the wait's failure, DMS starts and claims the
    name as before, and the bar keeps running as a bar: the failure mode
@@ -118,21 +128,19 @@ the bar.
    created is a C++ detail not read for this ADR; the wait step covers
    either answer, but the build must confirm it with `busctl --user
    status org.freedesktop.Notifications` on a cold login.
-3. **`scripts/bar-switch.sh` owns the order of restarts.** `own` stops
-   DMS, restarts the bar (a bar that started after DMS holds no name, so
-   starting it is not enough), then starts DMS; `dms` stops the bar and
-   restarts DMS so the DMS bar gets its daemon back. The drop-in stays
-   installed in both modes: with the bar stopped, DMS registers the name
-   exactly as today, only systemd's notion of "started" changes. `status`
-   reports which process owns the name (`busctl --user status`), because
-   the bar cannot easily tell you itself. Recovery from any state is
-   `scripts/bar-switch.sh dms`, one command, documented in
-   `docs/shell.md`. `PartOf=` does not cover an automatic restart after a
-   bar crash (`Restart=on-failure` is not a restart job that propagates):
-   after a crash DMS may take the name in the gap and keeps it until
-   `scripts/bar-switch.sh own` is run, which restores the order. `status`
-   shows the owner, `quickshell` or `dms` (DMS's process is called `qs`,
-   so the script reads its command line).
+3. **`scripts/bar-switch.sh` switches by starting and stopping the bar.**
+   `own` restarts the bar (a bar that started after DMS holds no name, so
+   starting it is not enough) and lets the hooks of decision 2 do the DMS
+   dance; `dms` only stops and disables the bar, and DMS, which kept
+   running, re-registers the name within milliseconds by itself. The
+   drop-in stays installed in both modes: with the bar stopped, DMS
+   registers the name exactly as today, only systemd's notion of "started"
+   changes. `status` reports which process owns the name
+   (`bar-notifications status`, which reads `busctl --user status`),
+   because the bar cannot easily tell you itself. Recovery from any state
+   is `scripts/bar-switch.sh dms`, one command, documented in
+   `docs/shell.md`. `status` shows the owner, `quickshell` or `dms` (DMS's
+   process is called `qs`, so the helper reads its command line).
 4. **The bar adds what the specification does not give.** Before the daily
    switch the bar must have: its own history in
    `$XDG_STATE_HOME/dotfiles-bar/` (the existing dismiss state file grows
@@ -172,7 +180,7 @@ the bar.
   setting for the server, or stops when it loses the name, the drop-in and
   this ADR are revisited. `dms-shell` is already a fragile package in the
   update report (ADR-0025), so the report flags every DMS update.
-- Switching modes now restarts DMS, which it never did before. The
+- Switching to the own bar now restarts DMS, which it never did before. The
   wallpaper, the polkit agent, the dash and the DMS lock trigger are gone
   for a second or two during a switch. Accepted: the switch is a rare,
   deliberate act, never something the session does on its own.
@@ -188,11 +196,18 @@ the bar.
   quickshell-bar.service` looked safe. It was not. DMS is Quickshell and
   retries registration when the name frees, so the bar's restart handed
   the name to DMS in the gap, the bar could not get it back, and
-  notifications went to DMS popups. The fix is the `PartOf=` line in the
-  drop-in (decision 2): a bar restart now restarts DMS with it, DMS
-  comes up after the bar holds the name, and the wallpaper and polkit
-  agent blink for a second. A crash restart stays uncovered, see decision
-  3.
+  notifications went to DMS popups. A first fix, `PartOf=` in the drop-in,
+  covered manual restarts only.
+- Amended 2026-10-10 (crash path): `PartOf=` does not propagate an
+  automatic `Restart=on-failure`, so after a bar crash the bar came back
+  two seconds later, DMS re-registered the name the moment it freed, and the
+  bar never got it back. The bar's own start hooks (decision 2) now make
+  room for it on every start, whoever triggered the start. Remaining
+  limits, on purpose: a crash while the session is locked leaves DMS the
+  name until the next `scripts/bar-switch.sh own`, and a restart loop
+  leaves DMS alone. A bar restart blinks DMS once (the wallpaper and polkit
+  agent go for a second); `scripts/bar-switch.sh dms` no longer restarts
+  DMS at all.
 - Nothing in this ADR touches the Niri `input`, `output`, `cursor` or
   `debug` sections, so the greeter does not need `setup-greetd.sh`.
 

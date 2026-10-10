@@ -1,0 +1,115 @@
+#!/bin/sh
+# Make room for the own bar on org.freedesktop.Notifications (ADR-0028). DMS is
+# Quickshell too and registers the name the moment it frees, so a bar that
+# starts while DMS runs never gets it. quickshell-bar.service runs `release`
+# before the bar starts and `claim` after the bar holds the name; one mechanism
+# for login, manual restart and crash restart. Every path of release and claim
+# exits 0: the bar must always start.
+set -eu
+
+systemctl_command=${SYSTEMCTL_COMMAND:-systemctl}
+busctl_command=${BUSCTL_COMMAND:-busctl}
+runtime_dir=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+marker=$runtime_dir/bar-notifications.restart-dms
+bar_unit=quickshell-bar.service
+dms_unit=dms.service
+notification_name=org.freedesktop.Notifications
+loop_threshold=2
+
+usage() {
+	printf 'Usage: %s release | claim | status\n' "${0##*/}"
+}
+
+if [ "$#" -ne 1 ]; then
+	usage >&2
+	exit 2
+fi
+case $1 in
+-h | --help)
+	usage
+	exit 0
+	;;
+release | claim | status) ;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac
+
+# The same read as the bar's Session.qml lockWatchScript.
+session_locked() {
+	session_path=$("$busctl_command" --system get-property org.freedesktop.login1 /org/freedesktop/login1/user/self org.freedesktop.login1.User Display 2>/dev/null | cut -d'"' -f4) || return 1
+	[ -n "$session_path" ] || return 1
+	locked_hint=$("$busctl_command" --system get-property org.freedesktop.login1 "$session_path" org.freedesktop.login1.Session LockedHint 2>/dev/null) || return 1
+	[ "$locked_hint" = 'b true' ]
+}
+
+release() {
+	if ! "$systemctl_command" --user is-active --quiet "$dms_unit"; then
+		return 0
+	fi
+	if session_locked; then
+		printf 'bar-notifications: the session is locked, DMS keeps the notification name\n'
+		return 0
+	fi
+	restarts=$("$systemctl_command" --user show "$bar_unit" -p NRestarts --value 2>/dev/null || true)
+	case $restarts in
+	'' | *[!0-9]*) restarts=0 ;;
+	esac
+	if [ "$restarts" -gt "$loop_threshold" ]; then
+		printf 'bar-notifications: %s restarts of the bar, leaving DMS alone during a restart loop\n' "$restarts"
+		return 0
+	fi
+	if "$systemctl_command" --user stop "$dms_unit"; then
+		mkdir -p "$runtime_dir"
+		: >"$marker"
+		printf 'bar-notifications: stopped %s so the bar can take the notification name\n' "$dms_unit"
+	else
+		printf 'bar-notifications: could not stop %s\n' "$dms_unit" >&2
+	fi
+}
+
+# --no-block is mandatory: DMS is ordered after the bar, and the bar is not
+# active until ExecStartPost returns, so a blocking start would deadlock.
+claim() {
+	[ -e "$marker" ] || return 0
+	rm -f "$marker"
+	"$systemctl_command" --user start --no-block "$dms_unit" ||
+		printf 'bar-notifications: could not start %s\n' "$dms_unit" >&2
+}
+
+# Who holds the name: quickshell, dms, nobody, unknown (no busctl or no session
+# bus), or the process name of any other owner. DMS's process is called qs, so
+# qs counts as dms when its command line is the DMS runtime
+# (qs -p /run/user/<uid>/danklinux-shell/...).
+status() {
+	if ! command -v "$busctl_command" >/dev/null 2>&1; then
+		echo unknown
+		return 0
+	fi
+	if ! owner_status=$("$busctl_command" --user status "$notification_name" 2>/dev/null); then
+		if "$busctl_command" --user list --no-legend >/dev/null 2>&1; then
+			echo nobody
+		else
+			echo unknown
+		fi
+		return 0
+	fi
+	owner_comm=$(printf '%s\n' "$owner_status" | sed -n 's/^Comm=//p' | sed -n 1p)
+	owner_cmdline=$(printf '%s\n' "$owner_status" | sed -n 's/^CommandLine=//p' | sed -n 1p)
+	case $owner_comm in
+	qs)
+		case $owner_cmdline in
+		*danklinux-shell* | *dms*) owner_comm=dms ;;
+		esac
+		;;
+	esac
+	echo "${owner_comm:-unknown}"
+}
+
+case $1 in
+release) release || true ;;
+claim) claim || true ;;
+status) status ;;
+esac
+exit 0

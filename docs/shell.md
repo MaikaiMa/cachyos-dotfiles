@@ -665,8 +665,10 @@ chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
     Carousel.qml                        sideways strip for Theme and Wallpaper: wheel, drag, arrows
     Osd.qml                             OSD body: icon, fill track, value
 chezmoi/dot_config/systemd/user/quickshell-bar.service
+chezmoi/dot_local/bin/executable_bar-notifications   release/claim hooks and name owner (~/.local/bin/bar-notifications)
 scripts/bar-switch.sh                   switches between the DMS and the own bar
 tests/bar-switch.sh                     switch script test with stubs
+tests/bar-notifications.sh              helper test with stubs
 tests/quickshell-bar.sh                 qmldir check and qmllint over every bar QML file
 ```
 
@@ -745,37 +747,54 @@ it when the choice should stick.
 
 The own bar is meant to own `org.freedesktop.Notifications`
 ([ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md)),
-and DMS cannot give the name up, so the order of starts decides who holds
-it. `quickshell-bar.service` is `Before=dms.service` and waits for the name
-with `ExecStartPost=-gdbus wait --session --timeout 30
-org.freedesktop.Notifications`; the `-` keeps a bar that cannot register
-from failing, in which case DMS claims the name as before. The drop-in
-`dms.service.d/notifications.conf` makes `dms.service` `Type=simple`, so
-systemd no longer waits for DMS to hold the name and DMS starts when the
-bar's wait ends. The drop-in also sets `PartOf=quickshell-bar.service`
-(DMS is Quickshell too and takes the name the moment it frees, so a bar
-restart alone would hand it to DMS for good), which makes a stop or restart
-of the bar propagate to DMS: restarting the bar restarts DMS with it, and
-the wallpaper and polkit agent blink for a second. The drop-in stays
-installed in both modes: with the bar stopped, DMS registers the name
-exactly as before.
+and DMS cannot give the name up. DMS is Quickshell too and registers the
+name the moment it frees, so a bar that starts while DMS runs never gets it.
+`quickshell-bar.service` therefore makes room itself on every start, for a
+login, a manual restart and a crash restart alike, through
+`~/.local/bin/bar-notifications`
+([`chezmoi/dot_local/bin/executable_bar-notifications`](../chezmoi/dot_local/bin/executable_bar-notifications)):
 
-A bar that starts after DMS holds no name, so `scripts/bar-switch.sh own`
-stops `dms.service`, restarts `quickshell-bar.service` and starts
-`dms.service` again, and `scripts/bar-switch.sh dms` disables the bar and
-restarts `dms.service`. Each does nothing when the state already matches
-(for `own`: the bar enabled and running, DMS running, the bar holding the
-name). `scripts/bar-switch.sh status` adds a line with the process that
-holds the name (`quickshell`, `dms`, `nobody`, or `unknown` without
-`busctl` or a session bus), read with `busctl --user status`; DMS's process
-is called `qs`, so the script recognises it by its command line.
+- `ExecStartPre=-bar-notifications release` stops `dms.service` and leaves a
+  marker in `$XDG_RUNTIME_DIR`. It does nothing while the session is locked
+  (logind `LockedHint`; stopping DMS would take down the DMS lock) and when
+  the bar has restarted more than twice (a restart loop leaves DMS alone).
+- `ExecStartPost=-gdbus wait --session --timeout 30
+  org.freedesktop.Notifications` waits for the name; the `-` keeps a bar
+  that cannot register from failing.
+- `ExecStartPost=-bar-notifications claim` starts `dms.service` again with
+  `--no-block` when the marker exists (a blocking start would deadlock:
+  DMS is ordered after the bar). DMS comes back after the bar holds the
+  name, and the wallpaper and polkit agent blink for a second.
 
-An automatic restart after a bar crash does not propagate to DMS, so DMS may
-take the name in the gap. When `status` names `dms` as the holder while the
-own bar runs, hand the name back:
+The drop-in `dms.service.d/notifications.conf` makes `dms.service`
+`Type=simple`, so systemd no longer waits for DMS to hold the name. There is
+no `PartOf=`: stopping the bar alone leaves DMS running and DMS registers
+the name by itself. The drop-in stays installed in both modes.
+
+`scripts/bar-switch.sh own` enables and restarts the bar; the hooks do the
+rest. `scripts/bar-switch.sh dms` disables and stops the bar only; DMS keeps
+running and takes the name within milliseconds. Each does nothing when the
+state already matches (for `own`: the bar enabled and running, DMS running,
+the bar holding the name). `scripts/bar-switch.sh status` adds a line with
+the process that holds the name (`quickshell`, `dms`, `nobody`, or
+`unknown` without `busctl` or a session bus), which is `bar-notifications
+status`; it reads `busctl --user status`, and DMS's process is called `qs`,
+so it recognises DMS by its command line.
+
+A bar crash while the session is locked leaves DMS the name, by design. When
+`status` names `dms` as the holder while the own bar runs, hand the name
+back:
 
 ```fish
 scripts/bar-switch.sh own
+```
+
+Check the crash path and the holder by hand:
+
+```fish
+systemctl --user kill -s KILL quickshell-bar.service
+sleep 5
+scripts/bar-switch.sh status
 ```
 
 Recovery from any state is one command:
@@ -930,10 +949,14 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   summary in `error`. With do not disturb on (right click on the bell, or
   the IPC call under "Shortcuts") nothing peeks except critical, and the
   state survives `systemctl --user restart quickshell-bar.service`. That
-  restart also restarts DMS (PartOf=), and afterwards `scripts/bar-switch.sh
-  status` still names `quickshell`; after a bar crash use
-  `scripts/bar-switch.sh own`, and `status` names the holder `quickshell` or
-  `dms`.
+  restart blinks DMS once (the bar's start hooks stop and start it) and
+  afterwards `scripts/bar-switch.sh status` still names `quickshell`. A
+  crash restart does the same: `systemctl --user kill -s KILL
+  quickshell-bar.service`, then `scripts/bar-switch.sh status` must say
+  `quickshell` within a few seconds. `scripts/bar-switch.sh dms` no longer
+  restarts DMS; DMS's popups come back at once. After a bar crash while
+  the session is locked, `status` names `dms` until `scripts/bar-switch.sh
+  own`.
   Locking with `Mod+Alt+L`, sending one and unlocking shows "1 new
   notification". A notification DMS sends itself (an update or Bluetooth
   prompt) shows here and its action reaches DMS.
@@ -1108,7 +1131,7 @@ owns.
 | Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper` | DMS has no folder setting; its picker remembers the last folder. |
 | Keyboard cover, on-screen keyboard, rotation lock | `~/.local/bin/tablet-mode watch`, `osk watch` (only while detached), `$XDG_STATE_HOME/dotfiles/rotation-lock` | The helpers from [tablet.md](tablet.md); the bar calls `osk toggle` and `auto-rotate lock toggle`. |
 | Session actions | `systemctl suspend|reboot|poweroff`, `niri msg action quit --skip-confirmation`, `dms ipc call lock lock` | |
-| Notification daemon handover | `dms.service.d/notifications.conf` drop-in (`Type=simple`, `PartOf=quickshell-bar.service`), `quickshell-bar.service` (`Before=dms.service`, `gdbus wait`), `busctl --user status org.freedesktop.Notifications` | Decided in [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md), see "Notification handover". The packaged `BusName=` stays: systemd 262 rejects an empty `BusName=` and only `Type=dbus` waits for the name. |
+| Notification daemon handover | `dms.service.d/notifications.conf` drop-in (`Type=simple`), `quickshell-bar.service` (`Before=dms.service`, `gdbus wait`, the `bar-notifications release` and `claim` hooks), `~/.local/bin/bar-notifications`, `busctl --user status org.freedesktop.Notifications` | Decided in [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md), see "Notification handover". The packaged `BusName=` stays: systemd 262 rejects an empty `BusName=` and only `Type=dbus` waits for the name. |
 | Notifications list | The bar is the daemon: `Quickshell.Services.Notifications` `NotificationServer` with actions, markup, images, inline reply and persistence announced; history, seen marks and do not disturb in `$XDG_STATE_HOME/dotfiles-bar/notifications.json`; do not disturb by `quickshell ipc -c bar call notifications toggleDnd` | Decided in [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md). The file holds `doNotDisturb` and `notifications` (non-transient only: `id`, `serverId`, `appName`, `summary`, `body`, `appIcon`, `image` paths, `desktopEntry`, `urgency`, `timestamp`, `seen`), at most 200 entries and 7 days, pruned and written at most once per second. Raw image data is not kept. DMS's history is not imported. Quickshell's notification ids restart at 1 per process, so entries carry their own id. |
 | Session locked | logind `LockedHint` of the user's display session (`/org/freedesktop/login1/user/self` `Display`), read with `busctl --system` and followed with `gdbus monitor --system` | DMS sets the hint through its `loginctl.setLockedHint` (in the shipped `dms` binary). Read-only, no polling; verified on 2026-10-08 (`b false`, monitor attached to `/org/freedesktop/login1/session/_33`). The change line format of `gdbus monitor` is read from glib's output format, not seen with a real lock. |
 | Music, album colour | `Quickshell.Services.Mpris` plus Quickshell's `ColorQuantizer` | |

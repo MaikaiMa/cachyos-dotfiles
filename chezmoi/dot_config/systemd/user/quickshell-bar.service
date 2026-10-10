@@ -7,12 +7,23 @@ After=niri.service
 Before=dms.service
 
 [Service]
+# DMS is Quickshell too and registers the name the moment it frees, so a bar
+# that starts while DMS runs never gets it. One mechanism covers login, manual
+# restart and crash restart: release stops DMS before the bar starts, claim
+# starts it again once the bar holds the name. release leaves DMS alone while
+# the session is locked (a crash then leaves DMS the name until the next
+# `scripts/bar-switch.sh own`) and during a restart loop. Both hooks always
+# succeed; the "-" is belt and braces so the bar always starts.
+ExecStartPre=-%h/.local/bin/bar-notifications release
 ExecStart=/usr/bin/quickshell -c bar -n
 # Type=simple is "started" at fork, before the bar registers the name. This
 # holds dms.service back until the name exists or 30 seconds pass. The "-" keeps
 # a failed wait (bar cannot register, name already taken) from failing the unit:
 # DMS then claims the name as before and the bar stays up (ADR-0028).
 ExecStartPost=-gdbus wait --session --timeout 30 org.freedesktop.Notifications
+# After the wait: claim starts DMS again, without blocking (DMS is ordered after
+# the bar, which is not active until this returns).
+ExecStartPost=-%h/.local/bin/bar-notifications claim
 Restart=on-failure
 RestartSec=2
 
