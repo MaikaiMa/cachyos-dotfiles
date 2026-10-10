@@ -93,8 +93,11 @@ Singleton {
     readonly property string locationSource: internal.locationSource
     // The configured place name, else the coordinates: no service can tell
     // the city without another lookup, and geoclue's fix can be a city away.
-    readonly property string placeText: Settings.weatherPlace !== "" ? Settings.weatherPlace : isNaN(latitude) ? "" : latitude.toFixed(2) + ", " + longitude.toFixed(2)
+    readonly property bool usesSettingsLocation: internal.locationSource === "fixed" || internal.locationSource === "default"
+    readonly property string placeText: usesSettingsLocation && Settings.weatherPlace !== "" ? Settings.weatherPlace : isNaN(latitude) ? "" : latitude.toFixed(2) + ", " + longitude.toFixed(2)
 
+    // Settings loads its file after this service has asked once, so a fixed
+    // location or new coordinates re-locate when they arrive.
     function locate() {
         if (Settings.weatherFixedLocation) {
             const moved = Math.abs(Settings.weatherLatitude - latitude) > 0.05 || Math.abs(Settings.weatherLongitude - longitude) > 0.05;
@@ -148,7 +151,7 @@ Singleton {
     }
 
     function parseCache(text: string) {
-        if (internal.locationSource === "geoclue")
+        if (internal.locationSource === "geoclue" || Settings.weatherFixedLocation)
             return;
         try {
             const cached = JSON.parse(text);
@@ -245,6 +248,24 @@ Singleton {
     }
 
     Component.onCompleted: locate()
+
+    Connections {
+        target: Settings
+
+        function onWeatherFixedLocationChanged() {
+            root.locate();
+        }
+
+        function onWeatherLatitudeChanged() {
+            if (Settings.weatherFixedLocation)
+                root.locate();
+        }
+
+        function onWeatherLongitudeChanged() {
+            if (Settings.weatherFixedLocation)
+                root.locate();
+        }
+    }
 
     QtObject {
         id: internal

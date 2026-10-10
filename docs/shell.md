@@ -1622,9 +1622,12 @@ Three shapes hold for every service:
   `Settings.weatherLatitude` and `weatherLongitude` with a warning; with
   `Settings.weatherFixedLocation` those two are used without asking
   geoclue. `locationSource` names which one won, and the `bar weather` IPC
-  prints it (see "Shortcuts"). `placeText` is `Settings.weatherPlace`, else
-  the coordinates to two decimals; the Home tile shows it after "Feels
-  like", since nothing else says where the weather is for.
+  prints it (see "Shortcuts"). `placeText` is `Settings.weatherPlace` while
+  the settings coordinates are in use, else the coordinates to two
+  decimals, so a geoclue fix is never labelled with the configured name;
+  the Home tile shows it after "Feels like", since nothing else says where
+  the weather is for. Settings loads after the first locate, so a change of
+  the fixed switch or the coordinates re-locates.
   Conditions and icons come from one WMO code table, `wmo`.
 - `System`: `active` (the Home panel is open), `cpu`, `temperature` (°C,
   NaN without k10temp), `temperatureLevel` (0..1 from 30 to 95 °C,
