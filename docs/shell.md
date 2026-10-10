@@ -970,6 +970,14 @@ quickshell ipc -c bar call bar wave toggle
 quickshell ipc -c bar call bar reduceMotion on
 ```
 
+No surface shows where the weather is for, so `weather` prints the
+coordinates, their source (`geoclue`, `cache`, `fixed` or `default`) and
+the time of the last fetch:
+
+```fish
+quickshell ipc -c bar call bar weather
+```
+
 ## Running it by hand
 
 For development, run the repository copy directly. Two instances draw two
@@ -1306,7 +1314,7 @@ owns.
 | Music, album colour | `Quickshell.Services.Mpris` plus Quickshell's `ColorQuantizer` | |
 | Audio levels for orb and wave | `cava` raw ascii output on stdout, 24 bars, 30 fps, run only while something plays | |
 | Tray | `Quickshell.Services.SystemTray` | |
-| Weather | Open-Meteo, called by the bar, auto location through geoclue's `where-am-i` demo, else the last fix, else `weatherLatitude` and `weatherLongitude` in the bar's settings file | DMS keeps weather in memory only. The settings default is a placeholder (Amsterdam); put your own fallback there. |
+| Weather | Open-Meteo, called by the bar, auto location through geoclue's `where-am-i` demo, else the last fix, else `weatherLatitude` and `weatherLongitude` in the bar's settings file (always those with `weatherFixedLocation`) | DMS keeps weather in memory only. The settings default is a placeholder (Amsterdam); put your own fallback there. |
 | Updates | `system-update --pending` from the repository helper | Never call `dms ipc call systemupdater updatestatus`: it starts a check instead of reporting one. |
 | CPU, temperature, memory | `/proc/stat`, `/proc/meminfo`, the `k10temp` hwmon resolved by name | hwmon numbers change between boots. |
 | Microphone in use | `Quickshell.Services.Pipewire`: capture streams with an active or paused link from an audio source node | Streams and links are bound with `PwObjectTracker`; unbound, `properties` is empty and every link reads `Unlinked`. Streams flagged `stream.monitor`, `stream.capture.sink` or `node.passive` (peak meters, pavucontrol, cava) and streams linked from a sink monitor do not count. |
@@ -1572,7 +1580,9 @@ Three shapes hold for every service:
   follows it), `notificationPeek` (true), `nowPlayingPeek` (true),
   `crossfade` (true; the bar's screen transition on Light and Dark),
   `weatherLatitude` and `weatherLongitude` (Weather's last fallback; the
-  default, 52.37 and 4.90, is a placeholder); setters
+  default, 52.37 and 4.90, is a placeholder), `weatherFixedLocation`
+  (false; true skips geoclue and always uses them, for when the ISP's
+  address puts geoclue a city away); setters
   `setWaveEnabled`, `setReduceMotion`, `setNotificationPeek`,
   `setNowPlayingPeek`, `setCrossfade`. `wave` and `reduceMotion` are also
   on the `bar` IPC target (see "Shortcuts").
@@ -1607,7 +1617,10 @@ Three shapes hold for every service:
   (`Theme.busyOpacity`) in the Home tile. The location comes
   from `where-am-i -t 10`, else the last fix in
   `$XDG_STATE_HOME/dotfiles-bar/weather-location.json`, else
-  `Settings.weatherLatitude` and `weatherLongitude` with a warning.
+  `Settings.weatherLatitude` and `weatherLongitude` with a warning; with
+  `Settings.weatherFixedLocation` those two are used without asking
+  geoclue. `locationSource` names which one won, and the `bar weather` IPC
+  prints it (see "Shortcuts").
   Conditions and icons come from one WMO code table, `wmo`.
 - `System`: `active` (the Home panel is open), `cpu`, `temperature` (°C,
   NaN without k10temp), `temperatureLevel` (0..1 from 30 to 95 °C,

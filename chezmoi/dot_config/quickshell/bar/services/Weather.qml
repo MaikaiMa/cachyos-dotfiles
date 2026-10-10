@@ -89,7 +89,17 @@ Singleton {
         fetch();
     }
 
+    // Where the coordinates came from: geoclue, cache, fixed or default.
+    readonly property string locationSource: internal.locationSource
+
     function locate() {
+        if (Settings.weatherFixedLocation) {
+            const moved = Math.abs(Settings.weatherLatitude - latitude) > 0.05 || Math.abs(Settings.weatherLongitude - longitude) > 0.05;
+            useLocation(Settings.weatherLatitude, Settings.weatherLongitude, "fixed");
+            if (moved || !ready)
+                fetch();
+            return;
+        }
         locator.running = true;
     }
 
@@ -236,7 +246,6 @@ Singleton {
     QtObject {
         id: internal
 
-        // geoclue, cache or default.
         property string locationSource: ""
         property var request: null
         property int retryDelay: root.retryFirst

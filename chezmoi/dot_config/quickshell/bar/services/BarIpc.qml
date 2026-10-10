@@ -90,6 +90,16 @@ Scope {
             return Shell.centreState + " on " + Shell.screenName;
         }
 
+        // The weather's location and age, since no surface shows where it is for.
+        function weather(): string {
+            if (isNaN(Weather.latitude))
+                return "no location yet";
+            const place = Weather.latitude.toFixed(4) + ", " + Weather.longitude.toFixed(4) + " (" + Weather.locationSource + ")";
+            if (!Weather.ready)
+                return place + ", " + (Weather.failed ? "last fetch failed" : "not fetched yet");
+            return place + ", fetched " + Qt.formatTime(Weather.updated, "HH:mm") + (Weather.stale ? ", stale" : "") + (Weather.failed ? ", last fetch failed" : "");
+        }
+
         // on, off or toggle the top-edge wave; kept across restarts. Returns the new state.
         function wave(action: string): string {
             if (action === "on" || action === "off")

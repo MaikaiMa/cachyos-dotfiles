@@ -20,10 +20,13 @@ Singleton {
     readonly property bool nowPlayingPeek: stored.nowPlayingPeek
     // Light and Dark end in one screen-wide crossfade (Appearance).
     readonly property bool crossfade: stored.crossfade
-    // Weather's location when geoclue has never answered. The default is a
-    // placeholder (Amsterdam); set your own in the file.
+    // Weather's location when geoclue has never answered, or always with
+    // weatherFixedLocation: geoclue locates by the ISP's address, which can
+    // be a city away. The default is a placeholder (Amsterdam); set your own
+    // in the file.
     readonly property real weatherLatitude: stored.weatherLatitude
     readonly property real weatherLongitude: stored.weatherLongitude
+    readonly property bool weatherFixedLocation: stored.weatherFixedLocation
 
     function setWaveEnabled(enabled: bool) {
         stored.waveEnabled = enabled;
@@ -55,6 +58,7 @@ Singleton {
         property bool crossfade: true
         property real weatherLatitude: 52.37
         property real weatherLongitude: 4.90
+        property bool weatherFixedLocation: false
     }
 
     FileView {
