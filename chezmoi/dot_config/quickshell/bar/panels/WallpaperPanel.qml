@@ -80,7 +80,7 @@ Appear {
         label: "Wallpapers"
         adoptOnSettle: true
         model: Wallpapers.files
-        onActivated: index => Wallpapers.apply(Wallpapers.files[index], panel.screenName)
+        onActivated: index => Wallpapers.set(Wallpapers.files[index], panel.screenName)
 
         delegate: Item {
             id: thumb

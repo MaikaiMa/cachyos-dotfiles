@@ -2,15 +2,15 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import "services"
 
 // Durations and curves from the Motion table in docs/shell-design.md.
 Singleton {
-    property bool reduceMotion: false
+    // The `bar reduceMotion` IPC switch, kept in Settings.
+    readonly property bool reduceMotion: Settings.reduceMotion
 
     readonly property int growDuration: reduceMotion ? 0 : 280
-    readonly property var growEasing: [0.2, 0.8, 0.2, 1]
     readonly property int shrinkDuration: reduceMotion ? 0 : 220
-    readonly property var shrinkEasing: [0.4, 0, 0.2, 1]
     readonly property int crossfadeDuration: reduceMotion ? 0 : 140
     readonly property int crossfadeEasing: Easing.OutCubic
     // Level meters and the charge capsule glide to a new reading.
@@ -21,8 +21,6 @@ Singleton {
     // The accent under a segmented control's current segment.
     readonly property int segmentSlideDuration: reduceMotion ? 0 : 200
     readonly property int indicatorDuration: reduceMotion ? 0 : 180
-    // CSS ease-out.
-    readonly property var indicatorEasing: [0, 0, 0.58, 1]
     readonly property int trayDuration: reduceMotion ? 0 : 200
     readonly property int refreshSpinDuration: reduceMotion ? 0 : 600
     readonly property int osdInDuration: reduceMotion ? 0 : 160
@@ -62,10 +60,11 @@ Singleton {
     readonly property int marqueeBase: 2000
     readonly property int marqueePerPixel: 28
 
-    // Easing.BezierSpline wants the end point (1, 1) after the CSS control points.
-    readonly property var growCurve: growEasing.concat([1, 1])
-    readonly property var shrinkCurve: shrinkEasing.concat([1, 1])
-    readonly property var indicatorCurve: indicatorEasing.concat([1, 1])
+    // The CSS cubic-bezier control points, then the end point (1, 1) that
+    // Easing.BezierSpline wants; the indicator's is CSS ease-out.
+    readonly property var growCurve: [0.2, 0.8, 0.2, 1, 1, 1]
+    readonly property var shrinkCurve: [0.4, 0, 0.2, 1, 1, 1]
+    readonly property var indicatorCurve: [0, 0, 0.58, 1, 1, 1]
 
     // Interaction timing, not animation: reduce motion leaves it alone.
     readonly property int hoverRestDelay: 250
@@ -85,15 +84,4 @@ Singleton {
     readonly property int notificationHoldLow: 3000
     readonly property int notificationHoldMin: 2000
     readonly property int notificationHoldMax: 15000
-    // The notification history is written at most this often.
-    readonly property int notificationSaveInterval: 1000
-    // A workspace's notification colour clears this long after it gains focus.
-    readonly property int alertClearDelay: 3000
-    // A Bluetooth pair or connect that is idle this long after the request failed.
-    readonly property int pendingSettle: 2000
-    // A pair or connect still pending after this has failed; a Wi-Fi client
-    // failure this soon after a connect may be a stale password.
-    readonly property int pendingTimeout: 20000
-    // How long the Wi-Fi panel says "Scanning…" after it turned the scanner on.
-    readonly property int firstScanTime: 4000
 }

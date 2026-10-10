@@ -4,7 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Networking
-import ".."
+import "maps.js" as Maps
 
 // Wi-Fi state from Quickshell's NetworkManager backend.
 Singleton {
@@ -43,12 +43,20 @@ Singleton {
         return Object.values(bySsid).sort((a, b) => rank(a) - rank(b) || bars(b) - bars(a) || a.name.localeCompare(b.name));
     }
 
+    // Set by Shell while the Wi-Fi panel is open on any screen.
+    property bool active: false
+    // How long the panel says "Scanning…" after it turned the scanner on.
+    readonly property int firstScanTime: 4000
+    // A client failure this soon after a connect on a saved network may be a
+    // stale password.
+    readonly property int attemptWindow: 20000
+
     // Quickshell lists networks that are neither connected nor saved only while
     // its scanner is on, and the scanner asks NetworkManager for a scan at once
-    // and then at most every 10 s. It runs while the Wi-Fi panel is open on any
-    // screen and Wi-Fi is on; this service owns it, so a panel moving between
-    // screens or an island going away cannot leave it running.
-    readonly property bool scannerWanted: Shell.centreState === "wifi" && wifiEnabled && wifiDevice !== null
+    // and then at most every 10 s. It runs while active and Wi-Fi is on; this
+    // service owns it, so a panel moving between screens or an island going
+    // away cannot leave it running.
+    readonly property bool scannerWanted: active && wifiEnabled && wifiDevice !== null
     // The first scan after the scanner started is still running.
     readonly property bool scanning: firstScan.running
 
@@ -120,19 +128,12 @@ Singleton {
     }
 
     function setError(ssid: string, text: string) {
-        const next = Object.assign({}, errors);
-        if (text === "")
-            delete next[ssid];
-        else
-            next[ssid] = text;
-        errors = next;
+        errors = text === "" ? Maps.withoutKey(errors, ssid) : Maps.withKey(errors, ssid, text);
     }
 
     function noteAttempt(ssid: string) {
         setError(ssid, "");
-        const next = Object.assign({}, lastAttempt);
-        next[ssid] = Date.now();
-        lastAttempt = next;
+        lastAttempt = Maps.withKey(lastAttempt, ssid, Date.now());
     }
 
     // A click on a saved or open network.
@@ -157,7 +158,7 @@ Singleton {
     // plain client failure, not as missing secrets.
     function reportFailure(network: var, reason: int) {
         const ssid = network.name;
-        const recent = Date.now() - (lastAttempt[ssid] ?? 0) < Motion.pendingTimeout;
+        const recent = Date.now() - (lastAttempt[ssid] ?? 0) < attemptWindow;
         if (reason === ConnectionFailReason.NoSecrets && needsPassword(network)) {
             setError(ssid, "Wrong password");
             if (!wrongPassword.includes(ssid))
@@ -225,6 +226,6 @@ Singleton {
     Timer {
         id: firstScan
 
-        interval: Motion.firstScanTime
+        interval: root.firstScanTime
     }
 }

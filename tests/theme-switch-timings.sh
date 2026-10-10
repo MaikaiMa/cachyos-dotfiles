@@ -17,20 +17,20 @@ fail() {
 
 output=$(
 	"$script" - <<'LOG'
-2026-10-05T21:17:10.000000+0200 host quickshell[10]: qml: Theming: theme call: dms ipc call theme light
+2026-10-05T21:17:10.000000+0200 host quickshell[10]: qml: Appearance: theme call: dms ipc call theme light
 2026-10-05T21:17:11.100000+0200 host dms[20]:   INFO qml: [Theme:1594] Setting desired theme - image mode: light (dynamic)
 2026-10-05T21:17:11.900000+0200 host dms[20]:   INFO qml: [Theme:2126] Theme worker: Theme generation completed
-2026-10-05T21:18:00.000000+0200 host quickshell[10]: qml: Theming: theme call: dms ipc call theme dark
-2026-10-05T21:18:00.010000+0200 host quickshell[10]: qml: Theming: theme call: niri msg action do-screen-transition --delay-ms 1400
-2026-10-05T21:18:00.030000+0200 host quickshell[10]: qml: Theming: theme call: dms ipc call toast info
-2026-10-05T21:18:00.450000+0200 host quickshell[10]: qml: Theming: theme call: gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark
-2026-10-05T21:18:00.460000+0200 host quickshell[10]: qml: Theming: theme call: gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+2026-10-05T21:18:00.000000+0200 host quickshell[10]: qml: Appearance: theme call: dms ipc call theme dark
+2026-10-05T21:18:00.010000+0200 host quickshell[10]: qml: Appearance: theme call: niri msg action do-screen-transition --delay-ms 1400
+2026-10-05T21:18:00.030000+0200 host quickshell[10]: qml: Appearance: theme call: dms ipc call toast info
+2026-10-05T21:18:00.450000+0200 host quickshell[10]: qml: Appearance: theme call: gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark
+2026-10-05T21:18:00.460000+0200 host quickshell[10]: qml: Appearance: theme call: gsettings set org.gnome.desktop.interface color-scheme prefer-dark
 2026-10-05T21:18:05.000000+0200 host dms[20]:   INFO qml: [Theme:1594] Setting desired theme - image mode: dark (dynamic)
 2026-10-05T21:18:06.000000+0200 host dms[20]:   INFO qml: [Theme:2126] Theme worker: Theme generation completed
-2026-10-05T23:59:59.000000+0200 host quickshell[10]: qml: Theming: theme call: gsettings set org.gnome.desktop.interface color-scheme default
+2026-10-05T23:59:59.000000+0200 host quickshell[10]: qml: Appearance: theme call: gsettings set org.gnome.desktop.interface color-scheme default
 2026-10-06T00:00:01.000000+0200 host dms[20]:   INFO qml: [Theme:1594] Setting desired theme - image mode: light (dynamic)
 2026-10-06T00:00:02.000000+0200 host dms[20]:   INFO qml: [Theme:2126] Theme worker: Theme generation completed
-2026-10-06T08:00:00.000000+0200 host quickshell[10]: qml: Theming: theme call: gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+2026-10-06T08:00:00.000000+0200 host quickshell[10]: qml: Appearance: theme call: gsettings set org.gnome.desktop.interface color-scheme prefer-dark
 LOG
 )
 

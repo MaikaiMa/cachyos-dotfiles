@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import ".."
+import "maps.js" as Maps
 // Namespaced: this singleton has the same name as the module's.
 import Quickshell.Bluetooth as Bluez
 
@@ -21,19 +21,37 @@ Singleton {
     readonly property int connectedDevices: Bluez.Bluetooth.devices.values.filter(device => device.connected).length // qmllint disable unresolved-type
     readonly property bool discovering: adapter ? adapter.discovering : false
 
-    // Discovery runs while the Bluetooth panel is open on any screen and the
-    // adapter is powered, for at most Theme.bluetoothDiscoveryTime; this service
-    // owns it, so a panel moving between screens or an island going away cannot
-    // leave it running.
-    readonly property bool discoveryWanted: Shell.centreState === "bluetooth" && powered
+    // Set by Shell while the Bluetooth panel is open on any screen.
+    property bool active: false
+    // Discovery stops after this at the latest.
+    readonly property int discoveryTime: 30000
+    // How long the panel says "Scanning…" after discovery started.
+    readonly property int firstScanTime: 4000
+    // A pair or connect that is idle this long after the request has failed.
+    readonly property int pendingSettle: 2000
+    // A pair or connect still pending after this has failed.
+    readonly property int pendingTimeout: 20000
+
+    // Discovery runs while active and the adapter is powered, for at most
+    // discoveryTime; this service owns it, so a panel moving between screens
+    // or an island going away cannot leave it running.
+    readonly property bool discoveryWanted: active && powered
     // The first seconds of a discovery, shown as "Scanning…".
     readonly property bool scanning: scanNote.running
 
     // Per address, until the next attempt on that device: the row's error line.
     property var errors: ({})
-    // Attempts in flight, address -> start time in ms; polled while any are.
+    // Attempts in flight, address -> start time in ms.
     property var pendingPairs: ({})
     property var pendingConnects: ({})
+    // The pairing and connection state of every device in flight: BlueZ's
+    // property signals re-check them, the deadline timer covers the time-outs.
+    readonly property string pendingStates: Object.keys(pendingPairs).concat(Object.keys(pendingConnects)).map(address => {
+        const device = deviceFor(address);
+        return device ? [address, device.paired, device.pairing, device.state, device.connected].join(":") : address;
+    }).join(" ")
+
+    onPendingStatesChanged: Qt.callLater(checkPending)
 
     onDiscoveryWantedChanged: {
         setDiscovering(discoveryWanted);
@@ -100,7 +118,7 @@ Singleton {
         return [batteryText(device), state].filter(part => part !== "").join(" · ");
     }
 
-    // A connect that ended without a connection; pending connects are polled.
+    // A connect that ended without a connection.
     function connectSettled(device: var): bool {
         return device.state === Bluez.BluetoothDeviceState.Disconnected || device.state === Bluez.BluetoothDeviceState.Connected; // qmllint disable unresolved-type
     }
@@ -110,32 +128,18 @@ Singleton {
     }
 
     function setError(address: string, text: string) {
-        const next = Object.assign({}, errors);
-        if (text === "")
-            delete next[address];
-        else
-            next[address] = text;
-        errors = next;
-    }
-
-    function withPending(map: var, address: string, add: bool): var {
-        const next = Object.assign({}, map);
-        if (add)
-            next[address] = Date.now();
-        else
-            delete next[address];
-        return next;
+        errors = text === "" ? Maps.withoutKey(errors, address) : Maps.withKey(errors, address, text);
     }
 
     function startConnect(device: var) {
         setError(device.address, "");
-        pendingConnects = withPending(pendingConnects, device.address, true);
+        pendingConnects = Maps.withKey(pendingConnects, device.address, Date.now());
         connectDevice(device);
     }
 
     function startPair(device: var) {
         setError(device.address, "");
-        pendingPairs = withPending(pendingPairs, device.address, true);
+        pendingPairs = Maps.withKey(pendingPairs, device.address, Date.now());
         pair(device);
     }
 
@@ -149,13 +153,13 @@ Singleton {
             const device = deviceFor(address);
             const elapsed = now - pendingPairs[address];
             if (!device) {
-                pendingPairs = withPending(pendingPairs, address, false);
+                pendingPairs = Maps.withoutKey(pendingPairs, address);
             } else if (device.paired) {
-                pendingPairs = withPending(pendingPairs, address, false);
-                pendingConnects = withPending(pendingConnects, address, true);
+                pendingPairs = Maps.withoutKey(pendingPairs, address);
+                pendingConnects = Maps.withKey(pendingConnects, address, now);
                 trustAndConnect(device);
-            } else if ((!device.pairing && elapsed > Motion.pendingSettle) || elapsed > Motion.pendingTimeout) {
-                pendingPairs = withPending(pendingPairs, address, false);
+            } else if ((!device.pairing && elapsed > pendingSettle) || elapsed > pendingTimeout) {
+                pendingPairs = Maps.withoutKey(pendingPairs, address);
                 setError(address, "Pairing failed");
             }
         }
@@ -163,19 +167,32 @@ Singleton {
             const device = deviceFor(address);
             const elapsed = now - pendingConnects[address];
             if (!device || device.connected) {
-                pendingConnects = withPending(pendingConnects, address, false);
-            } else if ((connectSettled(device) && elapsed > Motion.pendingSettle) || elapsed > Motion.pendingTimeout) {
-                pendingConnects = withPending(pendingConnects, address, false);
+                pendingConnects = Maps.withoutKey(pendingConnects, address);
+            } else if ((connectSettled(device) && elapsed > pendingSettle) || elapsed > pendingTimeout) {
+                pendingConnects = Maps.withoutKey(pendingConnects, address);
                 setError(address, "Could not connect");
             }
+        }
+        scheduleDeadline(now);
+    }
+
+    // The next settle or time-out of any attempt in flight.
+    function scheduleDeadline(now: real) {
+        const starts = Object.values(pendingPairs).concat(Object.values(pendingConnects));
+        const times = starts.reduce((all, start) => all.concat([start + pendingSettle, start + pendingTimeout]), []).filter(time => time > now);
+        const next = Math.min.apply(null, times);
+        if (isFinite(next)) {
+            deadline.interval = Math.max(1, next - now + 1);
+            deadline.restart();
+        } else {
+            deadline.stop();
         }
     }
 
     // bluetoothctl in a terminal, for PINs, passkeys and everything else the
-    // panel leaves out: DMS's terminalOverride, else xdg-terminal-exec, else
-    // Ghostty, as the Updates panel's Update all.
+    // panel leaves out.
     function openTerminal() {
-        Quickshell.execDetached(["sh", "-c", "if [ -n \"$1\" ]; then exec \"$1\" -e bluetoothctl; elif command -v xdg-terminal-exec >/dev/null 2>&1; then exec xdg-terminal-exec bluetoothctl; else exec ghostty -e bluetoothctl; fi", "sh", Dms.terminal]);
+        Session.openInTerminal(["bluetoothctl"]);
     }
 
     function toggleBluetooth() {
@@ -213,20 +230,19 @@ Singleton {
     Timer {
         id: discoveryCap
 
-        interval: Theme.bluetoothDiscoveryTime
+        interval: root.discoveryTime
         onTriggered: root.setDiscovering(false)
     }
 
     Timer {
         id: scanNote
 
-        interval: Motion.firstScanTime
+        interval: root.firstScanTime
     }
 
     Timer {
-        interval: 500
-        repeat: true
-        running: Object.keys(root.pendingPairs).length > 0 || Object.keys(root.pendingConnects).length > 0
+        id: deadline
+
         onTriggered: root.checkPending()
     }
 }

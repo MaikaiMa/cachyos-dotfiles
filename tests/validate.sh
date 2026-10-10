@@ -75,7 +75,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Network.qml \
 	chezmoi/dot_config/quickshell/bar/services/Bluetooth.qml \
 	chezmoi/dot_config/quickshell/bar/services/Dms.qml \
-	chezmoi/dot_config/quickshell/bar/services/Theming.qml \
+	chezmoi/dot_config/quickshell/bar/services/Appearance.qml \
 	chezmoi/dot_config/quickshell/bar/services/Notifications.qml \
 	chezmoi/dot_config/quickshell/bar/services/Music.qml \
 	chezmoi/dot_config/quickshell/bar/services/Cava.qml \
@@ -89,6 +89,12 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/services/Privacy.qml \
 	chezmoi/dot_config/quickshell/bar/services/Settings.qml \
 	chezmoi/dot_config/quickshell/bar/services/Frames.qml \
+	chezmoi/dot_config/quickshell/bar/services/Paths.qml \
+	chezmoi/dot_config/quickshell/bar/services/Command.qml \
+	chezmoi/dot_config/quickshell/bar/services/CommandReader.qml \
+	chezmoi/dot_config/quickshell/bar/services/CommandWriter.qml \
+	chezmoi/dot_config/quickshell/bar/services/LineWatcher.qml \
+	chezmoi/dot_config/quickshell/bar/services/maps.js \
 	chezmoi/dot_config/quickshell/bar/services/qmldir \
 	chezmoi/dot_config/quickshell/bar/islands/LeftIsland.qml \
 	chezmoi/dot_config/quickshell/bar/islands/CentreIsland.qml \

@@ -34,8 +34,8 @@ Rectangle {
             objectName: "tempMeter"
             width: tile.columnWidth
             height: tile.meterHeight
-            label: isNaN(System.temp) ? "–" : Math.round(System.temp) + "°"
-            level: isNaN(System.temp) ? 0 : (System.temp - Theme.tempScaleMin) / (Theme.tempScaleMax - Theme.tempScaleMin)
+            label: isNaN(System.temperature) ? "–" : Math.round(System.temperature) + "°"
+            level: System.temperatureLevel
             iconName: "device_thermostat"
             description: "CPU temperature"
         }

@@ -92,7 +92,7 @@ Singleton {
             peekTimer.restart();
             return;
         }
-        if (!Theme.nowPlayingPeek || Motion.reduceMotion || hidden || osdVisible || centreState !== "collapsed")
+        if (!Settings.nowPlayingPeek || Motion.reduceMotion || hidden || osdVisible || centreState !== "collapsed")
             return;
         open("musicbar", ipcScreen());
         if (centreState !== "musicbar")
@@ -146,8 +146,8 @@ Singleton {
     }
 
     // A screen that goes away takes its island along: whatever it showed closes,
-    // so the services that follow centreState (scanner, discovery, sampling)
-    // stop with it.
+    // so the services made active below (scanner, discovery, sampling) stop
+    // with it.
     function dropMissingScreen() {
         if (centreState !== "collapsed" && screenName !== "" && !Quickshell.screens.some(screen => screen.name === screenName))
             close();
@@ -181,12 +181,49 @@ Singleton {
         }
     }
 
-    // One owner for the sampling switch: every screen has a Home panel, but only
-    // one state is open at a time.
+    // Every service whose work only a panel shows has `active`, and this is
+    // its one owner: every screen has the panels, but only one state is open
+    // at a time, and the services never read centreState themselves.
     Binding {
         target: System
         property: "active"
         value: root.centreState === "home"
+    }
+
+    Binding {
+        target: Brightness
+        property: "active"
+        value: root.centreState === "settings" || root.centreState === "display"
+    }
+
+    Binding {
+        target: Audio
+        property: "active"
+        value: root.centreState === "sound"
+    }
+
+    Binding {
+        target: Display
+        property: "active"
+        value: root.centreState === "display"
+    }
+
+    Binding {
+        target: Network
+        property: "active"
+        value: root.centreState === "wifi"
+    }
+
+    Binding {
+        target: Bluetooth
+        property: "active"
+        value: root.centreState === "bluetooth"
+    }
+
+    Binding {
+        target: Music
+        property: "active"
+        value: root.centreState === "player"
     }
 
     Connections {
@@ -299,6 +336,18 @@ Singleton {
             else
                 console.warn("Shell: unknown wave action " + action);
             return Settings.waveEnabled ? "on" : "off";
+        }
+
+        // on, off or toggle reduce motion: every duration 0, no music motion,
+        // no peeks of the playing track; kept across restarts. Returns the new state.
+        function reduceMotion(action: string): string {
+            if (action === "on" || action === "off")
+                Settings.setReduceMotion(action === "on");
+            else if (action === "toggle")
+                Settings.setReduceMotion(!Settings.reduceMotion);
+            else
+                console.warn("Shell: unknown reduceMotion action " + action);
+            return Settings.reduceMotion ? "on" : "off";
         }
     }
 

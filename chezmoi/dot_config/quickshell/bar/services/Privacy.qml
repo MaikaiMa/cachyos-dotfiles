@@ -25,9 +25,9 @@ Singleton {
     readonly property bool anyActive: micActive || cameraActive || shareActive
 
     // Inputs: the PipeWire graph and Niri's casts.
-    property var nodes: Pipewire.nodes.values
-    property var links: Pipewire.links.values
-    property var casts: Niri.casts
+    readonly property var nodes: Pipewire.nodes.values
+    readonly property var links: Pipewire.links.values
+    readonly property var casts: Niri.casts
 
     readonly property var streams: nodes.filter(node => isCaptureOrCast(node))
     readonly property var liveLinks: links.filter(link => link.source && link.target && (link.state === PwLinkState.Active || link.state === PwLinkState.Paused))
@@ -42,8 +42,11 @@ Singleton {
     property var deviceStatus: ({})
     readonly property bool cameraAwake: Object.values(deviceStatus).some(status => status !== "suspended")
     property var cameraHolders: []
+    // Process names of the active casts' clients.
     property var commByPid: ({})
-    property bool commPending: false
+    // A camera plugged in later appears as a new device node; the USB devices
+    // are probed again then.
+    readonly property string cameraNodes: nodes.filter(node => isCameraDevice(node)).map(node => node.name).sort().join(" ")
 
     // Capture streams and Niri's cast output; playback streams are never bound.
     function isCaptureOrCast(node: var): bool {
@@ -109,8 +112,14 @@ Singleton {
         }).filter(holder => holder.pid > 0 && holder.comm !== "" && holder.comm !== "pipewire" && holder.comm !== "wireplumber");
     }
 
+    // Only the pids of current casts stay: pids are reused over a long session.
     function parseComms(text: string) {
-        const next = Object.assign({}, commByPid);
+        const pids = activeCasts.map(cast => String(cast.pid));
+        const next = {};
+        for (const pid of Object.keys(commByPid)) {
+            if (pids.includes(pid))
+                next[pid] = commByPid[pid];
+        }
         for (const line of text.split("\n")) {
             const space = line.indexOf(" ");
             if (space > 0 && line.slice(space + 1).trim() !== "")
@@ -124,14 +133,15 @@ Singleton {
         if (pids.length === 0)
             return;
         if (commReader.running) {
-            commPending = true;
+            internal.commPending = true;
             return;
         }
         commReader.command = ["sh", "-c", "for pid; do printf '%s %s\\n' \"$pid\" \"$(cat \"/proc/$pid/comm\" 2>/dev/null)\"; done", "sh"].concat(pids.map(String));
-        commReader.running = true;
+        commReader.run();
     }
 
     onShareWantedChanged: shareDebounce.restart()
+    onCameraNodesChanged: deviceProbe.refresh()
     onActiveCastsChanged: readComms()
     onCameraAwakeChanged: {
         if (!cameraAwake)
@@ -154,12 +164,19 @@ Singleton {
         onTriggered: root.shareActive = root.shareWanted
     }
 
-    Process {
+    QtObject {
+        id: internal
+
+        property bool commPending: false
+    }
+
+    // Read at start.
+    CommandReader {
+        id: deviceProbe
+
+        name: "Privacy"
         command: ["sh", "-c", "for node in /sys/class/video4linux/video*; do [ -e \"$node/device\" ] || continue; usb=$(readlink -f \"$node/device/..\"); [ -f \"$usb/idVendor\" ] && [ -f \"$usb/power/runtime_status\" ] && printf '%s\\n' \"$usb\"; done | sort -u"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: root.cameraDevices = text.split("\n").filter(line => line !== "")
-        }
+        onRead: text => root.cameraDevices = text.split("\n").filter(line => line !== "")
     }
 
     Instantiator {
@@ -204,16 +221,13 @@ Singleton {
         }
     }
 
-    Process {
+    Command {
         id: commReader
 
-        stdout: StdioCollector {
-            onStreamFinished: root.parseComms(text)
-        }
-        // QProcess::ExitStatus is not exposed to qmllint.
-        onExited: { // qmllint disable signal-handler-parameters
-            if (root.commPending) {
-                root.commPending = false;
+        onFinished: (code, output) => {
+            root.parseComms(output);
+            if (internal.commPending) {
+                internal.commPending = false;
                 root.readComms();
             }
         }

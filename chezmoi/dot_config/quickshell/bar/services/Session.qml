@@ -2,12 +2,12 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import ".."
 
 // The Power panel's actions. The panel closes first and the action runs once the
 // island has shrunk, so the lock screen or the shutdown never shows it half open.
-// Also whether the session is locked, for the notification peek.
+// Also whether the session is locked, for the notification peek, and the one
+// way the bar opens a terminal.
 Singleton {
     id: root
 
@@ -30,6 +30,15 @@ Singleton {
 
     property string pending: ""
 
+    // DMS's terminalOverride, else xdg-terminal-exec, else Ghostty, running argv.
+    function terminalCommand(argv: list<string>): list<string> {
+        return ["sh", "-c", "terminal=$1; shift; if [ -n \"$terminal\" ]; then exec \"$terminal\" -e \"$@\"; elif command -v xdg-terminal-exec >/dev/null 2>&1; then exec xdg-terminal-exec \"$@\"; else exec ghostty -e \"$@\"; fi", "sh", Dms.terminal].concat(argv);
+    }
+
+    function openInTerminal(argv: list<string>) {
+        Quickshell.execDetached(terminalCommand(argv));
+    }
+
     function perform(action: string) {
         if (!commands[action]) {
             console.warn("Session: unknown action " + action);
@@ -49,41 +58,14 @@ Singleton {
     }
 
     // Without a watcher nothing would ever clear `locked`, and a stale true
-    // holds every peek back. A watcher that keeps dying at once (no Display
-    // session, a TTY login) is reported once, then retried quietly.
-    Process {
-        id: lockWatch
-
-        property real startedAt: 0
-        property int quickExits: 0
-        property bool warned: false
-
+    // holds every peek back: a watcher that exits resets it. The monitor only
+    // exits when logind or the bus goes away.
+    LineWatcher {
+        name: "Session"
         command: ["sh", "-c", root.lockWatchScript]
-        running: true
-        stdout: SplitParser {
-            onRead: data => root.readLockLine(data)
-        }
-        onRunningChanged: {
-            if (running) {
-                startedAt = Date.now();
-                return;
-            }
-            root.locked = false;
-            quickExits = Date.now() - startedAt < 2 * lockRetry.interval ? quickExits + 1 : 0;
-            if (quickExits >= 3 && !warned) {
-                warned = true;
-                console.warn("Session: the logind lock watcher keeps exiting; the lock state is unknown, peeks are not held back");
-            }
-            lockRetry.start();
-        }
-    }
-
-    // The monitor only exits when logind or the bus goes away; follow it again.
-    Timer {
-        id: lockRetry
-
-        interval: 5000
-        onTriggered: lockWatch.running = true
+        active: true
+        onLine: text => root.readLockLine(text)
+        onStopped: root.locked = false
     }
 
     Timer {

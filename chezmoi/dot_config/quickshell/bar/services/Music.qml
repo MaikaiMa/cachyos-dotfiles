@@ -14,6 +14,8 @@ Singleton {
     readonly property var players: Mpris.players.values.filter(candidate => !candidate.dbusName.startsWith("org.mpris.MediaPlayer2.playerctld"))
     readonly property MprisPlayer player: players.find(candidate => candidate.isPlaying) ?? players[0] ?? null
     readonly property bool hasPlayer: player !== null
+    // Set by Shell while the Player panel, the only reader of `position`, is open.
+    property bool active: false
 
     readonly property string title: player ? player.trackTitle : ""
     readonly property string artist: player ? player.trackArtist : ""
@@ -193,12 +195,12 @@ Singleton {
     }
 
     // MPRIS does not stream the position; ask for it while something plays and
-    // the player panel, its only reader, is open.
+    // active.
     Timer {
         interval: 1000
         repeat: true
         triggeredOnStart: true
-        running: root.playing && Shell.centreState === "player"
+        running: root.playing && root.active
         onTriggered: root.player.positionChanged()
     }
 }

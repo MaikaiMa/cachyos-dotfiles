@@ -12,8 +12,7 @@ Singleton {
     id: root
 
     readonly property int bandCount: 24
-    readonly property string configDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/dotfiles-bar"
-    readonly property string configPath: configDir + "/cava.conf"
+    readonly property string configPath: Paths.barRuntime + "/cava.conf"
     readonly property string config: ["[general]", "bars = " + bandCount, "framerate = 30", "autosens = 1", "sleep_timer = 1", "", "[input]", "method = pipewire", "source = auto", "", "[output]", "method = raw", "raw_target = /dev/stdout", "data_format = ascii", "ascii_max_range = 100", "bar_delimiter = 59", "frame_delimiter = 10", "channels = mono", "mono_option = average", ""].join("\n")
 
     property bool configReady: false
@@ -51,7 +50,7 @@ Singleton {
 
     // The wave fades in while playback runs and out after it stops; every
     // screen's wave draws at this opacity.
-    readonly property bool waveOn: Theme.topWaveEnabled && Settings.waveEnabled && Music.hasPlayer && Music.playing && !Motion.reduceMotion
+    readonly property bool waveOn: Settings.waveEnabled && Music.hasPlayer && Music.playing && !Motion.reduceMotion
     property real waveOpacity: waveOn ? Theme.wavePeakOpacity : 0
 
     Behavior on waveOpacity {
@@ -111,6 +110,13 @@ Singleton {
         tick(dt);
     }
 
+    function writeConfig() {
+        if (Paths.ready && !configReady)
+            configFile.setText(config);
+    }
+
+    Component.onCompleted: writeConfig()
+
     onRunningChanged: {
         if (!running)
             bands = zeros();
@@ -141,23 +147,30 @@ Singleton {
         }
     }
 
-    Process {
-        command: ["sh", "-c", "mkdir -p \"$1\" && printf '%s' \"$2\" > \"$1/cava.conf\"", "sh", root.configDir, root.config]
-        running: true
-        // QProcess::ExitStatus is not exposed to qmllint.
-        onExited: code => { // qmllint disable signal-handler-parameters
-            if (code === 0)
-                root.configReady = true;
-            else
-                console.warn("Cava: cannot write " + root.configPath);
+    // Written once Paths has created the runtime directory.
+    FileView {
+        id: configFile
+
+        path: root.configPath
+        preload: false
+        printErrors: false
+        onSaved: root.configReady = true
+        onSaveFailed: console.warn("Cava: cannot write " + root.configPath)
+    }
+
+    Connections {
+        target: Paths
+
+        function onReadyChanged() {
+            root.writeConfig();
         }
     }
 
-    Process {
+    // A PipeWire restart ends cava; it starts again after the watcher's retry.
+    LineWatcher {
+        name: "Cava"
         command: ["cava", "-p", root.configPath]
-        running: root.running
-        stdout: SplitParser {
-            onRead: line => root.parseFrame(line)
-        }
+        active: root.running
+        onLine: text => root.parseFrame(text)
     }
 }

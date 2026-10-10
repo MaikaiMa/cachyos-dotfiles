@@ -89,7 +89,7 @@ Step 5 made the side islands and the Updates panel real.
   (`Notifications.hasRecentFor(appId)`, the name matching of the DMS
   plugins' `NotificationMatcher`); the active pill turns `error` then.
   The colour clears when the notification is dismissed from the list, at
-  once, or 3 s (`Motion.alertClearDelay`) after its workspace gains focus,
+  once, or 3 s (`Notifications.alertClearDelay`) after its workspace gains focus,
   through the workspace or one of its windows; leaving within those 6 s
   clears nothing, and a new notification for the focused workspace gets
   its own 3 s (the DMS apps plugin's focus clearing, which waited 1.5 s). A
@@ -202,7 +202,8 @@ Step 5 made the side islands and the Updates panel real.
   is hidden or the session is locked (`Session.locked`) arrivals wait and
   come back as one "N new notifications" row without actions, whose click
   opens Settings. Reduce motion makes every duration 0 and keeps the
-  holds. `Theme.notificationPeek` turns the peek off.
+  holds. `notificationPeek: false` in the bar's settings file
+  (`Settings`) turns the peek off.
 - **Updates panel**, 420 px: "48 updates · checked 3 min ago", the fragile
   packages first in `error` with a reason (kernel, shell, greeter, else a
   reboot), then the rest with a source chip and `old → new` in a list that
@@ -247,7 +248,7 @@ pieces, and moved the shortcuts (built 2026-10-05).
   its bar paints none, so a switch waited until something made it draw: a
   panel opening, a toast, the mouse (journal 2026-10-10, 3 to 23 s). Right
   after the call the bar shows a blank DMS toast (`toast info " "`, hidden
-  after `Theme.themeNudgeDuration`, 400 ms), behind the frozen screen, the
+  after `Appearance.nudgeDuration`, 400 ms), behind the frozen screen, the
   same nudge `dms-settings` uses; DMS then renders within about 0.2 s. The
   bar then sets the GTK theme name, `adw-gtk3` or `adw-gtk3-dark` (package
   `adw-gtk-theme`), and the explicit scheme, `prefer-light` or
@@ -267,25 +268,27 @@ pieces, and moved the shortcuts (built 2026-10-05).
   itself already glides to the other mode's colours from the loaded
   `dms-colors.json` (`Colors.preview`), and the next reload of that file
   wins. A second click on the mode already pending is ignored, and every
-  queued call is logged with `console.info` ("Theming: theme call: ...") in
+  queued call is logged with `console.info` ("Appearance: theme call: ...") in
   the bar's journal. Auto is DMS's `matugenSmartMode` (matugen picks light or dark from
   the wallpaper), the mode `dms/look.json` records: it sets the key to true
-  and re-renders by setting the current wallpaper again. The calls run one
+  and re-renders by setting the current wallpaper again
+  (`Wallpapers.rerender`, which asks DMS for it with `wallpaper get`, or
+  `getFor` in per-monitor mode). The calls run one
   after another, each after the previous one has exited; the control slides
   to the choice at once and follows DMS again once it has settled (2.5 s
   after the last call; then the mode comes from `dms-colors.json` and smart
   mode and the scheme are read once). Light and Dark get one
-  screen-wide crossfade: 300 ms after the click (`Theme.themeCrossfadeLead`),
+  screen-wide crossfade: 300 ms after the click (`Appearance.crossfadeLead`),
   once the control has slid and the bar has recoloured, the bar makes the
   theme call; DMS freezes the screen through Niri with a 0 ms delay, which
   would start fading before its render is done, so right after the call
   returns the bar runs `niri msg action do-screen-transition --delay-ms 1400`
-  (`Theme.themeCrossfadeDelay`). Niri replaces a pending transition on the
+  (`Appearance.crossfadeDelay`). Niri replaces a pending transition on the
   next request and renders the frozen frame into the new starting texture
   (`do_screen_transition` and `render` in niri's `src/niri.rs`), so the
   desktop stays frozen on the old desktop with the new bar until DMS and its
   templates are done, then cross-fades once. Under reduce motion, or with
-  `Theme.themeCrossfade: false`, the bar adds no transition and DMS's own
+  `crossfade: false` in the settings file, the bar adds no transition and DMS's own
   short fade shows. Scheme changes get none: DMS starts rendering about
   150 ms after `settings set`, before a transition 300 ms later could freeze
   the old state. While `themeBusy`, a 2 px `primary` line under the mode
@@ -501,7 +504,7 @@ Also on 2026-10-07 the three Settings capsules got panels of their own.
     pairing agent and the module does not say why a pair failed: a pair that
     ends without a bond shows "Pairing failed" (pair devices that want a PIN
     or passkey in `bluetoothctl`), a connect that settles disconnected "Could
-    not connect"; both give up after 20 s (`Motion.pendingTimeout`). The
+    not connect"; both give up after 20 s (`Bluetooth.pendingTimeout`). The
     state otherwise reads "Off", "On · N connected" or "On".
 
 The `dms ipc` calls that remain are the ones DMS owns: `lock lock` (Lock
@@ -634,18 +637,27 @@ Wi-Fi, Bluetooth, Sound and Display panels, through `dms-settings`),
 ```text
 chezmoi/dot_config/quickshell/bar/      -> ~/.config/quickshell/bar/
   shell.qml                             entry point: per screen the bar window (mask, close area), the wave strip and the orb box
-  Colors.qml                            singleton: DMS palette, watched
-  Theme.qml                             singleton: sizes, radii, fonts, panel widths
-  Motion.qml                            singleton: durations, curves, reduce motion
+  Colors.qml                            singleton: DMS palette, watched; the fixed privacy dot colours
+  Theme.qml                             singleton: sizes, radii, fonts, opacities, panel widths; slider and seek steps
+  Motion.qml                            singleton: durations, curves; reduce motion follows Settings
   qmldir                                registers the token singletons
   README.md                             short directory guide
   services/                             singletons that own state or data
     Shell.qml                           centre island state machine and IPC target `bar`
     Niri.qml ... Updates.qml            data services, see "Services"
+    Paths.qml                           XDG roots with fallbacks, the bar's state and runtime directories (created once)
+    Settings.qml                        the bar's runtime switches in settings.json (FileView with JsonAdapter)
+    Appearance.qml                      Light / Dark / Auto and the scheme through DMS, the crossfade
+    Dms.qml                             caffeine, the DMS settings window, one-off `dms ipc` calls
+    Command.qml                         type: one run of a command, exit code and output together
+    CommandReader.qml                   type: a command whose output is a reading: active gate, interval, single flight
+    CommandWriter.qml                   type: a command that writes a value, newest value wins
+    LineWatcher.qml                     type: a long-running line-per-state command, restarted after it exits
+    maps.js                             withKey and withoutKey for copy-on-write map properties
     Session.qml                         Power panel actions: lock, suspend, log out, reboot, power off; logind lock state
     Notifications.qml                   the notification daemon: history, do not disturb, peek stack
     Tablet.qml                          keyboard cover detached, on-screen keyboard, rotation lock
-    Display.qml                         night temperature and schedule, keyboard backlight, rear light
+    Display.qml                         night light, its temperature and schedule, keyboard backlight, rear light
     Wallpapers.qml                      DMS wallpaper folder, its images, the current wallpaper
     Privacy.qml                         microphone, camera and screen share in use, with app names
     Frames.qml                          frames presented per window, IPC target `bardebug`
@@ -738,8 +750,10 @@ with a `FileView`, watches it for changes, and exposes the colours of the
 active mode (`primary`, `primaryForeground`, `primaryContainer`, `secondary`,
 `tertiary`, `surface`,
 `surfaceContainer`, `surfaceContainerHigh`, `foreground`, `foregroundVariant`,
-`outline`, `error`), `dark` (the shown palette, which `preview` moves) and
-`mode` (the file's own mode, which `Theming.mode` follows). The colours are
+`outline`, `error`, `shadow`), `dark` (the shown palette, which `preview` moves) and
+`mode` (the file's own mode, which `Appearance.mode` follows), and the
+privacy dot colours `privacyMic`, `privacyCamera` and `privacyShare`, which
+are fixed, not the palette. The colours are
 assigned, not bound, so a new
 palette glides in over `Motion.paletteDuration` (300 ms, 0 under reduce
 motion) instead of cutting. Every colour falls back to a Material dark
@@ -895,6 +909,18 @@ quickshell ipc -c bar call notifications openList
 quickshell ipc -c bar call notifications clearAll
 quickshell ipc -c bar call notifications toggleDnd
 quickshell ipc -c bar call notifications dnd
+```
+
+Two runtime switches of the `bar` target have no bind. Each takes `on`,
+`off` or `toggle`, prints the new state and is kept across restarts in
+`$XDG_STATE_HOME/dotfiles-bar/settings.json` (see `Settings` under
+"Services"): `wave` (the top-edge wave, see "Music") and `reduceMotion`
+(every duration 0, no music motion, no now-playing peek, no bar-side
+crossfade on a theme switch):
+
+```fish
+quickshell ipc -c bar call bar wave toggle
+quickshell ipc -c bar call bar reduceMotion on
 ```
 
 ## Running it by hand
@@ -1191,12 +1217,14 @@ owns.
 | Volume, microphone, mute | `Quickshell.Services.Pipewire` | |
 | Outputs, inputs, per-app volume, mic level | `Quickshell.Services.Pipewire` (`preferredDefaultAudioSink/Source`, `PwObjectTracker`, `PwNodePeakMonitor`), port names from `pactl -f json list sinks` and `sources` | Quickshell exposes no ports: the friendly name ("Speakers", "Headphones", "Internal Microphone") is the active port's description, read at start, when the set of sinks and sources changes (300 ms debounce; application streams do not count), when the Sound panel opens and, while it is open, on `pactl subscribe` sink, source or card events (a jack plug moves the port without a node change). Without pactl: Bluetooth by device name, HDMI as "HDMI / DisplayPort", the analog card as "Speakers" or "Microphone". `pactl` is `libpulse`, a dependency of `cava`. Playback streams are bound with `PwObjectTracker` only while the panel is open; the level monitor runs only then too, and its stream flags itself `stream.monitor`, so it is no microphone use for `Privacy`. |
 | Brightness | `brightnessctl` | No ambient light sensor on the Z13, so the icon cycles 25, 50, 75, 100. |
-| Night temperature and schedule | `dms ipc call night status`, `getDayTemp`, `getSchedule`, `setTargetTemp` | DMS 1.6.2 accepts 1000 to 6000 K, rounds to 500 K and refuses a value above the day temperature (read in its shipped `DisplayService.qml`); the schedule has no IPC setter, only the settings tab `display_gamma`. Read when the Display panel opens and after each write. |
+| Night light, its temperature and schedule | `dms ipc call night status`, `getDayTemp`, `getSchedule`, `setTargetTemp`, `toggle` | DMS 1.6.2 accepts 1000 to 6000 K, rounds to 500 K and refuses a value above the day temperature (read in its shipped `DisplayService.qml`); the schedule has no IPC setter, only the settings tab `display_gamma`. Only the Display panel shows night light, so `Display` reads all three when it opens, after each temperature write and 400 ms after a toggle; nothing polls. |
 | Keyboard backlight | `brightnessctl -d asus::kbd_backlight` | 0 to 3; read when the Display panel opens and after a write. |
 | Rear window light | `~/.local/state/z13ctl/state.json` (watched), `z13ctl brightness off|low|medium|high --device lightbar` | `devices.lightbar.brightness` 0 to 3 (`enabled: false` reads as off) and `color`; `brightness` keeps the mode and colour, and `sync-z13-window-color` keeps the level. |
 | Wi-Fi, Bluetooth | `Quickshell.Networking`, `Quickshell.Bluetooth` | Native modules in Quickshell 0.3. Networks that are neither connected nor saved are listed only while the module's scanner is on (rescans at most every 10 s), so the Wi-Fi panel runs it only while open. |
-| Night light, do not disturb, caffeine, theme mode, scheme | `dms ipc call night|notifications|inhibit|theme|settings` | `settings set matugenScheme` only saves the key: DMS 1.6.2's IPC assigns the setting directly and skips the `regenSystemThemes` hook its own settings UI runs (read in the shipped QML, not tried). The bar re-renders by setting the current wallpaper again, as [dms.md](dms.md) describes; a light/dark switch would also render but turns smart mode off. |
-| Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper` | DMS has no folder setting; its picker remembers the last folder. |
+| Caffeine, theme mode, scheme | `dms ipc call inhibit|theme|settings` | Do not disturb is the bar's own since ADR-0028 (see "Notifications list"). Caffeine is polled every 10 s, because the right island shows it. `settings set matugenScheme` only saves the key: DMS 1.6.2's IPC assigns the setting directly and skips the `regenSystemThemes` hook its own settings UI runs (read in the shipped QML, not tried). The bar re-renders by setting the current wallpaper again, as [dms.md](dms.md) describes; a light/dark switch would also render but turns smart mode off. |
+| Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper get|set`, `getFor|setFor` | DMS has no folder setting; its picker remembers the last folder. In DMS's per-monitor mode `get` and `set` answer `ERROR`, and the calls are made again for the screen. |
+| Bar settings | `$XDG_STATE_HOME/dotfiles-bar/settings.json`, a `FileView` with a `JsonAdapter`, watched | The bar's own switches; see `Settings` under "Services". A missing file is the defaults and is written on the first change. |
+| Terminal | DMS's `terminalOverride` in `$XDG_STATE_HOME/DankMaterialShell/session.json` (watched, read-only), else `xdg-terminal-exec`, else `ghostty -e` | `session.json` is DMS's internal session state, not a public interface; when it is missing or changes shape the fallbacks apply. |
 | Keyboard cover, on-screen keyboard, rotation lock | `~/.local/bin/tablet-mode watch`, `osk watch` (only while detached), `$XDG_STATE_HOME/dotfiles/rotation-lock` | The helpers from [tablet.md](tablet.md); the bar calls `osk toggle` and `auto-rotate lock toggle`. |
 | Session actions | `systemctl suspend|reboot|poweroff`, `niri msg action quit --skip-confirmation`, `dms ipc call lock lock` | |
 | Notification daemon handover | `dms.service.d/notifications.conf` drop-in (`Type=simple`), `quickshell-bar.service` (`Before=dms.service`, `gdbus wait`, the `bar-notifications release` and `claim` hooks), `~/.local/bin/bar-notifications`, `busctl --user status org.freedesktop.Notifications` | Decided in [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md), see "Notification handover". The packaged `BusName=` stays: systemd 262 rejects an empty `BusName=` and only `Type=dbus` waits for the name. |
@@ -1205,7 +1233,7 @@ owns.
 | Music, album colour | `Quickshell.Services.Mpris` plus Quickshell's `ColorQuantizer` | |
 | Audio levels for orb and wave | `cava` raw ascii output on stdout, 24 bars, 30 fps, run only while something plays | |
 | Tray | `Quickshell.Services.SystemTray` | |
-| Weather | Open-Meteo, called by the bar, auto location through geoclue's `where-am-i` demo | DMS keeps weather in memory only. |
+| Weather | Open-Meteo, called by the bar, auto location through geoclue's `where-am-i` demo, else the last fix, else `weatherLatitude` and `weatherLongitude` in the bar's settings file | DMS keeps weather in memory only. The settings default is a placeholder (Amsterdam); put your own fallback there. |
 | Updates | `system-update --pending` from the repository helper | Never call `dms ipc call systemupdater updatestatus`: it starts a check instead of reporting one. |
 | CPU, temperature, memory | `/proc/stat`, `/proc/meminfo`, the `k10temp` hwmon resolved by name | hwmon numbers change between boots. |
 | Microphone in use | `Quickshell.Services.Pipewire`: capture streams with an active or paused link from an audio source node | Streams and links are bound with `PwObjectTracker`; unbound, `properties` is empty and every link reads `Unlinked`. Streams flagged `stream.monitor`, `stream.capture.sink` or `node.passive` (peak meters, pavucontrol, cava) and streams linked from a sink monitor do not count. |
@@ -1218,6 +1246,34 @@ Every data source above is one `pragma Singleton` under `services/`, with
 no UI; widgets import `"../services"` and bind to the properties. Quickshell
 creates a singleton on first use, so a service that no widget references
 does not run. Percentages are 0..100 and levels 0..1 unless noted.
+
+Three shapes hold for every service:
+
+- **Activity.** A service whose work only a panel shows (sampling, a scan,
+  a poll, a tracker) has `property bool active: false` and derives its
+  wants from it; `Shell` binds every `active` in one place with `Binding`
+  elements, from `centreState`. Services never read `centreState`
+  themselves. Today: `System` (home), `Brightness` (settings or display),
+  `Audio` (sound), `Display` (display), `Network` (wifi), `Bluetooth`
+  (bluetooth), `Music` (player).
+- **Commands.** No service writes a `Process` for a one-off command: a
+  `Command` runs it and reports `finished(code, output)` once both the exit
+  and the whole stdout have arrived (a command that cannot start finishes
+  with -1); a `CommandReader` is a command whose output is a reading
+  (`command`, `interval` in ms or 0 for on demand, `active` gates the
+  interval and reads when it turns true, `name` for warnings; signals
+  `read(text)` and `failed(code)`; `refresh()` runs once at a time and once
+  more when asked during a run; a failure is warned about once until it
+  succeeds again); a `CommandWriter` writes values (`send(argv)`: while
+  one runs only the newest waits, so a slider drag never loses its last
+  value; `finished(code)` once the newest is written); a `LineWatcher` is
+  a long-running command that prints one state per line (`command`,
+  `active`, `retryInterval` 5000; signals `line(text)` and `stopped(code)`;
+  started again after it exits, warned about once when it keeps exiting at
+  once). These four are non-singleton types in `services/qmldir`.
+- **Durations and paths.** Animation durations live in `Motion`; a
+  service's own timings (polls, time-outs, debounces) are named `readonly
+  property int`s at the top of the service. Paths come from `Paths`.
 
 - `Niri`: `workspaces` (sorted by output, then idx: `id`, `idx`, `name`,
   `output`, `isActive`, `isFocused`, `isUrgent`, `activeWindowId`),
@@ -1242,42 +1298,50 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
 - `Audio`: `volume`, `muted`, `micVolume`, `micMuted`, `ready`, `sink`
   and `source` (the defaults), `sinks` and `sources` (hardware and virtual
   outputs and inputs, no streams, sorted by label), `ports` (node name to
-  active port label and type, from pactl), `panelOpen` (`Shell.centreState`
-  is `sound`), `playbackStreams`, `appStreams` (`key`, `name`, `icon`,
+  active port label and type, from pactl), `active` (the Sound panel is
+  open), `playbackStreams`, `appStreams` (`key`, `name`, `icon`,
   `nodes`, grouped by `application.name`, else `media.name`, else node
   name; capture and monitor streams, the bar's cava among them, are never
-  in it), `micLevel` (0..1, only while the panel is open);
+  in it), `micLevel` (0..1, only while active);
   `setVolume(v)`, `toggleMute()`, `setMicVolume(v)`, `toggleMicMute()`,
   `sinkLabel(node)` (the friendly name, also for the Player's output chips),
   `deviceIcon(node)`, `setDefaultSink(node)`, `setDefaultSource(node)`
   (PipeWire's configured default), `appGroup(key)`, `groupVolume(group)`
   (the loudest member), `groupMuted(group)`, `setGroupVolume(group, v)`
-  and `toggleGroupMute(group)` (every member), `readPorts()`.
-- `Brightness`: `percentage` (-1 until read), `device`, `available`,
-  `panelShown` (`Shell.centreState` is `settings` or `display`);
+  and `toggleGroupMute(group)` (every member), `readPorts()`. The two
+  `pactl -f json list` reads are `CommandReader`s; `pactl subscribe` is a
+  `LineWatcher` while active, so a PipeWire restart does not end it.
+- `Brightness`: `percentage` (-1 until read and without a backlight),
+  `device`, `available`, `active` (the Settings or Display panel is open);
   `set(p)` (1 to 100), `cycle()` (25, 50, 75, 100), `refresh()`. Reads the
-  backlight class at start, when the Settings or Display panel opens, every
-  5 s while one of them is open, and after each write. While a write runs, only
-  the newest `set` waits and follows it, so a slider drag never loses its
-  last value. `set` moves `percentage` at once, so key repeats step from
-  the new value and the OSD shows it.
-- `Display`: `panelOpen` (`Shell.centreState` is `display`),
-  `nightTemperature` (K, -1 until read), `nightMinimum`, `nightMaximum`,
-  `nightStep`, `schedule` (DMS's text), `scheduleText`, `keyboardLevel` and
-  `keyboardAvailable`, `rearLevel`, `rearColor` (RRGGBB) and
-  `rearAvailable`; `nightFraction(kelvin)` and `nightKelvin(fraction)` (the
-  capsule's 0..100), `setNightTemperature(kelvin)` (only the newest waits
-  while a call runs), `setKeyboardLevel(level)`, `setRearLevel(level)`,
-  `refresh()` (run when the panel opens). Night light on and off stay in
-  `Dms`.
+  backlight class at start, when it becomes active, every 5 s
+  (`pollInterval`) while active, and after each write. Writes go through a
+  `CommandWriter`, so a slider drag never loses its last value. `set`
+  moves `percentage` at once, so key repeats step from the new value and
+  the OSD shows it. An empty read (no backlight, an external monitor only)
+  is warned about once and leaves `percentage` at -1.
+- `Display`: `active` (the Display panel is open), `nightLight`,
+  `nightTemperature` (K, -1 until read), `nightMinimum`, `nightCeiling`
+  (6000), `nightMaximum` (the ceiling, or lower under a lower day
+  temperature), `nightStep`, `schedule` (DMS's text), `scheduleText`,
+  `keyboardLevel` and `keyboardAvailable`, `rearLevel`, `rearColor`
+  (RRGGBB) and `rearAvailable`; `nightFraction(kelvin)` and
+  `nightKelvin(fraction)` (the capsule's 0..100), `toggleNightLight()`,
+  `setNightTemperature(kelvin)`, `setKeyboardLevel(level)` and
+  `setRearLevel(level)` (each a `CommandWriter`: only the newest waits
+  while a write runs, and the value moves at once), `refresh()` (run when
+  it becomes active). Night status, day temperature and schedule are three
+  `CommandReader`s; after a toggle they are read again once `Dms.settled`.
 - `Network`: `wifiEnabled`, `connected` (any device), `wifiConnected`,
   `ssid`, `strength`, `weak` (under 40), `statusIcon` (the one Wi-Fi glyph
   for the Settings tile and the right island: `wifi_off`, the 0-bar glyph
   when disconnected, else `signalIcon` of the active network), `networks` (Quickshell
-  `WifiNetwork`s, one per SSID, ordered for the panel), `scannerWanted`
-  (`Shell.centreState` is `wifi`, Wi-Fi is on and a device exists; drives
-  the module's `scannerEnabled`), `scanning` (its first 4 s), `errors` (per
-  SSID), `wrongPassword`, `lastAttempt`; signal `failed(ssid, kind)`;
+  `WifiNetwork`s, one per SSID, ordered for the panel), `active` (the Wi-Fi
+  panel is open), `scannerWanted` (active, Wi-Fi is on and a device
+  exists; drives the module's `scannerEnabled`), `scanning` (its first
+  `firstScanTime`, 4 s), `attemptWindow` (20 s: a client failure this soon
+  after a connect on a saved network suggests a stale password), `errors`
+  (per SSID), `wrongPassword`, `lastAttempt`; signal `failed(ssid, kind)`;
   `toggleWifi()`, `attemptConnect(network)`, `attemptPassword(network,
   password)`, `attemptForget(network)`, `reportFailure(network, reason)`
   (an `Instantiator` watches every network of the Wi-Fi device, hidden and
@@ -1287,37 +1351,51 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `needsPassword`, `detailText`, `failureText`.
 - `Bluetooth`: `btEnabled`, `powered` (the adapter state is Enabled),
   `connectedDevices`, `available`, `discovering`,
-  `devices` (connected, paired, then named discovered devices),
-  `discoveryWanted` (`Shell.centreState` is `bluetooth` and the adapter is
-  powered; drives discovery, capped at 30 s), `scanning` (its first 4 s),
-  `errors` (per address), `pendingPairs`, `pendingConnects`;
-  `toggleBluetooth()`, `startConnect(device)`, `startPair(device)` (then
-  trust and connect), `setError(address, text)`, `deviceFor(address)`,
-  `openTerminal()` (`bluetoothctl`), the raw `setDiscovering(value)`,
+  `devices` (connected, paired, then named discovered devices), `active`
+  (the Bluetooth panel is open), `discoveryWanted` (active and the adapter
+  is powered; drives discovery, capped at `discoveryTime`, 30 s),
+  `scanning` (its first `firstScanTime`, 4 s), `errors` (per address),
+  `pendingPairs`, `pendingConnects`, `pendingSettle` (2 s) and
+  `pendingTimeout` (20 s); `toggleBluetooth()`, `startConnect(device)`,
+  `startPair(device)` (then trust and connect), `setError(address, text)`,
+  `deviceFor(address)`, `openTerminal()` (`bluetoothctl` through
+  `Session.openInTerminal`), the raw `setDiscovering(value)`,
   `connectDevice`, `disconnectDevice`, `pair`, `trustAndConnect`, `forget`,
   and the row helpers `deviceIcon`, `batteryText`, `detailText`,
   `connectSettled`. Everything is native: the module has
-  discovery, pairing and battery levels, but no pairing agent.
-- `Dms`: `nightLight` and `caffeine`, polled every 10 s and after each
-  call; `terminal` (DMS's `terminalOverride` from its `session.json`,
-  watched); `toggleNightLight()`, `toggleCaffeine()`, `openSettingsTab(tab)`
+  discovery, pairing and battery levels, but no pairing agent. An attempt
+  in flight is checked again when its device's pairing or connection state
+  changes (`pendingStates`), and one single-shot timer wakes it at the next
+  settle or time-out; nothing polls.
+- `Dms`: `caffeine` (polled every 10 s, `pollInterval`, and after each
+  call), `terminal` (DMS's `terminalOverride` from its `session.json`,
+  watched; a read-only dependency on DMS's internal state, see "Data
+  sources"); `call(args)` (one `dms ipc call`, never dropped or merged),
+  `toggleCaffeine()`, `openSettingsTab(tab)`
   (a tab id from `dms ipc call settings tabs`; it runs
   `~/.local/bin/dms-settings`, which nudges DMS when its settings window
-  does not map, see docs/dms.md Known limits), `refresh()`.
-- `Theming`: the theme state DMS owns. `mode` (`dark` or `light`: bound to
+  does not map, see docs/dms.md Known limits), `refresh()`; signal
+  `settled` (`settleDelay`, 400 ms, after the last call, because DMS
+  answers before it has applied some changes; Dms and Display read again
+  then). Night light is in `Display`.
+- `Appearance`: the theme state DMS owns. `mode` (`dark` or `light`: bound to
   `Colors.mode` while not busy, the optimistic choice while busy; no poll),
   `smartMode` (`matugenSmartMode`, shown as Auto) and `scheme`
   (`matugenScheme`), read at start, when the Theme panel opens and after
   each action; `schemes` (value and label of every scheme DMS accepts);
   `gtkThemeLight`, `gtkThemeDark` (the theme names written on a switch);
-  `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued and run
-  one step at a time; see the Theme panel above), `busy` (true while a
-  queued action runs and for 2.5 s after the last call, while DMS renders;
-  then `refresh()` runs once), `pendingMode`, the
+  `crossfadeLead` (300 ms), `crossfadeDelay` (1400 ms), `nudgeDuration`
+  (400 ms), `settleDuration` (2.5 s), calibrated against DMS, not design
+  tokens; `setLight()`, `setDark()`, `setAuto()`, `setScheme(name)` (queued
+  and run one step at a time; see the Theme panel above; the re-render step
+  is `Wallpapers.rerender`), `busy` (true while a queued action runs and
+  for `settleDuration` after the last call, while DMS renders; then
+  `refresh()` runs once), `pendingMode`, the
   `reported` signal (a poll answered while nothing is pending; the panel
   then drops its optimistic choice) and `refresh()`. Light and Dark also
-  start the Niri screen transition, see the Theme panel above. The colours
-  themselves come through `Colors`.
+  start the Niri screen transition unless reduce motion or `crossfade:
+  false` in `Settings`, see the Theme panel above. The colours themselves
+  come through `Colors`.
 - `Notifications`: the notification daemon (ADR-0028). `items` (newest
   first: `id`, `serverId`, `appName`, `summary`, `body`, `timestamp` in ms,
   `appIcon`, `image`, `urgency`, `desktopEntry`, `seen`, and `live`: the
@@ -1346,14 +1424,14 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   `toggleDoNotDisturb()`, `appKeys(name)`, `hasRecentFor(appId)`,
   `iconSource(appIcon, desktopEntry, image)`, `storedImage(image)`,
   `plainText(text)`, `oneLine(text)`. While `focusedAlertIds` is not empty
-  and stays the same for `Motion.alertClearDelay`, they are marked seen. A
+  and stays the same for `alertClearDelay` (3 s), they are marked seen. A
   sender's `replaces_id` arrives as changed properties on the same
   Quickshell object. A new summary or urgency rewrites the entry as new
   (new timestamp, unseen, back on top); a change of only the body, image
   or actions, as progress senders make every second, updates the entry in
   place and keeps its timestamp and seen mark. Either way `replaced`
   fires, but no new peek starts. A transient notification that does not
-  peek on arrival (peeks off, do not disturb, bar hidden or locked, a
+  peek on arrival (`Settings.notificationPeek` off, do not disturb, bar hidden or locked, a
   panel open or a fullscreen window) is expired at once. The `now` clock
   that ages alerts out ticks every 30 s only while alerts exist. A notification the sender
   closes stays in the list as history; one that falls out of the 200
@@ -1373,10 +1451,19 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   whose app id is the player's desktop entry or identity, case-insensitive;
   false when neither works). playerctld's mirror player is left out of
   `players`. `position` is asked from the player every second only while
-  something plays and the Player panel is open.
+  something plays and `active` (the Player panel is open).
 - `Settings`: the bar's own runtime switches, kept in
-  `$XDG_STATE_HOME/dotfiles-bar/settings.json` (defaults when the file is
-  missing or unreadable): `waveEnabled`; `setWaveEnabled(enabled)`.
+  `$XDG_STATE_HOME/dotfiles-bar/settings.json` through a `FileView` with a
+  `JsonAdapter`: defaults while the file is missing, written on the first
+  change, and a hand edit is picked up while the bar runs. Read-only
+  `waveEnabled` (true), `reduceMotion` (false; `Motion.reduceMotion`
+  follows it), `notificationPeek` (true), `nowPlayingPeek` (true),
+  `crossfade` (true; the bar's screen transition on Light and Dark),
+  `weatherLatitude` and `weatherLongitude` (Weather's last fallback; the
+  default, 52.37 and 4.90, is a placeholder); setters
+  `setWaveEnabled`, `setReduceMotion`, `setNotificationPeek`,
+  `setNowPlayingPeek`, `setCrossfade`. `wave` and `reduceMotion` are also
+  on the `bar` IPC target (see "Shortcuts").
 - `Cava`: `running` (cava runs only while a player plays, never under
   reduce motion), `bands` (24 raw levels), `smoothBands`, `level`, `low`
   (mean of the first four bands; all three smoothed with 80 ms attack and
@@ -1385,7 +1472,9 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   over 600 ms), `bloom`, `ringSwell` (0 to 1 and back on a 5 s
   cosine, the resting orb's ring breath), `ringBreath` (its opacity, 0.2 to
   0.8), `waveOn`, `waveOpacity`, `animating`; signal `tick(dt)`. Writes
-  its config to `$XDG_RUNTIME_DIR/dotfiles-bar/cava.conf`.
+  its config to `$XDG_RUNTIME_DIR/dotfiles-bar/cava.conf` with a
+  `FileView` once `Paths` has created the directory; cava itself is a
+  `LineWatcher`, so it starts again 5 s after a PipeWire restart ends it.
 - `Tray`: `items`, `count`; `activate(item)`, `menuFor(item)` (a handle for
   `QsMenuOpener`).
 - `Weather`: `ready`, `failed` (the last fetch failed; the previous
@@ -1404,45 +1493,65 @@ does not run. Percentages are 0..100 and levels 0..1 unless noted.
   nothing. A stale reading shows "–" in the pill and Detail and is dimmed
   (`Theme.busyOpacity`) in the Home tile. The location comes
   from `where-am-i -t 10`, else the last fix in
-  `$XDG_STATE_HOME/dotfiles-bar/weather-location.json`, else Nijmegen
-  (51.84, 5.86) with a warning.
-- `System`: `active` (bound by `Shell` to the `home` state), `cpu`, `temp` (°C, NaN
-  without k10temp), `memory`, `memoryUsedGiB`, `memoryTotalGiB`. Samples
-  every 2 s only while `active` is true.
+  `$XDG_STATE_HOME/dotfiles-bar/weather-location.json`, else
+  `Settings.weatherLatitude` and `weatherLongitude` with a warning.
+  Conditions and icons come from one WMO code table, `wmo`.
+- `System`: `active` (the Home panel is open), `cpu`, `temperature` (°C,
+  NaN without k10temp), `temperatureLevel` (0..1 from 30 to 95 °C,
+  `temperatureMin` and `temperatureMax`; 0 without a reading), `memory`.
+  Samples every 2 s (`sampleInterval`) only while active.
 - `Session`: `perform(action)` for `lock`, `suspend`, `logout`, `reboot`,
   `poweroff`: closes the panel, then runs the command once the island has
-  shrunk. `locked`: logind's `LockedHint` on the user's display session,
-  read once and then followed by one `gdbus monitor` process (restarted
-  after 5 s when it exits). An exit resets `locked` to false, so a dead
-  watcher cannot hold peeks back; three quick exits in a row are warned
-  about once.
+  shrunk. `terminalCommand(argv)` and `openInTerminal(argv)`: the one way
+  the bar opens a terminal (DMS's `terminalOverride`, else
+  `xdg-terminal-exec`, else `ghostty -e`), used by Bluetooth and Updates.
+  `locked`: logind's `LockedHint` on the user's display session, read once
+  and then followed by one `gdbus monitor` `LineWatcher` (restarted after
+  5 s when it exits). An exit resets `locked` to false, so a dead watcher
+  cannot hold peeks back; three quick exits in a row are warned about once.
 - `Tablet`: `detached` (from `tablet-mode watch`), `keyboardVisible` (from
   `osk watch`, which runs only while detached), `rotationLocked` (the state
   file, watched and read again when Settings opens); `toggleKeyboard()`
   (`osk toggle`), `toggleRotationLock()` (`auto-rotate lock toggle`),
   `refresh()`. Re-attaching the cover runs `osk hide`, as the retired DMS
-  plugin did. A helper that exits is started again after 5 s.
+  plugin did. Both watchers are `LineWatcher`s: a helper that exits is
+  started again after 5 s.
 - `Wallpapers`: `folder`, `files` (absolute paths, at most 200, sorted by
   name), `current`, `loading`; `refresh(screen)` (called when the Wallpaper
   panel opens; it reloads DMS's `cache.json` and lists the folder that
-  answer names), `apply(path, screen)`, `fileName(path)`.
+  answer names), `set(path, screen)` (while a set runs only the newest
+  waits), `rerender(screen)` (sets the current wallpaper again, which makes
+  DMS render the theme anew; signal `rerendered` when done or given up),
+  `fileName(path)`. Every call falls back to `getFor` and `setFor` with the
+  screen in DMS's per-monitor mode.
 - `Privacy`: `micApps`, `cameraApps`, `shareApps` (deduplicated display
   names: `application.name`, else `media.name`, the node description or
   name; for direct camera holders the process name), `micActive`,
   `cameraActive`, `shareActive` (follows the active casts after 500 ms
   without change, so a short screencopy does not flash), `anyActive`;
   `cameraDevices` (the webcam USB devices), `deviceStatus`, `cameraAwake`,
-  `cameraHolders` (`pid`, `comm`). Event-driven apart from the 2 s sysfs
+  `cameraHolders` (`pid`, `comm`); the inputs `nodes`, `links` and `casts`
+  are read-only. The USB devices are probed again when a camera node
+  appears in PipeWire, so a webcam plugged in later is watched too.
+  Event-driven apart from the 2 s sysfs
   read and the holder scan while the webcam is awake. A muted app that keeps
   its stream open (a paused link) still counts. Holders owned by another user
   (root) are not readable and do not count.
 - `Updates`: `items` (fragile first: `source`, `name`, `oldVersion`,
   `newVersion`, `fragile`, `reason`: the helper's one-line text for a
   fragile package, empty otherwise), `count`, `fragileCount`, `checking`, `ready`,
-  `lastChecked`, `upgrading`, `reportPath`, `reportAvailable`; `refresh()`,
-  `upgradeAll()` (the full helper in a terminal, see step 5 above),
+  `lastChecked`, `error` (why the last check failed, empty after a good
+  one; the Updates panel's head line shows it), `upgrading`, `reportPath`,
+  `reportAvailable`; `refresh()`, `upgradeAll()` (the full helper in a
+  terminal through `Session.terminalCommand`, see step 5 above),
   `openReport()`. Runs `~/.local/bin/system-update --pending` every 30
   minutes, on `refresh()` and after the update terminal closes.
+- `Paths`: `home`, `state`, `cache` and `runtime` (the XDG roots with their
+  fallbacks), `localBin`, `barState` (`state/dotfiles-bar`), `barRuntime`
+  (`runtime/dotfiles-bar`), `dmsCache`, `dmsState`, and `ready` once its one
+  `mkdir -p` has created the two bar directories. `Colors` and `Motion` in
+  the root module import it too (`import "services"`; the cycle with the
+  services' `import ".."` is fine for QML and qmllint).
 
 ### Music
 
@@ -1495,7 +1604,7 @@ same 600 ms.
   resume from a stop or a pause over 30 s, or when another player starts;
   `Shell.peek()` then opens `musicbar` on the focused screen for 5 s if
   the island is collapsed, and the pointer reaching the orb or the bar
-  hands it over to the normal hover. `Theme.nowPlayingPeek: false` turns
+  hands it over to the normal hover. `Settings.nowPlayingPeek` off turns
   it off; reduce motion, a hidden bar, the OSD and any open state also
   skip it.
 - **Player.** The island takes `PlayerPanel`'s height. A 1.5 px `RimLight`
@@ -1522,9 +1631,8 @@ same 600 ms.
   strokes, the band between 8 px above the screen edge and the curve is
   filled at the core stroke's alpha, so the top row stays covered when the
   curve swings down past the core stroke.
-  `Theme.topWaveEnabled` switches it off in the code; at runtime
-  `Settings.waveEnabled` switches it, kept across restarts, for example for
-  a power A/B:
+  `Settings.waveEnabled` switches it at runtime, kept across restarts, for
+  example for a power A/B:
 
   ```fish
   quickshell ipc -c bar call bar wave toggle
@@ -1612,7 +1720,7 @@ the approach come first, the things that are only work come last.
 
 Code layout from step 0 on, under `chezmoi/dot_config/quickshell/bar/`:
 `services/` for singletons that own data (Niri, Audio, Battery, Weather,
-Music, Tray, Updates, Dms, Theming), `islands/` for the three islands,
+Music, Tray, Updates, Dms, Appearance), `islands/` for the three islands,
 `panels/` for the centre panel states, `components/` for shared pieces,
 and `Theme.qml`, `Colors.qml`, `Motion.qml` for the tokens. Every step
 lands as its own change with docs and tests; the DMS bar plugins are

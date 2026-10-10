@@ -6,14 +6,12 @@ import Quickshell.Io
 
 // Current weather and a short forecast from Open-Meteo, every 15 minutes.
 // Location: geoclue's where-am-i demo; else the last fix cached in
-// $XDG_STATE_HOME/dotfiles-bar/weather-location.json; else Nijmegen.
+// $XDG_STATE_HOME/dotfiles-bar/weather-location.json; else the fallback in
+// Settings.
 Singleton {
     id: root
 
     readonly property string whereAmI: "/usr/lib/geoclue-2.0/demos/where-am-i"
-    readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/dotfiles-bar"
-    readonly property real defaultLatitude: 51.84
-    readonly property real defaultLongitude: 5.86
 
     property real latitude: NaN
     property real longitude: NaN
@@ -40,67 +38,50 @@ Singleton {
     readonly property int retryFirst: 60 * 1000
     readonly property int requestTimeout: 20 * 1000
 
-    // WMO weather interpretation codes, as Open-Meteo documents them.
+    // WMO weather interpretation codes, as Open-Meteo documents them: the
+    // text and the icon of the small set the widgets draw (clear and
+    // partly-cloudy get -day or -night).
+    readonly property var wmo: ({
+            "0": ["Clear", "clear"],
+            "1": ["Mainly clear", "clear"],
+            "2": ["Partly cloudy", "partly-cloudy"],
+            "3": ["Overcast", "cloudy"],
+            "45": ["Fog", "fog"],
+            "48": ["Fog", "fog"],
+            "51": ["Drizzle", "drizzle"],
+            "53": ["Drizzle", "drizzle"],
+            "55": ["Drizzle", "drizzle"],
+            "56": ["Freezing drizzle", "drizzle"],
+            "57": ["Freezing drizzle", "drizzle"],
+            "61": ["Light rain", "rain"],
+            "63": ["Rain", "rain"],
+            "65": ["Heavy rain", "rain"],
+            "66": ["Freezing rain", "rain"],
+            "67": ["Freezing rain", "rain"],
+            "71": ["Snow", "snow"],
+            "73": ["Snow", "snow"],
+            "75": ["Snow", "snow"],
+            "77": ["Snow grains", "snow"],
+            "80": ["Showers", "rain"],
+            "81": ["Showers", "rain"],
+            "82": ["Showers", "rain"],
+            "85": ["Snow showers", "snow"],
+            "86": ["Snow showers", "snow"],
+            "95": ["Thunderstorm", "thunderstorm"],
+            "96": ["Thunderstorm, hail", "thunderstorm"],
+            "99": ["Thunderstorm, hail", "thunderstorm"]
+        })
+
     function describe(value: int): string {
-        if (value === 0)
-            return "Clear";
-        if (value === 1)
-            return "Mainly clear";
-        if (value === 2)
-            return "Partly cloudy";
-        if (value === 3)
-            return "Overcast";
-        if (value === 45 || value === 48)
-            return "Fog";
-        if (value >= 51 && value <= 55)
-            return "Drizzle";
-        if (value === 56 || value === 57)
-            return "Freezing drizzle";
-        if (value === 61)
-            return "Light rain";
-        if (value === 63)
-            return "Rain";
-        if (value === 65)
-            return "Heavy rain";
-        if (value === 66 || value === 67)
-            return "Freezing rain";
-        if (value >= 71 && value <= 75)
-            return "Snow";
-        if (value === 77)
-            return "Snow grains";
-        if (value >= 80 && value <= 82)
-            return "Showers";
-        if (value === 85 || value === 86)
-            return "Snow showers";
-        if (value === 95)
-            return "Thunderstorm";
-        if (value === 96 || value === 99)
-            return "Thunderstorm, hail";
-        return "";
+        return (wmo[value] ?? [""])[0];
     }
 
-    // The small icon set the widgets draw: clear-day, clear-night, partly-cloudy-day,
-    // partly-cloudy-night, cloudy, fog, drizzle, rain, snow, thunderstorm.
+    // "" before the first reading; an unknown code draws as cloudy.
     function iconFor(value: int, day: bool): string {
         if (value < 0)
             return "";
-        if (value === 0 || value === 1)
-            return day ? "clear-day" : "clear-night";
-        if (value === 2)
-            return day ? "partly-cloudy-day" : "partly-cloudy-night";
-        if (value === 3)
-            return "cloudy";
-        if (value === 45 || value === 48)
-            return "fog";
-        if (value >= 51 && value <= 57)
-            return "drizzle";
-        if ((value >= 61 && value <= 67) || (value >= 80 && value <= 82))
-            return "rain";
-        if ((value >= 71 && value <= 77) || value === 85 || value === 86)
-            return "snow";
-        if (value >= 95)
-            return "thunderstorm";
-        return "cloudy";
+        const icon = (wmo[value] ?? ["", "cloudy"])[1];
+        return icon === "clear" || icon === "partly-cloudy" ? icon + (day ? "-day" : "-night") : icon;
     }
 
     function refresh() {
@@ -148,8 +129,8 @@ Singleton {
     function locationFailed() {
         if (!isNaN(latitude))
             return;
-        console.warn("Weather: no location from geoclue or the cache; using Nijmegen (" + defaultLatitude + ", " + defaultLongitude + ")");
-        useLocation(defaultLatitude, defaultLongitude, "default");
+        console.warn("Weather: no location from geoclue or the cache; using the fallback in settings.json (" + Settings.weatherLatitude + ", " + Settings.weatherLongitude + ")");
+        useLocation(Settings.weatherLatitude, Settings.weatherLongitude, "default");
         fetch();
     }
 
@@ -188,7 +169,7 @@ Singleton {
                 return;
             }
             try {
-                apply(JSON.parse(request.responseText));
+                adopt(JSON.parse(request.responseText));
             } catch (error) {
                 fetchFailed("cannot read the Open-Meteo answer: " + error);
                 return;
@@ -212,7 +193,7 @@ Singleton {
     }
 
     // Everything is read first, so a malformed answer changes nothing.
-    function apply(data: var) {
+    function adopt(data: var) {
         const current = data.current;
         if (typeof current.temperature_2m !== "number")
             throw new Error("no current temperature");
@@ -322,14 +303,9 @@ Singleton {
     FileView {
         id: locationFile
 
-        path: root.stateDir + "/weather-location.json"
+        path: Paths.barState + "/weather-location.json"
         printErrors: false
         onLoaded: root.parseCache(text())
-    }
-
-    Process {
-        command: ["mkdir", "-p", root.stateDir]
-        running: true
     }
 
     // C locale: where-am-i prints the decimal comma of the user's locale otherwise.

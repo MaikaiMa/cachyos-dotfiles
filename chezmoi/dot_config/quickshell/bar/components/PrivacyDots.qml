@@ -20,21 +20,21 @@ Item {
         objectName: "privacyMic"
         shown: Privacy.micActive
         slot: 0
-        color: Theme.privacyMicColor
+        color: Colors.privacyMic
     }
 
     Dot {
         objectName: "privacyCamera"
         shown: Privacy.cameraActive
         slot: Privacy.micActive ? 1 : 0
-        color: Theme.privacyCameraColor
+        color: Colors.privacyCamera
     }
 
     Dot {
         objectName: "privacyShare"
         shown: Privacy.shareActive
         slot: (Privacy.micActive ? 1 : 0) + (Privacy.cameraActive ? 1 : 0)
-        color: Theme.privacyShareColor
+        color: Colors.privacyShare
     }
 
     component Dot: Rectangle {

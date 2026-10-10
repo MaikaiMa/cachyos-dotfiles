@@ -3,8 +3,10 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Sizes and fonts from the Tokens table in docs/shell-design.md.
+// Sizes, fonts and opacities from the Tokens table in docs/shell-design.md,
+// grouped by its rows, then by area; the behaviour steps at the end.
 Singleton {
+    // --- Bar and islands ---
     readonly property int barHeight: 36
 
     readonly property int islandHeight: 30
@@ -20,10 +22,12 @@ Singleton {
     readonly property int paddingVertical: 6
     readonly property int gap: 8
 
+    // --- Hairline separator ---
     readonly property int hairlineWidth: 1
     readonly property int hairlineHeight: 14
     readonly property real hairlineOpacity: 0.4
 
+    // --- Text and icons ---
     readonly property string fontFamily: "Inter Variable"
     // The type scale; the domain sizes below are names for its steps.
     readonly property int fontSizeSmall: 11
@@ -40,10 +44,12 @@ Singleton {
     readonly property string iconFontFamily: "Material Symbols Rounded"
     readonly property bool iconFontAvailable: Qt.fontFamilies().includes(iconFontFamily)
 
+    // --- Shadow on expanded islands ---
     readonly property int shadowOffsetY: 8
     readonly property int shadowBlur: 24
     readonly property real shadowOpacity: 0.35
 
+    // --- Interaction and shared controls ---
     // Keyboard focus: a ring this far outside the focused item.
     readonly property int focusRingInset: 3
     readonly property int focusRingWidth: 2
@@ -73,6 +79,7 @@ Singleton {
     // A small glyph and a name over a group of rows.
     readonly property int sectionHeaderSpacing: 6
 
+    // --- Left and right island ---
     // Left island: dots in 3 px padded slots; the active one is wider and filled.
     readonly property int workspaceDot: 8
     readonly property int workspaceActiveDot: 22
@@ -108,8 +115,10 @@ Singleton {
     // Keeps an end pill's 12 px corner concentric with the island's 15 px corner.
     readonly property int rightEndInset: 3
 
+    // --- Panel width and tile grid ---
     readonly property int powerButtonSize: 72
-    // Updates is 420 px in the prototype; the contract table does not list it.
+    // The Tokens table lists Settings, Player, Power, Home, Theme and
+    // Wallpaper; Updates and the panels opened from Settings take Settings' 420 px.
     readonly property var panelWidths: ({
             home: 560,
             settings: 420,
@@ -134,6 +143,7 @@ Singleton {
     readonly property real tileDiscOnAccentOpacity: 0.14
     readonly property real tileStateOnAccentOpacity: 0.72
 
+    // --- Settings grid and slider ---
     readonly property int settingsColumns: 4
     readonly property int settingsTileHeight: 64
     readonly property int settingsTileRows: 2
@@ -146,11 +156,16 @@ Singleton {
     readonly property int sliderValueFontSize: fontSizeDetail
     // Movement below this is a click, not a drag.
     readonly property int sliderDragThreshold: 4
-    // One arrow key press or one wheel notch.
-    readonly property int sliderStep: 5
     // The hit area reaches this far into the gap above and below, so the
     // chevron zone of a capsule is a 40 x 40 touch target.
     readonly property int sliderHitExtension: 4
+    // The Wi-Fi and Bluetooth tiles: a chevron zone on the right opens their panel.
+    readonly property int tileChevronZone: 40
+    readonly property real tileChevronHairlineOpacity: 0.15
+    readonly property int settingsGridHeight: settingsTileRows * settingsTileHeight + (settingsTileRows - 1) * tileGap
+    readonly property int settingsSlidersHeight: sliderCount * sliderHeight + (sliderCount - 1) * sliderGap
+
+    // --- Notification list ---
     readonly property int notificationHeaderGap: 10
     readonly property int notificationHeaderHeight: 28
     readonly property int notificationRowHeight: 62
@@ -174,10 +189,16 @@ Singleton {
     readonly property int notificationBodyMaxLines: 4
     readonly property int notificationImageMaxSize: 64
     readonly property int notificationReplyWidth: 72
-    // Notification peek: the stack replaces the right island at the Player's
-    // width, never closer to the centre island than the clearance (it truncates
+    // Action pills in the Settings list.
+    readonly property int notificationActionHeight: pillHeight
+    readonly property int notificationActionFontSize: fontSizeSmall
+    readonly property int notificationActionPadding: pillPadding
+    readonly property int notificationActionGap: 4
+    readonly property int notificationActionMaxWidth: 140
+
+    // --- Notification peek ---
+    // The stack replaces the right island at the Player's width, never closer to the centre island than the clearance (it truncates
     // instead), and grows down one bare row at a time, newest on top.
-    readonly property bool notificationPeek: true
     readonly property int notificationPeekWidth: 360
     readonly property int notificationPeekCentreClearance: 8
     readonly property int notificationPeekPaddingHorizontal: 10
@@ -205,25 +226,17 @@ Singleton {
     readonly property int notificationPeekActionGap: 24
     readonly property int notificationPeekActionFontSize: fontSizeDetail
     readonly property int notificationPeekActionRise: 10
+
+    // --- Disc blobs ---
     // Rows that broke out of the stack, under the island and right-aligned
     // with it; past the maximum a "+N" blob on the far left.
     readonly property int notificationBlobSize: 30
     readonly property int notificationBlobGap: 8
     readonly property int notificationBlobMax: 6
     readonly property int notificationBlobCountWeight: Font.DemiBold
-    // Action pills in the Settings list.
-    readonly property int notificationActionHeight: pillHeight
-    readonly property int notificationActionFontSize: fontSizeSmall
-    readonly property int notificationActionPadding: pillPadding
-    readonly property int notificationActionGap: 4
-    readonly property int notificationActionMaxWidth: 140
-    // The Wi-Fi and Bluetooth tiles: a chevron zone on the right opens their panel.
-    readonly property int tileChevronZone: 40
-    readonly property real tileChevronHairlineOpacity: 0.15
-    readonly property int settingsGridHeight: settingsTileRows * settingsTileHeight + (settingsTileRows - 1) * tileGap
-    readonly property int settingsSlidersHeight: sliderCount * sliderHeight + (sliderCount - 1) * sliderGap
 
-    // Home: a narrow and a wide column; row heights are fixed so the panel has one height.
+    // --- Home ---
+    // A narrow and a wide column; row heights are fixed so the panel has one height.
     readonly property int homeTimeColumnWidth: 150
     readonly property int homeTilePadding: 12
     readonly property int homeSectionGap: 10
@@ -246,9 +259,6 @@ Singleton {
     readonly property int weatherTemperatureGap: 3
     readonly property int meterWidth: 6
     readonly property int meterGap: 6
-    // The temperature bar runs from empty at 30 °C to full at 95 °C.
-    readonly property int tempScaleMin: 30
-    readonly property int tempScaleMax: 95
     readonly property int powerHeadHeight: 28
     readonly property int powerIconSize: 20
     readonly property int chargeCapsuleHeight: 20
@@ -259,6 +269,7 @@ Singleton {
     readonly property int homeActionHeight: 40
     readonly property int homeHeight: 2 * panelPadding + homeTopRowHeight + tileGap + homeBottomRowHeight + tileGap + homeActionHeight
 
+    // --- Wi-Fi and Bluetooth ---
     // Wi-Fi and Bluetooth: a control row over a list of rows that expand in place.
     readonly property int controlRowHeight: 32
     readonly property int controlButtonSize: 32
@@ -278,9 +289,8 @@ Singleton {
     readonly property int listRowExpansionLift: 2
     readonly property int listRowErrorLift: 4
     readonly property int listRowButtonWidth: 88
-    // While the panel is open; Bluetooth discovery stops after this at the latest.
-    readonly property int bluetoothDiscoveryTime: 30000
 
+    // --- Sound ---
     // Sound: Output, Input and Apps sections of list rows in one scrolling area.
     readonly property int sectionHeaderHeight: 24
     readonly property int sectionGap: 8
@@ -295,11 +305,13 @@ Singleton {
     readonly property int appSliderValueZone: 40
     readonly property int appIconSize: 20
 
+    // --- Display ---
     // Display: capsules and segmented rows; the schedule line under the night capsule.
     readonly property int scheduleLineHeight: 20
     readonly property int displayLabelWidth: 132
     readonly property int colorDotSize: 10
 
+    // --- Updates ---
     // Updates: count line, fragile rows, a scrolling list and three buttons.
     readonly property int updatesHeadHeight: 20
     readonly property int updatesHeadInset: 4
@@ -316,6 +328,7 @@ Singleton {
     readonly property int updatesActionsGap: 12
     readonly property int updatesButtonHeight: 36
 
+    // --- Music ---
     // Music: the orb sits orbGap left of the pill and glides to orbInset inside
     // the music bar. The bloom reaches orbBloom beyond the rim, and the hit area
     // is the whole bloom.
@@ -338,8 +351,6 @@ Singleton {
     readonly property int orbHitPadding: orbBloom
     // The prototype's 280 px bar, padding included: orb, gap, text, three controls.
     readonly property int musicBarWidth: 280
-    // The music bar opens by itself for a moment when the playing track changes.
-    readonly property bool nowPlayingPeek: true
     readonly property real musicBarRimWidth: 2.5
     // A rim light follows the audio level from rest to full: brighter and more opaque.
     readonly property real rimBrightnessRest: 0.85
@@ -361,6 +372,7 @@ Singleton {
     readonly property int marqueeTail: 12
     readonly property int marqueeFade: 10
 
+    // --- Player ---
     // Player: cover beside the text, a thin seekable track, controls, outputs.
     readonly property int playerCoverSize: 88
     readonly property int playerCoverRadius: 14
@@ -388,23 +400,18 @@ Singleton {
     readonly property int outputChipGap: 6
     readonly property int outputChipPadding: 10
     readonly property int outputChipMaxWidth: 150
-    // Seconds per arrow key on the progress track.
-    readonly property int playerSeekStep: 5
 
-    // Privacy dots right of the centre island, mirroring the orb. Fixed colours,
-    // not the wallpaper palette: they must read the same on every scheme.
+    // --- Privacy dots ---
+    // Right of the centre island, mirroring the orb; their colours are in Colors.
     readonly property int privacyDotSize: 6
     readonly property int privacyDotGap: 4
     readonly property int privacyDotOffset: 6
-    readonly property color privacyMicColor: "#FF9F0A"
-    readonly property color privacyCameraColor: "#30D158"
-    readonly property color privacyShareColor: "#0A84FF"
     // While the bar is hidden the dots sit in a mini island at the screen centre.
     readonly property int privacyPillHeight: 16
     readonly property int privacyPillPadding: 6
 
-    // Top-edge wave: a band of light along the top of every screen while music plays.
-    readonly property bool topWaveEnabled: true
+    // --- Top-edge wave ---
+    // A band of light along the top of every screen while music plays.
     readonly property int waveHeight: 48
     readonly property int waveAmplitude: 20
     readonly property real wavePeakOpacity: 0.5
@@ -417,6 +424,7 @@ Singleton {
     // close to the full peak opacity.
     readonly property var waveStrokes: [[58, 0.2], [41, 0.32], [29, 0.5], [24, 0.8]]
 
+    // --- Power ---
     // Power: one row of square buttons, the panel's padding all round.
     readonly property int powerPanelPadding: 10
     readonly property int powerButtonIconSize: 22
@@ -425,6 +433,7 @@ Singleton {
     readonly property real pressedScale: 0.97
     readonly property int powerPanelHeight: powerButtonSize + 2 * powerPanelPadding
 
+    // --- Theme and Wallpaper ---
     // Theme and Wallpaper: a strip of cards that scrolls sideways.
     readonly property int carouselGap: 8
     readonly property int carouselPadding: 3
@@ -439,17 +448,9 @@ Singleton {
     readonly property int schemeDotGap: 4
     readonly property int schemeDotsGap: 9
     readonly property int schemeLabelHeight: 14
-    readonly property int schemeCardHeight: schemeCardPadding + schemeDotSize + schemeDotsGap + schemeLabelHeight + 10
-    // Light and Dark: the bar calls DMS this long after the click, once the
-    // control has slid and the bar has recoloured, then asks Niri for a screen
-    // transition whose delay covers DMS's render and its templates (about
-    // 0.8 s from the call; measure with scripts/theme-switch-timings.sh).
-    readonly property bool themeCrossfade: true
-    readonly property int themeCrossfadeLead: 300
-    readonly property int themeCrossfadeDelay: 1400
-    // How long the blank toast that makes DMS paint stays up; the colour
-    // scheme is written after it, once DMS's own write has landed.
-    readonly property int themeNudgeDuration: 400
+    // Under the label; less than the padding above the dots.
+    readonly property int schemeCardBottomPadding: 10
+    readonly property int schemeCardHeight: schemeCardPadding + schemeDotSize + schemeDotsGap + schemeLabelHeight + schemeCardBottomPadding
     // Static disabled look of the Theme panel while DMS works.
     readonly property real busyOpacity: 0.5
     readonly property int themePanelHeight: 2 * panelPadding + segmentedHeight + tileGap + 2 * carouselPadding + schemeCardHeight
@@ -467,6 +468,7 @@ Singleton {
     // One wheel notch moves the strip this far.
     readonly property int carouselWheelStep: 120
 
+    // --- OSD ---
     // OSD: icon, a thin fill track and the value, in the collapsed island's height.
     readonly property int osdWidth: 200
     readonly property int osdPadding: 12
@@ -474,10 +476,17 @@ Singleton {
     readonly property int osdTrackHeight: 4
     readonly property int osdValueWidth: 34
 
+    // --- Hiding ---
     // The hide toggle slides the islands this far up, until their bottom edge is
     // hideClearance above the screen.
     readonly property int hideClearance: 15
     readonly property int hideDistance: islandTop + islandHeight + hideClearance
+
+    // --- Steps, not sizes ---
+    // One arrow key press or one wheel notch on a slider, in percent.
+    readonly property int sliderStep: 5
+    // Seconds per arrow key on the Player's progress track.
+    readonly property int playerSeekStep: 5
 
     Component.onCompleted: {
         if (!iconFontAvailable)

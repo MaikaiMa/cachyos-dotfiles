@@ -26,3 +26,10 @@
 
 # Stood in for the panels until step 7 of the own bar replaced the last ones (docs/shell.md).
 .config/quickshell/bar/panels/PlaceholderPanel.qml
+
+# Replaced in the structure cleanup of 2026-10-10 (docs/shell.md): IslandAnimation
+# became components/MorphAnimation.qml, NotificationActionPill became PillButton,
+# Theming became services/Appearance.qml.
+.config/quickshell/bar/components/IslandAnimation.qml
+.config/quickshell/bar/components/NotificationActionPill.qml
+.config/quickshell/bar/services/Theming.qml

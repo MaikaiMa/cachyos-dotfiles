@@ -3,7 +3,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import ".."
 
 // Light / Dark / Auto and the matugen scheme: the theme state DMS owns, read
@@ -11,6 +10,19 @@ import ".."
 // themselves arrive through Colors, from the file DMS writes.
 Singleton {
     id: root
+
+    // Light and Dark: the bar calls DMS this long after the click, once the
+    // control has slid and the bar has recoloured, then asks Niri for a screen
+    // transition whose delay covers DMS's render and its templates (about
+    // 0.8 s from the call; measure with scripts/theme-switch-timings.sh).
+    readonly property int crossfadeLead: 300
+    readonly property int crossfadeDelay: 1400
+    // How long the blank toast that makes DMS paint stays up; the colour
+    // scheme is written after it, once DMS's own write has landed.
+    readonly property int nudgeDuration: 400
+    // DMS renders for a few seconds after an action and may report the old
+    // state until then.
+    readonly property int settleDuration: 2500
 
     // dark or light: the mode in dms-colors.json, the optimistic choice while busy.
     property string mode: "dark"
@@ -66,9 +78,6 @@ Singleton {
     // A theme or scheme change is running or DMS is still rendering it (2.5 s
     // after the last call); the Theme panel keeps its own choice shown until then.
     property bool busy: false
-    // Waiting actions, each a list of steps run in order: a `dms ipc call`
-    // argument list, a `gsettings` command, "rerender", "transition" (the Niri
-    // screen transition) or "wait" (a pause of Theme.themeNudgeDuration).
     // GTK 3 applications, and Electron ones such as the Claude app, take light
     // or dark from the GTK theme name, not from the portal colour scheme
     // (checked 2026-10-10: with the scheme at prefer-light the Claude app
@@ -76,6 +85,10 @@ Singleton {
     // when its own GTK theming is applied, so the bar sets it.
     readonly property string gtkThemeLight: "adw-gtk3"
     readonly property string gtkThemeDark: "adw-gtk3-dark"
+    // Waiting actions, each a list of steps run in order: a `dms ipc call`
+    // argument list, a `gsettings` command, "rerender" (Wallpapers.rerender),
+    // "transition" (the Niri screen transition) or "wait" (a pause of
+    // nudgeDuration).
     property var queue: []
     // light, dark or auto while that choice is queued or settling.
     property string pendingMode: ""
@@ -83,17 +96,8 @@ Singleton {
     // A poll answered while no action is pending.
     signal reported
 
-    // Light and Dark call `dms ipc call theme light|dark`, which switches at
-    // once and turns smart mode off. Not the desktop portal: DMS 1.6.2 polls
-    // the portal colour scheme about every 10 s instead of listening, so a
-    // switch through gsettings landed 0 to 10 s later, and a second click in
-    // that window was applied as the earlier value and written back to
-    // gsettings, reverting every application (journal, 2026-10-10). The IPC
-    // starts DMS's own Niri screen transition with a 0 ms delay, which would
-    // fade before the render is done; Niri replaces a pending transition on
-    // the next request and captures the frozen frame as the new start, so the
-    // bar requests a second one right after the call, with a delay that
-    // covers DMS's render (see crossfade in docs/shell.md).
+    // Through the IPC, not the portal, with a second screen transition: why,
+    // see the Theme panel in docs/shell.md.
     function setLight() {
         setMode("light");
     }
@@ -104,7 +108,7 @@ Singleton {
 
     function setMode(wanted: string) {
         if (busy && pendingMode === wanted) {
-            console.info("Theming: " + wanted + " is already pending, ignored");
+            console.info("Appearance: " + wanted + " is already pending, ignored");
             return;
         }
         busy = true;
@@ -118,7 +122,7 @@ Singleton {
 
     function setAuto() {
         if (busy && pendingMode === "auto") {
-            console.info("Theming: auto is already pending, ignored");
+            console.info("Appearance: auto is already pending, ignored");
             return;
         }
         pendingMode = "auto";
@@ -146,7 +150,7 @@ Singleton {
         queue = queue.concat([steps]);
         busy = true;
         settle.stop();
-        if (!runner.running)
+        if (!runner.running && !pause.running && !internal.rerendering)
             runNext();
     }
 
@@ -158,28 +162,32 @@ Singleton {
         const steps = queue[0];
         const step = steps[0];
         queue = steps.length > 1 ? [steps.slice(1)].concat(queue.slice(1)) : queue.slice(1);
-        // The re-render step reads the wallpaper when it runs, not when it was queued.
         if (step === "wait") {
             pause.restart();
             return;
         }
-        if (step === "rerender")
-            runner.command = ["sh", "-c", "dms ipc call wallpaper set \"$(dms ipc call wallpaper get)\""];
-        else if (step === "transition")
-            runner.command = ["niri", "msg", "action", "do-screen-transition", "--delay-ms", String(Theme.themeCrossfadeDelay)];
+        // The re-render reads the wallpaper when it runs, not when it was queued.
+        if (step === "rerender") {
+            console.info("Appearance: theme call: wallpaper rerender");
+            internal.rerendering = true;
+            Wallpapers.rerender(Shell.resolveScreen(""));
+            return;
+        }
+        if (step === "transition")
+            runner.command = ["niri", "msg", "action", "do-screen-transition", "--delay-ms", String(root.crossfadeDelay)];
         else if (step[0] === "gsettings")
             runner.command = step;
         else
             runner.command = ["dms", "ipc", "call"].concat(step);
-        console.info("Theming: theme call: " + (step === "rerender" ? "dms ipc call wallpaper set (dms ipc call wallpaper get)" : runner.command.join(" ")));
-        runner.running = true;
+        console.info("Appearance: theme call: " + runner.command.join(" "));
+        runner.run();
     }
 
     // Smart mode and the scheme; the mode needs no poll, Colors reads it from
     // the file DMS rewrites on every switch.
     function refresh() {
-        schemeStatus.running = true;
-        smartStatus.running = true;
+        schemeStatus.run();
+        smartStatus.run();
     }
 
     Component.onCompleted: refresh()
@@ -201,11 +209,11 @@ Singleton {
 
         property string wanted: "dark"
 
-        interval: Theme.themeCrossfadeLead
+        interval: root.crossfadeLead
         onTriggered: {
             const light = wanted === "light";
             const steps = [["theme", wanted]];
-            if (Theme.themeCrossfade && !Motion.reduceMotion)
+            if (Settings.crossfade && !Motion.reduceMotion)
                 steps.push("transition");
             // DMS 1.6.2 applies the mode through two 100 ms QML timers that
             // only advance while DMS paints a frame, and an idle DMS without
@@ -228,22 +236,34 @@ Singleton {
     Timer {
         id: pause
 
-        interval: Theme.themeNudgeDuration
+        interval: root.nudgeDuration
         onTriggered: root.runNext()
     }
 
-    Process {
+    QtObject {
+        id: internal
+
+        property bool rerendering: false
+    }
+
+    Connections {
+        target: Wallpapers
+
+        function onRerendered() {
+            if (!internal.rerendering)
+                return;
+            internal.rerendering = false;
+            root.runNext();
+        }
+    }
+
+    Command {
         id: runner
 
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.startsWith("ERROR") || text.includes("FAILURE") || text.includes("INVALID"))
-                    console.warn("Theming: " + runner.command.join(" ") + ": " + text.trim());
-            }
-        }
-        onRunningChanged: {
-            if (!running)
-                Qt.callLater(root.runNext);
+        onFinished: (code, output) => {
+            if (code !== 0 || output.startsWith("ERROR") || output.includes("FAILURE") || output.includes("INVALID"))
+                console.warn("Appearance: " + runner.command.join(" ") + " (" + code + "): " + output.trim());
+            Qt.callLater(root.runNext);
         }
     }
 
@@ -252,7 +272,7 @@ Singleton {
     Timer {
         id: settle
 
-        interval: 2500
+        interval: root.settleDuration
         onTriggered: {
             root.busy = false;
             root.pendingMode = "";
@@ -261,37 +281,33 @@ Singleton {
     }
 
     // JSON: "scheme-tonal-spot".
-    Process {
+    Command {
         id: schemeStatus
 
         command: ["dms", "ipc", "call", "settings", "get", "matugenScheme"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (root.busy)
-                    return;
-                try {
-                    const answer = JSON.parse(text);
-                    if (typeof answer === "string" && answer.startsWith("scheme-"))
-                        root.scheme = answer;
-                } catch (error) {
-                    console.warn("Theming: unexpected matugenScheme answer: " + text.trim());
-                }
+        onFinished: (code, output) => {
+            if (root.busy)
+                return;
+            try {
+                const answer = JSON.parse(output);
+                if (typeof answer === "string" && answer.startsWith("scheme-"))
+                    root.scheme = answer;
+            } catch (error) {
+                console.warn("Appearance: unexpected matugenScheme answer (" + code + "): " + output.trim());
             }
         }
     }
 
     // JSON: true or false.
-    Process {
+    Command {
         id: smartStatus
 
         command: ["dms", "ipc", "call", "settings", "get", "matugenSmartMode"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (root.busy)
-                    return;
-                root.smartMode = text.trim() === "true";
-                root.reported();
-            }
+        onFinished: (code, output) => {
+            if (root.busy)
+                return;
+            root.smartMode = output.trim() === "true";
+            root.reported();
         }
     }
 }

@@ -9,7 +9,8 @@ import "../services"
 // the night-light switch in the control row, then the night temperature with
 // a read-only schedule line, brightness, the keyboard backlight (only while
 // the cover is attached) and the rear window light with the theme colour it
-// follows. Values live in `Display`, `Brightness` and `Dms`.
+// follows. Values live in `Display` and `Brightness`; both read themselves
+// while the panel is open.
 Appear {
     id: panel
 
@@ -20,13 +21,6 @@ Appear {
     implicitWidth: Theme.panelWidths.display
     implicitHeight: 2 * Theme.panelPadding + Theme.controlRowHeight + Theme.gap + Theme.sliderHeight + Theme.scheduleLineHeight + Theme.sliderGap + Theme.sliderHeight + (keyboardShown ? Theme.sliderGap + Theme.sliderHeight : 0) + (rearShown ? Theme.sliderGap + Theme.sliderHeight : 0)
 
-    // The DMS settings change these behind the bar's back; Brightness reads
-    // itself when the panel opens.
-    onShownChanged: {
-        if (shown)
-            Dms.refresh();
-    }
-
     PanelControlRow {
         id: controls
 
@@ -34,10 +28,10 @@ Appear {
         y: Theme.panelPadding
         width: panel.width - 2 * Theme.panelPadding
         switchName: "Night light"
-        checked: Dms.nightLight
-        stateText: Dms.nightLight ? "On" + (Display.nightTemperature > 0 ? " · " + Display.nightTemperature + " K" : "") : "Off"
+        checked: Display.nightLight
+        stateText: Display.nightLight ? "On" + (Display.nightTemperature > 0 ? " · " + Display.nightTemperature + " K" : "") : "Off"
         actionLabel: "Open night light settings"
-        onToggled: Dms.toggleNightLight()
+        onToggled: Display.toggleNightLight()
         // The schedule can only be changed there; the window needs the keyboard.
         onActionTriggered: {
             Dms.openSettingsTab("display_gamma");
@@ -57,14 +51,14 @@ Appear {
             width: parent.width
             label: "Night light temperature"
             available: Display.nightTemperature > 0
-            muted: !Dms.nightLight
+            muted: !Display.nightLight
             value: Display.nightFraction(Display.nightTemperature)
             snap: 100 * Display.nightStep / (Display.nightMaximum - Display.nightMinimum)
             stepSize: snap
             valueText: Display.nightKelvin(nightSlider.shownValue) + " K"
             iconName: "nightlight"
             onMoved: target => Display.setNightTemperature(Display.nightKelvin(target))
-            onIconClicked: Dms.toggleNightLight()
+            onIconClicked: Display.toggleNightLight()
         }
 
         Label {

@@ -11,14 +11,19 @@ Singleton {
     // Set by Shell while the Home panel is open.
     property bool active: false
 
+    readonly property int sampleInterval: 2000
+
     // 0..1 over the last sample interval.
     property real cpu: 0
     // °C from k10temp (Tctl); NaN when no k10temp hwmon exists.
-    property real temp: NaN
+    property real temperature: NaN
+    // The temperature bar runs from empty at 30 °C to full at 95 °C.
+    readonly property real temperatureMin: 30
+    readonly property real temperatureMax: 95
+    // 0..1 on that scale; 0 without a reading.
+    readonly property real temperatureLevel: isNaN(temperature) ? 0 : Math.max(0, Math.min(1, (temperature - temperatureMin) / (temperatureMax - temperatureMin)))
     // 0..1 of MemTotal; used = total - available.
     property real memory: 0
-    property real memoryUsedGiB: 0
-    property real memoryTotalGiB: 0
 
     // hwmon numbers change between boots, so the directory is found by name.
     property string tempPath: ""
@@ -50,8 +55,6 @@ Singleton {
         if (!(total > 0) || isNaN(available))
             return;
         memory = (total - available) / total;
-        memoryUsedGiB = (total - available) / 1048576;
-        memoryTotalGiB = total / 1048576;
     }
 
     onActiveChanged: {
@@ -62,7 +65,7 @@ Singleton {
     }
 
     Timer {
-        interval: 2000
+        interval: root.sampleInterval
         repeat: true
         running: root.active
         onTriggered: root.sample()
@@ -89,19 +92,17 @@ Singleton {
 
         path: root.tempPath === "" ? "" : root.tempPath + "/temp1_input"
         printErrors: false
-        onLoaded: root.temp = Number(text().trim()) / 1000
+        onLoaded: root.temperature = Number(text().trim()) / 1000
     }
 
-    Process {
+    Command {
         command: ["sh", "-c", "for name in /sys/class/hwmon/*/name; do [ \"$(cat \"$name\")\" = k10temp ] && { dirname \"$name\"; exit 0; }; done; exit 1"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: root.tempPath = text.trim()
-        }
-        // QProcess::ExitStatus is not exposed to qmllint.
-        onExited: code => { // qmllint disable signal-handler-parameters
-            if (code !== 0)
+        onFinished: (code, output) => {
+            if (code === 0)
+                root.tempPath = output.trim();
+            else
                 console.warn("System: no k10temp hwmon; CPU temperature unavailable");
         }
+        Component.onCompleted: run()
     }
 }

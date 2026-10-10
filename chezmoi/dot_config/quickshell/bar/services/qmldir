@@ -7,7 +7,7 @@ singleton Display 1.0 Display.qml
 singleton Network 1.0 Network.qml
 singleton Bluetooth 1.0 Bluetooth.qml
 singleton Dms 1.0 Dms.qml
-singleton Theming 1.0 Theming.qml
+singleton Appearance 1.0 Appearance.qml
 singleton Notifications 1.0 Notifications.qml
 singleton Music 1.0 Music.qml
 singleton Cava 1.0 Cava.qml
@@ -21,3 +21,8 @@ singleton Tablet 1.0 Tablet.qml
 singleton Wallpapers 1.0 Wallpapers.qml
 singleton Settings 1.0 Settings.qml
 singleton Frames 1.0 Frames.qml
+singleton Paths 1.0 Paths.qml
+Command 1.0 Command.qml
+CommandReader 1.0 CommandReader.qml
+CommandWriter 1.0 CommandWriter.qml
+LineWatcher 1.0 LineWatcher.qml

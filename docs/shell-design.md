@@ -683,7 +683,8 @@ Material keys of that file.
 
 Size and position animate; opacity only supports them. No bounces larger
 than 2 px. Everything respects a global "reduce motion" switch that drops
-durations to 0.
+durations to 0 (`quickshell ipc -c bar call bar reduceMotion on`, kept in the
+bar's settings).
 
 ## Open items
 

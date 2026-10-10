@@ -9,14 +9,16 @@ chezmoi deploys this directory to `~/.config/quickshell/bar/`;
 ```text
 shell.qml        entry point: per screen the bar window (islands, mask, blur,
                  keyboard focus, and the close area while a panel is open)
-Colors.qml       singleton: DMS palette from dms-colors.json, with dark fallbacks
-Theme.qml        singleton: bar, island and panel sizes, radii, fonts
-Motion.qml       singleton: durations and curves, reduce motion
+Colors.qml       singleton: DMS palette from dms-colors.json, with dark fallbacks; privacy dot colours
+Theme.qml        singleton: bar, island and panel sizes, radii, fonts, opacities; slider and seek steps
+Motion.qml       singleton: durations and curves; reduce motion follows Settings
 qmldir           registers the token singletons
-services/        singletons that own state or data; Shell.qml is the centre island state machine
-                 and the IPC targets `bar` and `notifications` the Niri shortcuts call;
-                 Notifications.qml is the notification daemon (ADR-0028); Theming.qml the
-                 Light / Dark / Auto and scheme switching through DMS, Dms.qml the rest of `dms ipc`
+services/        singletons that own state or data; Shell.qml is the centre island state machine,
+                 sets every service's `active` and holds the IPC targets `bar` and `notifications`;
+                 Notifications.qml is the notification daemon (ADR-0028); Appearance.qml the
+                 Light / Dark / Auto and scheme switching through DMS, Dms.qml the rest of `dms ipc`;
+                 Settings.qml the bar's runtime switches, Paths.qml the XDG paths; the types
+                 Command, CommandReader, CommandWriter and LineWatcher wrap external commands
 islands/         LeftIsland (workspaces, apps), CentreIsland (weather, clock, battery,
                  Detail, music orb and bar, privacy dots), RightIsland (tray, attention indicators,
                  or the notification stack in their place), NotificationBlobs (disc blobs below it)

@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "services"
 
 Singleton {
     id: root
@@ -10,40 +11,25 @@ Singleton {
     // Fallbacks are Material dark defaults, so the bar renders before DMS has themed anything.
     // Property names must not start with "on" + a capital: QML reads them as signal
     // handlers and refuses the declaration, which also aborts the file loader below.
-    property var scheme: ({})
-    readonly property bool dark: scheme.dark ?? true
+    readonly property bool dark: internal.scheme.dark ?? true
+    // The mode DMS last applied, from the file; unlike `dark` no preview moves it.
+    readonly property string mode: internal.file.mode === "light" ? "light" : "dark"
 
-    // Assigned by apply(), not bound, so each colour can glide to a new palette.
-    // Keys are the Material names in dms-colors.json; values are the fallbacks.
-    readonly property var keys: ({
-            primary: ["primary", "#d0bcff"],
-            primaryForeground: ["on_primary", "#381e72"],
-            primaryContainer: ["primary_container", "#4f378b"],
-            secondary: ["secondary", "#ccc2dc"],
-            tertiary: ["tertiary", "#efb8c8"],
-            surface: ["surface", "#141218"],
-            surfaceContainer: ["surface_container", "#211f26"],
-            surfaceContainerHigh: ["surface_container_high", "#2b2930"],
-            foreground: ["on_surface", "#e6e0e9"],
-            foregroundVariant: ["on_surface_variant", "#cac4d0"],
-            outline: ["outline", "#938f99"],
-            error: ["error", "#f2b8b5"],
-            shadow: ["shadow", "#000000"]
-        })
-
-    property color primary: "#d0bcff"
-    property color primaryForeground: "#381e72"
-    property color primaryContainer: "#4f378b"
-    property color secondary: "#ccc2dc"
-    property color tertiary: "#efb8c8"
-    property color surface: "#141218"
-    property color surfaceContainer: "#211f26"
-    property color surfaceContainerHigh: "#2b2930"
-    property color foreground: "#e6e0e9"
-    property color foregroundVariant: "#cac4d0"
-    property color outline: "#938f99"
-    property color error: "#f2b8b5"
-    property color shadow: "#000000"
+    // Each starts at its fallback and is then assigned by internal.apply(), not
+    // bound, so it can glide to a new palette.
+    property color primary: internal.keys.primary[1]
+    property color primaryForeground: internal.keys.primaryForeground[1]
+    property color primaryContainer: internal.keys.primaryContainer[1]
+    property color secondary: internal.keys.secondary[1]
+    property color tertiary: internal.keys.tertiary[1]
+    property color surface: internal.keys.surface[1]
+    property color surfaceContainer: internal.keys.surfaceContainer[1]
+    property color surfaceContainerHigh: internal.keys.surfaceContainerHigh[1]
+    property color foreground: internal.keys.foreground[1]
+    property color foregroundVariant: internal.keys.foregroundVariant[1]
+    property color outline: internal.keys.outline[1]
+    property color error: internal.keys.error[1]
+    property color shadow: internal.keys.shadow[1]
 
     // Interaction and state colours, derived from the palette with Theme's alphas.
     readonly property color hoverSurface: hovered(surfaceContainerHigh, false)
@@ -57,10 +43,22 @@ Singleton {
     readonly property color scrollHint: Qt.alpha(foreground, Theme.scrollHintOpacity)
     readonly property color islandSurface: Qt.alpha(surfaceContainer, Theme.islandOpacity)
 
+    // The privacy dots: fixed, not the palette, so they read the same on every scheme.
+    readonly property color privacyMic: "#FF9F0A"
+    readonly property color privacyCamera: "#30D158"
+    readonly property color privacyShare: "#0A84FF"
+
     // A surface under the pointer: tinted with the accent, or on the accent
     // itself with the accent's foreground.
     function hovered(base: color, onAccent: bool): color {
         return onAccent ? Qt.tint(base, Qt.alpha(primaryForeground, Theme.hoverTintOnAccent)) : Qt.tint(base, Qt.alpha(primary, Theme.hoverTint));
+    }
+
+    // Shows the other mode's colours from the loaded file at once, so the glide
+    // starts on the click while DMS renders; the next reload of the file wins.
+    function preview(mode: string) {
+        if (internal.file.colors && internal.file.colors[mode])
+            internal.select(mode);
     }
 
     Behavior on primary {
@@ -108,60 +106,76 @@ Singleton {
         easing.type: Easing.InOutQuad
     }
 
-    function apply() {
-        for (const name in keys)
-            root[name] = pick(keys[name][0], keys[name][1]);
-    }
+    QtObject {
+        id: internal
 
-    onSchemeChanged: apply()
+        // Keys are the Material names in dms-colors.json; values are the fallbacks.
+        readonly property var keys: ({
+                primary: ["primary", "#d0bcff"],
+                primaryForeground: ["on_primary", "#381e72"],
+                primaryContainer: ["primary_container", "#4f378b"],
+                secondary: ["secondary", "#ccc2dc"],
+                tertiary: ["tertiary", "#efb8c8"],
+                surface: ["surface", "#141218"],
+                surfaceContainer: ["surface_container", "#211f26"],
+                surfaceContainerHigh: ["surface_container_high", "#2b2930"],
+                foreground: ["on_surface", "#e6e0e9"],
+                foregroundVariant: ["on_surface_variant", "#cac4d0"],
+                outline: ["outline", "#938f99"],
+                error: ["error", "#f2b8b5"],
+                shadow: ["shadow", "#000000"]
+            })
+        // The shown mode's colours from the file, or nothing for the fallbacks.
+        property var scheme: ({})
+        // The last parsed file; it holds a colour set for both modes.
+        property var file: ({})
 
-    function pick(key: string, fallback: string): string {
-        const value = scheme.colors ? scheme.colors[key] : undefined;
-        return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
-    }
-
-    // The last parsed file; it holds a colour set for both modes.
-    property var file: ({})
-    // The mode DMS last applied, from the file; unlike `dark` no preview moves it.
-    readonly property string mode: file.mode === "light" ? "light" : "dark"
-
-    // A read can catch DMS mid-write; a palette once loaded stays until the
-    // next good read, the fallbacks are only for a file that never parsed.
-    function parse(text: string) {
-        let parsed;
-        try {
-            parsed = JSON.parse(text);
-            if (!parsed || typeof parsed !== "object")
-                throw new Error("not an object");
-        } catch (error) {
-            console.warn("Colors: cannot parse " + colorsFile.path + ": " + error);
-            if (!file.colors)
-                scheme = ({});
-            return;
+        function apply() {
+            for (const name in keys)
+                root[name] = pick(keys[name][0], keys[name][1]);
         }
-        file = parsed;
-        select(file.mode === "light" ? "light" : "dark");
-    }
 
-    function select(mode: string) {
-        const colors = file.colors ? file.colors[mode] : undefined;
-        scheme = colors ? { dark: mode === "dark", colors: colors } : ({});
-    }
+        onSchemeChanged: apply()
 
-    // Shows the other mode's colours from the loaded file at once, so the glide
-    // starts on the click while DMS renders; the next reload of the file wins.
-    function preview(mode: string) {
-        if (file.colors && file.colors[mode])
-            select(mode);
+        function pick(key: string, fallback: string): string {
+            const value = scheme.colors ? scheme.colors[key] : undefined;
+            return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+        }
+
+        // A read can catch DMS mid-write; a palette once loaded stays until the
+        // next good read, the fallbacks are only for a file that never parsed.
+        function parse(text: string) {
+            let parsed;
+            try {
+                parsed = JSON.parse(text);
+                if (!parsed || typeof parsed !== "object")
+                    throw new Error("not an object");
+            } catch (error) {
+                console.warn("Colors: cannot parse " + colorsFile.path + ": " + error);
+                if (!file.colors)
+                    scheme = ({});
+                return;
+            }
+            file = parsed;
+            select(file.mode === "light" ? "light" : "dark");
+        }
+
+        function select(mode: string) {
+            const colors = file.colors ? file.colors[mode] : undefined;
+            scheme = colors ? {
+                dark: mode === "dark",
+                colors: colors
+            } : ({});
+        }
     }
 
     FileView {
         id: colorsFile
 
-        path: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/DankMaterialShell/dms-colors.json"
+        path: Paths.dmsCache + "/dms-colors.json"
         watchChanges: true
         printErrors: false
-        onLoaded: root.parse(text())
+        onLoaded: internal.parse(text())
         onFileChanged: reload()
         // The watch needs an existing file; DMS writes it only after its first matugen run.
         onLoadFailed: retry.restart()

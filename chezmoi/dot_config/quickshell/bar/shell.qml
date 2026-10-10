@@ -62,7 +62,7 @@ ShellRoot {
                     right: true
                 }
                 implicitHeight: Theme.waveHeight
-                visible: Theme.topWaveEnabled && Settings.waveEnabled && Cava.waveOpacity > 0
+                visible: Settings.waveEnabled && Cava.waveOpacity > 0
                 exclusionMode: ExclusionMode.Ignore
                 color: "transparent"
                 WlrLayershell.layer: WlrLayer.Bottom

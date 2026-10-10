@@ -3,15 +3,14 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Pipewire
 
 // Default output and input volume from PipeWire, live and without polling. For
 // the Sound panel also the outputs and inputs with the name of their active
 // port ("Speakers", "Headphones"), which Quickshell does not expose, from
-// `pactl -f json` read at start, on node changes and on pactl's own change
-// events while the panel is open; the default input's level and the playback
-// streams grouped per application, both only while the panel is open.
+// `pactl -f json` read at start, on device changes and on pactl's own change
+// events while active; the default input's level and the playback streams
+// grouped per application, both only while active.
 Singleton {
     id: root
 
@@ -25,7 +24,8 @@ Singleton {
     readonly property real micVolume: source && source.audio ? source.audio.volume : 0
     readonly property bool micMuted: source && source.audio ? source.audio.muted : false
 
-    readonly property bool panelOpen: Shell.centreState === "sound"
+    // Set by Shell while the Sound panel is open.
+    property bool active: false
 
     readonly property var nodes: Pipewire.nodes.values ?? []
     // Hardware and virtual outputs and inputs, not application streams, in a
@@ -37,7 +37,7 @@ Singleton {
     readonly property var playbackStreams: nodes.filter(node => node.isStream && node.audio !== null && (node.type & PwNodeType.AudioOutStream) === PwNodeType.AudioOutStream && !isMonitor(node))
 
     // node name -> { label, portType } from pactl.
-    property var ports: ({})
+    readonly property var ports: Object.assign({}, internal.sinkPorts, internal.sourcePorts)
 
     // One entry per application: { key, name, icon, nodes }. Properties are only
     // bound while the tracker below holds the streams, that is while the panel is
@@ -62,10 +62,10 @@ Singleton {
         return groups.sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    // 0..1, the default input's peak on a -60..0 dB scale; 0 while the panel is closed.
+    // 0..1, the default input's peak on a -60..0 dB scale; 0 while not active.
     readonly property real micLevel: {
         const peak = peakMonitor.peak;
-        if (!panelOpen || !(peak > 0))
+        if (!active || !(peak > 0))
             return 0;
         return clamp((20 * Math.log10(peak) + 60) / 60);
     }
@@ -209,77 +209,73 @@ Singleton {
     }
 
     function readPorts() {
-        if (portReader.running)
-            portReader.pending = true;
-        else
-            portReader.running = true;
+        sinkPortReader.refresh();
+        sourcePortReader.refresh();
     }
 
     // pactl -f json list sinks / sources: name, active_port, ports[].description and type.
-    function parsePorts(sinksJson: string, sourcesJson: string) {
+    function parsePorts(json: string): var {
         const next = {};
-        for (const text of [sinksJson, sourcesJson]) {
-            let entries = [];
-            try {
-                entries = JSON.parse(text);
-            } catch (error) {
-                console.warn("Audio: cannot parse pactl output: " + error);
-                continue;
-            }
-            for (const entry of entries) {
-                const port = (entry.ports ?? []).find(candidate => candidate.name === entry.active_port);
-                if (port)
-                    next[entry.name] = {
-                        label: port.description ?? "",
-                        portType: port.type ?? ""
-                    };
-            }
+        let entries = [];
+        try {
+            entries = JSON.parse(json);
+        } catch (error) {
+            console.warn("Audio: cannot parse pactl output: " + error);
+            return next;
         }
-        ports = next;
+        for (const entry of entries) {
+            const port = (entry.ports ?? []).find(candidate => candidate.name === entry.active_port);
+            if (port)
+                next[entry.name] = {
+                    label: port.description ?? "",
+                    portType: port.type ?? ""
+                };
+        }
+        return next;
     }
 
     // Ports belong to sinks and sources; application streams come and go
     // without touching them, so only a change in the device set re-reads.
     readonly property string deviceNames: sinks.concat(sources).map(node => node.name).sort().join("\n")
 
-    Component.onCompleted: readPorts()
-    onPanelOpenChanged: {
-        if (panelOpen)
+    onActiveChanged: {
+        if (active)
             readPorts();
     }
     onDeviceNamesChanged: portDebounce.restart()
 
-    // Both lists in one run, separated by a line pactl never prints.
-    Process {
-        id: portReader
+    QtObject {
+        id: internal
 
-        property bool pending: false
+        property var sinkPorts: ({})
+        property var sourcePorts: ({})
+    }
 
-        command: ["sh", "-c", "pactl -f json list sinks && printf '\\n---ports---\\n' && pactl -f json list sources"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const parts = text.split("\n---ports---\n");
-                if (parts.length === 2)
-                    root.parsePorts(parts[0], parts[1]);
-            }
-        }
-        onRunningChanged: {
-            if (!running && pending) {
-                pending = false;
-                running = true;
-            }
-        }
+    // Both read at start.
+    CommandReader {
+        id: sinkPortReader
+
+        name: "Audio"
+        command: ["pactl", "-f", "json", "list", "sinks"]
+        onRead: text => internal.sinkPorts = root.parsePorts(text)
+    }
+
+    CommandReader {
+        id: sourcePortReader
+
+        name: "Audio"
+        command: ["pactl", "-f", "json", "list", "sources"]
+        onRead: text => internal.sourcePorts = root.parsePorts(text)
     }
 
     // A jack plug moves the port without touching the nodes; pactl reports it.
-    Process {
+    LineWatcher {
+        name: "Audio"
         command: ["pactl", "subscribe"]
-        running: root.panelOpen
-        stdout: SplitParser {
-            onRead: data => {
-                if (/on (sink|source|card) /.test(data))
-                    portDebounce.restart();
-            }
+        active: root.active
+        onLine: text => {
+            if (/on (sink|source|card) /.test(text))
+                portDebounce.restart();
         }
     }
 
@@ -294,12 +290,12 @@ Singleton {
         id: peakMonitor
 
         node: root.source
-        enabled: root.panelOpen && root.source !== null
+        enabled: root.active && root.source !== null
     }
 
     // Volume, mute and properties of a node are only bound while a tracker holds
-    // it: the defaults always, the playback streams while the panel is open.
+    // it: the defaults always, the playback streams while active.
     PwObjectTracker {
-        objects: [root.sink, root.source].filter(node => node !== null).concat(root.panelOpen ? root.playbackStreams : [])
+        objects: [root.sink, root.source].filter(node => node !== null).concat(root.active ? root.playbackStreams : [])
     }
 }

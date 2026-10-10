@@ -11,7 +11,7 @@ import "../services"
 Appear {
     id: panel
 
-    readonly property int appliedIndex: Theming.schemes.findIndex(scheme => scheme.value === Theming.scheme)
+    readonly property int appliedIndex: Appearance.schemes.findIndex(scheme => scheme.value === Appearance.scheme)
 
     implicitWidth: Theme.panelWidths.theme
     implicitHeight: Theme.themePanelHeight
@@ -19,7 +19,7 @@ Appear {
     onShownChanged: {
         if (!shown)
             return;
-        Theming.refresh();
+        Appearance.refresh();
         schemes.open(Math.max(0, appliedIndex));
         Qt.callLater(() => {
             if (panel.shown)
@@ -64,35 +64,35 @@ Appear {
         width: Theme.themeModeWidth
         label: "Theme mode"
         fontSize: Theme.themeModeFontSize
-        interactive: !Theming.busy
+        interactive: !Appearance.busy
         // Static disabled look while DMS works: nothing may animate under the
         // frozen frame of the screen crossfade.
-        opacity: Theming.busy ? Theme.busyOpacity : 1
+        opacity: Appearance.busy ? Theme.busyOpacity : 1
         model: ["Light", "Dark", "Auto"]
         // The choice shows at once and the accent slides; DMS reports the new
         // mode only after it has rendered, so the service value takes over
         // again once its theme action has settled. A change of currentIndex
         // never emits selected: only a click or a key does.
         property int chosen: -1
-        readonly property int reported: Theming.smartMode ? 2 : Theming.mode === "light" ? 0 : 1
+        readonly property int reported: Appearance.smartMode ? 2 : Appearance.mode === "light" ? 0 : 1
 
         currentIndex: chosen >= 0 ? chosen : reported
         onSelected: index => {
             chosen = index;
             if (index === 0) {
                 Colors.preview("light");
-                Theming.setLight();
+                Appearance.setLight();
             } else if (index === 1) {
                 Colors.preview("dark");
-                Theming.setDark();
+                Appearance.setDark();
             } else {
-                Theming.setAuto();
+                Appearance.setAuto();
             }
         }
     }
 
     Connections {
-        target: Theming
+        target: Appearance
 
         // Once DMS has settled and answered, its value is adopted once.
         function onReported() {
@@ -104,17 +104,17 @@ Appear {
     Carousel {
         id: schemes
 
-        opacity: Theming.busy ? Theme.busyOpacity : 1
+        opacity: Appearance.busy ? Theme.busyOpacity : 1
 
         objectName: "schemes"
         y: mode.y + mode.height + Theme.tileGap
         width: panel.width
         height: Theme.schemeCardHeight + 2 * Theme.carouselPadding
         label: "Colour schemes"
-        model: Theming.schemes
+        model: Appearance.schemes
         onActivated: index => {
-            if (!Theming.busy)
-                Theming.setScheme(Theming.schemes[index].value);
+            if (!Appearance.busy)
+                Appearance.setScheme(Appearance.schemes[index].value);
         }
 
         delegate: Item {
@@ -199,7 +199,7 @@ Appear {
                 id: pointer
 
                 anchors.fill: parent
-                enabled: !Theming.busy
+                enabled: !Appearance.busy
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {

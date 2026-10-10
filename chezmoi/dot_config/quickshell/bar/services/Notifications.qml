@@ -11,14 +11,17 @@ import ".."
 // server holds the live notifications; the history, the seen marks and do not
 // disturb live in the bar's own state file. A notification lights its app's
 // workspace pill until it is ten minutes old, dismissed, or seen: its workspace
-// kept focus for Motion.alertClearDelay. The peek stack lives here as well, one
+// kept focus for alertClearDelay. The peek stack lives here as well, one
 // for all screens, shown on the screen that had focus when it started.
 Singleton {
     id: root
 
-    readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/dotfiles-bar"
     readonly property int historyLimit: 200
     readonly property real historyAge: 7 * 24 * 60 * 60 * 1000
+    // The history is written at most this often.
+    readonly property int saveInterval: 1000
+    // A workspace's notification colour clears this long after it gains focus.
+    readonly property int alertClearDelay: 3000
 
     // Newest first: {id, serverId, appName, summary, body, appIcon, image,
     // desktopEntry, urgency, timestamp (ms), seen}. Transient notifications are
@@ -306,7 +309,7 @@ Singleton {
     // A transient that does not peek now never will, so it ends here; after
     // the server has taken it, not inside its own arrival.
     function offerPeek(id: string, notification: var) {
-        const wanted = Theme.notificationPeek && (!doNotDisturb || notification.urgency === NotificationUrgency.Critical);
+        const wanted = Settings.notificationPeek && (!doNotDisturb || notification.urgency === NotificationUrgency.Critical);
         if (wanted && !peekDeferred && !peekBlocked) {
             pushPeek(id);
             return;
@@ -673,7 +676,7 @@ Singleton {
     Timer {
         id: saveTimer
 
-        interval: Motion.notificationSaveInterval
+        interval: root.saveInterval
         onTriggered: {
             if (root.loaded)
                 root.writeState();
@@ -692,21 +695,16 @@ Singleton {
     Timer {
         id: alertClear
 
-        interval: Motion.alertClearDelay
+        interval: root.alertClearDelay
         onTriggered: root.markSeen(root.focusedAlertIds)
     }
 
     FileView {
         id: stateFile
 
-        path: root.stateDir + "/notifications.json"
+        path: Paths.barState + "/notifications.json"
         printErrors: false
         onLoaded: root.parseState(text())
         onLoadFailed: root.finishLoading()
-    }
-
-    Process {
-        command: ["mkdir", "-p", root.stateDir]
-        running: true
     }
 }

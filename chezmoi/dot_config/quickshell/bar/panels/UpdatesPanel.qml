@@ -21,10 +21,12 @@ Appear {
     readonly property real listSectionHeight: otherItems.length > 0 ? Theme.updatesSectionGap + listHeight : 0
 
     readonly property string headline: {
+        if (Updates.checking && !Updates.ready)
+            return "Checking for updates…";
         if (!Updates.ready)
-            return Updates.checking ? "Checking for updates…" : "Not checked yet";
+            return Updates.error !== "" ? Updates.error : "Not checked yet";
         const count = Updates.count === 0 ? "Up to date" : Updates.count === 1 ? "1 update" : Updates.count + " updates";
-        return count + " · checked " + relativeTime(Updates.lastChecked, now);
+        return count + " · checked " + relativeTime(Updates.lastChecked, now) + (Updates.error !== "" ? " · last check failed" : "");
     }
 
     implicitWidth: Theme.panelWidths.updates

@@ -5,46 +5,65 @@ import Quickshell
 import Quickshell.Io
 
 // The bar's own runtime switches, kept across restarts in
-// $XDG_STATE_HOME/dotfiles-bar/settings.json. A missing or unreadable file
-// leaves the defaults.
+// $XDG_STATE_HOME/dotfiles-bar/settings.json. A missing file leaves the
+// defaults; a hand edit is picked up while the bar runs.
 Singleton {
     id: root
 
-    readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/dotfiles-bar"
-
-    property bool waveEnabled: true
+    // The top-edge wave.
+    readonly property bool waveEnabled: stored.waveEnabled
+    // Every duration 0 and no continuous animation (Motion).
+    readonly property bool reduceMotion: stored.reduceMotion
+    // Notifications peek in the right island.
+    readonly property bool notificationPeek: stored.notificationPeek
+    // The music bar opens for a moment when the playing track changes.
+    readonly property bool nowPlayingPeek: stored.nowPlayingPeek
+    // Light and Dark end in one screen-wide crossfade (Appearance).
+    readonly property bool crossfade: stored.crossfade
+    // Weather's location when geoclue has never answered. The default is a
+    // placeholder (Amsterdam); set your own in the file.
+    readonly property real weatherLatitude: stored.weatherLatitude
+    readonly property real weatherLongitude: stored.weatherLongitude
 
     function setWaveEnabled(enabled: bool) {
-        waveEnabled = enabled;
-        save();
+        stored.waveEnabled = enabled;
     }
 
-    function parse(text: string) {
-        try {
-            const stored = JSON.parse(text);
-            if (typeof stored.waveEnabled === "boolean")
-                waveEnabled = stored.waveEnabled;
-        } catch (error) {
-            console.warn("Settings: ignoring unreadable " + file.path + ": " + error);
-        }
+    function setReduceMotion(enabled: bool) {
+        stored.reduceMotion = enabled;
     }
 
-    function save() {
-        file.setText(JSON.stringify({
-            waveEnabled: waveEnabled
-        }, null, 2) + "\n");
+    function setNotificationPeek(enabled: bool) {
+        stored.notificationPeek = enabled;
+    }
+
+    function setNowPlayingPeek(enabled: bool) {
+        stored.nowPlayingPeek = enabled;
+    }
+
+    function setCrossfade(enabled: bool) {
+        stored.crossfade = enabled;
+    }
+
+    JsonAdapter {
+        id: stored
+
+        property bool waveEnabled: true
+        property bool reduceMotion: false
+        property bool notificationPeek: true
+        property bool nowPlayingPeek: true
+        property bool crossfade: true
+        property real weatherLatitude: 52.37
+        property real weatherLongitude: 4.90
     }
 
     FileView {
-        id: file
-
-        path: root.stateDir + "/settings.json"
+        path: Paths.barState + "/settings.json"
+        watchChanges: true
         printErrors: false
-        onLoaded: root.parse(text())
-    }
-
-    Process {
-        command: ["mkdir", "-p", root.stateDir]
-        running: true
+        // The property's type is not in the module's type info.
+        adapter: stored // qmllint disable missing-type
+        onFileChanged: reload()
+        onAdapterUpdated: writeAdapter()
     }
 }

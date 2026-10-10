@@ -10,8 +10,8 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string binDir: Quickshell.env("HOME") + "/.local/bin"
-    readonly property string lockFile: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/dotfiles/rotation-lock"
+    readonly property string binDir: Paths.localBin
+    readonly property string lockFile: Paths.state + "/dotfiles/rotation-lock"
 
     property bool detached: false
     property bool keyboardVisible: false
@@ -22,7 +22,7 @@ Singleton {
     }
 
     function toggleRotationLock() {
-        lockToggle.running = true;
+        lockToggle.run();
     }
 
     // The lock can also change from a terminal; the Settings panel re-reads it on open.
@@ -38,6 +38,7 @@ Singleton {
 
     // "tablet" or "laptop", now and on every change.
     LineWatcher {
+        name: "Tablet"
         command: [root.binDir + "/tablet-mode", "watch"]
         active: true
         onLine: text => root.detached = text === "tablet"
@@ -45,6 +46,7 @@ Singleton {
 
     // "visible" or "hidden"; only needed while the keyboard button shows.
     LineWatcher {
+        name: "Tablet"
         command: [root.binDir + "/osk", "watch"]
         active: root.detached
         onLine: text => root.keyboardVisible = text === "visible"
@@ -54,14 +56,11 @@ Singleton {
         }
     }
 
-    Process {
+    Command {
         id: lockToggle
 
         command: [root.binDir + "/auto-rotate", "lock", "toggle"]
-        onRunningChanged: {
-            if (!running)
-                lockState.reload();
-        }
+        onFinished: lockState.reload()
     }
 
     // "locked" or "unlocked"; a missing file is unlocked.
@@ -74,37 +73,5 @@ Singleton {
         onFileChanged: reload()
         onLoaded: root.rotationLocked = text().trim() === "locked"
         onLoadFailed: root.rotationLocked = false
-    }
-
-    // A long-running helper that prints one state per line. The watchers only
-    // exit when their monitor fails; retry instead of freezing the state.
-    component LineWatcher: Scope {
-        id: watcher
-
-        property var command: []
-        property bool active: false
-
-        signal line(string text)
-
-        Process {
-            id: process
-
-            command: watcher.command
-            running: watcher.active
-            stdout: SplitParser {
-                onRead: data => watcher.line(data.trim())
-            }
-            onRunningChanged: {
-                if (!running && watcher.active)
-                    restart.start();
-            }
-        }
-
-        Timer {
-            id: restart
-
-            interval: 5000
-            onTriggered: process.running = watcher.active
-        }
     }
 }

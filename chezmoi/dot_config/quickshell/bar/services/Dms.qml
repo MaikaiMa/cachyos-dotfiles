@@ -5,32 +5,33 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The actions DMS owns, through its public `dms ipc call` interface only:
-// night light, idle inhibit and its settings window. Theme mode and scheme
-// are in Theming. Statuses are polled every 10 s and right after each change.
+// The actions DMS owns, through its public `dms ipc call` interface: idle
+// inhibit (polled every 10 s, the right island shows it), its settings window
+// and the calls of other services (night light in Display; theme mode and
+// scheme in Appearance). One read-only internal dependency: `terminal` comes
+// from DMS's session.json, which is not a public interface; without it the
+// terminal fallbacks apply.
 Singleton {
     id: root
 
-    property bool nightLight: false
+    readonly property int pollInterval: 10000
+    // DMS answers a call before it has applied some changes.
+    readonly property int settleDelay: 400
+
     // Idle inhibit.
     property bool caffeine: false
     // DMS's terminalOverride session key (ghostty here); empty when unset.
     property string terminal: ""
 
+    // settleDelay after the last call; the services that called re-read then.
+    signal settled
+
     function refresh() {
-        nightStatus.running = true;
-        caffeineStatus.running = true;
+        caffeineStatus.refresh();
     }
 
-    function call(args: var) {
-        const process = callComponent.createObject(root, {
-            command: ["dms", "ipc", "call"].concat(args)
-        });
-        process.running = true;
-    }
-
-    function toggleNightLight() {
-        call(["night", "toggle"]);
+    function call(args: list<string>) {
+        run(["dms", "ipc", "call"].concat(args));
     }
 
     function toggleCaffeine() {
@@ -41,51 +42,43 @@ Singleton {
     // the helper: with the DMS bar off, DMS never maps its settings window on
     // its own (docs/dms.md, Known limits).
     function openSettingsTab(tab: string) {
-        runSettingsHelper([tab]);
+        run([Paths.localBin + "/dms-settings", tab]);
     }
 
-    function runSettingsHelper(args: var) {
-        const process = callComponent.createObject(root, {
-            command: [Quickshell.env("HOME") + "/.local/bin/dms-settings"].concat(args)
-        });
-        process.running = true;
+    // One Command per call: calls are independent and none may be dropped.
+    function run(argv: list<string>) {
+        const command = callComponent.createObject(root, {
+            command: argv
+        }) as Command;
+        command.run();
     }
 
-    Component.onCompleted: refresh()
+    onSettled: refresh()
 
-    Timer {
-        interval: 10000
-        repeat: true
-        running: true
-        onTriggered: root.refresh()
-    }
-
-    // DMS answers before it has applied some changes; give it a moment.
     Timer {
         id: afterCall
 
-        interval: 400
-        onTriggered: root.refresh()
+        interval: root.settleDelay
+        onTriggered: root.settled()
     }
 
     Component {
         id: callComponent
 
-        Process {
-            id: ipcCall
+        Command {
+            id: dmsCall
 
-            // QProcess::ExitStatus is not exposed to qmllint.
-            onExited: code => { // qmllint disable signal-handler-parameters
+            onFinished: code => {
                 if (code !== 0)
-                    console.warn("Dms: " + ipcCall.command.join(" ") + " exited with " + code);
+                    console.warn("Dms: " + dmsCall.command.join(" ") + " exited with " + code);
                 afterCall.restart();
-                ipcCall.destroy();
+                dmsCall.destroy();
             }
         }
     }
 
     FileView {
-        path: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/DankMaterialShell/session.json"
+        path: Paths.dmsState + "/session.json"
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
@@ -99,23 +92,13 @@ Singleton {
         }
     }
 
-    // First line: "Night mode: enabled" or "Night mode: disabled".
-    Process {
-        id: nightStatus
-
-        command: ["dms", "ipc", "call", "night", "status"]
-        stdout: StdioCollector {
-            onStreamFinished: root.nightLight = /^Night mode: enabled/m.test(text)
-        }
-    }
-
     // "Idle inhibit is enabled" or "... disabled".
-    Process {
+    CommandReader {
         id: caffeineStatus
 
+        name: "Dms"
         command: ["dms", "ipc", "call", "inhibit", "status"]
-        stdout: StdioCollector {
-            onStreamFinished: root.caffeine = /is enabled/.test(text)
-        }
+        interval: root.pollInterval
+        onRead: text => root.caffeine = /is enabled/.test(text)
     }
 }

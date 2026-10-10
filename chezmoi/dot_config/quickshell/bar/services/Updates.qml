@@ -10,8 +10,9 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string helper: Quickshell.env("HOME") + "/.local/bin/system-update"
-    readonly property string reportPath: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/system-update/last-report.md"
+    readonly property int checkInterval: 30 * 60 * 1000
+    readonly property string helper: Paths.localBin + "/system-update"
+    readonly property string reportPath: Paths.state + "/system-update/last-report.md"
     property bool reportAvailable: false
     readonly property bool upgrading: upgrade.running
 
@@ -22,29 +23,19 @@ Singleton {
     readonly property bool checking: pending.running
     property bool ready: false
     property date lastChecked
-    // Exit code and output arrive as separate signals in no guaranteed order.
-    property var exitCode: null
-    property var outputText: null
+    // Why the last check failed; empty after a successful one.
+    property string error: ""
 
     function refresh() {
-        pending.running = true;
+        pending.run();
         report.reload();
     }
 
-    function quoted(text: string): string {
-        return "'" + text.replace(/'/g, "'\\''") + "'";
-    }
-
-    // Runs the full helper with its fragile prompt in a terminal: DMS's
-    // terminalOverride, else xdg-terminal-exec, else Ghostty. Like DMS's own
-    // updater the window waits for Enter, so the summary stays readable.
+    // Runs the full helper with its fragile prompt in a terminal. Like DMS's
+    // own updater the window waits for Enter, so the summary stays readable.
     // Checks again once the terminal is closed.
     function upgradeAll() {
-        if (upgrade.running)
-            return;
-        const script = root.quoted(root.helper) + "; printf '\\nPress Enter to close. '; read -r _";
-        upgrade.command = ["sh", "-c", "if [ -n \"$1\" ]; then exec \"$1\" -e sh -c \"$2\"; elif command -v xdg-terminal-exec >/dev/null 2>&1; then exec xdg-terminal-exec sh -c \"$2\"; else exec ghostty -e sh -c \"$2\"; fi", "sh", Dms.terminal, script];
-        upgrade.running = true;
+        upgrade.run();
     }
 
     function openReport() {
@@ -72,23 +63,11 @@ Singleton {
     }
 
     Timer {
-        interval: 30 * 60 * 1000
+        interval: root.checkInterval
         repeat: true
         running: true
         triggeredOnStart: true
         onTriggered: root.refresh()
-    }
-
-    function finish() {
-        if (exitCode === null || outputText === null)
-            return;
-        if (exitCode === 0) {
-            parse(outputText);
-            lastChecked = new Date();
-            ready = true;
-        } else {
-            console.warn("Updates: system-update --pending exited with " + exitCode);
-        }
     }
 
     FileView {
@@ -100,35 +79,31 @@ Singleton {
         onLoadFailed: root.reportAvailable = false
     }
 
-    Process {
+    Command {
         id: upgrade
 
-        // QProcess::ExitStatus is not exposed to qmllint.
-        onExited: code => { // qmllint disable signal-handler-parameters
+        command: Session.terminalCommand(["sh", "-c", "\"$1\"; printf '\\nPress Enter to close. '; read -r _", "sh", root.helper])
+        onFinished: code => {
             if (code !== 0)
                 console.warn("Updates: the update terminal exited with " + code);
             root.refresh();
         }
     }
 
-    Process {
+    Command {
         id: pending
 
         command: [root.helper, "--pending"]
-        onStarted: {
-            root.exitCode = null;
-            root.outputText = null;
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.outputText = text;
-                root.finish();
+        onFinished: (code, output) => {
+            if (code === 0) {
+                root.parse(output);
+                root.lastChecked = new Date();
+                root.ready = true;
+                root.error = "";
+            } else {
+                console.warn("Updates: system-update --pending exited with " + code);
+                root.error = code < 0 ? "Check failed: system-update not found" : "Check failed (exit " + code + ")";
             }
-        }
-        // QProcess::ExitStatus is not exposed to qmllint.
-        onExited: code => { // qmllint disable signal-handler-parameters
-            root.exitCode = code;
-            root.finish();
         }
     }
 }
