@@ -91,6 +91,9 @@ Singleton {
 
     // Where the coordinates came from: geoclue, cache, fixed or default.
     readonly property string locationSource: internal.locationSource
+    // The configured place name, else the coordinates: no service can tell
+    // the city without another lookup, and geoclue's fix can be a city away.
+    readonly property string placeText: Settings.weatherPlace !== "" ? Settings.weatherPlace : isNaN(latitude) ? "" : latitude.toFixed(2) + ", " + longitude.toFixed(2)
 
     function locate() {
         if (Settings.weatherFixedLocation) {

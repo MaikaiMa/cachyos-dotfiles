@@ -57,7 +57,7 @@ Surface {
             }
 
             Label {
-                text: Weather.ready ? "Feels like " + tile.degrees(Weather.apparent) : ""
+                text: Weather.ready ? "Feels like " + tile.degrees(Weather.apparent) + (Weather.placeText !== "" ? " · " + Weather.placeText : "") : ""
                 secondary: true
                 numeric: true
             }

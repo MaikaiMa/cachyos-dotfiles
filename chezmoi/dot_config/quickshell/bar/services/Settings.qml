@@ -27,6 +27,8 @@ Singleton {
     readonly property real weatherLatitude: stored.weatherLatitude
     readonly property real weatherLongitude: stored.weatherLongitude
     readonly property bool weatherFixedLocation: stored.weatherFixedLocation
+    // Shown after "Feels like" in the Home tile; empty shows the coordinates.
+    readonly property string weatherPlace: stored.weatherPlace
 
     function setWaveEnabled(enabled: bool) {
         stored.waveEnabled = enabled;
@@ -59,6 +61,7 @@ Singleton {
         property real weatherLatitude: 52.37
         property real weatherLongitude: 4.90
         property bool weatherFixedLocation: false
+        property string weatherPlace: ""
     }
 
     FileView {
