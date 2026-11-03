@@ -103,16 +103,16 @@ re-sync is needed.
 `dms-greeter sync --yes` (run by `scripts/setup-greetd.sh`) makes the login
 screen follow the desktop:
 
-- It symlinks the live `~/.config/DankMaterialShell/settings.json`,
-  `~/.local/state/DankMaterialShell/session.json`, and
-  `~/.cache/DankMaterialShell/dms-colors.json` into
+- It symlinks the live `~/.config/dms/settings.json`,
+  `~/.local/state/dms/session.json`, and
+  `~/.cache/dms/dms-colors.json` into
   `/var/cache/dms-greeter/users/<user>/`. Because these are symlinks, not
   copies, the greeter's look, theme, and wallpaper stay live: a wallpaper or
   theme change reaches the login screen immediately, with no re-sync needed.
 - It grants the `greeter` group read and traverse ACLs (`setfacl -m
   g:greeter:rX`) on `~`, `~/.config`, `~/.local`, `~/.local/state`,
   `~/.local/share`, and `~/.cache`, recursively, plus default ACLs on the
-  three `DankMaterialShell` state directories above and on the wallpaper file
+  three `dms` state directories above and on the wallpaper file
   and its directories, so the `greeter` system account can read what it needs
   to render the same look.
 - That ACL only takes effect when the file's own mode grants group read: on a
@@ -226,7 +226,7 @@ After the first login through greetd, confirm:
   applies. Expect `640`, or `650` after a sync, whose ACL mask includes
   execute; `600` means the greeter cannot read them:
   ```fish
-  stat -c %a ~/.config/DankMaterialShell/settings.json ~/.local/state/DankMaterialShell/session.json
+  stat -c %a ~/.config/dms/settings.json ~/.local/state/dms/session.json
   ```
 - DMS starts without an immediate lock screen after login.
 
@@ -300,7 +300,7 @@ install command in the README, is harmless; it stays disabled until
   at the first successful login, so the very first boot through greetd shows
   no preselected user.
 
-- The `greeter` system account gets read access to `~/.cache/DankMaterialShell`
+- The `greeter` system account gets read access to `~/.cache/dms`
   as part of the ACL sync, which includes clipboard and notification history,
   not just theme state. This is an accepted trade-off of using the live
   symlink approach.

@@ -45,7 +45,7 @@ updates; `paru` updates it like any other AUR package.
 
 DMS no longer records the clipboard: the managed
 `modify_clsettings.json` keeps `disabled` set in
-`~/.config/DankMaterialShell/clsettings.json`, so Vicinae is the only
+`~/.config/dms/clsettings.json`, so Vicinae is the only
 clipboard history. Screenshot binds still copy to the clipboard; DMS does
 that with its own process.
 
@@ -150,9 +150,9 @@ end
 dms-reset
 ```
 
-Their old settings stay in `~/.config/DankMaterialShell/plugin_settings.json`
+Their old settings stay in `~/.config/dms/plugin_settings.json`
 and do nothing; DMS's old clipboard history stays in
-`~/.cache/DankMaterialShell/clipboard` until it is deleted by hand.
+`~/.cache/dms/clipboard` until it is deleted by hand.
 `translate-shell` and `xdg-utils` are no longer recorded; remove
 `translate-shell` with `paru -Rns translate-shell` if nothing else uses it
 (`xdg-utils` is a dependency of other packages and stays).
@@ -211,7 +211,7 @@ former plugins with `./scripts/dms-restore-plugins.sh` (bootstrap runs it).
 The revert does not delete live files on its own: remove
 `~/.config/systemd/user/handy.service`, the two links in
 `~/.config/systemd/user/niri.service.wants/`, `~/.config/xdg-terminals.list`,
-and `~/.config/DankMaterialShell/clsettings.json` (or add them to
+and `~/.config/dms/clsettings.json` (or add them to
 `chezmoi/.chezmoiremove` in the revert), then stop both services and remove
 the packages:
 

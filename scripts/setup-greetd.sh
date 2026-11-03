@@ -18,8 +18,8 @@ legacy_session_target=${GREETD_LEGACY_SESSION_TARGET:-/usr/local/share/wayland-s
 legacy_wrapper_target=${GREETD_LEGACY_WRAPPER_TARGET:-/usr/local/bin/niri-session-quiet}
 niri_config=${GREETD_NIRI_CONFIG:-/etc/greetd/niri/config.kdl}
 greeter_command=${DMS_GREETER_COMMAND:-dms-greeter}
-settings_json=${DMS_SETTINGS_PATH:-$HOME/.config/DankMaterialShell/settings.json}
-session_json=${DMS_SESSION_PATH:-$HOME/.local/state/DankMaterialShell/session.json}
+settings_json=${DMS_SETTINGS_PATH:-$HOME/.config/dms/settings.json}
+session_json=${DMS_SESSION_PATH:-$HOME/.local/state/dms/session.json}
 dry_run=false
 switch=false
 

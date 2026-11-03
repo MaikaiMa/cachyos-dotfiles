@@ -90,7 +90,7 @@ system-update
 
 The helper is the guarded version of `paru -Syu; and flatpak update`
 (ADR-0025). Before it upgrades anything it lists the fragile pending packages
-with their version jump: kernels, Mesa, niri, Quickshell, DMS (`dms-shell`),
+with their version jump: kernels, Mesa, niri, Quickshell, DMS (`dux-shell`),
 systemd, greetd, and `greetd-dms-greeter-bin`. When that list is not empty and
 the helper runs in a terminal, it asks `Continue with the upgrade? [Y/n]` once;
 Enter continues, anything else cancels before anything is installed.

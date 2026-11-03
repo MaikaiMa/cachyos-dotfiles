@@ -48,7 +48,7 @@ done
 
 settings_window_exists() {
 	"$niri_command" msg -j windows 2>/dev/null |
-		jq -e 'any(.[]; .app_id == "com.danklinux.dms" and .title == "Settings")' >/dev/null 2>&1
+		jq -e 'any(.[]; (.app_id == "dev.duxlabs.shell" or .app_id == "com.danklinux.dms") and .title == "Settings")' >/dev/null 2>&1
 }
 
 was_open=false

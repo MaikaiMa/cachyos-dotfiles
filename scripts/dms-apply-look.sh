@@ -11,9 +11,9 @@ repo_root=$(
 look_json="$repo_root/dms/look.json"
 session_look_json="$repo_root/dms/session.json"
 plugin_look_json="$repo_root/dms/plugin_settings.json"
-settings_json="$HOME/.config/DankMaterialShell/settings.json"
-session_json="${XDG_STATE_HOME:-$HOME/.local/state}/DankMaterialShell/session.json"
-plugin_settings_json="$HOME/.config/DankMaterialShell/plugin_settings.json"
+settings_json="$HOME/.config/dms/settings.json"
+session_json="${XDG_STATE_HOME:-$HOME/.local/state}/dms/session.json"
+plugin_settings_json="$HOME/.config/dms/plugin_settings.json"
 backup_json="$settings_json.before-look"
 dry_run=0
 
@@ -88,7 +88,7 @@ fill_effective_defaults() {
 		fi
 		value=$(dms ipc call settings get "$key" 2>/dev/null) || continue
 		case "$value" in
-		"" | *[!0-9.a-zA-Z-]*) continue ;;
+		"" | undefined | *[!0-9.a-zA-Z-]*) continue ;;
 		esac
 		jq --arg key "$key" --arg value "$value" \
 			'.[$key] = ($value | if . == "true" then true elif . == "false" then false elif test("^-?[0-9]+(\\.[0-9]+)?$") then tonumber else . end)' \

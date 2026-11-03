@@ -8,7 +8,7 @@ repo_root=$(
 	cd -- "$(dirname -- "$0")/.."
 	pwd
 )
-script="$repo_root/chezmoi/dot_config/DankMaterialShell/modify_clsettings.json"
+script="$repo_root/chezmoi/dot_config/dms/modify_clsettings.json"
 
 fail() {
 	printf '%s\n' "$1" >&2

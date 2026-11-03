@@ -1,5 +1,5 @@
 {
-  "cornerRadius": 16,
+  "radiusStrength": 50,
   "niriLayoutGapsOverride": -2,
   "niriLayoutRadiusOverride": 20,
   "currentThemeName": "dynamic",
@@ -15,14 +15,16 @@
   "blurBorderEnabled": true,
   "barElevationEnabled": false,
   "audioVisualizerEnabled": true,
-  "showWorkspaceApps": false,
-  "showOccupiedWorkspacesOnly": true,
   "barConfigs": [
     {
       "id": "default",
       "leftWidgets": [
         "launcherButton",
-        "workspaceSwitcher",
+        {
+          "id": "workspaceSwitcher",
+          "enabled": true,
+          "showOccupiedWorkspacesOnly": true
+        },
         "runningApps"
       ],
       "centerWidgets": [
@@ -35,7 +37,11 @@
           "id": "music",
           "mediaSize": 2
         },
-        "systemTray",
+        {
+          "id": "systemTray",
+          "enabled": true,
+          "trayMaxVisibleItems": 1
+        },
         {
           "id": "systemUpdate",
           "hideWhenIdle": true
@@ -68,8 +74,6 @@
   "updaterCheckOnStart": true,
   "updaterUseCustomCommand": true,
   "updaterCustomCommand": "system-update",
-  "trayMaxVisibleItems": 1,
-  "trayAutoOverflow": true,
   "niriLayoutBorderSize": 1,
   "osdVolumeEnabled": false,
   "osdMicMuteEnabled": false,

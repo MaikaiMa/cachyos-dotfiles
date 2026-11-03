@@ -8,7 +8,7 @@ checkupdates_command=${CHECKUPDATES_COMMAND:-checkupdates}
 flatpak_command=${FLATPAK_COMMAND:-flatpak}
 pacdiff_command=${PACDIFF_COMMAND:-pacdiff}
 # These keep running the old code until the kernel or the session restarts.
-reboot_pattern='^(linux-|mesa$|niri$|quickshell$|dms-shell|systemd$|greetd)'
+reboot_pattern='^(linux-|mesa$|niri$|quickshell$|dux-shell|systemd$|greetd)'
 greeter_package=greetd-dms-greeter-bin
 
 usage() {
@@ -61,7 +61,7 @@ print_pending() {
 	} | awk -v pattern="$reboot_pattern" -v greeter="$greeter_package" '
 		function reason(name) {
 			if (name ~ /^linux-/) return "kernel: reboot needed"
-			if (name == "quickshell" || name ~ /^dms-shell/) return "shell: restarts the bar"
+			if (name == "quickshell" || name ~ /^dux-shell/) return "shell: restarts the bar"
 			if (name == greeter || name ~ /^greetd/) return "greeter: re-sync needed"
 			return "needs a reboot"
 		}

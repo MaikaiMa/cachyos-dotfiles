@@ -15,8 +15,8 @@ Singleton {
     readonly property string localBin: home + "/.local/bin"
     readonly property string barState: state + "/dotfiles-bar"
     readonly property string barRuntime: runtime + "/dotfiles-bar"
-    readonly property string dmsCache: cache + "/DankMaterialShell"
-    readonly property string dmsState: state + "/DankMaterialShell"
+    readonly property string dmsCache: cache + "/dms"
+    readonly property string dmsState: state + "/dms"
     // Both bar directories exist.
     property bool ready: false
 

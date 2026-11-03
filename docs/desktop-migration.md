@@ -29,13 +29,13 @@ Rules that apply to every phase:
 
 | Piece | Repository path | Live path | Phase |
 | --- | --- | --- | --- |
-| DMS settings seed and plugin lock | `chezmoi/dot_config/DankMaterialShell/` | `~/.config/DankMaterialShell/` | 2 |
+| DMS settings seed and plugin lock | `chezmoi/dot_config/dms/` | `~/.config/dms/` | 2 |
 | DMS service wiring | `chezmoi/dot_config/systemd/user/niri.service.wants/symlink_dms.service` | `~/.config/systemd/user/niri.service.wants/dms.service` | 2 |
 | Noctalia removals | `chezmoi/.chezmoiremove` | Noctalia files and service symlink | 2 |
 | Niri keybinds and includes | `chezmoi/dot_config/niri/` | `~/.config/niri/` | 2 |
 | matugen config and templates | `chezmoi/dot_config/matugen/` | `~/.config/matugen/` | 2 |
 | Z13 rear-window color helper | `chezmoi/dot_local/bin/executable_sync-z13-window-color` | `~/.local/bin/` | 2 |
-| Repository plugins for DMS | `chezmoi/dot_config/DankMaterialShell/plugins/` | `~/.config/DankMaterialShell/plugins/` | 3 |
+| Repository plugins for DMS | `chezmoi/dot_config/dms/plugins/` | `~/.config/dms/plugins/` | 3 |
 | greetd config | `system/greetd/config.toml` | `/etc/greetd/config.toml` | 5 |
 | greetd PAM stack | `system/pam.d/greetd` | `/etc/pam.d/greetd` | 5 |
 | Quiet niri-session wrapper | `system/local/bin/niri-session` | `/usr/local/bin/niri-session` | 5 |
@@ -109,7 +109,7 @@ Agent delivers:
   the binary stays through the profile meta package. Review `playerctl`,
   `imagemagick`, and `noto-fonts` against what still references them and
   remove the ones nothing needs.
-- `chezmoi/dot_config/DankMaterialShell/settings.json` seeded from the
+- `chezmoi/dot_config/dms/settings.json` seeded from the
   trial's live file after review, and `plugins.lock.json`. DMS rewrites
   `settings.json`; per ADR-0008 that drift is reviewed and promoted or
   reverted, not ignored.
@@ -139,7 +139,7 @@ Agent delivers:
   restart, or is dropped if `dms` already offers it.
 - `tests/validate.sh`: remove the `noctalia` tool requirement and the
   Noctalia validation lines, update the required-files list, add `qmllint`
-  over `chezmoi/dot_config/DankMaterialShell/plugins/` (empty until phase 3).
+  over `chezmoi/dot_config/dms/plugins/` (empty until phase 3).
   Remove `tests/noctalia-audio-glow.sh`.
 - Docs: README desktop sections, `docs/maintenance.md` verification list,
   ADR-0002/0004/0005/0006/0007/0011 status lines set to
@@ -185,7 +185,7 @@ review pass over the plugin QML remains.
 
 Goal: the two features that Noctalia could not provide and DMS can host.
 
-Agent delivers, under `chezmoi/dot_config/DankMaterialShell/plugins/`:
+Agent delivers, under `chezmoi/dot_config/dms/plugins/`:
 
 - `dotfiles-apps`: a bar widget plugin that lists running and pinned
   applications with a primary-color dot under running apps and a red dot

@@ -81,7 +81,7 @@ DMS opens `Terminal=true` applications from its own surfaces and "open terminal
 here" in the terminal named by its `terminalOverride` session key; without
 it, DMS falls back to `$TERMINAL` and then `xterm`, which is not installed. `dms/session.json`
 sets it to `ghostty`, and `scripts/dms-apply-look.sh` merges it into
-`~/.local/state/DankMaterialShell/session.json`. DMS starts terminal
+`~/.local/state/dms/session.json`. DMS starts terminal
 applications as `ghostty -e sh -c <command>`, which runs in its own Ghostty
 process; "open terminal here" starts plain `ghostty` in that folder.
 

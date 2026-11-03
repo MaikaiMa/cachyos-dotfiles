@@ -10,7 +10,7 @@ repo_root=$(
 	pwd
 )
 lock_json=${DMS_PLUGIN_LOCKFILE:-$repo_root/dms/plugins.lock.json}
-dms_dir="${XDG_CONFIG_HOME:-$HOME/.config}/DankMaterialShell"
+dms_dir="${XDG_CONFIG_HOME:-$HOME/.config}/dms"
 plugins_dir="$dms_dir/plugins"
 live_lock_json="$dms_dir/plugins.lock.json"
 dms_command=${DMS_COMMAND:-dms}

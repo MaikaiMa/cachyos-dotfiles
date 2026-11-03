@@ -1,7 +1,13 @@
 # DankMaterialShell: the deployed desktop shell
 
 [ADR-0013](adr/ADR-0013-replace-noctalia-with-dms-and-quickshell-surfaces.md)
-replaces Noctalia with DankMaterialShell (DMS) 1.6.2. `docs/desktop-migration.md`
+replaces Noctalia with DankMaterialShell (DMS) 1.6.2.
+Since 2.0.0 (2026-11-02) the project is maintained by Dux Labs and the package
+is `dux-shell`; the `dms` binary, `dms.service` and the IPC keep their names.
+DMS moved its config, state and cache directories from `DankMaterialShell` to
+`dms` on first start and left symlinks at the old paths. The repo uses the new
+paths; `dms-greeter sync` 1.6.2 still links the greeter cache to the old paths,
+which resolve through those symlinks, so do not remove them. `docs/desktop-migration.md`
 phase 2 moved the shell into the chezmoi-managed tree; this guide documents the
 result and how to iterate on it day to day. The former Noctalia configuration
 is preserved only as the `noctalia-final` Git tag.
@@ -16,14 +22,14 @@ is preserved only as the `noctalia-final` Git tag.
 - **The look.** `dms/look.json` maps DMS setting keys to the mat-glass look
   (corner radius, transparency, blur, bar widget layout, wallpaper theming);
   `scripts/dms-apply-look.sh` merges it into
-  `~/.config/DankMaterialShell/settings.json`. See "The mat-glass look" below
+  `~/.config/dms/settings.json`. See "The mat-glass look" below
   for why it edits the file directly instead of using `dms ipc call settings
   set`. `dms/session.json` holds the few keys DMS keeps in session state
   instead, merged the same way into
-  `~/.local/state/DankMaterialShell/session.json`; currently only
+  `~/.local/state/dms/session.json`; currently only
   `terminalOverride`, see [docs/terminal.md](terminal.md#terminal-for-dms).
   `dms/plugin_settings.json` holds the pinned plugin settings, merged the
-  same way into `~/.config/DankMaterialShell/plugin_settings.json`; see
+  same way into `~/.config/dms/plugin_settings.json`; see
   "Plugin settings" below.
 - **Service layer and fallback bar.** Since 2026-10-05 the own Quickshell bar
   ([docs/shell.md](shell.md)) is the daily bar; DMS keeps running underneath
@@ -47,8 +53,8 @@ is preserved only as the `noctalia-final` Git tag.
   The lockfile and `scripts/dms-restore-plugins.sh` stay for a future
   plugin; see "Registry plugins" below.
 - **Clipboard history off.** The chezmoi `modify_` script
-  `chezmoi/dot_config/DankMaterialShell/modify_clsettings.json` sets
-  `disabled` in `~/.config/DankMaterialShell/clsettings.json`, so DMS no
+  `chezmoi/dot_config/dms/modify_clsettings.json` sets
+  `disabled` in `~/.config/dms/clsettings.json`, so DMS no
   longer records the clipboard; DMS reloads that file on change.
 - **Niri integration.** `chezmoi/dot_config/niri/config.kdl` includes
   `dms/layout.kdl` and `dms/colors.kdl`, which DMS itself writes, so the Niri
@@ -79,7 +85,7 @@ below stays so a future plugin can be pinned the same way.
 ### Plugin settings
 
 DMS plugins save their own state into
-`~/.config/DankMaterialShell/plugin_settings.json` (the former `commandRunner`
+`~/.config/dms/plugin_settings.json` (the former `commandRunner`
 kept its command history there, for example). A chezmoi-managed copy of the
 whole file would drift after every use and make a non-interactive bootstrap
 stop at chezmoi's overwrite prompt, so the file is not managed by chezmoi;
@@ -99,7 +105,7 @@ on purpose.
 ### Why the lockfile lives in `dms/`
 
 DMS rewrites its live lockfile,
-`~/.config/DankMaterialShell/plugins.lock.json`, on every install and update,
+`~/.config/dms/plugins.lock.json`, on every install and update,
 so a chezmoi-managed copy would drift constantly. `dms/plugins.lock.json` is
 desired state instead, like `dms/look.json`, in the DMS 1.6.2 format
 (`lockfileVersion` 1; per plugin id a `repo`, an optional `path` inside that
@@ -135,7 +141,7 @@ Then copy that plugin's entry from the live lockfile into
 `dms/plugins.lock.json`; this prints it:
 
 ```fish
-jq .plugins.PLUGIN_ID ~/.config/DankMaterialShell/plugins.lock.json
+jq .plugins.PLUGIN_ID ~/.config/dms/plugins.lock.json
 ```
 
 For a new plugin, also add `"<id>": {"enabled": true}` to
@@ -162,7 +168,7 @@ settings only — no QML, no plugin.
 `"Setting Objects and Arrays not supported"` for anything typed `object`,
 which includes arrays). Since the bar layout is the point of this look, the
 script merges `dms/look.json` into
-`~/.config/DankMaterialShell/settings.json` with `jq` instead, for every key,
+`~/.config/dms/settings.json` with `jq` instead, for every key,
 so there is only one code path to reason about. It stops `dms.service`
 before writing and starts it again after, so DMS does not race the edit or
 overwrite it with its own autosave.
@@ -180,7 +186,7 @@ Review the printed before/after diff, then apply for real:
 ```
 
 The first real run backs up the previous file to
-`~/.config/DankMaterialShell/settings.json.before-look` (once — later runs
+`~/.config/dms/settings.json.before-look` (once — later runs
 do not overwrite that backup). The script is idempotent: running it again
 with unchanged `dms/look.json`, `dms/session.json`, and
 `dms/plugin_settings.json` reports nothing to do and does not touch
@@ -192,7 +198,7 @@ Edit `dms/look.json`, re-run `--dry-run` to see the diff, then apply. To
 revert everything from this look:
 
 ```fish
-cp ~/.config/DankMaterialShell/settings.json.before-look ~/.config/DankMaterialShell/settings.json
+cp ~/.config/dms/settings.json.before-look ~/.config/dms/settings.json
 systemctl --user restart dms.service
 ```
 
@@ -371,7 +377,7 @@ Vicinae does not notice a theme file that is rewritten in place. See
 ### Zen Browser colours
 
 Zen does not follow the GTK theme, and DMS's own `zen` template
-(`~/.config/DankMaterialShell/zen.css`) is not used: it forces an opaque
+(`~/.config/dms/zen.css`) is not used: it forces an opaque
 background and overrides Zen's per-space colours. Instead Zen reads as the
 same translucent DMS glass as Ghostty and the bar, and the space you are in
 shows only in a few small cues.
@@ -562,7 +568,7 @@ in [docs/greeter.md](greeter.md).
   renders a frame, and an idle DMS without a bar renders nothing. Once
   loaded, the window stays loaded for that DMS session. The managed helper
   `~/.local/bin/dms-settings [--toggle] [TAB]` makes the call, waits up to
-  400 ms for the window (`com.danklinux.dms`, title `Settings`) and, if it
+  400 ms for the window (`dev.duxlabs.shell` since DMS 2.0, `com.danklinux.dms` before, title `Settings`) and, if it
   did not exist before and still does not show, makes DMS render one frame
   with `dms ipc call toast info " "` followed by `toast hide`, which shows no
   visible message. `Mod+Shift+S` and the bar's settings buttons use it.

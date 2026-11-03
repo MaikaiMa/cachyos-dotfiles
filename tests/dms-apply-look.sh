@@ -49,11 +49,11 @@ fail() {
 }
 
 plugin_value() {
-	jq -c "$2" "$1/.config/DankMaterialShell/plugin_settings.json"
+	jq -c "$2" "$1/.config/dms/plugin_settings.json"
 }
 
 home="$test_root/home"
-live_plugins="$home/.config/DankMaterialShell/plugin_settings.json"
+live_plugins="$home/.config/dms/plugin_settings.json"
 mkdir -p "$(dirname "$live_plugins")"
 cat >"$live_plugins" <<'EOF'
 {
@@ -82,7 +82,7 @@ case $dry_run in
 *private-history-command* | *private-engine*) fail 'dry-run printed plugin state that the repository does not pin.' ;;
 esac
 cmp -s "$live_plugins" "$test_root/before.json" || fail 'dry-run changed plugin_settings.json.'
-[ ! -e "$home/.config/DankMaterialShell/settings.json" ] || fail 'dry-run wrote settings.json.'
+[ ! -e "$home/.config/dms/settings.json" ] || fail 'dry-run wrote settings.json.'
 [ ! -s "$calls" ] || fail 'dry-run stopped or started dms.service.'
 
 run_apply "$home" >/dev/null
@@ -93,9 +93,9 @@ run_apply "$home" >/dev/null
 	fail 'a plugin no longer in the repository was not preserved.'
 [ "$(plugin_value "$home" '.handInstalled')" = '{"enabled":true}' ] ||
 	fail 'a plugin missing from the repository was not preserved.'
-[ "$(stat -c %a "$home/.config/DankMaterialShell/settings.json")" = 640 ] ||
+[ "$(stat -c %a "$home/.config/dms/settings.json")" = 640 ] ||
 	fail 'apply did not leave settings.json at mode 640 for the greeter.'
-[ "$(stat -c %a "$home/.local/state/DankMaterialShell/session.json")" = 640 ] ||
+[ "$(stat -c %a "$home/.local/state/dms/session.json")" = 640 ] ||
 	fail 'apply did not leave session.json at mode 640 for the greeter.'
 grep -q 'stop dms.service' "$calls" || fail 'apply did not stop dms.service before writing.'
 grep -q 'start dms.service' "$calls" || fail 'apply did not start dms.service after writing.'

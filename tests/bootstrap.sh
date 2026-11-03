@@ -176,15 +176,15 @@ case $look_dry_run in
 	exit 1
 	;;
 esac
-if [ -e "$test_home/.config/DankMaterialShell/settings.json" ]; then
+if [ -e "$test_home/.config/dms/settings.json" ]; then
 	printf '%s\n' 'Bootstrap dry-run wrote the DMS settings file.' >&2
 	exit 1
 fi
-if [ -e "$test_home/.config/DankMaterialShell/plugin_settings.json" ]; then
+if [ -e "$test_home/.config/dms/plugin_settings.json" ]; then
 	printf '%s\n' 'Bootstrap dry-run wrote the DMS plugin settings file.' >&2
 	exit 1
 fi
-if [ -e "$test_home/.config/DankMaterialShell/plugins.lock.json" ]; then
+if [ -e "$test_home/.config/dms/plugins.lock.json" ]; then
 	printf '%s\n' 'Bootstrap dry-run wrote the DMS plugin lockfile.' >&2
 	exit 1
 fi

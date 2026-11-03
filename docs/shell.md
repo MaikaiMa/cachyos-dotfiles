@@ -309,7 +309,7 @@ pieces, and moved the shortcuts (built 2026-10-05).
   sorted by name, as 120 x 68 px thumbnails with radius 10 and the file name
   under them. DMS has no setting for that folder: its picker remembers the
   last folder it browsed as `wallpaperLastPath` in
-  `~/.cache/DankMaterialShell/cache.json`, which is `~/Pictures/Wallpapers`
+  `~/.cache/dms/cache.json`, which is `~/Pictures/Wallpapers`
   here (see [pictures.md](pictures.md)); the bar reads it and falls back to
   that folder. The list is read when the panel opens, with the picker's own
   filter (one level, symlinks followed). Thumbnails load asynchronously at
@@ -793,7 +793,7 @@ QtQuick type and would shadow it.
 ## How colours arrive
 
 DMS runs matugen on every wallpaper change and writes
-`~/.cache/DankMaterialShell/dms-colors.json` with a `mode` (`dark` or
+`~/.cache/dms/dms-colors.json` with a `mode` (`dark` or
 `light`) and a Material colour set per mode. `Colors.qml` reads that file
 with a `FileView`, watches it for changes, and exposes the colours of the
 active mode (`primary`, `primaryForeground`, `primaryContainer`, `secondary`,
@@ -1331,9 +1331,9 @@ owns.
 | Rear window light | `~/.local/state/z13ctl/state.json` (watched), `z13ctl brightness off|low|medium|high --device lightbar` | `devices.lightbar.brightness` 0 to 3 (`enabled: false` reads as off) and `color`; `brightness` keeps the mode and colour, and `sync-z13-window-color` keeps the level. |
 | Wi-Fi, Bluetooth | `Quickshell.Networking`, `Quickshell.Bluetooth` | Native modules in Quickshell 0.3. Networks that are neither connected nor saved are listed only while the module's scanner is on (rescans at most every 10 s), so the Wi-Fi panel runs it only while open. |
 | Caffeine, theme mode, scheme | `dms ipc call inhibit|theme|settings` | Do not disturb is the bar's own since ADR-0028 (see "Notifications list"). Caffeine is polled every 10 s, because the right island shows it. `settings set matugenScheme` only saves the key: DMS 1.6.2's IPC assigns the setting directly and skips the `regenSystemThemes` hook its own settings UI runs (read in the shipped QML, not tried). The bar re-renders by setting the current wallpaper again, as [dms.md](dms.md) describes; a light/dark switch would also render but turns smart mode off. |
-| Wallpapers | `wallpaperLastPath` in `~/.cache/DankMaterialShell/cache.json`, `find` in that folder, `dms ipc call wallpaper get|set`, `getFor|setFor` | DMS has no folder setting; its picker remembers the last folder. In DMS's per-monitor mode `get` and `set` answer `ERROR`, and the calls are made again for the screen. |
+| Wallpapers | `wallpaperLastPath` in `~/.cache/dms/cache.json`, `find` in that folder, `dms ipc call wallpaper get|set`, `getFor|setFor` | DMS has no folder setting; its picker remembers the last folder. In DMS's per-monitor mode `get` and `set` answer `ERROR`, and the calls are made again for the screen. |
 | Bar settings | `$XDG_STATE_HOME/dotfiles-bar/settings.json`, a `FileView` with a `JsonAdapter`, watched | The bar's own switches; see `Settings` under "Services". A missing file is the defaults and is written on the first change. |
-| Terminal | DMS's `terminalOverride` in `$XDG_STATE_HOME/DankMaterialShell/session.json` (watched, read-only), else `xdg-terminal-exec`, else `ghostty -e` | `session.json` is DMS's internal session state, not a public interface; when it is missing or changes shape the fallbacks apply. |
+| Terminal | DMS's `terminalOverride` in `$XDG_STATE_HOME/dms/session.json` (watched, read-only), else `xdg-terminal-exec`, else `ghostty -e` | `session.json` is DMS's internal session state, not a public interface; when it is missing or changes shape the fallbacks apply. |
 | Keyboard cover, on-screen keyboard, rotation lock | `~/.local/bin/tablet-mode watch`, `osk watch` (only while detached), `$XDG_STATE_HOME/dotfiles/rotation-lock` | The helpers from [tablet.md](tablet.md); the bar calls `osk toggle` and `auto-rotate lock toggle`. |
 | Session actions | `systemctl suspend|reboot|poweroff`, `niri msg action quit --skip-confirmation`, `dms ipc call lock lock` | |
 | Notification daemon handover | `dms.service.d/notifications.conf` drop-in (`Type=simple`), `quickshell-bar.service` (`Before=dms.service`, `gdbus wait`, the `bar-notifications release` and `claim` hooks), `~/.local/bin/bar-notifications`, `busctl --user status org.freedesktop.Notifications` | Decided in [ADR-0028](adr/ADR-0028-own-the-notification-daemon-in-the-bar-for-the-niri-session.md), see "Notification handover". The packaged `BusName=` stays: systemd 262 rejects an empty `BusName=` and only `Type=dbus` waits for the name. |

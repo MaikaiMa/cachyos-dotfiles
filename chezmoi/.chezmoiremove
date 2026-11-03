@@ -18,11 +18,11 @@
 .config/quickshell/bar/Clock.qml
 
 # DMS bar plugins, replaced by the own Quickshell bar (docs/shell.md phase 5).
-.config/DankMaterialShell/plugins/dotfilesApps
-.config/DankMaterialShell/plugins/dotfilesDashboard
-.config/DankMaterialShell/plugins/dotfilesKeyboard
-.config/DankMaterialShell/plugins/dotfilesLauncher
-.config/DankMaterialShell/plugins/dotfilesWorkspaces
+.config/dms/plugins/dotfilesApps
+.config/dms/plugins/dotfilesDashboard
+.config/dms/plugins/dotfilesKeyboard
+.config/dms/plugins/dotfilesLauncher
+.config/dms/plugins/dotfilesWorkspaces
 
 # Stood in for the panels until step 7 of the own bar replaced the last ones (docs/shell.md).
 .config/quickshell/bar/panels/PlaceholderPanel.qml

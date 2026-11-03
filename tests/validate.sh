@@ -164,7 +164,7 @@ require_files \
 	chezmoi/dot_config/quickshell/bar/components/Surface.qml \
 	chezmoi/dot_config/quickshell/bar/components/home/qmldir \
 	chezmoi/dot_config/quickshell/bar/README.md \
-	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
+	chezmoi/dot_config/dms/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \
 	chezmoi/dot_config/vicinae/dotfiles.json \
 	chezmoi/dot_config/systemd/user/mobi.phosh.OSK.service.d/niri.conf \
@@ -421,7 +421,7 @@ shellcheck chezmoi/dot_local/bin/executable_focus-or-spawn \
 	chezmoi/dot_local/bin/executable_system-update \
 	chezmoi/dot_local/bin/executable_dms-settings \
 	chezmoi/dot_local/bin/executable_bar-notifications \
-	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
+	chezmoi/dot_config/dms/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session
@@ -437,7 +437,7 @@ shfmt -d scripts/*.sh tests/*.sh \
 	chezmoi/dot_local/bin/executable_system-update \
 	chezmoi/dot_local/bin/executable_dms-settings \
 	chezmoi/dot_local/bin/executable_bar-notifications \
-	chezmoi/dot_config/DankMaterialShell/modify_clsettings.json \
+	chezmoi/dot_config/dms/modify_clsettings.json \
 	chezmoi/dot_config/vicinae/modify_settings.json \
 	system/local/bin/niri-session \
 	system/local/bin/steam-session

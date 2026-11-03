@@ -42,7 +42,7 @@ cat >"$repo_lock" <<'EOF'
 EOF
 
 config_home="$test_root/config"
-dms_dir="$config_home/DankMaterialShell"
+dms_dir="$config_home/dms"
 live_lock="$dms_dir/plugins.lock.json"
 fake_bin="$test_root/bin"
 calls="$test_root/calls"
@@ -54,7 +54,7 @@ mkdir -p "$fake_bin" "$dms_dir/plugins"
 printf '%s\n' '#!/bin/sh' \
 	'printf "%s\n" "$*" >>"$DMS_STUB_CALLS"' \
 	'[ "$1 $2" = "plugins restore" ] || exit 0' \
-	'dir="$XDG_CONFIG_HOME/DankMaterialShell"' \
+	'dir="$XDG_CONFIG_HOME/dms"' \
 	'cp "$3" "$dir/plugins.lock.json"' \
 	'for id in $(jq -r ".plugins | keys[]" "$3"); do' \
 	'	mkdir -p "$dir/plugins/$id"' \

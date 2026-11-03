@@ -212,12 +212,12 @@ assert_links "$abs_profile/chrome" "$home6"
 home7="$test_root/case7"
 write_theme "$home7"
 write_single_profile "$home7"
-mkdir -p "$home7/.config/zen/only.default/chrome" "$home7/.config/DankMaterialShell"
-printf ':root {}\n' >"$home7/.config/DankMaterialShell/zen.css"
-ln -s "$home7/.config/DankMaterialShell/zen.css" "$home7/.config/zen/only.default/chrome/userChrome.css"
+mkdir -p "$home7/.config/zen/only.default/chrome" "$home7/.config/dms"
+printf ':root {}\n' >"$home7/.config/dms/zen.css"
+ln -s "$home7/.config/dms/zen.css" "$home7/.config/zen/only.default/chrome/userChrome.css"
 replace_out=$(run_link "$home7")
 case $replace_out in
-*"was -> $home7/.config/DankMaterialShell/zen.css"*) ;;
+*"was -> $home7/.config/dms/zen.css"*) ;;
 *) fail "replacing the zen.css symlink did not report it: $replace_out" ;;
 esac
 assert_links "$home7/.config/zen/only.default/chrome" "$home7"

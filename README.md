@@ -18,7 +18,7 @@ installed application.
 ```text
 chezmoi/                  chezmoi source tree for home-directory files
   dot_config/niri/        managed ~/.config/niri fragments
-  dot_config/DankMaterialShell/ DMS settings merge script
+  dot_config/dms/ DMS settings merge script
   dot_config/quickshell/bar/ repository-owned Quickshell bar; see docs/shell.md
   dot_config/matugen/     matugen config and templates (Niri colors, Z13 window color, Ghostty, Zen, Vicinae, Hylki); see docs/dms.md
   dot_config/systemd/user/ managed ~/.config/systemd/user units
@@ -115,7 +115,7 @@ requires it; a managed desktop-entry override
 (`chezmoi/dot_local/share/applications/dev.noctalia.Noctalia.desktop`)
 hides it from the launcher. `packages/pacman.txt` records only what the managed
 configuration, helpers, validation, and documented setup need on top of or
-from within that baseline — including `dms-shell`, `quickshell`,
+from within that baseline — including `dux-shell`, `quickshell`,
 `matugen`, and `cava`. Kernel, bootloader, driver, and other installer-owned
 packages are deliberately not recorded; see ADR-0009.
 

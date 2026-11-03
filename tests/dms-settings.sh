@@ -38,7 +38,7 @@ printf '%s\n' \
 	'#!/bin/sh' \
 	'printf "%s\n" "niri $*" >>"$FAKE_CALLS"' \
 	'if [ -e "$FAKE_STATE/window" ]; then' \
-	'printf "%s\n" "[{\"app_id\":\"other\",\"title\":\"x\"},{\"app_id\":\"com.danklinux.dms\",\"title\":\"Settings\"}]"' \
+	'printf "%s\n" "[{\"app_id\":\"other\",\"title\":\"x\"},{\"app_id\":\"dev.duxlabs.shell\",\"title\":\"Settings\"}]"' \
 	'else' \
 	'printf "%s\n" "[{\"app_id\":\"other\",\"title\":\"x\"}]"' \
 	'fi' >"$fake_bin/niri-test"
