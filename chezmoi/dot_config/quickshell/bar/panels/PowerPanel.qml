@@ -7,7 +7,9 @@ import qs.components
 
 // The Power state of the centre island: one row of five square buttons. The
 // first takes the keyboard on open, Left and Right move it, Enter or Space
-// activate; the focused button is drawn in the accent.
+// activate; the focused button is drawn in the accent. Each button also has
+// one letter, underlined in its label, that fires it at once: the panel was
+// opened on purpose and a click fires at once too.
 Panel {
     id: panel
 
@@ -16,26 +18,31 @@ Panel {
     readonly property var buttons: [
         {
             action: "lock",
+            key: "l",
             icon: "lock",
             text: "Lock"
         },
         {
             action: "suspend",
+            key: "s",
             icon: "bedtime",
             text: "Suspend"
         },
         {
             action: "logout",
+            key: "o",
             icon: "logout",
             text: "Log out"
         },
         {
             action: "reboot",
+            key: "r",
             icon: "restart_alt",
             text: "Reboot"
         },
         {
             action: "poweroff",
+            key: "p",
             icon: "power_settings_new",
             text: "Power off"
         }
@@ -48,6 +55,31 @@ Panel {
     onOpened: {
         focusIndex = 0;
         Qt.callLater(panel.focusButton, 0);
+    }
+
+    // Unmodified letters reach here from the focused button, which only
+    // takes Space, Return, Enter and the arrows.
+    Keys.onPressed: event => {
+        if (event.modifiers !== Qt.NoModifier || event.isAutoRepeat)
+            return;
+        const index = buttons.findIndex(button => button.key === event.text.toLowerCase());
+        if (index < 0)
+            return;
+        event.accepted = true;
+        focusIndex = index;
+        Session.perform(buttons[index].action);
+    }
+
+    // The label with its letter underlined, at a word start where one has it
+    // ("Log out" underlines "out"); the labels are the panel's own static
+    // strings, so styled text is safe here.
+    function underlined(text: string, key: string): string {
+        const lower = text.toLowerCase();
+        const wordStart = lower.search(new RegExp("(^|\\s)" + key));
+        const at = wordStart < 0 ? lower.indexOf(key) : lower.indexOf(key, wordStart);
+        if (at < 0)
+            return text;
+        return text.slice(0, at) + "<u>" + text[at] + "</u>" + text.slice(at + 1);
     }
 
     function focusButton(index: int) {
@@ -126,7 +158,8 @@ Panel {
 
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: button.modelData.text
+                            text: panel.underlined(button.modelData.text, button.modelData.key)
+                            textFormat: Text.StyledText
                             secondary: true
                             color: button.current ? Colors.primaryForeground : Colors.foreground
                         }

@@ -1114,9 +1114,10 @@ quickshell ipc -p ~/.config/quickshell/bar call bar osd
   settings on the Network tab; both close the panel.
   Switching the adapter on from the panel starts discovery ("Scanning…").
 - Power (`Mod+Escape`): Lock is in the accent when the panel opens, Left and
-  Right move the accent, hover tints the other buttons. Each action runs
-  only after the panel has closed; test Lock first, the others end the
-  session.
+  Right move the accent, hover tints the other buttons. The underlined
+  letter of each label (`L`, `S`, `O`, `R`, `P`) fires that button at once;
+  a letter with a modifier held does nothing. Each action runs only after
+  the panel has closed; test Lock first, the others end the session.
 - Theme (`Mod+Ctrl+Return`): the control shows Auto while DMS's smart mode
   is on; the strip opens centred on the applied scheme with its dot. A
   click or Enter on another scheme re-renders the palette within a few
