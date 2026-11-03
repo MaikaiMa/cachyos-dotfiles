@@ -5,8 +5,10 @@ import qs
 import qs.services
 import qs.components
 
-// The Updates state of the centre island: a count line, the fragile packages
-// with a reason, the rest in a scrolling list, and Update all, Refresh, Report.
+// The Updates state of the centre island: a count line, one scrolling list
+// with the fragile packages first (taller, with a reason), and Update all,
+// Refresh, Report. The list is capped so the actions stay on screen whatever
+// the count: after a long absence the fragile group alone can be twenty rows.
 Panel {
     id: panel
 
@@ -15,12 +17,11 @@ Panel {
     // Ticks while the panel is open so "checked 3 min ago" stays true.
     property real now: Date.now()
 
-    readonly property var fragileItems: Updates.items.filter(item => item.fragile)
-    readonly property var otherItems: Updates.items.filter(item => !item.fragile)
-    readonly property real fragileHeight: fragileItems.length > 0 ? Theme.updatesSectionGap + fragileItems.length * Theme.updatesFragileRowHeight + (fragileItems.length - 1) * Theme.updatesFragileRowGap : 0
-    readonly property real listHeight: Math.min(Theme.updatesListMaxHeight, otherItems.length * Theme.updatesRowHeight + Math.max(0, otherItems.length - 1) * Theme.updatesRowGap)
+    readonly property int itemCount: Updates.items.length
+    readonly property real rowsHeight: Updates.fragileCount * Theme.updatesFragileRowHeight + (itemCount - Updates.fragileCount) * Theme.updatesRowHeight + Math.max(0, itemCount - 1) * Theme.updatesRowGap
+    readonly property real listHeight: Math.min(Theme.updatesListMaxHeight, rowsHeight)
+    readonly property real listSectionHeight: itemCount > 0 ? Theme.updatesSectionGap + listHeight : 0
     readonly property real actionWidth: (contentWidth - (actions.children.length - 1) * Theme.gap) / actions.children.length
-    readonly property real listSectionHeight: otherItems.length > 0 ? Theme.updatesSectionGap + listHeight : 0
 
     readonly property string headline: {
         if (Updates.checking && !Updates.ready)
@@ -31,7 +32,7 @@ Panel {
         return count + " · " + Updates.checkedText(now) + (Updates.error !== "" ? " · last check failed" : "");
     }
 
-    implicitHeight: 2 * Theme.panelPadding + Theme.updatesHeadHeight + fragileHeight + listSectionHeight + Theme.updatesActionsGap + Theme.updatesButtonHeight
+    implicitHeight: 2 * Theme.panelPadding + Theme.updatesHeadHeight + listSectionHeight + Theme.updatesActionsGap + Theme.updatesButtonHeight
 
     onOpened: {
         now = Date.now();
@@ -56,49 +57,27 @@ Panel {
         numeric: true
     }
 
-    Column {
-        id: fragileColumn
-
-        x: panel.contentX
-        y: Theme.panelPadding + Theme.updatesHeadHeight + Theme.updatesSectionGap
-        width: panel.contentWidth
-        spacing: Theme.updatesFragileRowGap
-        visible: panel.fragileItems.length > 0
-
-        Repeater {
-            model: panel.fragileItems
-
-            UpdateRow {
-                required property var modelData
-
-                width: fragileColumn.width
-                height: Theme.updatesFragileRowHeight
-                item: modelData
-                fragile: true
-                reason: modelData.reason
-            }
-        }
-    }
-
     ListView {
         id: list
 
         x: panel.contentX
-        y: Theme.panelPadding + Theme.updatesHeadHeight + panel.fragileHeight + Theme.updatesSectionGap
+        y: Theme.panelPadding + Theme.updatesHeadHeight + Theme.updatesSectionGap
         width: panel.contentWidth
         height: panel.listHeight
-        visible: panel.otherItems.length > 0
+        visible: panel.itemCount > 0
         clip: true
         spacing: Theme.updatesRowGap
         boundsBehavior: Flickable.StopAtBounds
-        model: panel.otherItems
+        model: Updates.items
 
         delegate: UpdateRow {
             required property var modelData
 
             width: ListView.view.width
-            height: Theme.updatesRowHeight
+            height: modelData.fragile ? Theme.updatesFragileRowHeight : Theme.updatesRowHeight
             item: modelData
+            fragile: modelData.fragile
+            reason: modelData.reason
         }
     }
 

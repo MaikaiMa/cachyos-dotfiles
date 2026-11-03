@@ -207,10 +207,11 @@ Step 5 made the side islands and the Updates panel real.
   opens Settings. Reduce motion makes every duration 0 and keeps the
   holds. `notificationPeek: false` in the bar's settings file
   (`Settings`) turns the peek off.
-- **Updates panel**, 420 px: "48 updates · checked 3 min ago", the fragile
-  packages first in `error` with a reason (kernel, shell, greeter, else a
-  reboot), then the rest with a source chip and `old → new` in a list that
-  scrolls inside 280 px, then Update all, Refresh (its icon spins while
+- **Updates panel**, 420 px: "48 updates · checked 3 min ago", then one list
+  that scrolls inside 280 px: the fragile packages first in `error` with a
+  reason (kernel, shell, greeter, else a reboot), then the rest, each with a
+  source chip and `old → new`. The cap keeps the actions on screen whatever
+  the count. Then Update all, Refresh (its icon spins while
   checking) and Report (disabled until
   `~/.local/state/system-update/last-report.md` exists, opened with
   `xdg-open`). Update all closes the panel and runs `system-update` in a

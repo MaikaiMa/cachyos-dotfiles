@@ -333,7 +333,6 @@ Singleton {
     readonly property int updatesRowHeight: 32
     readonly property int updatesRowGap: 2
     readonly property int updatesFragileRowHeight: 48
-    readonly property int updatesFragileRowGap: 6
     readonly property int updatesListMaxHeight: 280
     readonly property int updatesChipWidth: 50
     readonly property int updatesChipHeight: 18
